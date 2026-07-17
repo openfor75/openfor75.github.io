@@ -127,7 +127,21 @@ main{
   border-bottom:1.5px dashed var(--rule);
   display:flex;align-items:center;
 }
-.jline .j-slot.empty{color:#B9C2CA;font-weight:500;font-size:.85rem;letter-spacing:.15em;}
+.jline .j-slot.empty{color:#B9C2CA;font-weight:500;font-size:.85rem;letter-spacing:.15em;white-space:nowrap;}
+
+/* ── 上癮元素:得分浮字與 FEVER 狂熱 ── */
+.popup{
+  position:absolute;z-index:80;left:50%;top:34%;
+  font-weight:900;font-size:1.5rem;color:var(--up);
+  text-shadow:1.5px 1.5px 0 #fff;pointer-events:none;
+  animation:pop 1s ease forwards;white-space:nowrap;
+}
+.popup.fev{color:#E8A008;font-size:1.7rem;}
+@keyframes pop{from{opacity:1;transform:translate(-50%,0) scale(1);}30%{transform:translate(-50%,-14px) scale(1.15);}to{opacity:0;transform:translate(-50%,-64px) scale(1);}}
+body.fever .journal{border-color:#E8A008;box-shadow:0 0 0 3px #E8A008, 6px 6px 0 rgba(232,160,8,.3);}
+body.fever .qcard{border-color:#E8A008;box-shadow:4px 4px 0 rgba(232,160,8,.35);}
+body.fever #streak-text{animation:fpulse .35s infinite alternate;}
+@keyframes fpulse{to{transform:scale(1.18);}}
 .jline .j-amt{
   font-variant-numeric:tabular-nums;font-weight:700;font-size:.95rem;
   min-width:4.8em;text-align:right;color:var(--ink);
@@ -233,6 +247,7 @@ input.txt:focus{outline:2px solid var(--rule);}
 <header>
   <h1>借貸法則大挑戰<small id="mode-label"></small></h1>
   <div class="scorebar">
+    <span id="snd" style="cursor:pointer">🔊</span>
     <span id="hearts"></span>
     <span>進度 <b id="prog-text">0/0</b></span>
     <span>答對 <b id="score-text">0</b></span>
@@ -257,12 +272,12 @@ input.txt:focus{outline:2px solid var(--rule);}
     <div class="j-head"><span>日 記 簿</span><span class="j-date" id="j-date">1月1日</span></div>
     <div class="jline debit" data-side="借">
       <span class="j-label">借</span>
-      <span class="j-slot empty" id="slot-d">借方科目寫這裡(上面一行)</span>
+      <span class="j-slot empty" id="slot-d">借方寫這裡</span>
       <span class="j-amt" id="amt-d"></span>
     </div>
     <div class="jline credit" data-side="貸">
       <span class="j-label">貸</span>
-      <span class="j-slot empty" id="slot-c">貸方科目寫這裡(空兩格)</span>
+      <span class="j-slot empty" id="slot-c">貸方寫這裡</span>
       <span class="j-amt" id="amt-c"></span>
     </div>
   </div>
@@ -466,6 +481,34 @@ const slotD=$("#slot-d"), slotC=$("#slot-c"), amtD=$("#amt-d"), amtC=$("#amt-c")
 const seal=$("#seal"), fb=$("#feedback");
 const jlines=[...document.querySelectorAll(".jline")];
 const tbar=$("#tbar"), tbarI=$("#tbar-i");
+const mainEl=$("#main");
+let bestPoints=0;
+
+/* ── 音效(WebAudio 合成,免素材)── */
+let AC=null, muted=false;
+$("#snd").addEventListener("click",()=>{ muted=!muted; $("#snd").textContent=muted?"🔇":"🔊"; });
+function beep(f,d=0.09,t="square",v=0.12){
+  if(muted) return;
+  try{
+    AC = AC || new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.type=t; o.frequency.value=f;
+    g.gain.setValueAtTime(v,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,AC.currentTime+d);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+const isFever=()=> mode==="timed" && streak>=10;
+function spawnPopup(text,fev){
+  const el=document.createElement("div");
+  el.className="popup"+(fev?" fev":"");
+  el.textContent=text;
+  el.style.left=(42+Math.random()*16)+"%";
+  mainEl.appendChild(el);
+  setTimeout(()=>el.remove(),1000);
+}
 
 /* ── 首頁選單 ── */
 $("#mode-list").innerHTML=Object.keys(MODES).map(m=>
@@ -511,8 +554,8 @@ function startGame(m, customQueue){
 }
 
 function resetJournal(){
-  slotD.textContent="借方科目寫這裡(上面一行)"; slotD.classList.add("empty");
-  slotC.textContent="貸方科目寫這裡(空兩格)"; slotC.classList.add("empty");
+  slotD.textContent="借方寫這裡"; slotD.classList.add("empty");
+  slotC.textContent="貸方寫這裡"; slotC.classList.add("empty");
   amtD.textContent=""; amtC.textContent="";
   jlines.forEach(l=>l.classList.remove("filled"));
 }
@@ -557,7 +600,7 @@ function updateHUD(){
     $("#score-text").textContent=score;
     $("#prog-bar").style.width=(queue.length?idx/queue.length*100:0)+"%";
   }
-  $("#streak-text").textContent= streak>=3 ? `🔥 連對 ${streak}` : "";
+  $("#streak-text").textContent= isFever() ? `🔥FEVER x2 連對 ${streak}` : (streak>=3 ? `🔥 連對 ${streak}` : "");
 }
 
 const fmtAmt=()=> "$ "+((1+Math.floor(Math.random()*99))*1000).toLocaleString();
@@ -578,12 +621,18 @@ function answer(sideCh){
     stopTimer();
     fillLine(sideCh);
     seal.classList.remove("show"); void seal.offsetWidth; seal.classList.add("show");
+    beep(440+Math.min(streak,12)*45,0.09,"square");
     if(mode==="timed"){
       answered++; streak++; maxStreak=Math.max(maxStreak,streak);
+      const fever=isFever();
+      document.body.classList.toggle("fever",fever);
+      if(fever && streak===10){ beep(660,.1);setTimeout(()=>beep(880,.1),90);setTimeout(()=>beep(1100,.14),180); }
       const bonus=Math.round(tLeft/tLimit*5);
-      points += 10+bonus+Math.min(streak-1,5);
+      const gain=Math.round((10+bonus+Math.min(streak-1,5))*(fever?2:1));
+      points += gain;
+      spawnPopup("+"+gain+(fever?" 🔥":""),fever);
       tLimit=Math.max(6, 12*Math.pow(0.985,answered));
-      fb.textContent = streak>=3?`連對 ${streak}!`:"";
+      fb.textContent = fever ? `FEVER 雙倍得分中!連對 ${streak}` : (streak>=3?`連對 ${streak}!`:"");
       fb.className="feedback ok";
       updateHUD();
       setTimeout(()=>{ seal.classList.remove("show");
@@ -605,6 +654,8 @@ function answer(sideCh){
     }
   }else{
     streak=0;
+    document.body.classList.remove("fever");
+    beep(140,0.28,"sawtooth",0.15);
     if(mode==="timed"){ loseHeart(); return; }
     if(firstTry){ wrongAll.push(curQ); roundWrong.push(curQ); }
     firstTry=false;
@@ -637,6 +688,8 @@ function loseHeart(timeout){
   locked=true;
   stopTimer();
   hearts--;
+  streak=0;
+  document.body.classList.remove("fever");
   wrongAll.push(curQ);
   fillLine(curQ.ans); /* 顯示正解位置 */
   qcard.classList.remove("wrong-shake"); void qcard.offsetWidth; qcard.classList.add("wrong-shake");
@@ -688,9 +741,18 @@ $("#btn-next").addEventListener("click",()=>{ $("#ov-round").classList.add("hidd
 
 function endGame(){
   stopTimer();
+  document.body.classList.remove("fever");
   qcard.style.visibility="hidden";
   $("#scorecard-result").innerHTML="";
   if(mode==="timed"){
+    let recordLine="";
+    if(points>bestPoints){
+      bestPoints=points;
+      recordLine="<b style='color:#E8A008'>🏆 新紀錄!本次最佳 "+points+" 分</b><br>";
+      beep(660,.1);setTimeout(()=>beep(880,.1),100);setTimeout(()=>beep(1320,.18),200);
+    }else if(bestPoints>0){
+      recordLine=`<b>目前最佳 ${bestPoints} 分,只差 ${bestPoints-points+1} 分就破紀錄,再來一場!</b><br>`;
+    }
     $("#ov-end .panel h2").textContent="遊戲結束!";
     $("#end-score").textContent=points+" 分";
     $("#end-correct").textContent=answered;
@@ -698,14 +760,19 @@ function endGame(){
     $("#end-acc").textContent= total?Math.round(answered/total*100)+"%":"0%";
     $("#btn-retry-wrong").textContent="再玩一次";
     $("#btn-retry-wrong").style.display="";
-  }else{
-    $("#ov-end .panel h2").textContent="挑戰完成!";
-    $("#end-score").textContent=Math.round(score/queue.length*100)+" 分";
-    $("#end-correct").textContent=`${score}/${queue.length}`;
-    $("#end-acc").textContent=Math.round(score/queue.length*100)+"%";
-    $("#btn-retry-wrong").textContent="錯題重練";
-    $("#btn-retry-wrong").style.display= wrongAll.length?"":"none";
+    $("#end-streak").textContent=maxStreak;
+    $("#end-wrong").innerHTML= recordLine + (wrongAll.length
+      ? "<b>需要複習:</b><br>"+wrongListHTML(wrongAll)
+      : "全部答對,超神!");
+    $("#ov-end").classList.remove("hidden");
+    return;
   }
+  $("#ov-end .panel h2").textContent="挑戰完成!";
+  $("#end-score").textContent=Math.round(score/queue.length*100)+" 分";
+  $("#end-correct").textContent=`${score}/${queue.length}`;
+  $("#end-acc").textContent=Math.round(score/queue.length*100)+"%";
+  $("#btn-retry-wrong").textContent="錯題重練";
+  $("#btn-retry-wrong").style.display= wrongAll.length?"":"none";
   $("#end-streak").textContent=maxStreak;
   $("#end-wrong").innerHTML= wrongAll.length
     ? "<b>需要複習:</b><br>"+wrongListHTML(wrongAll)
