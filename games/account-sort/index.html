@@ -706,11 +706,7 @@ $("#mode-list").innerHTML=Object.keys(MODES).map(m=>
 ).join("")+
 `<button class="mode-btn" data-mode="arcade" style="border-color:#C1272D">
    <b style="color:#C1272D">街機.會計方塊</b>
-   <span>科目卡不斷落下,落地前移到正確類別!放錯會堆疊,疊滿 5 層結束,全破 5 關即勝利</span>
- </button>`+
-`<button class="mode-btn" data-mode="arcade-tf" style="border-color:#C1272D">
-   <b style="color:#C1272D">街機.加減項是非快打</b>
-   <span>會計項目固定顯示在上方,落下的是分類標籤(例:資產加項),判斷 ○ 或 ✕!同樣 5 關制</span>
+   <span>科目卡不斷落下,左右滑動移到正確類別!放錯會堆疊,疊滿 5 層結束,全破 5 關即勝利</span>
  </button>`;
 document.querySelectorAll(".mode-btn").forEach(b=>
   b.addEventListener("click",()=>{
@@ -1024,6 +1020,7 @@ function clearArcadeDom(){
 function stopArcade(){
   if(arcRaf) cancelAnimationFrame(arcRaf);
   arcRaf=null; arcade=false; arcCard=null; arcPaused=false;
+  mainEl.style.touchAction="";
   clearArcadeDom();
   card.style.visibility="hidden";
 }
@@ -1042,8 +1039,9 @@ function startArcade(variant){
     $("#deck-hint").textContent="上方是題目,判斷落下的分類標籤對不對!點 ○/✕ 移動,點標籤直接落下";
   }else{
     buildBins();
-    $("#deck-hint").textContent="點下方類別左右移動卡片,點卡片直接落下";
+    $("#deck-hint").textContent="按住卡片或空白處左右滑動,原地點一下直接落下";
   }
+  mainEl.style.touchAction="none";
   cardAsk.textContent="";
   stacks=[[],[],[],[],[]]; level=1; clearedN=0; combo=0; maxCombo=0; score=0;
   wrongAll=[];
@@ -1089,11 +1087,23 @@ function spawnCard(){
     nm.className="name"+(arcIt.n.length>=16?" xl":arcIt.n.length>=9?" long":"");
     nm.textContent=arcIt.n;
     arcCard.appendChild(nm);
-    arcCard.addEventListener("pointerdown",()=>{ dropping=true; });
+    attachCardControls();
     mainEl.appendChild(arcCard);
     arcY=-arcCard.offsetHeight-4;
   }
   positionArcCard();
+}
+/* 卡片操作:按住左右滑=移動,原地點一下=直接落下 */
+function attachCardControls(){
+  let sx=0, movedCard=false;
+  arcCard.addEventListener("pointerdown",e=>{
+    sx=e.clientX; movedCard=false;
+    try{ arcCard.setPointerCapture(e.pointerId); }catch(err){}
+  });
+  arcCard.addEventListener("pointermove",e=>{
+    if(Math.abs(e.clientX-sx)>8){ movedCard=true; moveToX(e.clientX); }
+  });
+  arcCard.addEventListener("pointerup",()=>{ if(!movedCard) dropping=true; });
 }
 function positionArcCard(){
   if(!arcCard) return;
@@ -1107,6 +1117,24 @@ function arcMove(i){
   arcCol=Math.max(0,Math.min(bins.length-1,i));
   positionArcCard();
 }
+/* 依手指 X 座標移到最近的欄(滑動操作核心) */
+function moveToX(x){
+  const centers=colCenters();
+  let bi=0,bd=Infinity;
+  centers.forEach((c,i)=>{const d=Math.abs(c-x); if(d<bd){bd=d;bi=i;}});
+  arcMove(bi);
+}
+/* 在場地空白處按住左右滑,卡片跟著移動 */
+let fieldSwipe=false;
+mainEl.addEventListener("pointerdown",e=>{
+  if(!arcade) return;
+  if(e.target.closest(".card")||e.target.closest(".pause-btn")) return;
+  fieldSwipe=true; moveToX(e.clientX);
+});
+mainEl.addEventListener("pointermove",e=>{ if(arcade&&fieldSwipe) moveToX(e.clientX); });
+["pointerup","pointercancel","pointerleave"].forEach(ev=>
+  mainEl.addEventListener(ev,()=>{ fieldSwipe=false; })
+);
 
 function arcTick(t){
   if(!arcade||!arcCard) return;
