@@ -3,10 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>亭妤的遊戲大廳</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+<title>ㄊㄩ的遊戲大廳</title>
 <style>
+/* 俐方體11號(Cubic 11):台灣開源繁中像素字體,OFL 授權免費商用 */
+@font-face{
+  font-family:'Cubic 11';
+  src:url('https://cdn.jsdelivr.net/gh/ACh-K/Cubic-11@main/fonts/web/Cubic_11.woff2') format('woff2');
+  font-display:swap;
+}
 :root{
   --btn-face:#9c9c9c;
   --btn-hi:rgba(255,255,255,.45);
@@ -17,9 +21,9 @@
   --green:#55ff55;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-
+html{image-rendering:pixelated;}
 body{
-  font-family:'Noto Sans TC','LINE Seed TW',sans-serif;
+  font-family:'Cubic 11','LINE Seed TW','Noto Sans TC',sans-serif;
   min-height:100vh;
   color:var(--txt);
   /* 泥土方塊底圖(內嵌像素 SVG)+ 暗色遮罩,經典麥塊選單背景 */
@@ -31,6 +35,7 @@ body{
   display:flex;flex-direction:column;align-items:center;
   padding:2.2rem 1rem 3.4rem;
   text-rendering:optimizeSpeed;
+  -webkit-font-smoothing:none;
   
 }
 
@@ -38,7 +43,6 @@ body{
 
 /* 標題區 */
 .logo{
-  font-weight:900;
   font-size:clamp(1.9rem,8.5vw,2.9rem);
   letter-spacing:.06em;
   text-shadow:3px 3px 0 var(--txt-shadow);
@@ -46,12 +50,10 @@ body{
   position:relative;
 }
 .logo .sub{
-  font-weight:700;
   display:block;font-size:.42em;color:#c8c8c8;
   text-shadow:2px 2px 0 var(--txt-shadow);letter-spacing:.25em;margin-top:.15em;
 }
 .splash{
-  font-weight:900;
   position:absolute;right:-1.2em;bottom:-0.4em;
   color:var(--yellow);font-size:.42em;
   text-shadow:2px 2px 0 #3f3f00;
@@ -71,7 +73,6 @@ body{
 /* 麥塊按鈕 */
 .menu{width:100%;display:flex;flex-direction:column;gap:.7rem;}
 .sec-label{
-  font-weight:900;
   text-align:center;color:var(--green);
   font-size:.95rem;letter-spacing:.3em;
   text-shadow:2px 2px 0 var(--txt-shadow);
@@ -91,7 +92,7 @@ body{
   font-family:inherit;
 }
 .mc-btn .t{
-  font-weight:900;font-size:1.2rem;letter-spacing:.08em;
+  font-size:1.15rem;letter-spacing:.08em;
   text-shadow:2px 2px 0 var(--txt-shadow);
 }
 .mc-btn .d{
@@ -134,8 +135,8 @@ body{
 <body>
 <div class="wrap">
   <h1 class="logo">
-    亭妤的遊戲大廳
-    <span class="sub">A C C O U N T I N G &nbsp; E D I T I O N</span>
+    ㄊㄩ的遊戲大廳
+    <span class="sub">Accounting oh ya</span>
     <span class="splash" id="splash">邊玩邊學!</span>
   </h1>
   <p class="hint">選擇一個遊戲開始挑戰<br>做完記得產生成績卡,傳給老師加分!</p>
@@ -144,8 +145,8 @@ body{
 </div>
 
 <div class="bottombar">
-  <span>亭妤的遊戲大廳 v1.0</span>
-  <span>Powered by 林亭妤</span>
+  <span>ㄊㄩ的遊戲大廳 v1.0</span>
+  <span>Powered by ㄊㄩ</span>
 </div>
 
 <script>
