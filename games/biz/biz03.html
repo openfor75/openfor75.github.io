@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃記柑仔店轉型記｜商業現代化機能 互動學習遊戲</title>
+<style>
+  :root{
+    --night:#0E1630;      /* 深夜街區 */
+    --night2:#16223F;     /* 卡片底 */
+    --sign:#FFC53D;       /* 招牌黃 */
+    --neon:#FF4F8B;       /* 霓虹粉 */
+    --mint:#3EE0B0;       /* 通過綠 */
+    --cream:#F7F1E3;      /* 米白字 */
+    --dim:#8B97B8;        /* 次要字 */
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--night);
+    color:var(--cream);
+    font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei","Heiti TC",sans-serif;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:20px 16px 56px;}
+
+  /* ── 霓虹招牌（signature element）── */
+  .signboard{
+    border:3px solid var(--sign);
+    border-radius:14px;
+    padding:18px 14px 14px;
+    text-align:center;
+    position:relative;
+    background:
+      radial-gradient(ellipse at 50% -20%, rgba(255,197,61,.18), transparent 60%),
+      var(--night2);
+    box-shadow:0 0 22px rgba(255,197,61,.25), inset 0 0 18px rgba(255,197,61,.08);
+    margin-bottom:18px;
+  }
+  .signboard .shopname{
+    font-size:1.7rem;font-weight:900;letter-spacing:.35em;text-indent:.35em;
+    color:var(--sign);
+    text-shadow:0 0 8px rgba(255,197,61,.8),0 0 24px rgba(255,197,61,.45);
+    animation:flicker 6s infinite;
+  }
+  .signboard .shopsub{font-size:.8rem;color:var(--dim);letter-spacing:.2em;margin-top:4px;}
+  .signboard .bulbs{position:absolute;top:-9px;left:14px;right:14px;display:flex;justify-content:space-between;}
+  .signboard .bulbs i{width:8px;height:8px;border-radius:50%;background:var(--sign);box-shadow:0 0 6px var(--sign);}
+  @keyframes flicker{0%,93%,96%,100%{opacity:1;}94%,95%{opacity:.55;}}
+  @media (prefers-reduced-motion: reduce){
+    .signboard .shopname{animation:none;}
+    *{transition:none !important;}
+  }
+
+  /* ── 狀態列 ── */
+  .hud{display:flex;gap:8px;margin-bottom:16px;font-size:.82rem;}
+  .hud .chip{flex:1;background:var(--night2);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 10px;text-align:center;}
+  .hud .chip b{display:block;font-size:1.05rem;color:var(--sign);}
+  .bar{height:8px;background:var(--night2);border-radius:99px;overflow:hidden;margin-bottom:20px;border:1px solid rgba(255,255,255,.07);}
+  .bar > span{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--neon),var(--sign));transition:width .4s ease;}
+
+  /* ── 卡片 ── */
+  .card{background:var(--night2);border:1px solid rgba(255,255,255,.09);border-radius:16px;padding:20px 18px;margin-bottom:16px;}
+  .stagegate{border-color:var(--neon);box-shadow:0 0 18px rgba(255,79,139,.18);}
+  .eyebrow{font-size:.72rem;letter-spacing:.28em;color:var(--neon);font-weight:700;margin-bottom:8px;}
+  .story{font-size:.95rem;color:var(--cream);}
+  .story em{color:var(--sign);font-style:normal;font-weight:700;}
+  .qtext{font-size:1.02rem;font-weight:800;margin:14px 0 12px;}
+  .opts{display:flex;flex-direction:column;gap:9px;}
+  .opts button{
+    text-align:left;font-size:.93rem;color:var(--cream);
+    background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.13);
+    border-radius:11px;padding:12px 14px;cursor:pointer;line-height:1.5;
+    transition:border-color .15s, background .15s;
+    font-family:inherit;
+  }
+  .opts button:hover{border-color:var(--sign);}
+  .opts button:focus-visible{outline:2px solid var(--sign);outline-offset:2px;}
+  .opts button.correct{border-color:var(--mint);background:rgba(62,224,176,.12);}
+  .opts button.wrong{border-color:var(--neon);background:rgba(255,79,139,.12);}
+  .opts button:disabled{cursor:default;}
+
+  .verdict{margin-top:14px;font-weight:800;font-size:.95rem;}
+  .verdict.ok{color:var(--mint);}
+  .verdict.no{color:var(--neon);}
+
+  /* 知識卡 */
+  .kcard{
+    margin-top:12px;border-radius:12px;padding:14px;
+    background:linear-gradient(135deg, rgba(255,197,61,.10), rgba(255,79,139,.08));
+    border:1px dashed var(--sign);
+  }
+  .kcard .kterm{font-weight:900;color:var(--sign);font-size:.98rem;}
+  .kcard .ken{font-size:.8rem;color:var(--mint);letter-spacing:.04em;margin:2px 0 6px;}
+  .kcard .knote{font-size:.87rem;color:var(--cream);}
+
+  .next{
+    display:block;width:100%;margin-top:16px;
+    background:var(--sign);color:#241A00;font-weight:900;font-size:1rem;
+    border:none;border-radius:12px;padding:13px;cursor:pointer;letter-spacing:.15em;
+    font-family:inherit;
+  }
+  .next:focus-visible{outline:2px solid var(--cream);outline-offset:2px;}
+  .ghost{background:transparent;color:var(--sign);border:2px solid var(--sign);}
+
+  .shopface{font-size:2.4rem;text-align:center;margin:6px 0 2px;letter-spacing:.1em;}
+  .stagetitle{font-size:1.25rem;font-weight:900;color:var(--sign);margin:6px 0 8px;}
+  .hidden{display:none;}
+
+  /* 結局 */
+  .rank{font-size:1.5rem;font-weight:900;color:var(--sign);text-align:center;margin:8px 0;}
+  .review li{font-size:.86rem;margin:6px 0 6px 18px;color:var(--dim);}
+  .review li b{color:var(--cream);}
+  footer{margin-top:26px;text-align:center;font-size:.72rem;color:var(--dim);letter-spacing:.1em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="signboard">
+    <div class="bulbs"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    <div class="shopname" id="signName">桃記柑仔店</div>
+    <div class="shopsub" id="signSub">est. 1962 ・ 只收現金 ・ 手寫帳本</div>
+  </div>
+
+  <div class="hud">
+    <div class="chip">現代化指數<b id="score">0</b></div>
+    <div class="chip">連續答對<b id="streak">0</b></div>
+    <div class="chip">進度<b id="prog">0 / 20</b></div>
+  </div>
+  <div class="bar"><span id="barfill"></span></div>
+
+  <div id="stage"></div>
+
+  <footer>商業概論・第 3 章 商業現代化機能｜桃記柑仔店轉型記</footer>
+</div>
+
+<script>
+/* ─────────────────────────────────────────
+   劇本資料：章節 → 開場故事 → 題目群
+───────────────────────────────────────── */
+const CHAPTERS = [
+{
+  face:"🏚️", sign:"桃記柑仔店", sub:"est. 1962 ・ 只收現金 ・ 手寫帳本",
+  title:"序章｜阿桃，換你顧店了",
+  intro:`暑假第一天，阿嬤把一串鑰匙塞進你手裡：「<em>阿桃，柑仔店交給你了。</em>」<br><br>
+  店裡的收銀機還是會「鏘——」一聲彈出抽屜的那種，帳本用鉛筆寫，冰箱貼著民國 92 年的可樂海報。生意一年比一年差，隔壁新開的連鎖超商燈火通明。<br><br>
+  就在你發呆時，門口走進一位穿西裝的先生：「你好，我是政府派來的<em>商業現代化輔導員</em>。想不想把這間店，變成整條街最強的店？」`,
+  questions:[
+    {
+      story:`輔導員遞出名片。你瞄了一眼機關名稱，想確認他不是詐騙集團。`,
+      q:"推動「商業現代化」的主管機關應該是——",
+      opts:["金融監督管理委員會","經濟部商業發展署","內政部","勞動部"],
+      ans:1,
+      term:"經濟部商業發展署", en:"Ministry of Economic Affairs",
+      note:"112 年由「經濟部商業司」升格。商業現代化＝運用資訊科技＋自動化技術改善商業環境。"
+    },
+    {
+      story:`輔導員攤開整條街的照片：「我們正在做<em>商圈更新再造</em>，像宜蘭礁溪形象商圈那樣，把老街變成觀光亮點。」`,
+      q:"「商圈更新再造」是六大發展策略中的哪一項？",
+      opts:["提升商業技術水準","健全營運主體、維護商業秩序","擴大經營空間、改善商業環境","強化商業團體之經濟功能"],
+      ans:2,
+      term:"改善商業環境", en:"business environment improvement",
+      note:"同一策略還包括：規劃工商綜合區、傳統市場更新、攤販輔導與管理。"
+    },
+    {
+      story:`第一位客人上門就出難題：她上週在你剛開的網路賣場買了一包<em>口罩，已經拆封</em>，今天（第 5 天）拿來說要退。`,
+      q:"依消保法的 7 天猶豫期規定，你該怎麼回？",
+      opts:["還在 7 天內，必須無條件退","已拆封的個人衛生用品屬合理例外，可不受理退貨","超商買的才不能退，網購一律可退","只要她補運費就能退"],
+      ans:1,
+      term:"7 天猶豫期（合理例外）", en:"cooling-off period",
+      note:"通訊／訪問交易收貨隔日起 7 天可無因退貨；但已拆封個人衛生用品、客製化商品、生鮮、已拆封影音軟體、數位內容、報刊雜誌、國際機票不適用。"
+    },
+    {
+      story:`你決定把隔壁空屋租下來當倉庫。房東拿出一份密密麻麻的<em>制式租約</em>：「簽一簽吧，大家都簽這份。」`,
+      q:"面對這份定型化契約，下列敘述何者正確？",
+      opts:["你可以要求逐條修改內容","簽約前你享有 30 天以內的審閱期","簽了之後 7 天內可反悔解約","定型化契約沒有法源依據"],
+      ans:1,
+      term:"定型化契約・審閱期 30 天", en:"standard form contract / review period",
+      note:"業者單方擬定，消費者只能全部接受或拒絕、無法修訂條款；簽約「前」有 30 天以內審閱期。別跟收貨「後」7 天猶豫期搞混！"
+    },
+  ]
+},
+{
+  face:"🏪", sign:"桃記商行", sub:"整修中 ・ 開始鋪貨 ・ 通路擴張",
+  title:"第一關｜商流：這罐辣椒醬是誰的？",
+  intro:`招牌換新了。阿嬤的祖傳<em>手作辣椒醬</em>是鎮店之寶，你決定讓它走出柑仔店。<br><br>
+  輔導員：「賣東西的第一課叫<em>商流</em>——每一筆成交，商品的<em>所有權</em>就換人。先想清楚：這罐醬，要怎麼流到客人手上？」`,
+  questions:[
+    {
+      story:`你在白板上畫路線圖，思考商流的本質。`,
+      q:"「商流」流通的標的是什麼？",
+      opts:["實體商品","商品所有權","資金","資訊情報"],
+      ans:1,
+      term:"商流", en:"business flow / ownership transfer",
+      note:"商流是一切交易活動的基礎與起源；簽約、開發票、進銷存都在證明「所有權移轉」。物流才是搬實體商品。"
+    },
+    {
+      story:`辣椒醬單價不高、大家常回購，你希望<em>超商、雜貨店、全聯到處都買得到</em>。`,
+      q:"這種鋪貨方式屬於哪一種商流？",
+      opts:["選擇型商流（通路窄且短）","開放型商流（通路廣且長）","封閉型商流","專用型商流"],
+      ans:1,
+      term:"開放型商流", en:"intensive distribution",
+      note:"日常用品／便利品→開放型（廣且長）；高單價、須專人解說的家電汽車珠寶→選擇型（窄且短）。"
+    },
+    {
+      story:`大訂單來了！路線是：<em>你的工廠 → 食品批發商 → 各地零售店 → 消費者</em>。`,
+      q:"這條路線是幾階通路？",
+      opts:["零階","一階","二階","三階"],
+      ans:2,
+      term:"通路階層", en:"channel level",
+      note:"數「中間商」的層數：批發商＋零售商＝2 層＝二階。觀光果園現採直賣＝零階。"
+    },
+  ]
+},
+{
+  face:"🚚", sign:"桃記商行", sub:"配送中 ・ 冷藏出貨 ・ 倉儲上線",
+  title:"第二關｜物流：醬要真的送到才算數",
+  intro:`訂單湧入，問題也來了：醬要冷藏、玻璃罐怕摔、偏鄉店家喊缺貨。<br><br>
+  輔導員：「成交只是所有權換人，東西要<em>真的動起來</em>——這叫<em>物流</em>。記住，物流的靈魂是<em>自動化</em>。」`,
+  questions:[
+    {
+      story:`有一批醬的瓶蓋瑕疵，你決定<em>全面召回</em>送回工廠處理。`,
+      q:"「召回瑕疵品運回工廠」屬於哪一種物流？",
+      opts:["資材物流","生產物流","逆向（回收）物流","廢棄物物流"],
+      ans:2,
+      term:"逆向物流", en:"reverse logistics",
+      note:"召回維修、滯銷收回＝逆向物流。廣義物流五類：資材／生產／銷售（狹義）／廢棄物／逆向。"
+    },
+    {
+      story:`你在比較各家物流公司的報價，想先搞懂錢花在哪裡最關鍵。`,
+      q:"物流「最核心」的功能是？",
+      opts:["加工包裝","倉儲保管","運輸配送","裝卸搬運"],
+      ans:2,
+      term:"運輸配送", en:"transportation & delivery",
+      note:"物流扮演「通路協調者」，核心是把商品運到指定地點；其餘功能：裝卸、倉儲、加工包裝、提供資訊協調廠商。"
+    },
+    {
+      story:`物流公司業務拍胸脯：「我們什麼都能做！」你決定考考他。`,
+      q:"下列何者「不」屬於物流的功能？",
+      opts:["分類貼標","研發製造","倉儲保管","加工分裝"],
+      ans:1,
+      term:"物流功能的邊界", en:"scope of logistics",
+      note:"物流不含「製造、銷售、研發」。加工包裝只是分裝、貼標等流通加工，不是把原料做成產品。"
+    },
+  ]
+},
+{
+  face:"💳", sign:"桃記超商", sub:"多元支付 ・ 嗶一下就好",
+  title:"第三關｜金流：客人的錢怎麼進來？",
+  intro:`店面第二次改裝完成，連招牌都升級了。但收銀台前大排長龍——因為你<em>只收現金</em>。<br><br>
+  輔導員：「該補<em>金流</em>這一課了。錢的流動方式，決定客人願不願意掏錢。」`,
+  questions:[
+    {
+      story:`熟客陳老師掏出一張卡：「這張<em>刷多少、當下就直接從我存款帳戶扣多少</em>，不會透支，最安心。」`,
+      q:"陳老師用的是哪一種卡？",
+      opts:["信用卡","簽帳卡","簽帳金融卡","預付卡（儲值卡）"],
+      ans:2,
+      term:"簽帳金融卡", en:"debit card",
+      note:"立即消費立即付款。四卡口訣：信用卡＝賒有額度；簽帳卡＝賒無額度（月底全繳）；簽帳金融卡＝即刷即扣；預付卡＝先儲後花。"
+    },
+    {
+      story:`年輕客人舉起手機在感應區「嗶」一聲，用 <em>Apple Pay</em> 完成付款。`,
+      q:"Apple Pay 屬於哪一類行動支付？",
+      opts:["電子票證","電子支付","第三方支付","行動裝置信用卡"],
+      ans:3,
+      term:"行動裝置信用卡", en:"mobile device credit card (Apple Pay / Google Pay / Samsung Pay)",
+      note:"在行動裝置綁定信用卡、以掃描或感應付款；主管機關為金管會。感應技術是 NFC（近距離、一次讀一個）。"
+    },
+    {
+      story:`你想上架網路賣場，平台建議串接<em>綠界、PChome 支付連</em>這類「先幫買賣雙方保管貨款」的服務。`,
+      q:"這類「第三方支付」的主管機關是？",
+      opts:["金管會","數位發展部","經濟部","中央銀行"],
+      ans:1,
+      term:"第三方支付", en:"third-party payment",
+      note:"主管機關＝數位發展部！電子票證、電子支付、行動裝置信用卡才歸金管會（110/7/1 已整合電子票證與電子支付）。"
+    },
+    {
+      story:`支付方式一口氣裝了六種，阿嬤緊張地問：「這些會不會被盜刷啊？」`,
+      q:"選擇金流交易工具時，「首要」考量因素是？",
+      opts:["便利性","時效性","安全性","公開性"],
+      ans:2,
+      term:"金流考量因素", en:"security first",
+      note:"安全性＞便利、時效、公開、財務性。阿嬤的直覺是對的。"
+    },
+  ]
+},
+{
+  face:"🛰️", sign:"桃記超商", sub:"POS 上線 ・ 庫存即時 ・ 數據駕駛艙",
+  title:"第四關｜資訊流：讓數據替你顧店",
+  intro:`生意變好，但你開始失眠：哪些商品賣最好？何時該補貨？手寫帳本已經跟不上了。<br><br>
+  輔導員打開筆電：「歡迎來到<em>資訊流</em>——讓每一筆交易的情報自己說話。第一步，先給每個商品一張<em>身分證</em>。」`,
+  questions:[
+    {
+      story:`你裝了新收銀系統：掃條碼結帳開發票，晚上還能看報表，<em>一眼揪出暢銷品和滯銷品</em>。`,
+      q:"這套系統是？",
+      opts:["EOS 電子訂貨系統","POS 銷售點管理系統","EDI 電子資料交換","VAN 加值型網路"],
+      ans:1,
+      term:"POS（Point of Sales）", en:"P＝People，面對消費者",
+      note:"零售商↔消費者端的工具；效益：加快「結帳」、防弊、掌握庫存、分析暢滯銷品。注意：是節省結帳時間，不是選購時間。"
+    },
+    {
+      story:`辣椒醬又要缺貨了。你想跟供應商建立<em>無紙化的自動訂貨</em>，庫存低於安全量就自動下單。`,
+      q:"你需要導入的系統是？",
+      opts:["POS","EOS 電子訂貨系統","CAPS 電子標籤揀貨","RFID"],
+      ans:1,
+      term:"EOS（Electronic Ordering System）", en:"O＝Order，訂貨",
+      note:"零售商↔供應商（B2B）之間；可多樣少量訂貨、精準控管安全存量。EDI（D＝Document）則是把企業間文件格式標準化。"
+    },
+    {
+      story:`印製自有品牌包裝時，設計師問你條碼開頭要放什麼數字。`,
+      q:"台灣的國家代碼是？",
+      opts:["417","471","886","450"],
+      ans:1,
+      term:"條碼國家代碼 471", en:"barcode（EAN）",
+      note:"「4-7-1，台灣第一」。標準碼 13 碼、縮短碼 8 碼（少的是「廠商代碼」）；一國不限一組國碼（日本 450–459、490–499）。"
+    },
+    {
+      story:`你加裝了電子支付閘門，客人拿<em>悠遊卡</em>靠近感應區就能扣款，甚至不用對準方向。`,
+      q:"悠遊卡感應使用的核心技術是？",
+      opts:["Bar Code 光學掃描","RFID 無線射頻辨識","EDI","Big Data"],
+      ans:1,
+      term:"RFID", en:"Radio Frequency IDentification",
+      note:"電磁感應、可遠距（200 公尺內）、可同時讀取多個、資料可更新。NFC 由 RFID 演變而來：近距離、一次一個、最大 1MB。"
+    },
+  ]
+},
+{
+  face:"💖", sign:"桃記智慧商店", sub:"會員系統 ・ 五星好評 ・ 桃姐傳說",
+  title:"第五關｜服務流：讓客人一來再來",
+  intro:`硬體都到位了，最後一塊拼圖是<em>人</em>。<br><br>
+  輔導員：「設備會折舊，<em>服務</em>才是護城河。但服務這種東西看不到、存不了、還會因人而異——這關，考的是你的心。」`,
+  questions:[
+    {
+      story:`客訴來了：「早班店員超親切，晚班那位臭臉到我不敢結帳。」<em>同一間店，體驗天差地遠。</em>`,
+      q:"這反映服務的哪一種特性？你該如何因應？",
+      opts:["無形性→把服務有形化","易逝性→採差別訂價","易變性→建立 SOP＋教育訓練","同時性→增加自動化設備"],
+      ans:2,
+      term:"易變性（異質性）", en:"heterogeneity / variability",
+      note:"服務因「人」而品質不穩→建立標準作業流程＋訓練（星巴克三次複誦點餐）。四特性口訣：無同逝變（無糖世變）。"
+    },
+    {
+      story:`你培訓店員考取咖啡師證照，客人問豆子產區、烘焙度都能<em>專業解說</em>，信任感大增。`,
+      q:"這是服務品質五構面（RATER）中的哪一項？",
+      opts:["可靠性 Reliability","保證性 Assurance","關懷性 Empathy","反應性 Responsiveness"],
+      ans:1,
+      term:"保證性 Assurance", en:"RATER：Reliability・Assurance・Tangibles・Empathy・Responsiveness",
+      note:"專業知能→保證性（專業保證）；承諾必達成、每次都一致→可靠性（可靠承諾）。兩者是最經典的混淆組。"
+    },
+    {
+      story:`你上線會員系統，想長期經營熟客。輔導員：「CRM 有固定的四步驟，順序別亂。」`,
+      q:"顧客關係管理（CRM）的正確步驟是？",
+      opts:["蒐集→分析→儲存→應用","蒐集→儲存→分析→應用","分析→蒐集→儲存→應用","儲存→蒐集→分析→應用"],
+      ans:1,
+      term:"CRM", en:"Customer Relationship Management",
+      note:"蒐集→儲存→分析→應用（先存起來才有得分析）。滿意公式：實際感受 ≥ 事前期待 → 滿意，形成口碑行銷。"
+    },
+    {
+      story:`週年慶當天客人爆滿、排到店外，離峰時段卻小貓兩三隻。你推出<em>離峰時段咖啡第二杯半價</em>。`,
+      q:"這是在因應服務的哪一種特性？",
+      opts:["易逝性（不可儲存）","無形性","同時性","易變性"],
+      ans:0,
+      term:"易逝性 perishability", en:"服務存不起來，過時不候",
+      note:"尖峰／離峰落差→差別訂價（高鐵早鳥）。判斷關鍵字：限量、賣完、一位難求、空位浪費。"
+    },
+    {
+      story:`打烊前，阿嬤靠在門口看著滿店的客人，突然問你：「阿桃，這半年你裝了那麼多機器……<em>到底哪一樣才是做生意的根本？</em>」`,
+      q:"回到原點——現代化商業機能中，一切交易活動的「基礎與起源」是？",
+      opts:["金流","資訊流","商流","服務流"],
+      ans:2,
+      term:"商流＝核心機能", en:"business flow as the core",
+      note:"所有的物流、金流、資訊流、服務流，都是為了讓「所有權移轉」這件事更順利。生意的根本，永遠是完成一筆誠實的交易。"
+    },
+  ]
+},
+];
+
+/* ───────────── 遊戲引擎 ───────────── */
+const TOTAL = CHAPTERS.reduce((s,c)=>s+c.questions.length,0);
+let ch=0, qi=-1, score=0, streak=0, done=0;
+const missed=[];
+
+const $ = id=>document.getElementById(id);
+const stage = $("stage");
+
+function hud(){
+  $("score").textContent = score;
+  $("streak").textContent = streak;
+  $("prog").textContent = done+" / "+TOTAL;
+  $("barfill").style.width = (done/TOTAL*100)+"%";
+}
+function setSign(){
+  $("signName").textContent = CHAPTERS[ch].sign;
+  $("signSub").textContent = CHAPTERS[ch].sub;
+}
+function esc(s){return s;}
+
+function showIntro(){
+  setSign();
+  const c = CHAPTERS[ch];
+  stage.innerHTML = `
+    <div class="card stagegate">
+      <div class="shopface">${c.face}</div>
+      <div class="eyebrow">STAGE ${ch} ／ ${TOTAL} 題挑戰</div>
+      <div class="stagetitle">${c.title}</div>
+      <p class="story">${c.intro}</p>
+      <button class="next" id="go">${ch===0?"接下鑰匙，開始經營":"進入本關"}</button>
+    </div>`;
+  $("go").onclick = ()=>{ qi=0; showQ(); };
+}
+
+function showQ(){
+  const c = CHAPTERS[ch], item = c.questions[qi];
+  stage.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">${c.title.split("｜")[0]}・第 ${qi+1} 題</div>
+      <p class="story">${item.story}</p>
+      <p class="qtext">${item.q}</p>
+      <div class="opts" id="opts">
+        ${item.opts.map((o,i)=>`<button data-i="${i}">${"ABCD"[i]}. ${o}</button>`).join("")}
+      </div>
+      <div id="fb"></div>
+    </div>`;
+  document.querySelectorAll("#opts button").forEach(b=>{
+    b.onclick = ()=>answer(parseInt(b.dataset.i,10));
+  });
+}
+
+function answer(i){
+  const c = CHAPTERS[ch], item = c.questions[qi];
+  const ok = i===item.ans;
+  done++;
+  if(ok){ score+=5; streak++; if(streak>0 && streak%4===0) score+=2; }
+  else { streak=0; missed.push(item); }
+  hud();
+
+  document.querySelectorAll("#opts button").forEach((b,bi)=>{
+    b.disabled = true;
+    if(bi===item.ans) b.classList.add("correct");
+    else if(bi===i) b.classList.add("wrong");
+  });
+
+  $("fb").innerHTML = `
+    <div class="verdict ${ok?"ok":"no"}">${ok?"✔ 答對了！現代化指數 +5"+(streak%4===0&&streak>0?"（連對加成 +2）":""):"✘ 差一點——正解是 "+"ABCD"[item.ans]+"。看完知識卡再出發！"}</div>
+    <div class="kcard">
+      <div class="kterm">📇 知識卡｜${item.term}</div>
+      <div class="ken">${item.en}</div>
+      <div class="knote">${item.note}</div>
+    </div>
+    <button class="next" id="nx">${nextLabel()}</button>`;
+  $("nx").onclick = advance;
+  $("nx").focus();
+}
+
+function nextLabel(){
+  const last = qi===CHAPTERS[ch].questions.length-1;
+  if(!last) return "下一題";
+  return ch===CHAPTERS.length-1 ? "看看店變成什麼樣子" : "本關完成，前進下一關";
+}
+
+function advance(){
+  if(qi < CHAPTERS[ch].questions.length-1){ qi++; showQ(); return; }
+  if(ch < CHAPTERS.length-1){ ch++; qi=-1; showIntro(); return; }
+  showEnd();
+}
+
+function showEnd(){
+  const max = TOTAL*5;
+  const pct = score/max;
+  let face,rank,msg;
+  if(pct>=0.85){ face="🌆"; rank="桃記智慧商店 CEO"; msg="五流全開、政策法規倒背如流——阿嬤在門口偷偷抹眼淚。統測第 3 章，穩了。"; }
+  else if(pct>=0.6){ face="🏪"; rank="桃記超商 店長"; msg="店已成功轉型！少數觀念還會打滑，把下方複習清單掃過一輪就能封頂。"; }
+  else { face="🏚️"; rank="柑仔店 見習生"; msg="轉型之路才剛開始。別灰心——把知識卡與複習清單讀熟，再挑戰一次！"; }
+
+  $("signName").textContent = pct>=0.85?"桃記智慧商店":(pct>=0.6?"桃記超商":"桃記柑仔店");
+  $("signSub").textContent = "經營成果結算";
+
+  stage.innerHTML = `
+    <div class="card stagegate">
+      <div class="shopface">${face}</div>
+      <div class="eyebrow">FINAL RESULT</div>
+      <div class="rank">${rank}</div>
+      <p class="story" style="text-align:center">現代化指數 <em>${score}</em>／${max}<br>${msg}</p>
+      ${missed.length?`
+      <div class="kcard" style="margin-top:16px">
+        <div class="kterm">📚 回家複習清單（本局答錯的觀念）</div>
+        <ul class="review">
+          ${missed.map(m=>`<li><b>${m.term}</b>（${m.en}）— ${m.note}</li>`).join("")}
+        </ul>
+      </div>`:`
+      <div class="kcard" style="margin-top:16px">
+        <div class="kterm">🎉 全數答對，零錯題！</div>
+        <div class="knote">建議直接挑戰課本「統測聚焦」歷屆試題，做最後驗收。</div>
+      </div>`}
+      <button class="next" id="again">再開一間分店（重新挑戰）</button>
+      <button class="next ghost" id="recap" style="margin-top:10px">五流 30 秒總複習</button>
+    </div>`;
+  $("again").onclick = ()=>{ ch=0;qi=-1;score=0;streak=0;done=0;missed.length=0;hud();showIntro(); };
+  $("recap").onclick = showRecap;
+}
+
+function showRecap(){
+  stage.innerHTML = `
+    <div class="card">
+      <div class="eyebrow">30-SECOND RECAP</div>
+      <div class="stagetitle">一筆網購，五流全開</div>
+      <p class="story">
+        成交（<em>商流</em>＝所有權移轉，一切交易的基礎）→
+        出貨（<em>物流</em>＝實體流通，核心是運輸配送、關鍵是自動化）→
+        付錢（<em>金流</em>＝資金流通，首重安全性）→
+        留數據（<em>資訊流</em>＝條碼是身分證、POS 對客人、EOS 訂貨、EDI 文件）→
+        顧售後（<em>服務流</em>＝無同逝變、RATER、CRM 蒐儲分應）。<br><br>
+        政策面別忘了：主管機關是<em>經濟部商業發展署</em>，簽約看 <em>30</em>、網購悔 <em>7</em>、台灣條碼 <em>471</em>。
+      </p>
+      <button class="next" id="back">回到結算畫面</button>
+    </div>`;
+  $("back").onclick = showEnd;
+}
+
+hud();
+showIntro();
+</script>
+</body>
+</html>

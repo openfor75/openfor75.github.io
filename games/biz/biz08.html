@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>商概故事遊戲|第 8 章 財務管理</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
+    background:#faf6ef; color:#3a3230; min-height:100vh;
+    display:flex; flex-direction:column; max-width:560px; margin:0 auto;
+  }
+  header {
+    padding:14px 16px 10px; background:#faf6ef; position:sticky; top:0; z-index:5;
+    border-bottom:1px solid #e8dfd2;
+  }
+  header h1 { font-size:17px; color:#1f6f6b; letter-spacing:1px; }
+  .hud { display:flex; justify-content:space-between; font-size:13px; color:#8a7f74; margin-top:6px; }
+  .bar { height:6px; background:#e8dfd2; border-radius:3px; margin-top:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0%; background:#1f6f6b; transition:width .4s; }
+  main { flex:1; padding:16px; }
+  .scene {
+    background:#fff; border-radius:14px; padding:18px 16px;
+    box-shadow:0 2px 10px rgba(90,70,50,.08); font-size:16.5px; line-height:1.85;
+    animation:pop .35s ease-out;
+  }
+  @keyframes pop { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+  .scene .who { font-size:13px; color:#c96f2f; letter-spacing:2px; margin-bottom:6px; }
+  /* 劇情中的名詞:點擊查看定義 */
+  .t { color:#1f6f6b; font-weight:700; border-bottom:2px dotted #1f6f6b; cursor:pointer; }
+  .chips { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:12.5px; background:#e6f2f1; color:#1f6f6b; border-radius:99px; padding:3px 10px; }
+  .choices { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+  .choices button {
+    font-family:inherit; font-size:15.5px; text-align:left; line-height:1.6;
+    padding:12px 14px; border-radius:12px; border:1.5px solid #d9cdbc;
+    background:#fffdf9; color:#3a3230; cursor:pointer;
+  }
+  .choices button:active { transform:scale(.985); }
+  .fb { margin-top:14px; border-radius:12px; padding:14px; font-size:15.5px; line-height:1.8;
+        animation:pop .3s ease-out; }
+  .fb.ok  { background:#e6f2ec; border:1.5px solid #79ab8f; }
+  .fb.no  { background:#fdf1e2; border:1.5px solid #d9a75f; }
+  .fb .tag { font-weight:700; margin-bottom:4px; display:block; }
+  .fb button, .end button {
+    margin-top:12px; font-family:inherit; font-size:15px; padding:10px 20px;
+    border:none; border-radius:99px; background:#1f6f6b; color:#fff; cursor:pointer;
+  }
+  /* 名詞圖鑑 */
+  .dexbtn {
+    position:fixed; right:14px; bottom:14px; z-index:6;
+    background:#c96f2f; color:#fff; border:none; border-radius:99px;
+    padding:10px 16px; font-family:inherit; font-size:14px;
+    box-shadow:0 3px 8px rgba(90,70,50,.25); cursor:pointer;
+  }
+  .overlay {
+    position:fixed; inset:0; background:rgba(40,32,28,.5); z-index:10;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.show { display:flex; }
+  .sheet {
+    background:#faf6ef; width:100%; max-width:560px; max-height:75vh;
+    border-radius:16px 16px 0 0; padding:16px; overflow-y:auto;
+  }
+  .sheet h2 { font-size:16px; color:#1f6f6b; margin-bottom:10px; }
+  .entry { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; font-size:14.5px; line-height:1.7; }
+  .entry .en { color:#c96f2f; font-size:13px; }
+  .end { text-align:center; padding:6px 2px; }
+  .end .score { font-size:30px; color:#1f6f6b; font-weight:800; margin:8px 0; }
+  .end ul { text-align:left; margin:12px 0 0 18px; font-size:15px; line-height:1.9; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="gtitle">遊戲標題</h1>
+  <div class="hud"><span id="prog"></span><span id="score"></span></div>
+  <div class="bar"><i id="fill"></i></div>
+</header>
+
+<main id="main"></main>
+
+<button class="dexbtn" id="dexbtn">📖 名詞圖鑑 <span id="dexn">0</span></button>
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2>名詞圖鑑(點畫面其他地方關閉)</h2>
+    <div id="dexlist"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   第 8 章 財務管理|桃氣手搖第二季
+   12 個決策場景 + 1 結局,一輪約 10~15 分鐘
+   ============================================================ */
+const GAME = { title:"桃氣手搖第二季:小桃的財務長修煉", totalScenes:13, passLine:9 };
+
+const SCENES = {
+  start:{
+    who:"第 1 話|一週年的煩惱",
+    text:`「桃氣手搖」開幕滿一年,生意不錯,但小桃發現:明明有賺,戶頭卻常常空空的。
+      會計夥伴小舞拍桌:「老闆,我們該認真做<span class="t" data-k="fm">財務管理</span>了!
+      先訂一個最高目標——」`,
+    terms:[
+      {k:"fm", term:"財務管理", en:"financial management", def:"企業為降低融資成本、創造最大利潤,對資金進行籌集、運用、調度及控制等活動。"},
+      {k:"maxv", term:"公司價值極大化", en:"firm value maximization", def:"財務管理五大目的中最主要者;公司獲利與價值通常反映在股價現值上。"}
+    ],
+    choices:[
+      { label:"「目標:讓桃氣的整體價值愈來愈高!」", ok:true,
+        fb:"正解!財務管理有五大目的,其中最主要的就是<b>公司價值極大化</b>——健全財務結構、降低風險、提升獲利,最後都會反映在公司的價值上。", next:"s2" },
+      { label:"「目標:戶頭現金愈多愈好,抱滿最安心!」", ok:false,
+        fb:"小心!現金是<b>流動性最大、獲利性最低</b>的資產,抱太多反而讓資金閒置、效率下降。財管最主要的目的是<b>公司價值極大化</b>,不是現金極大化。", next:"s2" }
+    ]
+  },
+  s2:{
+    who:"第 2 話|錢要怎麼留",
+    text:`小舞列出留現金的三個理由:買茶葉、發薪水要用(<span class="t" data-k="m1">交易動機</span>);
+      封口機隨時可能罷工,得備一筆(<span class="t" data-k="m2">預防動機</span>);
+      聽說下個月茶葉可能跌價,想留錢掃貨(<span class="t" data-k="m3">投機動機</span>)。
+      月底結算,帳上還多出 20 萬——怎麼辦?`,
+    terms:[
+      {k:"m1", term:"交易動機", en:"transaction motive", def:"為日常營運、交易(購料、付款、發薪)而持有現金。"},
+      {k:"m2", term:"預防動機", en:"precautionary motive", def:"為因應不時之需、偶發狀況而持有現金。"},
+      {k:"m3", term:"投機動機", en:"speculative motive", def:"為把握有利的投資機會而持有現金。"}
+    ],
+    choices:[
+      { label:"「留下夠用的週轉金和預備金,多的拿去做短期投資。」", ok:true,
+        fb:"漂亮!現金管理的目標是把現金保持在<b>維持穩健營運的最低水準</b>,兼顧安全性、流動性、獲利性——多餘的錢,就讓它出門上班。", next:"s3" },
+      { label:"「20 萬全部鎖進保險箱,一毛都不准動!」", ok:false,
+        fb:"安全感滿分,獲利零分。現金<b>獲利性最低</b>,全鎖起來等於讓錢睡覺——留足週轉與預備,其餘應提高使用效率,避免因閒置而喪失獲利機會。", next:"s3" }
+    ]
+  },
+  s3:{
+    who:"第 3 話|讓閒錢去上班",
+    text:`多出的 20 萬,小舞建議投資<span class="t" data-k="sec">有價證券</span>。選單攤開:
+      政府發行的<span class="t" data-k="tb">國庫券</span>安全但報酬低;
+      朋友報明牌的<span class="t" data-k="stk">股票</span>號稱「保證翻倍」。小桃,選哪個?`,
+    terms:[
+      {k:"sec", term:"有價證券", en:"securities", def:"標有票面金額、可表彰財產與權利的證明文件,可自由轉讓、短時間內出售變現。"},
+      {k:"tb", term:"國庫券", en:"treasury bill", def:"政府為調節國庫收支或穩定金融發行的短期票券;信用保證、安全性高,報酬率較低。"},
+      {k:"stk", term:"股票", en:"stock", def:"股份有限公司向大眾籌資發行的持股憑證;股價易受市場波動,風險較大。"}
+    ],
+    choices:[
+      { label:"「這是週轉備用金,選安全的國庫券穩穩放。」", ok:true,
+        fb:"正確!這筆錢隨時可能要用,首選<b>安全性高、風險低</b>的標的。記住鐵律:<b>報酬率愈高,風險愈大</b>——「保證翻倍」通常是保證翻車。", next:"s4" },
+      { label:"「全押明牌股票,翻倍就能直接開二店!」", ok:false,
+        fb:"股價易受市場因素波動、<b>風險較大</b>;拿營運備用金去梭哈,一跌就週轉不靈。投資前要衡量<b>違約、利率、流動性、購買力</b>四大風險與預期報酬率。", next:"s4" }
+    ]
+  },
+  s4:{
+    who:"第 4 話|補習班的大單",
+    text:`隔壁補習班班主任上門:「每天 100 杯,月結付款!」——這等於允許對方<span class="t" data-k="cs">賒銷</span>,
+      店裡會多出一筆<span class="t" data-k="ar">應收帳款</span>。
+      小舞提醒:「先想清楚,他會不會變成收不回來的呆帳?」小桃怎麼審?`,
+    terms:[
+      {k:"cs", term:"賒銷(信用銷售)", en:"credit sales", def:"允許客戶先取貨、延後付款的銷售方式,因此產生應收帳款。"},
+      {k:"ar", term:"應收帳款", en:"accounts receivable", def:"因賒銷商品而產生、尚未收現的帳款。"},
+      {k:"c5", term:"信用 5C", en:"the 5 C's of credit", def:"品格、能力、資本、擔保品、經濟情況——授信前評估客戶的五個標準。"}
+    ],
+    choices:[
+      { label:"「查他過去的付款紀錄、營運狀況和財務體質,再決定給多少信用。」", ok:true,
+        fb:"專業!這就是<b>信用 5C</b>:<b>品</b>格(償債意願)、<b>能</b>力(償債能力)、<b>資</b>本(財務狀況)、<b>擔</b>保品、經濟情況——口訣:「品德好、能力夠、資本厚、擔保足、景氣旺」。", next:"s5" },
+      { label:"「大單耶!直接答應,先衝高營業額再說!」", ok:false,
+        fb:"授信政策太寬鬆,<b>呆帳風險</b>會飆高——營業額只是紙上數字,收不回來就是損失。企業應依客戶具備的<b>最低財務能力</b>(信用標準)決定給不給賒、給多少。", next:"s5" }
+    ]
+  },
+  s5:{
+    who:"第 5 話|讓他早點付錢",
+    text:`審核通過,補習班訂單成立!小舞追問:「那付款條件怎麼開?
+      要不要給<span class="t" data-k="cd">現金折扣</span>、<span class="t" data-k="cp">信用期間</span>抓多長?」`,
+    terms:[
+      {k:"cd", term:"現金折扣", en:"cash discount", def:"為鼓勵客戶提早清償貨款所給的折扣,例如 1/10, n/30 表示 10 天內付款享 1% 折扣。"},
+      {k:"cp", term:"信用期間", en:"credit period", def:"給予客戶賒欠貨款的期間,即購貨後至償付貨款所經過的時間。"}
+    ],
+    choices:[
+      { label:"「開 1/10, n/30:10 天內付款打 1% 折扣,最晚 30 天付清。」", ok:true,
+        fb:"內行!<b>1/10, n/30</b> 的意思:發票開出次日起 <b>10 天內付款享 1% 現金折扣</b>,<b>最晚 30 天</b>要付清——用小折扣換現金早點回家,收帳愈快、呆帳風險愈低。", next:"s6" },
+      { label:"「不用啦,他想什麼時候付都行,做人別太計較。」", ok:false,
+        fb:"沒有<b>信用期間</b>、額度與催收規則,收帳會愈拖愈慢、應收帳款週轉率下降、呆帳機率上升。信用政策要有標準、期間、折扣、額度與收款政策,才叫「管理」。", next:"s6" }
+    ]
+  },
+  s6:{
+    who:"第 6 話|倉庫的祕密",
+    text:`盤點日。倉庫裡躺著:高價的頂級茶葉、中價的果醬與鮮奶、便宜到笑的吸管杯膜。
+      小舞問:「這些<span class="t" data-k="inv">存貨</span>,全部用同一套方式管嗎?」`,
+    terms:[
+      {k:"inv", term:"存貨", en:"inventory", def:"企業持有以銷售為目的、但尚未出售的商品;製造業還包含原物料、零組件、在製品。"},
+      {k:"abc", term:"ABC 存貨控制法", en:"ABC inventory control", def:"依存貨價值與數量分成 A、B、C 三類:A 類價值最高、數量最少,管得最嚴;C 類相反,寬鬆管理。"}
+    ],
+    choices:[
+      { label:"「分級管理:高價茶葉嚴格控管、常盤點;便宜耗材寬鬆管就好。」", ok:true,
+        fb:"這就是 <b>ABC 存貨控制法</b>:<b>A 類價值最高(約 70~80%)、數量最少(約 20%)</b>,嚴格控管、經常盤點;C 類價值低、數量多,寬鬆管理——把力氣花在最值錢的地方。", next:"s7" },
+      { label:"「不管貴賤,每樣東西每天全部盤點一輪,最安心!」", ok:false,
+        fb:"每天全盤點,人力成本會吃掉利潤。存貨管理的目標是<b>以最低的成本,維持營運所需的最適存貨量</b>——依價值分級的 <b>ABC 法</b>才是聰明做法。", next:"s7" }
+    ]
+  },
+  s7:{
+    who:"第 7 話|體檢報告出爐",
+    text:`小舞把年度財報算完:「老闆,我們的<span class="t" data-k="cr">流動比率</span>是 4.5。」
+      她卻皺著眉。小桃不解:「比率這麼高,不是超強嗎?」`,
+    terms:[
+      {k:"cr", term:"流動比率", en:"current ratio", def:"流動資產÷流動負債,衡量短期償債能力,又稱營運資金比率;理想值約 2。"},
+      {k:"qr", term:"速動比率", en:"quick ratio (acid-test ratio)", def:"(流動資產-存貨-預付款項-其他流動資產)÷流動負債;最嚴格的短期償債體檢,理想值約 1。"},
+      {k:"wc", term:"營運資金", en:"working capital", def:"流動資產-流動負債。"}
+    ],
+    choices:[
+      { label:"「等等……太高,是不是代表錢和存貨堆著沒在動?」", ok:true,
+        fb:"答對!流動比率<b>理想值約 2</b>,<b>過高表示資金運用缺乏效率</b>(現金抱太多、存貨積壓);過低才是跳票倒帳危機。比率不是愈高愈好,要看「過高」背後藏了什麼。", next:"s8" },
+      { label:"「4.5 超讚!我們繼續朝 10 邁進!」", ok:false,
+        fb:"過高的流動比率=<b>資金閒置、存貨積壓</b>,獲利機會白白流失,理想值約 <b>2</b>。順帶一提:更嚴格的<b>速動比率</b>(扣掉存貨、預付款項等)理想值約 <b>1</b>。", next:"s8" }
+    ]
+  },
+  s8:{
+    who:"第 8 話|珍珠滾不動了",
+    text:`報告第二頁:<span class="t" data-k="it">存貨週轉率</span>從 12 掉到 6,配料在倉庫愈堆愈多,
+      連<span class="t" data-k="art">應收帳款週轉率</span>都被小舞順手標了紅字。先處理存貨——怎麼辦?`,
+    terms:[
+      {k:"it", term:"存貨週轉率", en:"inventory turnover", def:"銷貨成本÷平均存貨,衡量商品銷售能力;四個週轉率中唯一分子用「銷貨成本」者。"},
+      {k:"art", term:"應收帳款週轉率", en:"receivables turnover", def:"銷貨淨額÷平均應收帳款,衡量收帳速度與帳款管理能力。"}
+    ],
+    choices:[
+      { label:"「辦買一送一出清,同時檢討進貨量,讓存貨動起來。」", ok:true,
+        fb:"正解!存貨週轉率<b>過低=銷售能力欠佳、存貨閒置積壓資金</b>。加碼考點:<b>存貨週轉率的分子用「銷貨成本」</b>(因為分母的存貨以成本計價),其餘週轉率都用銷貨淨額——「只有存貨配成本」。", next:"s9" },
+      { label:"「放著吧,珍珠總有一天會賣掉的。」", ok:false,
+        fb:"配料會過期,資金會<b>積壓</b>!週轉率愈低,代表<b>銷售欠佳、存貨閒置倉庫</b>。看到警訊要行動——促銷出清、調整採購,而不是等奇蹟。", next:"s9" }
+    ]
+  },
+  s9:{
+    who:"第 9 話|夏天要來了",
+    text:`旺季將至,要囤一大批原料,短期現金不夠。二店的大錢之後再想,先解決眼前的
+      <span class="t" data-k="fin">籌資</span>需求:`,
+    terms:[
+      {k:"fin", term:"籌資(融資)", en:"financing", def:"企業自有資金不足時,向金融機構借貸或發行有價證券籌措資金,以利息或股息為代價。"},
+      {k:"tc", term:"交易信用", en:"trade credit", def:"憑企業自身信用,以賒購方式向往來廠商進貨;最常見的短期籌資方式。"}
+    ],
+    choices:[
+      { label:"「跟合作一年的茶行談月結賒購:先進貨、月底付款。」", ok:true,
+        fb:"聰明!這就是<b>交易信用(商業信用)</b>——憑信用賒購,<b>最常見的短期籌資方式</b>。旺季備料屬<b>季節性</b>的短期資金需求,用短期方式解決,剛剛好。", next:"s10" },
+      { label:"「直接辦一筆七年期貸款,順便把二店的錢一起借起來放!」", ok:false,
+        fb:"旺季備料是短期需求,卻扛七年長債,期限錯配、白付利息。原則:<b>短期資金用於流動資產、長期資金用於固定資產</b>——需求多長,錢就借多長。", next:"s10" }
+    ]
+  },
+  s10:{
+    who:"第 10 話|封口機退休了",
+    text:`老封口機正式罷工。新型設備一台 35 萬,小桃不想一次噴光現金。
+      小舞攤出兩條路,考驗老闆的中期資金安排:`,
+    terms:[
+      {k:"lease", term:"租賃融資", en:"lease financing", def:"缺乏資金購置設備時,向出租人(租賃公司)承租、定期支付租金取得使用權;屬中期籌資。"},
+      {k:"sf", term:"供應商融資", en:"supplier financing", def:"以分期付款方式向供應商購進營運所需設備;屬中期籌資。"}
+    ],
+    choices:[
+      { label:"「向租賃公司承租,或和設備商談分期付款。」", ok:true,
+        fb:"正確!購置機器設備屬<b>中期(1~7 年)</b>資金需求,<b>租賃融資</b>與<b>供應商融資(分期付款)</b>正是典型的中期籌資方式,不必掏空週轉金。", next:"s11" },
+      { label:"「把日常週轉金全部拿去付清,無債一身輕!」", ok:false,
+        fb:"週轉金一掏空,下個月的薪水、貨款就開天窗——這是把自己推向<b>週轉不靈</b>的財務風險。設備是中長期資產,應搭配<b>中期籌資</b>,別犧牲短期流動性。", next:"s11" }
+    ]
+  },
+  s11:{
+    who:"第 11 話|二店!200 萬的抉擇",
+    text:`桃氣改組為股份有限公司,二店預算 200 萬、自有資金 50 萬。
+      現在景氣正熱、店裡獲利穩定;小桃想保住經營主導權,還想省點稅。
+      缺口 150 萬,怎麼籌?`,
+    terms:[
+      {k:"bond", term:"公司債", en:"corporate bond", def:"公司發行債券向大眾募資,持有人為債權人;利息屬費用可節稅、無表決權,但有到期還本壓力。"},
+      {k:"common", term:"普通股", en:"common stock", def:"企業最基本的股份;股東有表決權,無到期日、無固定股利負擔,但無節稅效果。"},
+      {k:"lev", term:"財務槓桿", en:"financial leverage", def:"以舉債取得資金經營;報酬大於利息為「正的作用」,不足支付利息則為「負的作用」。"}
+    ],
+    choices:[
+      { label:"「發行公司債:固定付息、利息能抵稅,股權也不會被稀釋。」", ok:true,
+        fb:"完全符合這局的目標!公司債<b>利息屬費用、具節稅效果</b>,債權人<b>無表決權</b>;景氣熱、獲利大於利息時,可收<b>財務槓桿正的作用</b>。代價是<b>到期還本</b>壓力與負債比率上升,要盯緊。", next:"s12" },
+      { label:"「發行普通股:拿股東的錢,不用還本最輕鬆!」", ok:false,
+        fb:"不算錯,但不合這次的目標:普通股<b>無節稅效果</b>、會<b>稀釋每股盈餘(EPS)</b>,新股東還有<b>表決權</b>會分走主導權。想保經營權+節稅+景氣熱→這局<b>公司債</b>更合;普通股的強項是無到期日、降低負債比率。", next:"s12" }
+    ]
+  },
+  s12:{
+    who:"第 12 話|阿姨的投資",
+    text:`有錢的阿姨聽說要開二店,主動想投 50 萬:「我不想管店,
+      但我要每年穩穩領錢,而且公司賺錢要先分我!」——小桃該給阿姨什麼?`,
+    terms:[
+      {k:"pref", term:"特別股", en:"preferred stock", def:"股利固定、盈餘與剩餘財產優先分配、通常無表決權的股份;屬自有資金。"},
+      {k:"vote", term:"表決權", en:"voting right", def:"普通股股東參與公司決策的權利;特別股股東通常沒有。"}
+    ],
+    choices:[
+      { label:"「發行特別股給阿姨:固定股利、盈餘優先分配、無表決權。」", ok:true,
+        fb:"完美對接!<b>特別股</b>股東<b>優先分配盈餘</b>、領<b>固定股利</b>、通常<b>無表決權</b>——阿姨穩穩領錢,小桃穩穩當家,雙贏。", next:"end" },
+      { label:"「給普通股啊,大家都當一般股東比較公平!」", ok:false,
+        fb:"阿姨要的是「穩定領、優先分、不管事」,普通股卻是<b>股利不固定、盈餘分配次於特別股、有表決權</b>——三個條件全對不上。這種需求,教科書答案就是<b>特別股</b>。", next:"end" }
+    ]
+  },
+  end:{
+    end:true,
+    who:"最終話|二店開幕",
+    text:"「桃氣手搖 2 號店」剪綵這天,小舞把一年來的財報裝訂成冊送給小桃。小桃翻著翻著笑了——原來財務管理不是數字遊戲,而是每一次「錢要從哪來、往哪去」的選擇。"
+  }
+};
+
+/* ===== 引擎 ===== */
+let cur="start", score=0, seen=0, dex={};
+const $=id=>document.getElementById(id);
+$("gtitle").textContent=GAME.title;
+
+function collect(s){ (s.terms||[]).forEach(t=>{ if(!dex[t.k]){ dex[t.k]=t; } }); renderDex(); }
+function renderDex(){
+  const arr=Object.values(dex);
+  $("dexn").textContent=arr.length;
+  $("dexlist").innerHTML=arr.map(t=>
+    `<div class="entry"><b>${t.term}</b> <span class="en">${t.en}</span><br>${t.def}</div>`).join("")
+    || "<div class='entry'>還沒有收集到名詞,回劇情裡找找看!</div>";
+}
+function hud(){
+  $("prog").textContent=`進度 ${Math.min(seen,GAME.totalScenes)} / ${GAME.totalScenes}`;
+  $("score").textContent=`決策分 ${score}`;
+  $("fill").style.width=(Math.min(seen,GAME.totalScenes)/GAME.totalScenes*100)+"%";
+}
+function show(id){
+  cur=id; const s=SCENES[id]; seen++; collect(s); hud();
+  if(s.end){ return ending(s); }
+  $("main").innerHTML=`
+    <div class="scene">
+      <div class="who">${s.who||""}</div>
+      <div>${s.text}</div>
+      <div class="chips">${(s.terms||[]).map(t=>`<span class="chip">${t.term} ${t.en}</span>`).join("")}</div>
+      <div class="choices">${s.choices.map((c,i)=>`<button data-i="${i}">${c.label}</button>`).join("")}</div>
+      <div id="fbslot"></div>
+    </div>`;
+  document.querySelectorAll(".choices button").forEach(b=>b.onclick=()=>pick(+b.dataset.i));
+}
+function pick(i){
+  const c=SCENES[cur].choices[i];
+  if(c.ok) score++;
+  hud();
+  document.querySelectorAll(".choices button").forEach(b=>b.disabled=true);
+  $("fbslot").innerHTML=`
+    <div class="fb ${c.ok?"ok":"no"}">
+      <span class="tag">${c.ok?"✔ 好決策!":"✘ 等等,這樣有風險"}</span>${c.fb}
+      <br><button id="go">繼續 →</button>
+    </div>`;
+  $("go").onclick=()=>show(c.next);
+}
+function ending(s){
+  const tier = score>=11 ? "🏆 財務長等級!你已經能替公司把關每一分錢。"
+             : score>=8  ? "👍 稱職老闆!觀念都在,少數細節再磨一下。"
+             : "📚 先別急著展店——把每題解析再讀一次,重玩一輪!";
+  $("main").innerHTML=`
+    <div class="scene end">
+      <div class="who">${s.who||""}</div>
+      <div style="text-align:left">${s.text}</div>
+      <div class="score">決策分 ${score} / 12</div>
+      <div>${tier}</div>
+      <ul>
+        <li>財務管理五大功能與最主要目的「公司價值極大化」</li>
+        <li>持有現金四動機(教育投捕)與現金管理三原則</li>
+        <li>有價證券種類與投資四大風險(違約/利率/流動性/購買力)</li>
+        <li>信用 5C 與信用條件 1/10, n/30</li>
+        <li>ABC 存貨控制法:A 類價值最高、管最嚴</li>
+        <li>流動比率理想值 2、速動比率理想值 1,「過高」也是警訊</li>
+        <li>存貨週轉率分子=銷貨成本(只有存貨配成本)</li>
+        <li>短/中/長期籌資:需求多長,錢就借多長</li>
+        <li>普通股・特別股・公司債:節稅、槓桿、表決權、到期日</li>
+        <li>自我檢核:打開名詞圖鑑,每個名詞能不看定義說出意思嗎?</li>
+      </ul>
+      <button onclick="location.reload()">再玩一次</button>
+    </div>`;
+}
+/* 名詞點擊與圖鑑開關 */
+document.addEventListener("click",e=>{
+  const t=e.target.closest(".t");
+  if(t){ const d=dex[t.dataset.k]; if(d) alert(`${d.term}(${d.en})\n\n${d.def}`); }
+});
+$("dexbtn").onclick=()=>$("overlay").classList.add("show");
+$("overlay").onclick=e=>{ if(e.target.id==="overlay") $("overlay").classList.remove("show"); };
+
+show("start");
+</script>
+</body>
+</html>

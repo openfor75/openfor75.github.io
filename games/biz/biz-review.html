@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>商概總複習大挑戰</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FAF7F2;
+  --line:#E3DDD2;
+  --ink:#2A2621;
+  --soft:#6E655A;
+  --gold:#E8A008;
+  --red:#C1272D;
+  --ok:#1E7F4F;
+  --blue:#1D5FBF;
+  --purple:#6B4FA3;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;}
+body{
+  font-family:'Noto Sans TC','LINE Seed TW',system-ui,sans-serif;
+  color:var(--ink);background:var(--bg);
+  display:flex;flex-direction:column;overflow:hidden;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;opacity:.5;
+  background-image:radial-gradient(circle at 1px 1px, var(--line) 1px, transparent 0);
+  background-size:22px 22px;
+}
+
+header{padding:.7rem 1rem .35rem;display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;flex-wrap:wrap;}
+h1{font-weight:900;font-size:clamp(1rem,4.2vw,1.4rem);letter-spacing:.1em;}
+h1 small{font-size:.62em;font-weight:700;color:var(--soft);letter-spacing:.1em;margin-left:.4em;}
+.bar{display:flex;gap:.8rem;font-size:.82rem;font-weight:500;color:var(--soft);align-items:baseline;}
+.bar b{color:var(--ink);font-variant-numeric:tabular-nums;}
+.streak{color:var(--red);font-weight:900;}
+#snd{cursor:pointer;}
+.progress{height:7px;margin:0 1rem;border:1px solid var(--line);border-radius:4px;overflow:hidden;background:#fff;}
+.progress i{display:block;height:100%;width:0;background:var(--ink);transition:width .3s ease;}
+
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.7rem;padding:.6rem 1rem;min-height:0;position:relative;}
+
+.chapchip{
+  font-size:.68rem;font-weight:900;letter-spacing:.12em;
+  color:#fff;background:var(--c,var(--ink));padding:.18em .7em;border-radius:99px;
+}
+.qcard{
+  width:min(94vw,520px);background:#fff;
+  border:1.5px solid var(--ink);border-radius:10px;
+  box-shadow:4px 4px 0 rgba(42,38,33,.14);
+  padding:1rem 1.1rem 1.1rem;text-align:center;
+}
+.qtext{font-weight:900;font-size:clamp(1rem,4.3vw,1.28rem);line-height:1.6;letter-spacing:.02em;margin-top:.5rem;}
+.qtext.long{font-size:clamp(.9rem,3.8vw,1.1rem);}
+.qcard.shake{animation:shake .4s;}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}100%{transform:translateX(0)}}
+
+.opts{display:flex;flex-direction:column;gap:.45rem;width:min(94vw,520px);}
+.opt{
+  border:1.5px solid var(--ink);border-radius:8px;background:#fff;
+  color:var(--ink);font-family:inherit;font-weight:700;
+  font-size:clamp(.88rem,3.8vw,1rem);line-height:1.5;
+  padding:.7rem .9rem;cursor:pointer;text-align:left;
+  display:flex;gap:.6rem;align-items:flex-start;
+}
+.opt .k{font-weight:900;color:var(--soft);flex:none;}
+.opt:active{transform:translateY(2px);}
+.opt.right{background:#E7F4EC;border-color:var(--ok);color:var(--ok);}
+.opt.wrong{background:#FBE9E9;border-color:var(--red);color:var(--red);}
+.opt.dim{opacity:.45;}
+
+.exp{
+  width:min(94vw,520px);border:1.5px solid var(--line);border-radius:8px;
+  background:#fff;padding:.65rem .85rem;font-size:.83rem;line-height:1.7;
+  text-align:left;display:none;
+}
+.exp.show{display:block;}
+.exp b{color:var(--red);}
+.exp .tip{display:block;margin-top:.3rem;color:var(--soft);font-size:.78rem;}
+
+.popup{position:absolute;left:50%;top:22%;z-index:80;font-weight:900;font-size:1.5rem;color:var(--ok);text-shadow:1.5px 1.5px 0 #fff;pointer-events:none;animation:pop 1s ease forwards;white-space:nowrap;}
+.popup.fev{color:var(--gold);font-size:1.75rem;}
+@keyframes pop{from{opacity:1;transform:translate(-50%,0) scale(1);}30%{transform:translate(-50%,-14px) scale(1.15);}to{opacity:0;transform:translate(-50%,-62px);}}
+body.fever .qcard{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold),5px 5px 0 rgba(232,160,8,.28);}
+body.fever .streak{animation:fp .35s infinite alternate;}
+@keyframes fp{to{transform:scale(1.16);}}
+
+.overlay{position:fixed;inset:0;z-index:100;background:rgba(250,247,242,.97);display:flex;align-items:center;justify-content:center;padding:1.1rem;}
+.overlay.hidden{display:none;}
+.panel{width:min(94vw,560px);max-height:92vh;overflow:auto;background:#fff;border:1.5px solid var(--ink);border-radius:12px;box-shadow:6px 6px 0 rgba(42,38,33,.14);padding:1.5rem 1.3rem;text-align:center;}
+.panel h2{font-weight:900;font-size:1.4rem;letter-spacing:.12em;margin-bottom:.5rem;}
+.panel p{font-size:.85rem;color:var(--soft);line-height:1.75;margin-bottom:.8rem;}
+.panel .big{font-size:2.6rem;font-weight:900;margin:.25rem 0 .1rem;font-variant-numeric:tabular-nums;}
+.stats{display:flex;justify-content:center;gap:1.5rem;margin:.7rem 0 .9rem;font-size:.82rem;color:var(--soft);flex-wrap:wrap;}
+.stats b{display:block;font-size:1.25rem;color:var(--ink);font-variant-numeric:tabular-nums;}
+button.btn{font-family:inherit;font-size:.93rem;font-weight:900;letter-spacing:.1em;padding:.68rem 1.35rem;margin:.22rem;background:var(--ink);color:#fff;border:none;border-radius:8px;cursor:pointer;}
+button.btn.ghost-btn{background:#fff;color:var(--ink);border:1.5px solid var(--ink);}
+button.btn:active{transform:translateY(2px);}
+.mode-list{display:flex;flex-direction:column;gap:.5rem;margin:.35rem 0 .2rem;}
+.mode-btn{display:flex;flex-direction:column;align-items:flex-start;text-align:left;border:1.5px solid var(--ink);border-radius:8px;background:#fff;cursor:pointer;padding:.7rem .95rem;font-family:inherit;color:var(--ink);}
+.mode-btn:active{transform:translateY(2px);}
+.mode-btn b{font-size:1rem;letter-spacing:.08em;}
+.mode-btn span{font-size:.76rem;color:var(--soft);margin-top:.13rem;line-height:1.5;}
+.wrong-list{text-align:left;font-size:.82rem;line-height:1.8;margin:.35rem 0 .9rem;border-top:1px dashed var(--line);padding-top:.55rem;}
+.wrong-list .w{margin-bottom:.5rem;}
+.wrong-list .w .tag{font-weight:900;padding:.05em .45em;border-radius:3px;color:#fff;font-size:.68rem;margin-right:.4em;}
+.wrong-list .w .ans{color:var(--ok);font-weight:700;}
+input.txt{font-family:inherit;font-size:1rem;color:var(--ink);border:1.5px solid var(--ink);border-radius:8px;background:#fff;padding:.6rem .8rem;width:100%;margin:.2rem 0;text-align:center;}
+.scorecard-box{border-top:1px dashed var(--line);margin-top:.55rem;padding-top:.75rem;}
+#scorecard-result img{width:100%;border:1px solid var(--line);border-radius:8px;margin:.55rem 0 .2rem;}
+.vcode-note{font-size:.76rem;color:var(--soft);line-height:1.6;margin-top:.3rem;}
+.verify-result{font-size:1.05rem;font-weight:900;letter-spacing:.12em;margin:.55rem 0;min-height:1.5em;}
+.verify-result.ok{color:var(--ok);}
+.verify-result.bad{color:var(--red);}
+.stagebar{display:flex;gap:.25rem;justify-content:center;margin-bottom:.3rem;flex-wrap:wrap;}
+.stagebar i{width:.55rem;height:.55rem;border-radius:50%;background:var(--line);display:block;}
+.stagebar i.on{background:var(--ink);}
+.stagebar i.now{background:var(--gold);transform:scale(1.35);}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>商概總複習<small id="mode-label"></small></h1>
+  <div class="bar">
+    <span id="snd">🔊</span>
+    <span>進度 <b id="prog-text">0/0</b></span>
+    <span>得分 <b id="score-text">0</b></span>
+    <span class="streak" id="streak-text"></span>
+  </div>
+</header>
+<div class="progress"><i id="prog-bar"></i></div>
+
+<main id="main">
+  <div class="stagebar" id="stagebar"></div>
+  <div class="qcard" id="qcard">
+    <span class="chapchip" id="chip"></span>
+    <div class="qtext" id="qtext"></div>
+  </div>
+  <div class="opts" id="opts"></div>
+  <div class="exp" id="exp"></div>
+</main>
+
+<div class="overlay" id="ov-start">
+  <div class="panel">
+    <h2>商概總複習大挑戰</h2>
+    <p>跨十章統測高頻考點總驗收!<br>
+    每題四選一,答錯會附完整解析與陷阱提醒。<br>
+    連對 5 題進入 <b style="color:#E8A008">FEVER</b>,得分雙倍!</p>
+    <div class="mode-list" id="mode-list"></div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ov-stage">
+  <div class="panel">
+    <h2 id="stage-title">關卡完成!</h2>
+    <p id="stage-msg"></p>
+    <div class="stats">
+      <span>本關<b id="stage-correct">0/5</b></span>
+      <span>累計得分<b id="stage-score">0</b></span>
+    </div>
+    <button class="btn" id="btn-next">前往下一關</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ov-end">
+  <div class="panel">
+    <h2 id="end-title">總複習完成!</h2>
+    <div class="big" id="end-score">0 分</div>
+    <div class="stats">
+      <span>答對<b id="end-correct">0</b></span>
+      <span>正確率<b id="end-acc">0%</b></span>
+      <span>最長連對<b id="end-streak">0</b></span>
+    </div>
+    <div class="wrong-list" id="end-wrong"></div>
+    <div class="scorecard-box">
+      <input class="txt" id="player-name" maxlength="20" placeholder="輸入班級座號姓名(例:商三乙15王小明)">
+      <button class="btn ghost-btn" id="btn-make-card">產生成績卡 📸</button>
+      <div id="scorecard-result"></div>
+    </div>
+    <button class="btn" id="btn-again">再玩一次</button>
+    <button class="btn ghost-btn" id="btn-restart">回到首頁</button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="ov-verify">
+  <div class="panel">
+    <h2>成績卡驗證</h2>
+    <p>依成績卡上的內容逐欄輸入,系統會核對驗證碼是否相符。</p>
+    <input class="txt" id="v-name" placeholder="姓名">
+    <input class="txt" id="v-mode" placeholder="模式">
+    <input class="txt" id="v-score" placeholder="分數(例:186 分)">
+    <input class="txt" id="v-dt" placeholder="日期時間(例:2026/07/16 14:32)">
+    <input class="txt" id="v-code" placeholder="驗證碼">
+    <div class="verify-result" id="verify-result"></div>
+    <button class="btn" id="btn-verify">驗證</button>
+    <button class="btn ghost-btn" id="btn-verify-close">關閉</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════
+   題庫:跨十章統測高頻考點
+   c:章節  q:題目  o:選項  a:正解索引  e:解析  t:陷阱提醒(可省略)
+   ══════════════════════════════════════════════════════ */
+const CH_COLOR={1:"#1D5FBF",2:"#1E7F4F",3:"#C77817",4:"#6B4FA3",5:"#C1272D",
+                6:"#0F766E",7:"#B45309",8:"#7C3AED",9:"#BE123C",10:"#0369A1"};
+const BANK=[
+/* ── CH1 商業基本概念 ── */
+{c:1,q:"下列何者<b>不屬於</b>商業活動成立的四要件?",o:["以營利為目的","有交易行為","雙方自願","須以貨幣支付"],a:3,
+ e:"四要件為<b>營利、交易、自願、合法</b>(口訣:贏了交易,願意守法)。交易不限貨幣,以物易物或打工換宿只要有等值交換即成立。",t:"義賣❌(非營利)、黃牛票❌(不合法)、打工換宿✅"},
+{c:1,q:"「便利商店提供代收、影印、取貨服務」屬於現代商業九大特質中的哪一項?",o:["業際整合化","多角化經營","商品標準化","分工專業化"],a:0,
+ e:"跨越不同行業界線提供服務,屬<b>業際整合化</b>。多角化是同一企業跨足多種產業(如企業集團)。",t:"業際整合=跨業結合;多角化=一家公司做很多事業"},
+{c:1,q:"企業「未違法但被社會輿論譴責」,依 Carroll 四責任屬於?",o:["經濟責任","法律責任","倫理責任","自由裁量責任"],a:2,
+ e:"沒違法卻不符社會期待→<b>倫理責任</b>。經濟責任是最基本「責任」,法律責任是最基本「修養」,捐款義賣屬自由裁量。"},
+{c:1,q:"關於社會企業的敘述,下列何者正確?",o:["主要靠外界捐款維持營運","核心目標是追求股東利潤極大化","以商業模式解決社會問題並自給自足","盈餘一律不得分配"],a:2,
+ e:"社會企業<b>用做生意的方式解決社會問題,靠營運自給自足</b>,盈餘可部分分配;靠捐款且不得分配盈餘的是非營利組織(NPO)。",t:"113、114 連兩年統測考點"},
+{c:1,q:"「將鳳梨製成鳳梨酥」屬於何種生產?",o:["原始生產","形式生產","效用生產","勞務生產"],a:1,
+ e:"改變物品形狀或性質→<b>形式生產</b>。原始生產是取自自然(採礦、農耕);效用生產是改變產權/時間/地方(運輸、倉儲、買賣)。",t:"口訣:原形效勞;效用三效用=產時地"},
+{c:1,q:"我國公司家數最多的組織型態為?",o:["股份有限公司","有限公司","無限公司","兩合公司"],a:1,
+ e:"家數最多是<b>有限公司</b>(約 60 萬家),不是知名度最高的股份有限公司;家數最少的是兩合公司。"},
+/* ── CH2 創業與企業家精神 ── */
+{c:2,q:"SWOT 分析中,「同業競爭者推出低價商品」屬於哪一項?",o:["優勢 S","劣勢 W","機會 O","威脅 T"],a:3,
+ e:"競爭者行動屬<b>外部不利因素=威脅 T</b>。S/W 是企業<b>內部</b>條件,O/T 是<b>外部</b>環境。",t:"判斷關鍵:先問內部還是外部,再問有利還是不利"},
+{c:2,q:"「同時經營網拍、假日擺攤、接案設計」的工作型態稱為?",o:["SOHO 族","斜槓族","自由業","創客"],a:1,
+ e:"<b>斜槓族(Slash)</b>指同時擁有多重職業身分;<b>SOHO 族</b>強調的是「在家或小型辦公室工作」的地點特性。",t:"斜槓看「身分數量」,SOHO 看「工作地點」"},
+{c:2,q:"創業者投保「產品責任險」主要目的為?",o:["保障員工職災","轉嫁商品造成消費者損害的賠償風險","保障店面火災損失","確保營業中斷收入"],a:1,
+ e:"產品責任險用來<b>轉嫁商品瑕疵致人損害的賠償責任</b>。這與消保法的無過失責任相呼應——不管有沒有過失都要賠,所以要保險。"},
+/* ── CH3 商業現代化 ── */
+{c:3,q:"消費者網購收到商品後,依消保法可於幾日內無條件解約?",o:["收受隔天起 7 日","收受當天起 7 日","收受隔天起 30 日","下單日起 14 日"],a:0,
+ e:"通訊交易<b>收受商品之次日起算 7 日內</b>可解除契約,無須說明理由及負擔費用。這是<b>猶豫期</b>,不是試用期。",t:"30 日是「定型化契約審閱期」,別跟 7 日搞混"},
+{c:3,q:"商業五流中,「消費者在商品頁看到規格與評價」屬於?",o:["商流","物流","金流","資訊流"],a:3,
+ e:"資料與訊息的傳遞→<b>資訊流</b>。商流是<b>所有權移轉</b>、物流是<b>實體移動</b>、金流是<b>資金流動</b>。",t:"商流=所有權;下單成立那一刻才是商流"},
+{c:3,q:"下列何者是「電子訂貨系統」的英文縮寫?",o:["POS","EOS","EDI","VAN"],a:1,
+ e:"<b>EOS</b>=Electronic Ordering System 電子訂貨系統;POS=銷售時點情報系統;EDI=電子資料交換;VAN=加值型網路。",t:"POS 管「賣出去」,EOS 管「叫貨」"},
+{c:3,q:"感應式悠遊卡、手機感應付款所使用的近距離無線技術為?",o:["RFID","NFC","QR Code","Bluetooth"],a:1,
+ e:"<b>NFC</b>(近場通訊)是 RFID 的一種延伸應用,通訊距離約 10 公分內,用於行動支付;RFID 泛指無線射頻辨識,可用於庫存盤點。"},
+/* ── CH4 商業經營型態 ── */
+{c:4,q:"以「賣什麼」來區分商店的分類方式稱為?",o:["業種","業態","業界","業別"],a:0,
+ e:"<b>業種</b>=賣什麼商品(書店、藥局、鞋店);<b>業態</b>=怎麼賣(便利商店、量販店、百貨公司)。",t:"業種看商品,業態看經營方式——統測年年考"},
+{c:4,q:"下列何者屬於「無店鋪零售」?",o:["超級市場","自動販賣機","購物中心","專門店"],a:1,
+ e:"<b>自動販賣機、直銷、電視購物、網路購物、郵購</b>皆屬無店鋪零售,不需固定店面與店員。"},
+{c:4,q:"關於代理商與經銷商的差異,下列敘述何者正確?",o:["代理商取得商品所有權,自負盈虧","經銷商不取得所有權,賺取佣金","代理商賺取佣金,不承擔存貨風險","兩者皆須負擔存貨跌價風險"],a:2,
+ e:"<b>代理商</b>不取得所有權、賺<b>佣金</b>、風險低;<b>經銷商</b>買斷商品取得所有權、賺<b>價差</b>、自負存貨風險。",t:"買斷=經銷;抽佣=代理"},
+/* ── CH5 連鎖與加盟 ── */
+{c:5,q:"超商將即期品先行陳列販售,採用的存貨管理原則為?",o:["後進先出 LIFO","先進先出 FIFO","加權平均法","個別認定法"],a:1,
+ e:"<b>FIFO 先進先出</b>:先入庫的先賣出,可降低商品過期損失,是生鮮與食品零售的基本原則。"},
+{c:5,q:"加盟主支付給總部、用來取得加盟權利與教育訓練的一次性費用是?",o:["加盟金","權利金","保證金","履約金"],a:0,
+ e:"<b>加盟金</b>:簽約時一次支付,取得品牌使用與開店輔導,原則上<b>不退還</b>;<b>權利金</b>依營業額定期支付;<b>保證金</b>是履約擔保,合約正常終止時<b>應退還</b>。",t:"三金誰會退?只有保證金!"},
+{c:5,q:"「總部提供品牌與經營 Know-how,加盟主自行出資並擁有店鋪所有權」屬於?",o:["直營連鎖 RC","自願加盟 VC","特許加盟 FC","委託加盟"],a:2,
+ e:"<b>特許加盟 FC</b>:加盟主自行出資、擁有店鋪,受總部高度規範;直營連鎖 RC 由總部百分之百投資與管理;委託加盟則是總部出資、委由加盟主經營。"},
+{c:5,q:"連鎖經營的「3S 原則」指的是?",o:["標準化、簡單化、專業化","速度、服務、微笑","策略、系統、結構","規模、範疇、綜效"],a:0,
+ e:"<b>3S = 標準化(Standardization)、簡單化(Simplification)、專業化(Specialization)</b>,是連鎖體系能快速複製展店的核心。"},
+/* ── CH6 行銷管理 ── */
+{c:6,q:"「消費者買冷氣時,店家提供免費安裝與五年保固」屬於產品五層次的哪一層?",o:["核心產品","基本產品","期望產品","附加產品"],a:3,
+ e:"超出顧客預期的額外服務→<b>附加產品</b>。核心產品是顧客真正要買的利益(涼爽),期望產品是消費者理所當然認為該有的條件。",t:"口訣:核基期附潛=何必期付錢"},
+{c:6,q:"企業理念從「重視大量生產降低成本」演進到「重視顧客需求」,其順序為?",o:["生產→產品→銷售→行銷→社會行銷","產品→生產→行銷→銷售→社會行銷","銷售→生產→產品→行銷→社會行銷","生產→銷售→產品→行銷→社會行銷"],a:0,
+ e:"行銷觀念演進:<b>生產→產品→銷售→行銷→社會行銷</b>(口訣:生產銷行社)。生產導向重成本,產品導向重品質,銷售導向重推銷,行銷導向重需求,社會行銷再加上社會福祉。"},
+{c:6,q:"下列縮寫何者代表「公共關係」?",o:["PS","SP","PR","DM"],a:2,
+ e:"<b>PR</b>=Public Relations 公共關係;PS=人員銷售(Personal Selling);SP=促銷(Sales Promotion);DM=直效行銷/宣傳單;AD=廣告。",t:"PS/SP/PR/DM/AD 五個縮寫最愛互相當誘答"},
+/* ── CH7 人力資源管理 ── */
+{c:7,q:"記載「該職位需具備學歷、證照、經驗」的文件是?",o:["工作說明書","工作規範","工作分析表","職位評價表"],a:1,
+ e:"<b>工作規範</b>寫的是「做這個工作的<b>人</b>需要什麼條件」;<b>工作說明書</b>寫的是「這個<b>工作</b>要做什麼事」。",t:"規範看人,說明看事"},
+{c:7,q:"主管因員工外表出眾,連帶認為其工作能力也強,此評估偏誤稱為?",o:["月暈效應","刻板印象","對比效應","近因效應"],a:0,
+ e:"<b>月暈效應</b>:因單一優點(或缺點)而擴大影響整體評價;<b>刻板印象</b>是依所屬群體特徵(性別、年齡、籍貫)來判斷個人。"},
+{c:7,q:"「工作擴大化」與「工作豐富化」的差異在於?",o:["前者增加工作種類的廣度,後者增加職權與責任的深度","前者加薪,後者不加薪","前者針對主管,後者針對基層","兩者意義完全相同"],a:0,
+ e:"<b>工作擴大化=橫向</b>增加工作項目數量;<b>工作豐富化=縱向</b>賦予規劃、決策與自主權。",t:"擴大是「變多」,豐富是「變深」"},
+/* ── CH8 財務管理 ── */
+{c:8,q:"銀行評估授信的 5C 原則中,「品格」指的是?",o:["借款人的還款意願與信用紀錄","借款人的資產淨值","總體經濟景氣狀況","擔保品的價值"],a:0,
+ e:"5C=<b>品格(Character)、能力(Capacity)、資本(Capital)、擔保品(Collateral)、狀況(Condition)</b>。品格看還款<b>意願</b>,能力看還款<b>財力</b>。"},
+{c:8,q:"流動比率 200%、速動比率 60%,最可能的原因是?",o:["現金過多","存貨積壓過多","負債過高","應收帳款收現太快"],a:1,
+ e:"速動資產<b>不含存貨與預付費用</b>。兩者落差大→存貨占流動資產比重過高,可能<b>滯銷積壓</b>,短期償債能力其實沒有流動比率看起來那麼好。",t:"流動比率理想 200%,速動比率理想 100%"},
+{c:8,q:"本益比(P/E)為 15 倍,最直觀的意義是?",o:["每股可賺 15 元","股價是每股盈餘的 15 倍,約 15 年回本","公司負債為股東權益 15 倍","毛利率為 15%"],a:1,
+ e:"P/E=股價÷每股盈餘(EPS),代表<b>用現在的獲利水準,約需 15 年賺回股價</b>。數值越低通常代表回本越快。",t:"ROA 看總資產效率、ROE 看股東報酬、EPS 看每股賺多少"},
+/* ── CH9 商業法律 ── */
+{c:9,q:"關於著作權的取得,我國採取何種原則?",o:["註冊保護主義","創作保護主義","先申請主義","公告保護主義"],a:1,
+ e:"著作權採<b>創作保護主義</b>——<b>創作完成即自動取得</b>,無須申請登記;<b>專利與商標</b>才採<b>先申請主義</b>,誰先送件誰取得。",t:"著作權=自動;專利商標=搶快送件"},
+{c:9,q:"下列何者<b>不是</b>營業秘密的成立要件?",o:["非一般涉及該類資訊之人所知","因其秘密性而具經濟價值","已採取合理保密措施","已向智慧財產局申請登記"],a:3,
+ e:"營業秘密三要件:<b>秘密性、經濟價值、合理保密措施</b>,<b>不需登記</b>——一旦登記公開反而失去秘密性。"},
+{c:9,q:"依公平交易法,關於獨占事業的規範,下列敘述何者正確?",o:["法律禁止企業成為獨占事業","獨占本身不違法,濫用獨占地位才違法","獨占事業一律須拆分","獨占事業免受公平法規範"],a:1,
+ e:"公平法<b>不禁止獨占,禁止的是濫用獨占地位</b>(不當定價、阻礙他人競爭)。至於<b>聯合行為</b>則採「原則禁止、例外許可」。",t:"強不是罪,仗勢欺人才是罪"},
+/* ── CH10 商業未來發展 ── */
+{c:10,q:"關於 LINE Pay 與 LINE Pay Money 的差異,下列敘述何者正確?",o:["兩者都是電子支付","LINE Pay 屬第三方支付,LINE Pay Money 屬電子支付","LINE Pay 可儲值轉帳,LINE Pay Money 不行","兩者主管機關相同"],a:1,
+ e:"<b>LINE Pay = 第三方支付</b>(串接信用卡代收付,主管機關<b>數位發展部</b>);<b>LINE Pay Money = 電子支付</b>(可儲值、轉帳,主管機關<b>金管會</b>)。",t:"能儲值轉帳的才是電子支付"},
+{c:10,q:"「電信業者與便利商店合作推出聯名帳單服務」屬於?",o:["業際整合","策略聯盟","水平整合","垂直整合"],a:1,
+ e:"兩家<b>獨立企業</b>為特定目的合作但仍各自獨立→<b>策略聯盟</b>;<b>業際整合</b>是同一企業<b>跨越產業界線</b>整合不同行業機能。",t:"素養題最愛把這兩個放在一起當誘答"},
+{c:10,q:"企業在市場成長、自身條件良好時,依 Glueck 應採何種策略?",o:["成長策略","穩定策略","緊縮策略","混合策略"],a:0,
+ e:"Glueck 四大策略口訣:<b>好日穩、想衝成、缺錢縮、不平混</b>——日子好過採穩定,想擴張採成長,資源不足採緊縮,情況不一採混合。"},
+{c:10,q:"消費者在 momo、蝦皮等平台向不同賣家購買商品,此類平台屬於?",o:["B2B","B2C","C2C","O2O"],a:2,
+ e:"<b>C2C</b>:平台提供場地讓<b>個人賣家對個人買家</b>交易(蝦皮拍賣);<b>B2C</b>是企業直接對消費者(momo 購物網自營);<b>O2O</b>是線上引導至線下消費。"}
+];
+
+/* 六大關卡分組 */
+const STAGES=[
+  {n:"第一關.商業基礎",ch:[1],msg:"商業的定義與社會責任,是整個商概的地基!"},
+  {n:"第二關.創業與現代化",ch:[2,3],msg:"從創業精神到商業現代化,商業如何進化?"},
+  {n:"第三關.經營型態",ch:[4,5],msg:"業種業態、連鎖加盟——最愛出情境判斷題的一關!"},
+  {n:"第四關.行銷與人資",ch:[6,7],msg:"賣東西跟用人才,都是門學問。"},
+  {n:"第五關.財務與法律",ch:[8,9],msg:"看懂財報、守住法律底線,才走得長久。"},
+  {n:"第六關.未來趨勢",ch:[10],msg:"最後一關!行動支付與電商是近年爆量考點。"}
+];
+
+const MODES={
+  full:{label:"六關全破",build:()=>STAGES.map(s=>shuffle(BANK.filter(q=>s.ch.includes(q.c))))},
+  quick:{label:"快速練習",build:()=>[shuffle([...BANK]).slice(0,12)]},
+  weak:{label:"隨機挑戰",build:()=>[shuffle([...BANK]).slice(0,20)]}
+};
+const modeName={full:"★ 六關全破",quick:"快速練習(12題)",weak:"隨機挑戰(20題)"};
+const modeDesc={
+  full:`${BANK.length} 題全收錄!依章節分成六大關,每關結束可休息`,
+  quick:"隨機 12 題,課堂 5 分鐘小測驗剛剛好",
+  weak:"隨機 20 題混合出擊,考前熱身"
+};
+
+/* ══ 狀態 ══ */
+let mode="full", stages=[], si=0, qi=0;
+let score=0, correct=0, total=0, streak=0, maxStreak=0, wrongAll=[], best=0, locked=false;
+const $=s=>document.querySelector(s);
+const mainEl=$("#main"), expEl=$("#exp");
+
+let AC=null,muted=false;
+$("#snd").addEventListener("click",()=>{muted=!muted;$("#snd").textContent=muted?"🔇":"🔊";});
+function beep(f,d=.09,t="square",v=.12){
+  if(muted) return;
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+    if(AC.state==="suspended") AC.resume();
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type=t;o.frequency.value=f;
+    g.gain.setValueAtTime(v,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
+    o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);
+  }catch(e){}
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const isFever=()=>streak>=5;
+
+$("#mode-list").innerHTML=Object.keys(MODES).map(m=>
+  `<button class="mode-btn" data-mode="${m}" ${m==="full"?'style="border-color:#C1272D"':""}>
+     <b ${m==="full"?'style="color:#C1272D"':""}>${modeName[m]}</b><span>${modeDesc[m]}</span>
+   </button>`).join("");
+document.querySelectorAll(".mode-btn").forEach(b=>b.addEventListener("click",()=>start(b.dataset.mode)));
+
+function start(m){
+  mode=m;
+  $("#mode-label").textContent=MODES[m].label;
+  stages=MODES[m].build();
+  si=0;qi=0;score=0;correct=0;total=0;streak=0;maxStreak=0;wrongAll=[];
+  document.body.classList.remove("fever");
+  ["ov-start","ov-stage","ov-end"].forEach(i=>$("#"+i).classList.add("hidden"));
+  renderStagebar();
+  showQ();
+}
+function totalQ(){return stages.reduce((s,a)=>s+a.length,0);}
+function renderStagebar(){
+  $("#stagebar").innerHTML = mode==="full"
+    ? stages.map((_,i)=>`<i class="${i<si?'on':i===si?'now':''}"></i>`).join("")
+    : "";
+}
+function showQ(){
+  locked=false;
+  const q=stages[si][qi];
+  $("#chip").textContent=`第 ${q.c} 章`;
+  $("#chip").style.setProperty("--c",CH_COLOR[q.c]);
+  const t=$("#qtext");
+  t.innerHTML=q.q;
+  t.classList.toggle("long",q.q.replace(/<[^>]+>/g,"").length>34);
+  const el=$("#opts");
+  el.innerHTML=q.o.map((o,i)=>
+    `<button class="opt" data-i="${i}"><span class="k">${"ABCD"[i]}</span><span>${o}</span></button>`).join("");
+  [...el.querySelectorAll(".opt")].forEach(b=>b.addEventListener("click",()=>pick(+b.dataset.i)));
+  expEl.classList.remove("show");expEl.innerHTML="";
+  updateHUD();
+}
+function pick(i){
+  if(locked) return;
+  locked=true;
+  const q=stages[si][qi];
+  const btns=[...document.querySelectorAll(".opt")];
+  btns.forEach((b,bi)=>{
+    if(bi===q.a) b.classList.add("right");
+    else if(bi===i) b.classList.add("wrong");
+    else b.classList.add("dim");
+  });
+  total++;
+  if(i===q.a){
+    correct++;streak++;maxStreak=Math.max(maxStreak,streak);
+    const fever=isFever();
+    document.body.classList.toggle("fever",fever);
+    const gain=Math.round((10+Math.min(streak-1,5)*2)*(fever?2:1));
+    score+=gain;
+    beep(480+Math.min(streak,10)*45,.09);
+    if(fever&&streak===5){beep(660,.1);setTimeout(()=>beep(880,.1),90);setTimeout(()=>beep(1100,.14),180);}
+    const p=document.createElement("div");
+    p.className="popup"+(fever?" fev":"");
+    p.textContent="+"+gain+(fever?" 🔥":"");
+    mainEl.appendChild(p);setTimeout(()=>p.remove(),1000);
+  }else{
+    streak=0;document.body.classList.remove("fever");
+    beep(140,.28,"sawtooth",.15);
+    $("#qcard").classList.remove("shake");void $("#qcard").offsetWidth;$("#qcard").classList.add("shake");
+    wrongAll.push(q);
+  }
+  expEl.innerHTML=`<b>正解:${"ABCD"[q.a]}</b> ${q.e}`+(q.t?`<span class="tip">⚠ ${q.t}</span>`:"");
+  expEl.classList.add("show");
+  updateHUD();
+  setTimeout(()=>{
+    qi++;
+    if(qi>=stages[si].length){
+      si++;qi=0;
+      if(si>=stages.length){ end(); }
+      else{ renderStagebar(); stageEnd(); }
+    }else showQ();
+  }, i===q.a?1500:3200);
+}
+function updateHUD(){
+  $("#prog-text").textContent=`${total}/${totalQ()}`;
+  $("#score-text").textContent=score;
+  $("#streak-text").textContent= isFever()?`🔥FEVER x2 連對 ${streak}`:(streak>=3?`🔥 連對 ${streak}`:"");
+  $("#prog-bar").style.width=(totalQ()?total/totalQ()*100:0)+"%";
+}
+function stageEnd(){
+  const s=STAGES[si];
+  $("#stage-title").textContent=`${STAGES[si-1].n} 完成!`;
+  $("#stage-msg").textContent= s ? `下一關:${s.n}——${s.msg}` : "";
+  $("#stage-correct").textContent=`${correct}/${total}`;
+  $("#stage-score").textContent=score;
+  $("#ov-stage").classList.remove("hidden");
+}
+$("#btn-next").addEventListener("click",()=>{$("#ov-stage").classList.add("hidden");showQ();});
+
+function end(){
+  $("#scorecard-result").innerHTML="";
+  const acc=Math.round(correct/total*100);
+  let rec="";
+  if(score>best){best=score;rec="<b style='color:#E8A008'>🏆 新紀錄!</b><br>";beep(660,.1);setTimeout(()=>beep(880,.1),100);setTimeout(()=>beep(1320,.18),200);}
+  else if(best>0) rec=`<b>目前最佳 ${best} 分,再挑戰一次破紀錄!</b><br>`;
+  $("#end-title").textContent= acc===100?"🎉 商概滿分王!":acc>=80?"表現優異!":"總複習完成!";
+  $("#end-score").textContent=score+" 分";
+  $("#end-correct").textContent=`${correct}/${total}`;
+  $("#end-acc").textContent=acc+"%";
+  $("#end-streak").textContent=maxStreak;
+  $("#end-wrong").innerHTML= rec + (wrongAll.length
+    ? "<b>需要複習的考點:</b><br>"+wrongAll.map(w=>
+        `<div class="w"><span class="tag" style="background:${CH_COLOR[w.c]}">CH${w.c}</span>${w.q.replace(/<[^>]+>/g,"")}<br><span class="ans">→ ${w.o[w.a]}</span></div>`).join("")
+    : "全部答對,商概無敵!");
+  $("#ov-end").classList.remove("hidden");
+}
+$("#btn-again").addEventListener("click",()=>start(mode));
+$("#btn-restart").addEventListener("click",()=>{$("#ov-end").classList.add("hidden");$("#ov-start").classList.remove("hidden");});
+
+/* ══ 成績卡與驗證 ══ */
+const VSALT="CLVS-ACC-2026-桃";
+function vcode(str){
+  let h=5381,h2=52711;
+  for(let i=0;i<str.length;i++){h=((h<<5)+h+str.charCodeAt(i))>>>0;}
+  for(let i=str.length-1;i>=0;i--){h2=((h2*33)^str.charCodeAt(i))>>>0;}
+  const s=(h.toString(36)+h2.toString(36)).toUpperCase().replace(/[^A-Z0-9]/g,"");
+  return (s+"00000000").slice(0,8).replace(/^(.{4})(.{4})$/,"$1-$2");
+}
+$("#btn-make-card").addEventListener("click",async()=>{
+  const name=$("#player-name").value.trim();
+  if(!name){$("#player-name").style.borderColor="var(--red)";$("#player-name").placeholder="請先輸入姓名!";return;}
+  $("#player-name").style.borderColor="";
+  const d=new Date(),p=n=>String(n).padStart(2,"0");
+  const dt=`${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+  const mName="商概總複習."+modeName[mode];
+  const scoreTxt=$("#end-score").textContent.trim();
+  const code=vcode(`${VSALT}|${name}|${mName}|${scoreTxt}|${dt}`);
+  const s1=$("#end-correct").textContent.trim(),s2=$("#end-acc").textContent.trim(),s3=$("#end-streak").textContent.trim();
+  try{await document.fonts.ready;}catch(e){}
+  const W=1000,H=640,cv=document.createElement("canvas");cv.width=W;cv.height=H;
+  const g=cv.getContext("2d");
+  g.fillStyle="#FAF7F2";g.fillRect(0,0,W,H);
+  g.fillStyle="#E3DDD2";
+  for(let y=30;y<H;y+=22)for(let x=30;x<W;x+=22){g.fillRect(x,y,2,2);}
+  g.strokeStyle="#2A2621";g.lineWidth=3;g.strokeRect(14,14,W-28,H-28);
+  g.textAlign="center";g.fillStyle="#2A2621";
+  g.font='900 46px "Noto Sans TC",sans-serif';g.fillText("商概總複習大挑戰",W/2,88);
+  g.font='700 22px "Noto Sans TC",sans-serif';g.fillStyle="#6E655A";g.fillText("成 績 證 明",W/2,124);
+  g.fillStyle="#2A2621";g.font='900 40px "Noto Sans TC",sans-serif';g.fillText(name,W/2,196);
+  g.font='700 24px "Noto Sans TC",sans-serif';g.fillStyle="#6E655A";g.fillText(`模式:${mName}`,W/2,238);
+  g.fillStyle="#2A2621";g.font='900 110px "Noto Sans TC",sans-serif';g.fillText(scoreTxt,W/2,372);
+  const L=["答對題數","正確率","最長連對"],V=[s1,s2,s3],X=[W/2-280,W/2,W/2+280];
+  for(let i=0;i<3;i++){
+    g.fillStyle="#6E655A";g.font='500 20px "Noto Sans TC",sans-serif';g.fillText(L[i],X[i],428);
+    g.fillStyle="#2A2621";g.font='900 34px "Noto Sans TC",sans-serif';g.fillText(V[i],X[i],470);
+  }
+  g.fillStyle="#6E655A";g.font='500 22px "Noto Sans TC",sans-serif';g.fillText(dt,W/2,530);
+  g.fillStyle="#2A2621";g.font='900 30px monospace';g.fillText(`驗證碼 ${code}`,W/2,576);
+  g.save();g.translate(W-150,150);g.rotate(-.22);
+  g.strokeStyle="rgba(193,39,45,.85)";g.lineWidth=6;g.beginPath();g.arc(0,0,74,0,Math.PI*2);g.stroke();
+  g.fillStyle="rgba(193,39,45,.85)";g.font='900 52px "Noto Sans TC",sans-serif';g.fillText("商概",0,20);g.restore();
+  const url=cv.toDataURL("image/png");
+  $("#scorecard-result").innerHTML=
+    `<img src="${url}" alt="成績卡">`+
+    `<a class="btn ghost-btn" style="display:inline-block;text-decoration:none" href="${url}" download="商概成績卡_${name}.png">下載圖片</a>`+
+    `<div class="vcode-note">手機可長按圖片儲存,再傳給老師。<br>驗證碼:<b>${code}</b></div>`;
+});
+function openVerify(){$("#ov-verify").classList.remove("hidden");}
+if(location.hash==="#verify") openVerify();
+window.addEventListener("hashchange",()=>{if(location.hash==="#verify")openVerify();});
+$("#btn-verify").addEventListener("click",()=>{
+  const expect=vcode(`${VSALT}|${$("#v-name").value.trim()}|${$("#v-mode").value.trim()}|${$("#v-score").value.trim()}|${$("#v-dt").value.trim()}`);
+  const r=$("#verify-result");
+  if($("#v-code").value.trim().toUpperCase()===expect){r.textContent="✔ 驗證通過,成績為真";r.className="verify-result ok";}
+  else{r.textContent="✘ 驗證失敗,內容與驗證碼不符";r.className="verify-result bad";}
+});
+$("#btn-verify-close").addEventListener("click",()=>{
+  $("#ov-verify").classList.add("hidden");
+  if(location.hash==="#verify") history.replaceState(null,"",location.pathname+location.search);
+});
+</script>
+</body>
+</html>

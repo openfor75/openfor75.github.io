@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>柑仔店大冒險｜第5章 連鎖企業及微型企業創業經營</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12332B;          /* 深瓶綠：老柑仔店木櫃 */
+  --paper:#FBF3DC;       /* 米紙黃 */
+  --ink:#26221B;         /* 墨色 */
+  --red:#C5283D;         /* 紅龜粿紅 */
+  --yolk:#F2B33D;        /* 鹹蛋黃 */
+  --teal:#1F6F5C;        /* 招牌綠 */
+  --soft:#EADFC0;
+  --shadow:0 6px 0 rgba(0,0,0,.25);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  font-family:'Noto Sans TC',sans-serif;color:var(--ink);
+  background:var(--bg);
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(242,179,61,.08) 0 120px, transparent 121px),
+    radial-gradient(circle at 85% 70%, rgba(197,40,61,.10) 0 160px, transparent 161px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.02) 0 2px, transparent 2px 60px);
+  min-height:100vh;display:flex;justify-content:center;padding:16px 12px 48px;
+}
+.wrap{width:100%;max-width:560px}
+/* 招牌 */
+.signboard{
+  background:var(--red);color:var(--paper);border-radius:14px;
+  border:3px solid #8E1B2C;box-shadow:var(--shadow), inset 0 0 0 4px rgba(251,243,220,.25);
+  padding:14px 16px;text-align:center;margin-bottom:14px;position:relative;
+}
+.signboard::before,.signboard::after{
+  content:"";position:absolute;top:-10px;width:10px;height:10px;border-radius:50%;
+  background:var(--yolk);box-shadow:0 0 8px rgba(242,179,61,.9);
+}
+.signboard::before{left:18px}.signboard::after{right:18px}
+.signboard h1{font-family:'Noto Serif TC',serif;font-weight:900;font-size:1.5rem;letter-spacing:.12em}
+.signboard p{font-size:.8rem;opacity:.92;margin-top:4px;letter-spacing:.06em}
+/* 狀態列 */
+.hud{display:flex;gap:8px;margin-bottom:14px}
+.hud .chip{
+  flex:1;background:rgba(251,243,220,.12);border:1.5px solid rgba(251,243,220,.35);
+  color:var(--paper);border-radius:10px;padding:8px 10px;font-size:.82rem;text-align:center;
+}
+.hud b{font-size:1.05rem;color:var(--yolk)}
+.progress{height:8px;background:rgba(251,243,220,.15);border-radius:99px;overflow:hidden;margin-bottom:14px}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--yolk),var(--red));width:0%;transition:width .5s}
+/* 卡片 */
+.card{
+  background:var(--paper);border-radius:16px;padding:20px 18px 22px;
+  box-shadow:var(--shadow);border:2px solid #D8C79A;animation:pop .35s ease;
+}
+@keyframes pop{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+.stage-tag{
+  display:inline-block;background:var(--teal);color:var(--paper);
+  font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:99px;letter-spacing:.1em;margin-bottom:10px;
+}
+.card h2{font-family:'Noto Serif TC',serif;font-weight:900;font-size:1.25rem;margin-bottom:10px;line-height:1.4}
+.story{
+  background:var(--soft);border-left:5px solid var(--yolk);border-radius:8px;
+  padding:12px 14px;font-size:.95rem;line-height:1.75;margin-bottom:14px;
+}
+.story .who{font-weight:900;color:var(--red)}
+.q{font-weight:700;font-size:1rem;line-height:1.6;margin:8px 0 12px}
+.opts{display:flex;flex-direction:column;gap:9px}
+button.opt{
+  font-family:inherit;font-size:.95rem;text-align:left;line-height:1.55;
+  background:#fff;border:2px solid #C9B98C;border-radius:12px;padding:12px 14px;
+  cursor:pointer;transition:transform .12s, border-color .12s;color:var(--ink);
+}
+button.opt:active{transform:scale(.98)}
+button.opt.correct{border-color:var(--teal);background:#E3F1EA;font-weight:700}
+button.opt.wrong{border-color:var(--red);background:#FBE3E6}
+button.opt:disabled{cursor:default;opacity:.92}
+.feedback{
+  margin-top:14px;border-radius:12px;padding:12px 14px;font-size:.9rem;line-height:1.7;display:none;
+}
+.feedback.show{display:block;animation:pop .3s ease}
+.feedback.good{background:#E3F1EA;border:2px solid var(--teal)}
+.feedback.bad{background:#FBE3E6;border:2px solid var(--red)}
+.feedback b{display:block;margin-bottom:4px;font-size:1rem}
+.next-btn{
+  font-family:inherit;display:none;margin:16px auto 0;background:var(--red);color:var(--paper);
+  border:none;border-radius:99px;padding:12px 34px;font-size:1rem;font-weight:900;
+  letter-spacing:.15em;cursor:pointer;box-shadow:0 4px 0 #8E1B2C;
+}
+.next-btn:active{transform:translateY(3px);box-shadow:0 1px 0 #8E1B2C}
+.next-btn.show{display:block;animation:pop .3s}
+.start-btn{display:block;background:var(--yolk);color:var(--ink);box-shadow:0 4px 0 #B27F1C}
+.start-btn:active{box-shadow:0 1px 0 #B27F1C}
+/* 分類遊戲 */
+.sort-item{
+  background:#fff;border:2px dashed #C9B98C;border-radius:12px;padding:12px 14px;
+  font-size:.95rem;line-height:1.55;margin-bottom:10px;font-weight:500;
+}
+.bucket-row{display:flex;gap:8px;margin-top:10px}
+button.bucket{
+  flex:1;font-family:inherit;font-size:.9rem;font-weight:900;padding:12px 4px;border-radius:12px;
+  border:2px solid #C9B98C;background:#fff;cursor:pointer;color:var(--ink);
+}
+button.bucket:active{transform:scale(.96)}
+.mini-score{font-size:.82rem;color:#6b5d3f;margin-top:8px;text-align:right}
+/* 結局 */
+.ending-title{
+  font-family:'Noto Serif TC',serif;font-weight:900;font-size:1.7rem;color:var(--red);
+  text-align:center;margin:8px 0 4px;
+}
+.ending-sub{text-align:center;font-size:.95rem;margin-bottom:14px}
+.badge{
+  width:120px;height:120px;border-radius:50%;margin:6px auto 14px;display:flex;
+  align-items:center;justify-content:center;font-size:3rem;
+  background:radial-gradient(circle at 35% 30%, #fff5, transparent 60%), var(--yolk);
+  border:4px solid var(--red);box-shadow:var(--shadow);
+}
+.review{background:var(--soft);border-radius:10px;padding:12px 14px;font-size:.88rem;line-height:1.75;margin-top:10px}
+.review h3{font-size:.95rem;color:var(--red);margin-bottom:6px}
+.footer-note{color:rgba(251,243,220,.55);font-size:.72rem;text-align:center;margin-top:18px;letter-spacing:.05em}
+.big-emoji{font-size:2.2rem;text-align:center;margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="signboard">
+    <h1>柑仔店大冒險</h1>
+    <p>商業概論 CH5｜連鎖企業及微型企業創業經營</p>
+  </div>
+  <div class="hud">
+    <div class="chip">💰 創業金<br><b id="money">50</b> 萬</div>
+    <div class="chip">⭐ 商業智慧<br><b id="wisdom">0</b> 點</div>
+    <div class="chip">📍 進度<br><b id="stageNum">0</b>/12</div>
+  </div>
+  <div class="progress"><i id="bar"></i></div>
+  <div id="app"></div>
+  <p class="footer-note">答對＋10 智慧＋加碼創業金｜答錯也會獲得完整解析，智慧不扣分</p>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let money=50, wisdom=0, step=0, wrongList=[];
+const TOTAL=12;
+
+function updateHUD(){
+  $('money').textContent=money;
+  $('wisdom').textContent=wisdom;
+  $('stageNum').textContent=Math.min(step,TOTAL);
+  $('bar').style.width=(Math.min(step,TOTAL)/TOTAL*100)+'%';
+}
+
+/* ---------- 劇情關卡資料 ---------- */
+const scenes=[
+/* 0 開場 */
+{type:'intro',tag:'序章',title:'阿嬤把柑仔店交給你了',emoji:'🏮',
+story:`<span class="who">阿嬤：</span>「小杏啊，這間店開了四十年，賣過你爸的彈珠汽水，也賣過你的乖乖。阿嬤老了，這間店……就交給你了。」<br><br>你看著店裡：燈光昏暗、貨架上有一包<b>過期的</b>王子麵、帳本是手寫的、收銀機還要搖把手。<br><br>你手上有<b>創業金 50 萬</b>。這場冒險，將帶你走過課本 5.1～5.6 的每一個關鍵決策。準備好了嗎？`,
+btn:'接下店鑰匙 🗝️'},
+
+/* 1 - 5.1 診斷 */
+{type:'quiz',tag:'第 1 關｜5.1 傳統商店',title:'先診斷：過期王子麵之謎',emoji:'🍜',
+story:`<span class="who">你：</span>「為什麼貨架上會有過期的泡麵啊？」<br><span class="who">阿嬤：</span>「新貨來我就直接放前面啊，比較好拿嘛！」`,
+q:'消費者在傳統商店容易買到過期商品，「主要」原因是？',
+opts:[
+ {t:'店內照明較暗，看不清楚日期',ok:false,why:'照明是賣場劣勢沒錯，但不是過期品的主因。'},
+ {t:'未嚴格執行「先進先出（FIFO）」的作法',ok:true},
+ {t:'購物動線不佳，客人懶得走到後面',ok:false,why:'動線影響的是購物體驗，不是商品過期。'},
+ {t:'貨架太高拿不到',ok:false,why:'這只會讓商品賣不掉，關鍵仍在補貨順序。'}],
+ex:'阿嬤把新貨放前面＝「後進先出」，舊貨永遠卡在後排直到過期。存貨管理鐵則：<b>先進先出（First In, First Out）</b>。這也是傳統商店「進銷存管理缺乏效率」劣勢的經典案例。',
+reward:5},
+
+/* 2 - 5.1 系統選擇 */
+{type:'quiz',tag:'第 2 關｜5.1 傳統商店',title:'第一筆投資：買哪套系統？',emoji:'💻',
+story:`<span class="who">系統業務員：</span>「同學，要讓結帳變快、還能分析哪些商品是暢銷品，你需要的是——？」<br>（他狡猾地笑著，故意把型錄上的縮寫排在一起考你）`,
+q:'想「節省結帳時間＋分析暢銷／滯銷品」，該導入哪套系統？',
+opts:[
+ {t:'EOS 電子訂貨系統',ok:false,why:'EOS 管「訂貨」，跟結帳無關——這是統測經典陷阱！'},
+ {t:'CIS 企業識別系統',ok:false,why:'CIS 是商標、色彩等「企業長相」，對商品管理沒有直接影響。'},
+ {t:'POS 銷售點管理系統',ok:true},
+ {t:'CSI 顧客滿意指標',ok:false,why:'CSI 是衡量顧客滿意度的「指標」，不是系統。'}],
+ex:'四兄弟分工：<b>POS＝結帳＋銷售分析</b>／EOS＝電子訂貨／EDI＝電子資料交換／CIS＝企業識別。段考最愛把它們洗牌考你！',
+reward:5},
+
+/* 3 - 5.2 四要件 */
+{type:'quiz',tag:'第 3 關｜5.2 連鎖企業簡介',title:'加盟展初體驗：連鎖的秘密',emoji:'🎪',
+story:`小店翻新後生意變好，但你發現單打獨鬥好累。你走進「連鎖加盟展」，400 個攤位閃閃發光。<br><span class="who">講師：</span>「連鎖企業要順利運作，必須具備『四個一致』。我說三個，你接最後一個：經營理念一致、商品服務一致、企業識別系統一致，還有——？」`,
+q:'連鎖經營四要件的最後一項是？',
+opts:[
+ {t:'員工人數一致',ok:false,why:'各分店規模不同，員工數本來就不同——這是干擾選項常客。'},
+ {t:'管理制度一致',ok:true},
+ {t:'營業面積一致',ok:false,why:'面積不可能一致，也不是要件。'},
+ {t:'門市人員學歷一致',ok:false,why:'學歷從來不是連鎖要件。'}],
+ex:'口訣「<b>經商企管</b>」：<b>經</b>營理念、<b>商</b>品服務、<b>企</b>業識別、<b>管</b>理制度——四個一致。課本彩蛋：圖中 12 點鐘方向順時鐘唸剛好是這四個字！',
+reward:5},
+
+/* 4 - 5.3 情境選型態 A */
+{type:'quiz',tag:'第 4 關｜5.3 加盟組織類型',title:'命運的岔路：你要當哪種店？',emoji:'🔀',
+story:`<span class="who">加盟顧問：</span>「你的狀況我懂了：<b>沒有店面、資金有限、完全沒有連鎖經營經驗</b>，但你希望總部提供店面、設備、裝潢，還要有營業保證，你只出加盟金和保證金。」<br>他在紙上寫下四個選項。`,
+q:'最符合這個需求的加盟型態是？',
+opts:[
+ {t:'直營連鎖（RC）——由總部自己開店',ok:false,why:'RC 是總部 100% 出資自營，根本不開放你加盟。'},
+ {t:'委託加盟（FC2）——總部出店面設備，委託你經營',ok:true},
+ {t:'自願加盟（VC）——全部自己出資，總部只給商標輔導',ok:false,why:'VC 要你自己出店面出資金，跟「沒店面資金少」矛盾。'},
+ {t:'合作加盟（CC)——零售商合資成立總部',ok:false,why:'CC 是既有零售商聯合起義，你連店都沒有。'}],
+ex:'判斷心法：看「<b>誰出店面</b>」。總部出店面＋設備＋裝潢、你只繳加盟金保證金 → <b>委託加盟 FC2</b>。代價是：利潤總部分比較多。7-11、全家、萊爾富都有這種模式。',
+reward:8},
+
+/* 5 - 5.3 情境選型態 B */
+{type:'quiz',tag:'第 5 關｜5.3 加盟組織類型',title:'隔壁攤的煩惱',emoji:'🧋',
+story:`排隊時你認識了飲料店老闆娘阿霞。<br><span class="who">阿霞：</span>「我不一樣，我<b>自己有店面</b>也出得起裝潢錢，但我想掛大品牌、照總部的 SOP 走、有營業保證，利潤我要拿大頭！」`,
+q:'阿霞想要的是哪種加盟型態？',
+opts:[
+ {t:'特許加盟（FC1）',ok:true},
+ {t:'委託加盟（FC2）',ok:false,why:'FC2 是總部出店面，而且利潤總部拿大頭——跟阿霞的條件相反。'},
+ {t:'直營連鎖（RC）',ok:false,why:'RC 利潤全歸總部，阿霞一毛都分不到。'},
+ {t:'自願加盟（VC）',ok:false,why:'VC 沒有營業保證，決策也全在自己，不符「照總部 SOP 走」。'}],
+ex:'秒殺對照：<b>FC1 特許＝加盟者自備店面、利潤加盟者多</b>；<b>FC2 委託＝總部提供店面、利潤總部多</b>；兩者都是「總部握決策權＋有營業保證」。記法：「1 個人自己買店、2 手店總部給」。',
+reward:8},
+
+/* 6 - 5.3 三金 */
+{type:'quiz',tag:'第 6 關｜5.3 加盟三金',title:'簽約前的最後一問',emoji:'✍️',
+story:`合約攤在桌上：加盟金 30 萬、履約保證金 60 萬、每月權利金。<br><span class="who">你：</span>「等等——如果十年後合約結束，這些錢哪些拿得回來？」<br>顧問挑了挑眉：「問得好，這題統測考過。」`,
+q:'合約結束後，「會退還」給加盟者的是？',
+opts:[
+ {t:'加盟金',ok:false,why:'加盟金是使用商標技術的「入場費」，合約結束不退。'},
+ {t:'權利金',ok:false,why:'權利金是加盟期間的「月費」，付了就付了，不退。'},
+ {t:'履約保證金（扣除欠款違約金後）',ok:true},
+ {t:'三種都會退',ok:false,why:'只有一種會退——別被佛心話術騙了。'}],
+ex:'口訣：「<b>加權不退、保證要退</b>」。履約保證金像押金，證明你乖乖履約；合約結束、扣掉欠貨款或違約金後<b>須退還</b>。',
+reward:5},
+
+/* 7 - 5.4 3S 分類 */
+{type:'sort',tag:'第 7 關｜5.4 3S 管理',title:'總部特訓營：3S 分類挑戰',emoji:'🏋️',
+story:`你選了適合自己的型態、簽約成為「杏福柑仔店 2.0」。總部把你送進新店長特訓營。<br><span class="who">教官：</span>「連鎖成功的核心是 3S！我唸出總部的四項做法，你立刻判斷它屬於哪個 S！」`,
+items:[
+ {t:'① 編製「圖解工作手冊」，讓新進員工三天就能獨立作業',ans:'簡',why:'關鍵字「手冊、容易上手」→ 作業方式簡單化。'},
+ {t:'② 全台分店的裝潢、制服、招呼語完全相同',ans:'標',why:'關鍵字「相同、一致」→ 標準化（企業形象標準化）。'},
+ {t:'③ 總部負責規劃行銷活動，分店專心執行銷售',ans:'專',why:'關鍵字「分工、各司其職」→ 專業化（總部規劃、分店執行）。'},
+ {t:'④ 導入 APP 自助點餐，把點餐流程化繁為簡、降低人力',ans:'簡',why:'化繁為簡 → 簡單化。114 統測就這樣考！'}],
+buckets:[{k:'簡',t:'簡單化'},{k:'專',t:'專業化'},{k:'標',t:'標準化'}],
+ex:'判斷字典：<b>簡</b>＝手冊／上手／化繁為簡；<b>專</b>＝分工／各司其職；<b>標</b>＝一致／相同。注意陷阱：「總部負責銷售、分店負責規劃」是<b>顛倒的錯誤敘述</b>！',
+reward:8},
+
+/* 8 - 5.5 結盟判斷 */
+{type:'quiz',tag:'第 8 關｜5.5 異業結盟',title:'跨界邀請函',emoji:'🤝',
+story:`店穩定後，三封合作邀請同時飛來。你只挑一封來練習判斷——<br><span class="who">高鐵代表：</span>「我們想讓客人在你店裡<b>購票、取票</b>，你賺手續費＋來客數，我們多幾千個售票窗口！」`,
+q:'這種結盟屬於哪一型？',
+opts:[
+ {t:'物流型（通路型）',ok:false,why:'物流型的對象是「物流業者」（如宅配通），重點在配送。'},
+ {t:'行銷及售後服務型',ok:true},
+ {t:'技術研發型',ok:false,why:'沒有共同研發新技術新商品。'},
+ {t:'財務型',ok:false,why:'沒有資金融通，跟 BOT 無關。'}],
+ex:'雙方有<b>共同目標客群</b>、互相運用銷售通路提供服務 → <b>行銷及售後服務型</b>（統測出現率最高的類型）。對照：超商×宅配＝物流型；家樂福自有品牌代工＝生產製造型（OEM）。',
+reward:8},
+
+/* 9 - 5.5 陷阱雙王 */
+{type:'quiz',tag:'第 9 關｜5.5 異業結盟',title:'結盟成功學：陷阱雙王',emoji:'⚖️',
+story:`<span class="who">合作顧問：</span>「簽約前我考你一題，答對才代表你真的懂結盟。很多人都栽在這題的兩個詞上。」`,
+q:'關於異業結盟成功的關鍵，下列何者「正確」？',
+opts:[
+ {t:'雙方的組織文化應具「互補性」',ok:false,why:'文化要「相似或一致」才能有共同理念——互補的是資源不是文化！'},
+ {t:'雙方的資源技術應具「相似性」',ok:false,why:'資源相似就沒有合作的意義了，資源要「互補」。'},
+ {t:'組織文化應相似，資源技術應互補',ok:true},
+ {t:'結盟可「降低」新競爭者的進入障礙',ok:false,why:'結盟是「提高」進入障礙，讓對手更難進場。'}],
+ex:'陷阱雙王口訣：「<b>心同、力補</b>」——組織文化要<b>相似</b>（同心）、資源技術要<b>互補</b>（協力）。加碼：綜效＝1＋1<b>＞</b>2；進入障礙是「提高」。',
+reward:8},
+
+/* 10 - 5.6 貸款 */
+{type:'quiz',tag:'第 10 關｜5.6 微型企業',title:'表姊的創業夢',emoji:'🕊️',
+story:`你的成功激勵了 38 歲的表姊，她想辭職開手作烘焙坊，員工只有她和一位夥伴。<br><span class="who">表姊：</span>「我資金不夠……聽說政府有一種貸款，專門幫助<b>未滿 45 歲的女性</b>創業？那是哪個單位辦的？」`,
+q:'表姊該申請的貸款＆承辦單位是？',
+opts:[
+ {t:'微型創業鳳凰貸款——行政院勞動部',ok:true},
+ {t:'青年創業及啟動金貸款——行政院勞動部',ok:false,why:'青創貸款是「經濟部中小及新創企業署」辦的——單位配對是素養題陷阱！'},
+ {t:'微型創業鳳凰貸款——經濟部',ok:false,why:'鳳凰貸款是「勞動部」承辦，不是經濟部。'},
+ {t:'創業天使投資方案——財政部',ok:false,why:'天使方案是「國發會」推動，且對象是新創企業體。'}],
+ex:'配對表：<b>鳳凰＝勞動部</b>（未滿45歲女性／45-65歲國民／離島，最高200萬）；<b>青創＝經濟部中小及新創企業署</b>（18-45歲，最高1,800萬）；小頭家＝經濟部（500萬）；天使＝國發會（2,000萬）。記法：鳳凰浴火重生的「她」，由照顧勞工的勞動部守護。',
+reward:8},
+
+/* 11 - 5.6 階段 */
+{type:'quiz',tag:'第 11 關｜5.6 籌設計畫',title:'幫表姊排創業時程',emoji:'🗓️',
+story:`表姊拿出待辦清單：「性向評估我做完了、貸款也核准了！接下來這四件事，哪一件是<b>『創業營運階段』</b>才要做的？」`,
+q:'下列何者屬於「創業營運階段」的籌設項目？',
+opts:[
+ {t:'擬訂創業計劃書',ok:false,why:'計劃書屬於「創業準備階段」。'},
+ {t:'進行市場調查與分析',ok:false,why:'市調屬於「創業準備階段」。'},
+ {t:'選定目標顧客群',ok:false,why:'選定目標客群也是「準備階段」。'},
+ {t:'招募人才並進行教育訓練',ok:true}],
+ex:'三階段鐵則：<b>評估</b>（創業前：適不適合、專長、人脈、資金）→ <b>準備</b>（計劃書、市調、地點、籌資、目標客群）→ <b>營運</b>（招募、門市管理、行銷、財務、研發創新）。「研發創新、招募」看到就選營運！',
+reward:8},
+
+/* 12 - 5.3 終極 BOSS */
+{type:'quiz',tag:'最終關｜綜合 BOSS 戰',title:'十年後：換你當總部',emoji:'👑',
+story:`十年過去，「杏福」成為 30 家店的連鎖品牌，<b>你成了總部</b>。一位跟當年的你一樣的年輕人走進來——<br><span class="who">年輕人：</span>「我和朋友<b>共同出資</b>開文具店，願意付加盟金、保證金、權利金，希望總部提供技術輔導與教育訓練，但我們要<b>100% 的營業利潤</b>和完全的決策權！」`,
+q:'（112 統測真題改編）這位年輕人要的加盟型態是？',
+opts:[
+ {t:'自願加盟（VC）',ok:true},
+ {t:'合作加盟（CC）',ok:false,why:'CC 是零售商「聯合出資成立總部」當股東，他是來加入你的體系，不是自組總部。'},
+ {t:'委託加盟（FC2）',ok:false,why:'FC2 利潤總部拿大頭，決策也在總部——完全相反。'},
+ {t:'特許加盟（FC1）',ok:false,why:'FC1 決策權在總部，利潤也要共享，不符「100% 獨享＋完全決策權」。'}],
+ex:'同時滿足「<b>利潤 100% 獨享</b>」＋「<b>總部提供技術輔導</b>」的只有 <b>VC 自願加盟</b>。代價：總部控制力最弱、無營業保證、形象不易維持。恭喜你——當年在合約前發抖的小杏，如今能一眼看穿所有加盟型態了。',
+reward:10}
+];
+
+/* ---------- 渲染引擎 ---------- */
+function render(){
+  updateHUD();
+  const app=$('app');
+  if(step>=scenes.length){renderEnding();return;}
+  const s=scenes[step];
+  if(s.type==='intro'){
+    app.innerHTML=`<div class="card">
+      <span class="stage-tag">${s.tag}</span>
+      <div class="big-emoji">${s.emoji}</div>
+      <h2>${s.title}</h2>
+      <div class="story">${s.story}</div>
+      <button class="next-btn start-btn show" onclick="step++;render()">${s.btn}</button>
+    </div>`;
+    return;
+  }
+  if(s.type==='quiz'){
+    app.innerHTML=`<div class="card">
+      <span class="stage-tag">${s.tag}</span>
+      <div class="big-emoji">${s.emoji}</div>
+      <h2>${s.title}</h2>
+      <div class="story">${s.story}</div>
+      <p class="q">Q：${s.q}</p>
+      <div class="opts">${s.opts.map((o,i)=>`<button class="opt" onclick="answer(${i})">${'ABCD'[i]}. ${o.t}</button>`).join('')}</div>
+      <div class="feedback" id="fb"></div>
+      <button class="next-btn" id="nx" onclick="step++;render()">繼續冒險 ➜</button>
+    </div>`;
+    return;
+  }
+  if(s.type==='sort'){
+    sortIdx=0;sortRight=0;
+    app.innerHTML=`<div class="card">
+      <span class="stage-tag">${s.tag}</span>
+      <div class="big-emoji">${s.emoji}</div>
+      <h2>${s.title}</h2>
+      <div class="story">${s.story}</div>
+      <div id="sortZone"></div>
+      <div class="feedback" id="fb"></div>
+      <button class="next-btn" id="nx" onclick="step++;render()">繼續冒險 ➜</button>
+    </div>`;
+    renderSortItem();
+  }
+}
+
+function answer(i){
+  const s=scenes[step],o=s.opts[i];
+  const btns=document.querySelectorAll('.opt');
+  btns.forEach(b=>b.disabled=true);
+  const fb=$('fb');
+  const correctIdx=s.opts.findIndex(x=>x.ok);
+  btns[correctIdx].classList.add('correct');
+  if(o.ok){
+    wisdom+=10;money+=s.reward;
+    fb.className='feedback good show';
+    fb.innerHTML=`<b>✅ 答對了！＋10 智慧、＋${s.reward} 萬創業金</b>${s.ex}`;
+  }else{
+    btns[i].classList.add('wrong');
+    wrongList.push(`${s.tag}：${s.q}`);
+    fb.className='feedback bad show';
+    fb.innerHTML=`<b>❌ 差一點！</b>你的選項問題在：${o.why}<br><br><b>正解思路：</b>${s.ex}`;
+  }
+  updateHUD();
+  $('nx').classList.add('show');
+}
+
+/* 分類小遊戲 */
+let sortIdx=0,sortRight=0;
+function renderSortItem(){
+  const s=scenes[step];
+  if(sortIdx>=s.items.length){
+    const fb=$('fb');
+    const perfect=sortRight===s.items.length;
+    wisdom+=sortRight*3; if(perfect){money+=s.reward;}
+    updateHUD();
+    fb.className='feedback '+(perfect?'good':'bad')+' show';
+    fb.innerHTML=`<b>${perfect?'🎉 全數答對！＋'+s.reward+' 萬創業金':'訓練結束：答對 '+sortRight+'/'+s.items.length}</b>${s.ex}`;
+    if(!perfect) wrongList.push('5.4 3S 分類（'+sortRight+'/'+s.items.length+'）');
+    $('nx').classList.add('show');
+    $('sortZone').innerHTML='';
+    return;
+  }
+  const it=s.items[sortIdx];
+  $('sortZone').innerHTML=`
+    <div class="sort-item">${it.t}</div>
+    <div class="bucket-row">${s.buckets.map(b=>`<button class="bucket" onclick="pickBucket('${b.k}')">${b.t}</button>`).join('')}</div>
+    <p class="mini-score">第 ${sortIdx+1} / ${s.items.length} 題｜目前答對 ${sortRight} 題</p>`;
+}
+function pickBucket(k){
+  const s=scenes[step],it=s.items[sortIdx];
+  const fb=$('fb');
+  if(k===it.ans){sortRight++;fb.className='feedback good show';fb.innerHTML=`<b>✅ 正確！</b>${it.why}`;}
+  else{fb.className='feedback bad show';fb.innerHTML=`<b>❌ 不對喔。</b>${it.why}`;}
+  sortIdx++;
+  setTimeout(()=>{fb.className='feedback';renderSortItem();},1400);
+}
+
+/* 結局 */
+function renderEnding(){
+  step=TOTAL;updateHUD();
+  let title,emoji,msg;
+  if(wisdom>=110){title='連鎖企業大亨';emoji='👑';msg='你不只讀懂了課本，還能站在總部視角思考——統測 5.3 情境題對你來說是送分題。';}
+  else if(wisdom>=80){title='王牌加盟主';emoji='🏆';msg='大部分概念都穩了！把下方錯題回顧再讀一次，你就是滿分候選人。';}
+  else if(wisdom>=50){title='見習店長';emoji='📈';msg='方向對了，但幾個關鍵陷阱還會踩。建議重讀 5.3 比較表與 5.5 陷阱雙王。';}
+  else{title='熱血創業新手';emoji='🌱';msg='每個大亨都從新手開始！帶著錯題清單回到學習單，再來挑戰一次。';}
+  $('app').innerHTML=`<div class="card">
+    <span class="stage-tag">結局</span>
+    <div class="badge">${emoji}</div>
+    <p class="ending-title">${title}</p>
+    <p class="ending-sub">商業智慧 <b>${wisdom}</b> 點｜最終創業金 <b>${money}</b> 萬</p>
+    <div class="story">十年前那間燈光昏暗的柑仔店，如今掛上了你設計的招牌。阿嬤坐在店門口，看著排隊的人潮笑了。<br><br><b>這一章真正想教你的是：</b>「傳統」不是原罪，「加盟」不是保證，每一種經營型態都是<b>出資・所有權・決策權・利潤</b>四個變數的交換。看懂交換，你就看懂了商業。</div>
+    ${wrongList.length?`<div class="review"><h3>📋 錯題回顧（考前重點複習）</h3>${wrongList.map(w=>'• '+w).join('<br>')}</div>`:`<div class="review"><h3>💯 零失誤通關！</h3>你已具備挑戰統測歷屆試題的實力。</div>`}
+    <button class="next-btn show" onclick="restart()">再玩一次 🔄</button>
+  </div>`;
+}
+function restart(){money=50;wisdom=0;step=0;wrongList=[];render();}
+render();
+</script>
+</body>
+</html>

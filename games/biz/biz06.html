@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃氣手搖翻身戰|商概 CH6 行銷管理</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
+    background:#faf6ef; color:#3a3230; min-height:100vh;
+    display:flex; flex-direction:column; max-width:560px; margin:0 auto;
+  }
+  header {
+    padding:14px 16px 10px; background:#faf6ef; position:sticky; top:0; z-index:5;
+    border-bottom:1px solid #e8dfd2;
+  }
+  header h1 { font-size:17px; color:#1f6f6b; letter-spacing:1px; }
+  .hud { display:flex; justify-content:space-between; font-size:13px; color:#8a7f74; margin-top:6px; }
+  .bar { height:6px; background:#e8dfd2; border-radius:3px; margin-top:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0%; background:#1f6f6b; transition:width .4s; }
+  main { flex:1; padding:16px; }
+  .scene {
+    background:#fff; border-radius:14px; padding:18px 16px;
+    box-shadow:0 2px 10px rgba(90,70,50,.08); font-size:16.5px; line-height:1.85;
+    animation:pop .35s ease-out;
+  }
+  @keyframes pop { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+  .scene .who { font-size:13px; color:#c96f2f; letter-spacing:2px; margin-bottom:6px; }
+  .t { color:#1f6f6b; font-weight:700; border-bottom:2px dotted #1f6f6b; cursor:pointer; }
+  .chips { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:12.5px; background:#e6f2f1; color:#1f6f6b; border-radius:99px; padding:3px 10px; }
+  .choices { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+  .choices button {
+    font-family:inherit; font-size:15.5px; text-align:left; line-height:1.6;
+    padding:12px 14px; border-radius:12px; border:1.5px solid #d9cdbc;
+    background:#fffdf9; color:#3a3230; cursor:pointer;
+  }
+  .choices button:active { transform:scale(.985); }
+  .fb { margin-top:14px; border-radius:12px; padding:14px; font-size:15.5px; line-height:1.8;
+        animation:pop .3s ease-out; }
+  .fb.ok  { background:#e6f2ec; border:1.5px solid #79ab8f; }
+  .fb.no  { background:#fdf1e2; border:1.5px solid #d9a75f; }
+  .fb .tag { font-weight:700; margin-bottom:4px; display:block; }
+  .fb button, .end button {
+    margin-top:12px; font-family:inherit; font-size:15px; padding:10px 20px;
+    border:none; border-radius:99px; background:#1f6f6b; color:#fff; cursor:pointer;
+  }
+  .dexbtn {
+    position:fixed; right:14px; bottom:14px; z-index:6;
+    background:#c96f2f; color:#fff; border:none; border-radius:99px;
+    padding:10px 16px; font-family:inherit; font-size:14px;
+    box-shadow:0 3px 8px rgba(90,70,50,.25); cursor:pointer;
+  }
+  .overlay {
+    position:fixed; inset:0; background:rgba(40,32,28,.5); z-index:10;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.show { display:flex; }
+  .sheet {
+    background:#faf6ef; width:100%; max-width:560px; max-height:75vh;
+    border-radius:16px 16px 0 0; padding:16px; overflow-y:auto;
+  }
+  .sheet h2 { font-size:16px; color:#1f6f6b; margin-bottom:10px; }
+  .entry { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; font-size:14.5px; line-height:1.7; }
+  .entry .en { color:#c96f2f; font-size:13px; }
+  .end { text-align:center; padding:6px 2px; }
+  .end .score { font-size:30px; color:#1f6f6b; font-weight:800; margin:8px 0; }
+  .end ul { text-align:left; margin:12px 0 0 18px; font-size:15px; line-height:1.9; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="gtitle">遊戲標題</h1>
+  <div class="hud"><span id="prog"></span><span id="score"></span></div>
+  <div class="bar"><i id="fill"></i></div>
+</header>
+
+<main id="main"></main>
+
+<button class="dexbtn" id="dexbtn">📖 名詞圖鑑 <span id="dexn">0</span></button>
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2>名詞圖鑑(點畫面其他地方關閉)</h2>
+    <div id="dexlist"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   桃氣手搖翻身戰:商概 CH6 行銷管理
+   小桃的店遇上連鎖大軍,用一整章的行銷知識打一場翻身仗
+   ============================================================ */
+const GAME = { title:"桃氣手搖翻身戰|CH6 行銷管理", totalScenes:12, passLine:8 };
+
+const SCENES = {
+  start:{
+    who:"第 1 話|對面開了連鎖店",
+    text:`「桃氣手搖」開店半年,對面卻進駐連鎖大軍「茶霸」,買一送一的旗子插滿騎樓,小桃業績直接掉三成。深夜盯著帳本,她想起商概老師說過:生意做不起來,常常不是產品爛,是<span class="t" data-k="mconcept">行銷觀念</span>停在上個世紀。小桃的第一步該是?`,
+    terms:[
+      {k:"mconcept", term:"行銷觀念", en:"marketing concept", def:"以顧客需求為導向、由外而內的經營思維:先發掘市場要什麼,再整合行銷活動去滿足。買方市場從此開始。"},
+      {k:"myopia", term:"行銷近視症", en:"marketing myopia", def:"只顧把產品做到自己滿意,忽略市場環境變化與消費者偏好的改變,使產品過時滯銷。發生在產品觀念時期。"}
+    ],
+    choices:[
+      { label:"「我家茶葉是阿公傳下來的。把品質再拉高,客人自然會回來。」", ok:false,
+        fb:"小心!這是「產品觀念」的思維——太愛自己的產品,最容易得<b>行銷近視症</b>:你把茶做到滿分,客人要的卻是平價、好拍、快速。劇情修正:小桃決定先抬頭看看市場。", next:"s2" },
+      { label:"「先別急著改產品,我去問客人到底想要什麼。」", ok:true,
+        fb:"正解!這就是<b>行銷觀念</b>:由外而內、顧客導向。先發掘消費者需求,再決定產品怎麼做——整章行銷學的起手式。", next:"s2" }
+    ]
+  },
+  s2:{
+    who:"第 2 話|問卷回來了",
+    text:`小桃在 IG 發問卷,三天收到 312 份,答案卻很分裂:上班族要「快、大杯」,高中生要「便宜、好拍」,養生族要「無糖、看產地」。原來市場不是一塊鐵板——把大市場切成幾群性質類似的人,就叫<span class="t" data-k="seg">市場區隔</span>,也是<span class="t" data-k="stp">目標行銷(STP)</span>的第一步。小店資源有限,該怎麼辦?`,
+    terms:[
+      {k:"seg", term:"市場區隔", en:"segmentation", def:"將市場分割成若干「內部性質類似」的次級市場(組內同質、組間異質),再針對各群擬定行銷組合。"},
+      {k:"stp", term:"目標行銷 STP", en:"target marketing", def:"市場區隔(S)→目標市場選擇(T)→市場定位(P)三步驟,順序不可倒。"},
+      {k:"niche", term:"集中行銷(利基行銷)", en:"concentrated marketing", def:"企業資源有限時,將主力集中於區隔後的一個或少數子市場,深入經營、創造競爭力。"}
+    ],
+    choices:[
+      { label:"「三種客人我全都要!菜單直接開六十種品項。」", ok:false,
+        fb:"野心可嘉,但小店樣樣做等於樣樣不精,成本會先把你壓垮。多線作戰的「差異行銷」是大公司的玩法;教科書給小店的解法是<b>集中行銷(利基行銷)</b>——先深耕一塊。劇情修正:小桃決定選一個主戰場。", next:"s3" },
+      { label:"「資源有限,先挑一塊市場深耕——集中行銷。」", ok:true,
+        fb:"漂亮!切完市場(S)之後,評估各群吸引力、選定目標(T)。<b>集中行銷</b>把有限資源灌進單一市場,才打得贏連鎖店。", next:"s3" }
+    ]
+  },
+  s3:{
+    who:"第 3 話|用什麼刀切市場",
+    text:`要切市場,得先選<span class="t" data-k="segvar">區隔變數</span>。死黨阿凱出餿主意:「用星座切啊!水瓶座賣他們獵奇口味!」小桃翻了個白眼。正確的切法是?`,
+    terms:[
+      {k:"segvar", term:"區隔變數", en:"segmentation variables", def:"切市場的依據,分四大類:地理、人口統計(人文)、心理、行為變數。"},
+      {k:"demo", term:"人口統計變數", en:"demographic variables", def:"年齡、性別、職業、所得、教育程度、家庭生命週期等消費者外在特徵,是最常用的區隔變數。"},
+      {k:"diff", term:"可區別性", en:"differentiable", def:"有效市場區隔條件之一:切出來的各群必須能明確區別差異,且對不同行銷組合有不同反應。(五條件:可衡量、足量、可接近、可行動、可區別)"}
+    ],
+    choices:[
+      { label:"「用年齡加職業來切:鎖定放學經過的高中生。」", ok:true,
+        fb:"正確!年齡、職業都是<b>人口統計變數</b>。而且高中生人數查得到(可衡量)、放學會經過店門口(可接近)、人數夠多(足量性)——五個有效區隔條件幾乎全中。", next:"s4" },
+      { label:"「聽阿凱的,用星座切成十二塊市場。」", ok:false,
+        fb:"星座是切得出來,但獅子座和天蠍座買飲料的需求根本沒差——各群對行銷組合沒有不同反應,不符合有效區隔的<b>可區別性</b>,切心酸的。劇情修正:小桃改用年齡加職業,鎖定高中生。", next:"s4" }
+    ]
+  },
+  s4:{
+    who:"第 4 話|在學生心中放一句話",
+    text:`<span class="t" data-k="target">目標市場</span>定了:放學的高中生。接下來是 STP 最後一步——<span class="t" data-k="pos">市場定位</span>:要在消費者心中留下深刻、鮮明的印象,和「茶霸」做出區隔。小桃該立什麼人設?`,
+    terms:[
+      {k:"target", term:"目標市場", en:"target market", def:"市場區隔後,企業衡量內外部條件,選定要進入及服務的子市場。"},
+      {k:"pos", term:"市場定位", en:"positioning", def:"設計產品或品牌形象,使其在消費者心中留下深刻鮮明的印象,與競爭者區隔。考量:產品差異化、競爭者差異化、忠於顧客需求。"}
+    ],
+    choices:[
+      { label:"「職人手作、高端茶道,一杯 150 元起,格調先拉滿。」", ok:false,
+        fb:"定位很美,但和目標市場(高中生的錢包)完全對不上。定位必須<b>忠於顧客需求</b>,不是老闆的浪漫。劇情修正:小桃默默把價目表收回去重寫。", next:"s5" },
+      { label:"「銅板價現萃好茶,下課最好拍的那一杯。」", ok:true,
+        fb:"到位!價格貼合學生,又用「現萃、好拍」跟茶霸的規格化飲料做出差異——產品差異化、競爭者差異化、顧客需求,<b>市場定位</b>三個考量一次到齊。", next:"s5" }
+    ]
+  },
+  s5:{
+    who:"第 5 話|學生買的其實不是茶",
+    text:`開始設計新品「下課特調」。動手前小桃先問自己一個關鍵問題:學生掏出 49 元,內心真正想買的是什麼?這決定了<span class="t" data-k="five">產品五層次</span>裡的<span class="t" data-k="core">核心產品</span>。`,
+    terms:[
+      {k:"five", term:"產品五層次", en:"five product levels", def:"核心→基本→期望→附加→潛在。口訣:核基期附潛(何必期付錢)。"},
+      {k:"core", term:"核心產品", en:"core product", def:"消費者內心真正想購買的根本利益或服務,又稱核心利益。例:買冷氣是買「涼爽」。"},
+      {k:"aug", term:"附加產品", en:"augmented product", def:"在產品以外的屬性上創新以與競爭者區隔,如退換貨、免費運送、安裝、保固、分期付款、集點。"}
+    ],
+    choices:[
+      { label:"「就是一杯茶啊,不然咧?」", ok:false,
+        fb:"一杯能喝的茶只是「基本產品」。想想課本的冷氣機:客人買的不是機器,是「涼爽」。劇情修正:小桃盯著空杯重想了一次。", next:"s6" },
+      { label:"「買的是下課那口小確幸,加上限時動態的讚數。」", ok:true,
+        fb:"悟了!這就是<b>核心產品(核心利益)</b>。所以杯身要設計得好拍(基本+期望層次),再加「集點換隱藏口味」——這屬於<b>附加產品</b>,是和茶霸區隔的祕密武器。", next:"s6" }
+    ]
+  },
+  s6:{
+    who:"第 6 話|49 還是 99",
+    text:`「下課特調」成本一杯約 25 元,茶霸同級品賣 55 元。新品上市的訂價是門大學問——先開高價<span class="t" data-k="skim">吸脂</span>,還是低價<span class="t" data-k="pen">滲透</span>?`,
+    terms:[
+      {k:"skim", term:"吸脂訂價法", en:"skimming pricing", def:"新品具專利或創新性時先訂高價,吸引價格不敏感者,目的是賺取高額利潤、快速回收成本。又稱高價榨取。"},
+      {k:"pen", term:"滲透訂價法", en:"penetration pricing", def:"新品先訂低價、薄利多銷,目的是擴大市場占有率、快速提升知名度。又稱低價滲透。"},
+      {k:"odd", term:"畸零訂價法", en:"odd pricing", def:"以奇數數字(如 49、199)訂價,讓消費者產生「比較便宜」的心理,屬心理訂價法。"}
+    ],
+    choices:[
+      { label:"「訂 99 元走精品路線,先撈一波再說!」", ok:false,
+        fb:"吸脂訂價的前提是產品有<b>專利或創新性</b>、別人短期抄不來。手搖配方一週就被破解,高價只會把學生推去對面。劇情修正:小桃含淚改走親民路線。", next:"s7" },
+      { label:"「訂 49 元:滲透訂價衝市占,尾數 9 順便玩畸零訂價。」", ok:true,
+        fb:"雙重正解!<b>滲透訂價</b>薄利多銷搶市占、拚知名度;<b>畸零訂價</b>讓 49 看起來比 50 便宜一大截,學生無痛下單。", next:"s7" }
+    ]
+  },
+  s7:{
+    who:"第 7 話|沒人知道的新品等於沒有新品",
+    text:`新品排上菜單了,但此刻正是<span class="t" data-k="plc">產品生命週期</span>的<span class="t" data-k="intro">導入期</span>——知名度是零。宣傳預算只夠做一件事,小桃該推哪種廣告?`,
+    terms:[
+      {k:"plc", term:"產品生命週期 PLC", en:"product life cycle", def:"產品從上市到退出市場的歷程:導入期→成長期→成熟期→衰退期。"},
+      {k:"intro", term:"導入期", en:"introduction stage", def:"產品首次進入市場:價格最高、利潤為負或零、競爭者不多。行銷目標是提高知名度,適用告知性廣告與無差異行銷。"},
+      {k:"inform", term:"告知性廣告", en:"informative advertising", def:"告知新品上市、說明產品功能,提高商品知名度、建立企業形象,適用導入期。"}
+    ],
+    choices:[
+      { label:"「做告知性廣告:IG 貼文加校刊社海報,大聲說『新品上市』。」", ok:true,
+        fb:"正確!<b>導入期</b>的任務是提高知名度、發掘潛在需求,對應的正是<b>告知性廣告</b>。先讓全校知道你的存在。", next:"s8" },
+      { label:"「做提醒性廣告:『別忘了桃氣手搖』。」", ok:false,
+        fb:"客人根本還不認識你,是要提醒什麼啦!提醒性廣告是<b>成熟期</b>用來維持知名度的。劇情修正:小桃先老老實實昭告天下。", next:"s8" }
+    ]
+  },
+  s8:{
+    who:"第 8 話|把貨推出去,還是把客人拉進來",
+    text:`阿凱自告奮勇:「我去校門口堵人,一個一個推銷!」小桃想起課本的<span class="t" data-k="push">推力策略</span>與<span class="t" data-k="pull">拉力策略</span>。預算有限,賣的又是消費品,她該押哪邊?`,
+    terms:[
+      {k:"push", term:"推力策略", en:"push strategy", def:"製造商透過人員銷售,鼓勵業務員與中間商強力推銷產品;銷售達標給獎金、給中間商優惠鼓勵進貨。工業品推廣效果:人員銷售最佳。"},
+      {k:"pull", term:"拉力策略", en:"pull strategy", def:"製造商透過大量廣告或促銷活動,使消費者聚焦產品、主動向通路購買。消費品推廣效果:廣告>促銷>人員銷售>公共關係。"},
+      {k:"sp", term:"銷售推廣 SP", en:"sales promotion", def:"以降價、折價券、贈品、抽獎、免費試用等短期誘因刺激立即購買;長期無法建立品牌忠誠度。"}
+    ],
+    choices:[
+      { label:"「推力:阿凱出動,校門口人肉推銷部隊!」", ok:false,
+        fb:"推力策略本身沒有錯,但它的主場是<b>工業品</b>(人員銷售效果最佳);手搖飲是消費品,推廣效果排序是<b>廣告>促銷>人員銷售>公共關係</b>——而且被硬塞傳單的學生只想逃。劇情修正:改打拉力戰。", next:"s9" },
+      { label:"「拉力:辦『打卡送加料』加抽演唱會周邊,讓學生自己排隊來。」", ok:true,
+        fb:"聰明!用促銷(SP)與社群聲量把客人「拉」進店,消費品就吃這套。但記住:促銷是短期猛藥,長期還是要靠品牌。", next:"s9" }
+    ]
+  },
+  s9:{
+    who:"第 9 話|超商上門談合作",
+    text:`「下課特調」開賣一個月,單日突破三百杯。兩個合作邀約同天上門:全國連鎖超商想把它做成瓶裝上架(要經過大盤、物流層層轉手);外送平台則主打「三十分鐘現做直送」。<span class="t" data-k="channel">通路</span>怎麼選?`,
+    terms:[
+      {k:"channel", term:"通路", en:"channel / place", def:"製造商透過中間商,將產品訊息與所有權移轉給消費者的過程;行銷 4P 之一。"},
+      {k:"zero", term:"零階通路", en:"zero-level channel", def:"製造商直接把產品賣給消費者、沒有任何中間商,是最短的通路。例:觀光果園、自家店面直售。"},
+      {k:"length", term:"通路長度", en:"channel length", def:"指中間商階層數:階層多為長通路(如三階),少為短通路。易腐性高、具流行性、專業性高的產品適用短通路。"}
+    ],
+    choices:[
+      { label:"「簽超商!瓶裝鋪滿全台,走長通路衝銷量。」", ok:false,
+        fb:"等等——現萃手搖的賣點是新鮮現做,<b>易腐性高</b>的產品教科書明寫適用<b>短通路</b>;層層轉手到超商冷藏櫃,風味早就跑掉,還會砸了「現萃」的市場定位。劇情修正:婉拒瓶裝,守住短通路。", next:"s10" },
+      { label:"「接外送平台:店面直售加即時外送,守住新鮮優勢。」", ok:true,
+        fb:"正確!店面直售是<b>零階通路</b>,即時外送也只隔一層——短通路守住「現萃好茶」的定位。通路策略要和產品特性、市場定位互相配合,不是愈廣愈好。", next:"s10" }
+    ]
+  },
+  s10:{
+    who:"第 10 話|茶霸的反擊",
+    text:`三個月後「下課特調」正式爆紅,進入<span class="t" data-k="growth">成長期</span>——但茶霸推出 39 元山寨版「放學特調」,削價開戰!小桃的下一步?`,
+    terms:[
+      {k:"growth", term:"成長期", en:"growth stage", def:"銷售快速成長、競爭者增多、利潤上升至最高點的階段;行銷目標是擴大市占率、建立品牌偏好,適用差異化行銷。"},
+      {k:"persuade", term:"說服性廣告", en:"persuasive advertising", def:"說服消費者改買或立即購買、建立品牌偏好,適用成長期;「比較性廣告」是其類型。"},
+      {k:"loyalty", term:"品牌忠誠度", en:"brand loyalty", def:"消費者持續指名購買同一品牌的程度,屬市場區隔中的「行為變數」。"}
+    ],
+    choices:[
+      { label:"「跟它拚了,直接降到 35 元!」", ok:false,
+        fb:"削價戰打到最後只剩兩敗俱傷,而且你的成本結構拚不過連鎖採購。成長期的教科書解法是<b>差異化</b>+<b>建立品牌偏好</b>,不是跳進對方的主場。劇情修正:小桃收手,改打價值戰。", next:"s11" },
+      { label:"「推說服性(比較性)廣告:『現萃 VS 粉泡,一喝就知道』,加碼集點卡養忠誠。」", ok:true,
+        fb:"正解!<b>成長期</b>對應<b>說服性廣告</b>,比較性廣告強化自家優點;集點卡累積<b>品牌忠誠度</b>,把一時爆紅變成長紅。", next:"s11" }
+    ]
+  },
+  s11:{
+    who:"第 11 話|意外的採訪邀約",
+    text:`地方記者聽說小桃把每天的茶渣做成堆肥、免費送給學校園藝社,想做一篇專題報導。阿凱兩眼發亮:「免費上新聞耶!」這在課本裡叫什麼?`,
+    terms:[
+      {k:"pr", term:"公共關係 PR", en:"public relations", def:"企業「不付費」,透過舉辦公開活動造成話題、由媒體報導傳達產品訊息;可信度高、易使大眾卸下心防。"},
+      {k:"event", term:"事件行銷", en:"event marketing", def:"創造大眾關心的議題或活動,吸引媒體關注報導,以提升企業形象、宣傳商品;屬公共關係的類型。"},
+      {k:"societal", term:"社會行銷觀念", en:"societal marketing concept", def:"兼顧消費者需求、企業利潤與社會福利的三贏經營觀;綠色行銷、公益行銷因此盛行。"}
+    ],
+    choices:[
+      { label:"「接受採訪,加碼辦一場『校園永續茶會』。」", ok:true,
+        fb:"大加分!免費的媒體報導=<b>公共關係</b>,主動創造議題=<b>事件行銷</b>;而茶渣堆肥兼顧社會福利,正是<b>社會行銷觀念</b>——消費者、企業、社會三贏。", next:"s12" },
+      { label:"「婉拒,悶聲發大財就好。」", ok:false,
+        fb:"可惜了!公共關係是「不用付費、可信度又最高」的推廣工具,白送的聲量不要,是跟業績過不去。劇情修正:阿凱偷偷替她答應了採訪。", next:"s12" }
+    ]
+  },
+  s12:{
+    end:true,
+    who:"最終話|放學鐘響,排隊轉彎",
+    text:"期末,桃氣手搖的排隊人龍轉過巷口,茶霸悄悄收掉了買一送一的旗子。打烊後,小桃翻開商概課本,發現這學期做的每一個決定,原來都寫在第六章:先端正「行銷觀念」,用 STP 選對戰場,再以 4P——產品、訂價、推廣、通路——一招一招打出來。行銷不是玄學,是有步驟的功夫。"
+  }
+};
+
+/* ===== 引擎 ===== */
+let cur="start", score=0, seen=0, dex={};
+const $=id=>document.getElementById(id);
+$("gtitle").textContent=GAME.title;
+
+function collect(s){ (s.terms||[]).forEach(t=>{ if(!dex[t.k]){ dex[t.k]=t; } }); renderDex(); }
+function renderDex(){
+  const arr=Object.values(dex);
+  $("dexn").textContent=arr.length;
+  $("dexlist").innerHTML=arr.map(t=>
+    `<div class="entry"><b>${t.term}</b> <span class="en">${t.en}</span><br>${t.def}</div>`).join("")
+    || "<div class='entry'>還沒有收集到名詞,回劇情裡找找看!</div>";
+}
+function hud(){
+  $("prog").textContent=`進度 ${Math.min(seen,GAME.totalScenes)} / ${GAME.totalScenes}`;
+  $("score").textContent=`決策分 ${score}`;
+  $("fill").style.width=(Math.min(seen,GAME.totalScenes)/GAME.totalScenes*100)+"%";
+}
+function show(id){
+  cur=id; const s=SCENES[id]; seen++; collect(s); hud();
+  if(s.end){ return ending(s); }
+  $("main").innerHTML=`
+    <div class="scene">
+      <div class="who">${s.who||""}</div>
+      <div>${s.text}</div>
+      <div class="chips">${(s.terms||[]).map(t=>`<span class="chip">${t.term} ${t.en}</span>`).join("")}</div>
+      <div class="choices">${s.choices.map((c,i)=>`<button data-i="${i}">${c.label}</button>`).join("")}</div>
+      <div id="fbslot"></div>
+    </div>`;
+  document.querySelectorAll(".choices button").forEach(b=>b.onclick=()=>pick(+b.dataset.i));
+}
+function pick(i){
+  const c=SCENES[cur].choices[i];
+  if(c.ok) score++;
+  hud();
+  document.querySelectorAll(".choices button").forEach(b=>b.disabled=true);
+  $("fbslot").innerHTML=`
+    <div class="fb ${c.ok?"ok":"no"}">
+      <span class="tag">${c.ok?"✔ 好決策!":"✘ 等等,這樣有風險"}</span>${c.fb}
+      <br><button id="go">繼續 →</button>
+    </div>`;
+  $("go").onclick=()=>show(c.next);
+}
+function ending(s){
+  const passed=score>=GAME.passLine;
+  $("main").innerHTML=`
+    <div class="scene end">
+      <div class="who">${s.who||""}</div>
+      <div style="text-align:left">${s.text}</div>
+      <div class="score">決策分 ${score} / 11</div>
+      <div>${passed?"你已經有行銷人的腦袋了!茶霸看到你都發抖。":"再玩一次,注意每個解析在說什麼——行銷是可以練的。"}</div>
+      <ul>
+        <li>觀念演進五階段(生產→產品→銷售→行銷→社會行銷),各期關鍵字說得出來嗎?</li>
+        <li>STP 三步驟與四大區隔變數,你能舉自己的例子嗎?</li>
+        <li>產品五層次(何必期付錢)能對應到一杯手搖飲嗎?</li>
+        <li>吸脂 VS 滲透、推力 VS 拉力,你分得清嗎?</li>
+        <li>PLC 四期各配哪種廣告?(告知→說服→提醒)</li>
+        <li>打開名詞圖鑑,每個名詞不看定義能說出意思嗎?</li>
+      </ul>
+      <button onclick="location.reload()">再玩一次</button>
+    </div>`;
+}
+document.addEventListener("click",e=>{
+  const t=e.target.closest(".t");
+  if(t){ const d=dex[t.dataset.k]; if(d) alert(`${d.term}(${d.en})\n\n${d.def}`); }
+});
+$("dexbtn").onclick=()=>$("overlay").classList.add("show");
+$("overlay").onclick=e=>{ if(e.target.id==="overlay") $("overlay").classList.remove("show"); };
+
+show("start");
+</script>
+</body>
+</html>

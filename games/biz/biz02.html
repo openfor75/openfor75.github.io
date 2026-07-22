@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boba Lab 創業大冒險｜商概 CH2 互動學習遊戲</title>
+<style>
+  :root{
+    --ink:#241812;          /* 黑糖 */
+    --paper:#FBF4E6;        /* 鮮奶 */
+    --amber:#E8A33D;        /* 黑糖琥珀 */
+    --amber-deep:#C57F1D;
+    --pearl:#3B2A20;        /* 珍珠棕 */
+    --matcha:#6E9A4E;       /* 正確 */
+    --berry:#C44E43;        /* 錯誤 */
+    --tea:#8A5A33;
+    --cream-line:#E3D3B8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(232,163,61,.10), transparent 40%),
+      radial-gradient(circle at 85% 80%, rgba(138,90,51,.14), transparent 45%),
+      var(--ink);
+    color:var(--paper);
+    min-height:100%;
+    display:flex;justify-content:center;
+    padding:16px;
+  }
+  .app{width:100%;max-width:680px;display:flex;flex-direction:column;gap:12px;}
+
+  /* ── HUD ── */
+  .hud{
+    display:flex;align-items:center;gap:14px;
+    background:rgba(59,42,32,.55);
+    border:1px solid rgba(232,163,61,.35);
+    border-radius:16px;padding:10px 14px;
+    backdrop-filter:blur(4px);
+  }
+  .hud .brand{font-weight:900;letter-spacing:.05em;font-size:.95rem;color:var(--amber);white-space:nowrap;}
+  .meters{display:flex;gap:12px;flex:1;min-width:0;}
+  .meter{flex:1;min-width:0;}
+  .meter label{font-size:.72rem;opacity:.85;display:flex;justify-content:space-between;}
+  .bar{height:8px;background:rgba(0,0,0,.45);border-radius:6px;overflow:hidden;margin-top:3px;}
+  .bar i{display:block;height:100%;border-radius:6px;transition:width .5s ease;}
+  #cashBar i{background:linear-gradient(90deg,#C57F1D,#F2C063);}
+  #repBar i{background:linear-gradient(90deg,#7A4C8F,#C79BD8);}
+
+  /* ── 珍奶進度杯（簽名元件）── */
+  .cup{position:relative;width:44px;height:58px;flex-shrink:0;}
+  .cup .glass{
+    position:absolute;inset:0;
+    border:2px solid var(--amber);
+    border-top-width:3px;
+    border-radius:6px 6px 14px 14px;
+    background:rgba(251,244,230,.07);
+    overflow:hidden;
+  }
+  .cup .tealevel{
+    position:absolute;left:0;right:0;bottom:0;height:0%;
+    background:linear-gradient(180deg,rgba(232,163,61,.85),rgba(138,90,51,.95));
+    transition:height .8s ease;
+  }
+  .cup .straw{
+    position:absolute;top:-10px;left:50%;width:7px;height:22px;
+    background:var(--berry);border-radius:3px;
+    transform:translateX(-50%) rotate(8deg);
+  }
+  .cup .pearls{position:absolute;left:0;right:0;bottom:2px;height:16px;display:flex;justify-content:center;gap:2px;align-items:flex-end;}
+  .cup .pearls b{width:7px;height:7px;border-radius:50%;background:var(--pearl);opacity:0;transform:translateY(6px);transition:all .5s ease;}
+  .cup .pearls b.on{opacity:1;transform:translateY(0);}
+  .cup .cupLabel{position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);font-size:.6rem;color:var(--amber);white-space:nowrap;}
+
+  /* ── 場景卡 ── */
+  .stage{
+    background:var(--paper);color:var(--pearl);
+    border-radius:20px;
+    padding:22px 20px 20px;
+    box-shadow:0 12px 32px rgba(0,0,0,.45), inset 0 0 0 1px var(--cream-line);
+    animation:pop .35s ease;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+  .chapterTag{
+    display:inline-block;background:var(--pearl);color:var(--amber);
+    font-size:.72rem;font-weight:800;letter-spacing:.15em;
+    padding:4px 12px;border-radius:999px;margin-bottom:10px;
+  }
+  h1{font-size:1.7rem;font-weight:900;line-height:1.3;color:var(--ink);}
+  h2{font-size:1.25rem;font-weight:900;margin-bottom:8px;color:var(--ink);}
+  .speaker{
+    display:flex;align-items:center;gap:8px;margin:12px 0 6px;
+    font-weight:800;color:var(--tea);font-size:.92rem;
+  }
+  .speaker .ava{
+    width:34px;height:34px;border-radius:50%;
+    background:var(--amber);color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.05rem;flex-shrink:0;border:2px solid var(--pearl);
+  }
+  .bubble{
+    background:#fff;border:1px solid var(--cream-line);
+    border-radius:4px 16px 16px 16px;
+    padding:12px 14px;font-size:.98rem;line-height:1.75;
+  }
+  .narr{font-size:.95rem;line-height:1.8;margin:10px 0;}
+  .vocab{
+    display:inline-block;background:rgba(232,163,61,.18);
+    border:1px dashed var(--amber-deep);color:var(--amber-deep);
+    font-size:.78rem;font-weight:700;padding:1px 7px;border-radius:6px;
+    margin:0 2px;white-space:nowrap;
+  }
+  .kw{font-weight:900;color:var(--berry);}
+
+  /* ── 選項 ── */
+  .choices{display:flex;flex-direction:column;gap:9px;margin-top:14px;}
+  .choice{
+    text-align:left;font:inherit;cursor:pointer;
+    background:#fff;border:2px solid var(--cream-line);
+    border-radius:12px;padding:12px 14px;
+    font-size:.95rem;line-height:1.6;color:var(--pearl);
+    transition:transform .12s ease, border-color .12s ease, background .12s;
+  }
+  .choice:hover{border-color:var(--amber);transform:translateX(4px);}
+  .choice:focus-visible{outline:3px solid var(--amber);outline-offset:2px;}
+  .choice .en{font-size:.75rem;color:var(--tea);font-weight:700;}
+  .choice.correct{background:#EAF3E1;border-color:var(--matcha);}
+  .choice.wrong{background:#F8E4E1;border-color:var(--berry);opacity:.85;}
+  .choice:disabled{cursor:default;transform:none;}
+
+  /* ── 回饋 ── */
+  .feedback{
+    margin-top:14px;border-radius:12px;padding:13px 15px;
+    font-size:.92rem;line-height:1.75;animation:pop .3s ease;
+  }
+  .feedback.ok{background:#EAF3E1;border-left:5px solid var(--matcha);}
+  .feedback.no{background:#F8E4E1;border-left:5px solid var(--berry);}
+  .feedback b{color:var(--ink);}
+  .delta{font-weight:900;font-size:.85rem;margin-top:6px;display:block;color:var(--tea);}
+
+  .btn{
+    font:inherit;font-weight:900;cursor:pointer;
+    background:var(--pearl);color:var(--amber);
+    border:none;border-radius:12px;
+    padding:13px 26px;font-size:1rem;letter-spacing:.08em;
+    margin-top:16px;display:inline-block;
+    transition:transform .12s ease;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn:focus-visible{outline:3px solid var(--amber);outline-offset:2px;}
+  .btn.ghost{background:transparent;color:var(--pearl);border:2px solid var(--pearl);}
+
+  /* ── 分類小遊戲 ── */
+  .sortItem{
+    background:#fff;border:2px solid var(--cream-line);border-radius:12px;
+    padding:12px 14px;margin-top:12px;font-size:.95rem;line-height:1.6;
+  }
+  .sortBtns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .sortBtns .choice{flex:1;min-width:110px;text-align:center;padding:9px 8px;font-weight:800;}
+  .progressDots{display:flex;gap:6px;margin-top:10px;}
+  .progressDots i{width:10px;height:10px;border-radius:50%;background:var(--cream-line);}
+  .progressDots i.done{background:var(--matcha);}
+  .progressDots i.miss{background:var(--berry);}
+
+  /* ── 結局 ── */
+  .grade{
+    font-size:3.2rem;font-weight:900;color:var(--amber-deep);
+    text-align:center;margin:10px 0 2px;letter-spacing:.1em;
+  }
+  .gradeTitle{text-align:center;font-weight:900;font-size:1.15rem;color:var(--ink);margin-bottom:12px;}
+  .recap{margin-top:14px;border-top:2px dashed var(--cream-line);padding-top:12px;font-size:.9rem;line-height:1.8;}
+  .recap h3{font-size:.95rem;color:var(--tea);margin:10px 0 4px;}
+  .statRow{display:flex;justify-content:space-around;text-align:center;margin-top:8px;}
+  .statRow .n{font-size:1.5rem;font-weight:900;color:var(--ink);}
+  .statRow .l{font-size:.75rem;color:var(--tea);}
+
+  .titleArt{text-align:center;margin:6px 0 14px;}
+  .titleArt .cupBig{font-size:4rem;line-height:1;}
+  .subT{color:var(--tea);font-size:.9rem;margin-top:8px;line-height:1.7;}
+  footer{text-align:center;font-size:.72rem;opacity:.55;padding:4px 0 10px;}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- HUD -->
+  <div class="hud" id="hud" style="display:none">
+    <span class="brand">BOBA LAB</span>
+    <div class="meters">
+      <div class="meter" id="cashBar"><label><span>💰 資金 Capital</span><span id="cashV">50</span></label><div class="bar"><i style="width:50%"></i></div></div>
+      <div class="meter" id="repBar"><label><span>⭐ 商譽 Reputation</span><span id="repV">50</span></label><div class="bar"><i style="width:50%"></i></div></div>
+    </div>
+    <div class="cup" aria-label="章節進度">
+      <div class="straw"></div>
+      <div class="glass"><div class="tealevel" id="teaLevel"></div></div>
+      <div class="pearls"><b id="p1"></b><b id="p2"></b><b id="p3"></b><b id="p4"></b></div>
+      <div class="cupLabel" id="cupLabel">開店前</div>
+    </div>
+  </div>
+
+  <div class="stage" id="stage"></div>
+  <footer>商業概論 CH2《企業家精神與創業》互動學習遊戲｜對應統測命題重點</footer>
+</div>
+
+<script>
+/* ───────────── 遊戲狀態 ───────────── */
+const S = { cash:50, rep:50, correct:0, total:0, chapter:0, scene:0 };
+const stage = document.getElementById('stage');
+
+function clamp(v){ return Math.max(0, Math.min(100, v)); }
+function setMeters(dc, dr){
+  S.cash = clamp(S.cash + dc); S.rep = clamp(S.rep + dr);
+  document.querySelector('#cashBar i').style.width = S.cash + '%';
+  document.querySelector('#repBar i').style.width = S.rep + '%';
+  document.getElementById('cashV').textContent = S.cash;
+  document.getElementById('repV').textContent = S.rep;
+}
+function setCup(n){ // n = 已完成章節數 0~4
+  document.getElementById('teaLevel').style.height = (n*23) + '%';
+  const labels = ['開店前','2.1 完成','2.2 完成','2.3 完成','全章完成!'];
+  document.getElementById('cupLabel').textContent = labels[n];
+  for(let i=1;i<=4;i++) document.getElementById('p'+i).classList.toggle('on', i<=n);
+}
+function deltaText(dc,dr){
+  const parts=[];
+  if(dc) parts.push(`💰資金 ${dc>0?'+':''}${dc}`);
+  if(dr) parts.push(`⭐商譽 ${dr>0?'+':''}${dr}`);
+  return parts.length? parts.join('　') : '';
+}
+
+/* ───────────── 通用渲染 ───────────── */
+function render(html){ stage.innerHTML = html; stage.scrollIntoView({behavior:'smooth',block:'start'}); }
+function esc(s){ return s; }
+
+/* 劇情頁：tag, title, blocks(html), btnText, next */
+function storyScene(o){
+  render(`
+    <span class="chapterTag">${o.tag}</span>
+    ${o.title? `<h2>${o.title}</h2>`:''}
+    ${o.body}
+    <button class="btn" onclick="${o.next}">${o.btn||'繼續 ▶'}</button>
+  `);
+}
+
+/* 單選題：answered 後顯示解析 + 繼續鈕 */
+function quizScene(o){
+  const opts = o.options.map((op,i)=>`
+    <button class="choice" data-i="${i}" onclick="answerQuiz(${i})">
+      ${op.t}${op.en? `<div class="en">${op.en}</div>`:''}
+    </button>`).join('');
+  render(`
+    <span class="chapterTag">${o.tag}</span>
+    ${o.body||''}
+    <h2 style="margin-top:12px">${o.q}</h2>
+    <div class="choices">${opts}</div>
+    <div id="fb"></div>
+  `);
+  window.__quiz = o;
+}
+function answerQuiz(i){
+  const o = window.__quiz, op = o.options[i], ok = !!op.ok;
+  S.total++; if(ok) S.correct++;
+  document.querySelectorAll('.choice').forEach((b,idx)=>{
+    b.disabled = true;
+    if(o.options[idx].ok) b.classList.add('correct');
+    else if(idx===i) b.classList.add('wrong');
+  });
+  const dc = ok ? (o.gain?.[0]??5) : (o.lose?.[0]??-5);
+  const dr = ok ? (o.gain?.[1]??5) : (o.lose?.[1]??-5);
+  setMeters(dc,dr);
+  document.getElementById('fb').innerHTML = `
+    <div class="feedback ${ok?'ok':'no'}">
+      <b>${ok?'✅ 答對了！':'❌ 差一點！'}</b>　${op.fb || o.explain}
+      ${!ok && o.explain? `<br>${o.explain}`:''}
+      <span class="delta">${deltaText(dc,dr)}</span>
+    </div>
+    <button class="btn" onclick="${o.next}">繼續 ▶</button>`;
+}
+
+/* 連續分類小遊戲 */
+function sortGame(o){
+  window.__sort = { ...o, idx:0, results:[] };
+  renderSortItem();
+}
+function renderSortItem(){
+  const g = window.__sort, it = g.items[g.idx];
+  const dots = g.items.map((_,i)=>{
+    const r = g.results[i];
+    return `<i class="${r===true?'done':r===false?'miss':''}"></i>`;
+  }).join('');
+  const btns = g.cats.map((c,ci)=>`
+    <button class="choice" onclick="answerSort(${ci})">${c.t}${c.en?`<div class="en">${c.en}</div>`:''}</button>`).join('');
+  render(`
+    <span class="chapterTag">${g.tag}</span>
+    <h2>${g.title}</h2>
+    <div class="narr">${g.intro}</div>
+    <div class="sortItem"><b>事件 ${g.idx+1}／${g.items.length}：</b>${it.t}</div>
+    <div class="sortBtns">${btns}</div>
+    <div class="progressDots">${dots}</div>
+    <div id="fb"></div>
+  `);
+}
+function answerSort(ci){
+  const g = window.__sort, it = g.items[g.idx], ok = ci===it.a;
+  S.total++; if(ok) S.correct++;
+  g.results[g.idx] = ok;
+  const dc = ok?4:-4, dr = ok?3:-4;
+  setMeters(dc,dr);
+  document.querySelectorAll('.sortBtns .choice').forEach((b,idx)=>{
+    b.disabled=true;
+    if(idx===it.a) b.classList.add('correct');
+    else if(idx===ci) b.classList.add('wrong');
+  });
+  const last = g.idx === g.items.length-1;
+  document.getElementById('fb').innerHTML = `
+    <div class="feedback ${ok?'ok':'no'}">
+      <b>${ok?'✅ 正確！':'❌ 不對喔！'}</b>　${it.fb}
+      <span class="delta">${deltaText(dc,dr)}</span>
+    </div>
+    <button class="btn" onclick="${last? g.next : 'nextSortItem()'}">${last?'完成本關 ▶':'下一個事件 ▶'}</button>`;
+}
+function nextSortItem(){ window.__sort.idx++; renderSortItem(); }
+
+/* ───────────── 開場 ───────────── */
+function start(){
+  render(`
+    <div class="titleArt"><div class="cupBig">🧋</div></div>
+    <span class="chapterTag">商業概論 CH2 互動冒險</span>
+    <h1>Boba Lab 創業大冒險</h1>
+    <div class="subT">
+      你是剛從<b>應用英文科</b>畢業的「阿芸」。看好手搖飲＋跨境電商的浪潮，
+      你決定創立自己的珍奶品牌 <b>Boba Lab</b>，目標是把台灣珍奶賣到全世界。<br><br>
+      從「一個人」到「一間店」，你將親身經歷課本 2.1 → 2.4 的每一個關鍵抉擇：
+      <b>企業家特質、創業方式、風險與保險、危機處理、SWOT 策略</b>。<br><br>
+      💰資金與 ⭐商譽會隨你的決策起伏——右上角的珍奶杯，就是你的創業進度。<br>
+      準備好了嗎？
+    </div>
+    <button class="btn" onclick="hudOn();ch1_1()">🧋 開始創業 START</button>
+  `);
+}
+function hudOn(){ document.getElementById('hud').style.display='flex'; setCup(0); }
+
+/* ───────────── 第一章：企業家精神（2.1） ───────────── */
+function ch1_1(){
+  storyScene({
+    tag:'第一章｜你是那塊料嗎？（2.1 企業家精神）',
+    title:'深夜的頂樓',
+    body:`
+      <div class="narr">
+        畢業前夕，你在頂樓跟死黨阿哲說出計畫。他潑了你一桶冷水：
+      </div>
+      <div class="speaker"><span class="ava">😏</span>阿哲</div>
+      <div class="bubble">「珍奶店滿街都是，你憑什麼？有錢人開店叫投資，你這叫送頭吧。」</div>
+      <div class="narr">
+        你想起課本說的：經濟學家<b>熊彼得 (Schumpeter)</b> 認為企業家是進行
+        <span class="kw">創造性破壞</span> <span class="vocab">creative destruction</span> 的人——
+        把舊玩法打掉，<b>重新組合生產要素</b>。你不是要「再開一間一樣的店」，
+        你要做的是「不一樣」。這就是<span class="vocab">entrepreneurship 企業家精神</span>。
+      </div>`,
+    next:'ch1_2()'
+  });
+}
+function ch1_2(){
+  quizScene({
+    tag:'第一章｜特質判定 ①',
+    body:`
+      <div class="narr">你回答阿哲：</div>
+      <div class="speaker"><span class="ava">🧋</span>阿芸（你）</div>
+      <div class="bubble">「我觀察半年了——外國觀光客都在找『可以寄回國的珍奶』。
+      我要做<b>常溫珍珠奶茶組合包</b>，搭配英文教學影片賣到海外。這個市場現在還沒人卡位，我要先佈局！」</div>`,
+    q:'「察覺趨勢、先於對手佈局」——你展現了哪一種企業家特質？',
+    options:[
+      {t:'(A) 創新性', en:'Innovation', fb:''},
+      {t:'(B) 預警性（前瞻性）', en:'Foresight', ok:true, fb:'對市場具<b>高度敏銳性</b>、能先於對手佈局＝預警性。統測考過郭台銘同款題！'},
+      {t:'(C) 自主性', en:'Autonomy'},
+      {t:'(D) 風險承擔性', en:'Risk-taking'}
+    ],
+    explain:'關鍵字「察覺未來趨勢、事先佈局」→ <b>預警性</b>。若題目強調「重組要素做出新東西」才是創新性。',
+    next:'ch1_3()'
+  });
+}
+function ch1_3(){
+  quizScene({
+    tag:'第一章｜特質判定 ②',
+    body:`
+      <div class="narr">
+        阿哲繼續嗆：「萬一賠光呢？」你深吸一口氣：
+      </div>
+      <div class="speaker"><span class="ava">🧋</span>阿芸</div>
+      <div class="bubble">「商業環境本來就充滿不確定。我把打工三年的積蓄都押上了——
+      賠了我認，但不試我會後悔一輩子。」</div>`,
+    q:'這段話展現的核心特質是？',
+    options:[
+      {t:'(A) 風險承擔性', en:'Risk-taking', ok:true, fb:'具備<b>冒險精神、勇於承擔風險</b>。⚠️ 統測陷阱字：企業家是風險「承擔」性，不是風險「趨避」性！'},
+      {t:'(B) 競爭積極性', en:'Competitiveness'},
+      {t:'(C) 預警性', en:'Foresight'},
+      {t:'(D) 可溝通性', en:'Communicability', fb:'這是「企業願景」的特質，混進來騙你的！'}
+    ],
+    explain:'面對不確定性仍勇於投入＝<b>風險承擔性</b>（113 統測石斑魚題同款：風險承擔與堅持）。',
+    next:'ch1_4()'
+  });
+}
+function ch1_4(){
+  quizScene({
+    tag:'第一章｜熊彼得五創新',
+    body:`
+      <div class="narr">
+        你研發出「<b>冷萃常溫珍珠保存技術</b>」，讓珍珠不冰也 Q 彈 30 天——這是全台首創。
+        阿哲終於閉嘴，改口叫你「熊彼得接班人」。
+      </div>`,
+    q:'「冷萃常溫珍珠保存技術」屬於熊彼得五種創新模式中的哪一種？',
+    options:[
+      {t:'(A) 生產新產品', en:'new product'},
+      {t:'(B) 運用新技術', en:'new technology', ok:true, fb:'保存「技術」是製程方法的突破 → <b>運用新技術</b>。'},
+      {t:'(C) 尋找新合夥人', en:'new partner', fb:'熊彼得<b>沒有</b>這一項！假選項慣犯。'},
+      {t:'(D) 開拓新投資', en:'new investment', fb:'熊彼得<b>沒有</b>這一項！'}
+    ],
+    explain:'五創新口訣：<b>產雞料理事務所</b>（新產品／新技術／新原料／新市場／新組織）。「新合夥人、新投資」永遠是錯誤選項。',
+    next:'ch1_end()'
+  });
+}
+function ch1_end(){
+  setCup(1);
+  storyScene({
+    tag:'第一章完成 ✔',
+    title:'你，具備了企業家的靈魂',
+    body:`
+      <div class="narr">
+        📚 <b>本章重點回顧</b>：<br>
+        ① 五大特質：<b>自</b>主、<b>創</b>新、<b>風</b>險承擔、<b>預</b>警、<b>競</b>爭積極（口訣：自創瘋魚競）<br>
+        ② 熊彼得五創新：產／技／料／市／組<br>
+        ③ 單字：<span class="vocab">entrepreneur</span><span class="vocab">innovation</span><span class="vocab">risk-taking</span><span class="vocab">creative destruction</span>
+      </div>
+      <div class="narr">杯底的第一顆珍珠已就位。接下來——你要用什麼「形式」開始？</div>`,
+    btn:'進入第二章 ▶', next:'ch2_1()'
+  });
+}
+
+/* ───────────── 第二章：創業方式與風險（2.2） ───────────── */
+function ch2_1(){
+  storyScene({
+    tag:'第二章｜怎麼開局？（2.2 創業方式）★統測最高頻',
+    title:'房間就是你的總部',
+    body:`
+      <div class="narr">
+        資金有限，你決定先不租店面：白天在貿易公司上正職，
+        <b>下班後</b>在家裡的小房間研發配方、接單出貨——
+        這就是課本說的 <span class="vocab">SOHO</span>（Small Office Home Office）。
+        像你這樣同時擁有多重身分的人，就叫
+        <span class="vocab">slash 斜槓族</span>／<span class="vocab">freelancer 自由工作者</span>。
+      </div>`,
+    next:'ch2_2()'
+  });
+}
+function ch2_2(){
+  quizScene({
+    tag:'第二章｜SOHO 雙軸分類（114 統測同款）',
+    q:'依「①自主程度」與「②行業屬性」，此時的你分別屬於哪種 SOHO？',
+    body:`<div class="narr">提示：你「白天有正職、下班兼著做」，工作內容是「研發配方＋<b>銷售</b>珍奶組合包」。</div>`,
+    options:[
+      {t:'(A) ① 自雇型＋② 創意型'},
+      {t:'(B) ① 兼職型＋② 業務型', ok:true, fb:'有正職、下班兼差＝<b>兼職型</b>；以銷售商品為主＝<b>業務型</b>。114 統測就考這種「雙判斷」！'},
+      {t:'(C) ① 受雇型＋② 資訊型'},
+      {t:'(D) ① 創業型＋② 諮詢型'}
+    ],
+    explain:'兩把尺分開判斷：自主程度看「僱傭關係」、行業屬性看「工作內容」。⚠️ 補充陷阱：網頁設計者＝<b>資訊型</b>不是創意型！',
+    next:'ch2_3()'
+  });
+}
+function ch2_3(){
+  quizScene({
+    tag:'第二章｜網路開業：房東 vs 房客',
+    body:`
+      <div class="narr">
+        訂單漸多，你把商品上架到<b>蝦皮</b>，同時經營 IG 分享「用英文介紹珍奶」的短影音，
+        意外吸引大量外國粉絲，開始有廠商找你<span class="vocab">業配 sponsored post</span>。
+      </div>`,
+    q:'此時「你的」獲利來源，下列何者正確？',
+    options:[
+      {t:'(A) 成交手續費＋管理費', fb:'那是<b>蝦皮（平台方＝房東）</b>賺的！你反而要付它手續費。'},
+      {t:'(B) 網路廣告費＋關鍵字費用', fb:'廣告費是平台方收入；關鍵字費用是「入口網站」的專屬收入。'},
+      {t:'(C) 銷貨收入＋業配費', ok:true, fb:'自己賣東西＝<b>銷貨收入</b>；經營社群專頁＝<b>業配費</b>。你是「用平台的房客」！'},
+      {t:'(D) 物件刊登費＋觀眾贊助費', fb:'刊登費是拍賣「平台」收的；贊助費（抖內 donate）是「直播主」的收入。'}
+    ],
+    explain:'防呆心法：<b>開平台的房東賺廣告費＋手續費；用平台的房客賺銷貨收入／業配／抖內</b>。（106、109 統測連環考點）',
+    next:'ch2_4()'
+  });
+}
+function ch2_4(){
+  sortGame({
+    tag:'第二章｜風險分類挑戰',
+    title:'⚡ 創業第一年，六件事同時砸過來！',
+    intro:`判斷每個事件是<b>內部風險</b>（企業可控、可分散）還是<b>外部風險</b>（環境造成、不可控）。
+           心法只有一句：「<b>這件事，你自己控制得了嗎？</b>」`,
+    cats:[
+      {t:'🏠 內部風險', en:'internal risk（經營/資金/合夥）'},
+      {t:'🌪 外部風險', en:'external risk（市場/法律/災害）'}
+    ],
+    items:[
+      {t:'你錯估雙 11 銷量，備了三倍珍珠，全部過期報廢。', a:0,
+       fb:'「錯估需求」是自己判斷失誤 → 內部的<b>經營風險</b>（108 統測：錯估需求積壓庫存＝經營風險）。'},
+      {t:'政府公告新規：飲料包裝須含 30% 再生塑膠，你得換全部包材。', a:1,
+       fb:'政府政策法規變動 → 外部的<b>法律風險</b>（呼應課本歐盟再生塑膠火線新聞）。'},
+      {t:'一起創業的表姊認為該主攻日本、你想攻美國，大吵一架鬧拆夥。', a:0,
+       fb:'合夥人理念分歧 → 內部的<b>合夥風險</b>。'},
+      {t:'颱風重創南部，珍珠原料（樹薯粉）產地淹水，全面斷貨。', a:1,
+       fb:'天災人禍 → 外部的<b>災害風險</b>。'},
+      {t:'韓國「黑糖啤酒風」爆紅，年輕人突然不喝珍奶，改追新潮流。', a:1,
+       fb:'消費者偏好改變、市場潮流變化 → 外部的<b>市場風險</b>（110 統測「韓流退燒」同款）。'},
+      {t:'你把貨款拿去添購新設備，月底發現付不出廠商尾款，週轉不靈。', a:0,
+       fb:'資金規劃不當、調度不靈 → 內部的<b>資金風險</b>。'}
+    ],
+    next:'ch2_end()'
+  });
+}
+function ch2_end(){
+  setCup(2);
+  storyScene({
+    tag:'第二章完成 ✔',
+    title:'風險背後，藏著商機',
+    body:`
+      <div class="narr">
+        塑膠新規逼你換包材（法律風險）——但你乾脆推出「<b>甘蔗渣環保杯珍奶組</b>」，
+        主打歐美環保客群，訂單反而暴增。<br><br>
+        這就是課本說的：<span class="kw">化危機為轉機</span>——風險背後的<b>潛在商機</b>。
+      </div>
+      <div class="narr">
+        📚 <b>本章重點回顧</b>：SOHO 兩把尺（行業 4 型＋自主 4 型）｜房東房客獲利表｜
+        內部風險「經資合」／外部風險「市法災」<br>
+        單字：<span class="vocab">SOHO</span><span class="vocab">freelancer</span><span class="vocab">digital nomad</span><span class="vocab">e-commerce</span><span class="vocab">internal / external risk</span>
+      </div>`,
+    btn:'進入第三章 ▶', next:'ch3_1()'
+  });
+}
+
+/* ───────────── 第三章：保險與危機處理（2.3） ───────────── */
+function ch3_1(){
+  storyScene({
+    tag:'第三章｜出事之前與之後（2.3 保險與危機處理）',
+    title:'Boba Lab 一號店，開幕！',
+    body:`
+      <div class="narr">
+        線上業績穩定後，你租下第一間實體店面。簽約前，保險業務員遞來一疊 DM：
+      </div>
+      <div class="speaker"><span class="ava">🕴</span>保險業務</div>
+      <div class="bubble">「開店做生意，保險要先想好。風險發生<b>前</b>投保，把風險轉嫁給保險公司，叫
+      <span class="kw">風險移轉</span>；發生<b>後</b>靠理賠金彌補損失，叫<span class="kw">風險融資</span>。
+      英文的保險叫 <span class="vocab">insurance</span>，理賠叫 <span class="vocab">claim</span>。」</div>`,
+    next:'ch3_2()'
+  });
+}
+function ch3_2(){
+  quizScene({
+    tag:'第三章｜保險對號入座',
+    body:`
+      <div class="narr">
+        開幕第一週就出狀況——<b>你的員工小凱端熱茶上桌時腳滑，
+        整杯熱茶灑在客人手臂上，客人燙傷送醫</b>。客人要求賠償。
+      </div>`,
+    q:'這種「營業場所內、因員工業務疏失使第三人受傷」的賠償責任，應由哪種保險理賠？',
+    options:[
+      {t:'(A) 產品責任險', en:'product liability insurance', fb:'產品責任險保的是「產品<b>本身缺陷</b>害到人」（如熱飲杯沒貼警語）。這題是員工疏失，不是產品問題。'},
+      {t:'(B) 職業災害保險', en:'occupational accident insurance', fb:'職災險保的是「<b>員工自己</b>執行職務時受傷」。受傷的是客人（第三人），不適用！'},
+      {t:'(C) 公共意外責任險', en:'public liability insurance', ok:true, fb:'營業場所內因設施或<b>員工業務疏失</b>致「第三人」傷亡 → 公共意外責任險（統測 25 題同款：餐廳熱湯灑客人）。'},
+      {t:'(D) 人壽保險', en:'life insurance'}
+    ],
+    explain:'一秒判斷法：<b>東西害人→產品責任險｜場所害人→公共意外險｜工作時自己受傷→職災險</b>。',
+    next:'ch3_3()'
+  });
+}
+function ch3_3(){
+  storyScene({
+    tag:'第三章｜危機降臨',
+    title:'🔥 你被炎上了',
+    body:`
+      <div class="narr">
+        某天半夜，一則 Threads 貼文爆紅：
+      </div>
+      <div class="speaker"><span class="ava">😡</span>網友 @tea_hunter</div>
+      <div class="bubble">「在 Boba Lab 外帶的珍奶裡喝到一隻蟑螂？！附照片。大家不要再買了！！」
+      <br><i style="font-size:.8rem;opacity:.7">💬 3.2 萬則留言　🔁 1.8 萬次轉發　持續上升中…</i></div>
+      <div class="narr">
+        留言區炸鍋、退訂潮湧現、記者開始私訊你。這就是<span class="vocab">crisis 危機</span>——
+        它<b>突發</b>、<b>急迫</b>、<b>嚴重</b>、<b>衝突</b>、<b>複雜</b>……但別忘了，危機還有最後一個特性：
+        <span class="kw">機會性（雙面性）</span>。<br><br>
+        接下來的每一步，都在考驗你的<span class="vocab">crisis management 危機處理</span>。
+      </div>`,
+    btn:'開始處理危機 ▶', next:'ch3_4()'
+  });
+}
+function ch3_4(){
+  quizScene({
+    tag:'第三章｜危機處理 · 第一步',
+    q:'貼文爆紅後的「黃金一小時」，你的第一步是？',
+    body:`<div class="narr">（想想嘉義砂鍋魚頭店的教科書級示範……）</div>`,
+    options:[
+      {t:'(A) 先裝死，等風頭過去再說，避免火上加油',
+       fb:'違反<b>積極性原則</b>——課本明寫「不可低調迴避」。統測 104 考過：低調迴避＝錯誤示範。', ok:false},
+      {t:'(B) 立即確認原因、掌握事態，儘快由官方帳號對外說明', ok:true,
+       fb:'<b>即時性原則</b>：立即確認原因、掌握發展動態、儘快說明。危機有「急迫性」，拖越久災情越大。'},
+      {t:'(C) 請所有員工各自用私人帳號到留言區「護航澄清」',
+       fb:'違反<b>統一性原則</b>——應統一指揮對外發言窗口，多頭發言只會造成混亂。'},
+      {t:'(D) 先發律師函告網友毀謗，展現強硬態度',
+       fb:'先開戰不但沒解決問題，還違反積極面對、尋求諒解的<b>責任性原則</b>精神。'}
+    ],
+    explain:'危機處理六原則口訣：<b>積極真統治，責任靈活扛</b>（積極／即時／真實／統一／責任／靈活）。',
+    gain:[3,10], lose:[-5,-12],
+    next:'ch3_5()'
+  });
+}
+function ch3_5(){
+  quizScene({
+    tag:'第三章｜危機處理 · 對外聲明',
+    body:`
+      <div class="narr">你連夜寫好聲明稿，內容是：</div>
+      <div class="bubble">「Boba Lab 向社會大眾致歉。我們已<b>主動暫停營業</b>、全面清消，
+      並委請合法病媒防治單位進行鑑定；<b>無論鑑定結果如何，當日所有訂單全額退費</b>。
+      鑑定報告將於三日內全文公開。」</div>`,
+    q:'「主動休業清消、全額退費、承諾公開真實報告」依序展現了哪些原則？',
+    options:[
+      {t:'(A) 統一性 → 靈活性 → 即時性'},
+      {t:'(B) 積極性 → 責任性 → 真實性', ok:true,
+       fb:'主動面對解決＝<b>積極性</b>；承擔賠償不推諉＝<b>責任性</b>；公開真實原因＝<b>真實性</b>。109 統測就考這種「依序」判斷！'},
+      {t:'(C) 責任性 → 統一性 → 靈活性'},
+      {t:'(D) 即時性 → 積極性 → 統一性'}
+    ],
+    explain:'排序題訣竅：把題目句子<b>逐段拆開</b>、一段對一個原則，按出現順序作答。',
+    next:'ch3_6()'
+  });
+}
+function ch3_6(){
+  quizScene({
+    tag:'第三章｜三階段時間軸',
+    body:`
+      <div class="narr">
+        三天後鑑定出爐：蟑螂品種<b>非店內孳生</b>，是外部環境入侵。輿論大逆轉，
+        網友刷起「危機處理滿分」「路轉粉」。<br>
+        風波落幕，你召集團隊開會：「接下來我們該做什麼？」
+      </div>`,
+    q:'危機已進入「發生後（善後期）」，下列何者才是此階段的正確工作？',
+    options:[
+      {t:'(A) 擬定危機應變計畫', fb:'這是「發生<b>前</b>（潛伏期）」的工作——平時就要準備好！'},
+      {t:'(B) 啟動危機處理小組', fb:'依新審定版，這是「發生<b>時</b>（爆發期）」的動作。'},
+      {t:'(C) 重塑企業形象與聲譽、記錄並評估處理過程', ok:true,
+       fb:'善後期四件事：安撫人員、<b>重塑形象聲譽</b>、記錄過程、評估績效。'},
+      {t:'(D) 統一對外發言、與媒體溝通', fb:'這是爆發期進行中的工作。'}
+    ],
+    explain:'三階段：<b>潛伏期擬計畫 → 爆發期啟小組＋統一發言 → 善後期塑形象</b>。統測 102、112 都考「工作歸位」。',
+    next:'ch3_end()'
+  });
+}
+function ch3_end(){
+  setCup(3);
+  storyScene({
+    tag:'第三章完成 ✔',
+    title:'危機，成了你最好的廣告',
+    body:`
+      <div class="narr">
+        「喝到蟑螂還能路轉粉」的故事被媒體報導，Boba Lab 知名度暴漲——
+        你親身驗證了危機的<span class="kw">機會性（雙面性／價值中立性）</span>。
+      </div>
+      <div class="narr">
+        📚 <b>本章重點回顧</b>：保險功能（事前移轉／事後融資）｜三大責任險一秒分｜
+        危機六特性「突急嚴衝複＋機」｜六原則「積即真統責靈」｜三階段工作歸位<br>
+        單字：<span class="vocab">insurance</span><span class="vocab">liability</span><span class="vocab">claim</span><span class="vocab">crisis management</span><span class="vocab">spokesperson</span>
+      </div>`,
+    btn:'進入最終章 ▶', next:'ch4_1()'
+  });
+}
+
+/* ───────────── 第四章：願景與 SWOT（2.4） ───────────── */
+function ch4_1(){
+  storyScene({
+    tag:'最終章｜往哪走？怎麼走？（2.4 願景與 SWOT）★統測常勝軍',
+    title:'投資人的兩個問題',
+    body:`
+      <div class="narr">
+        一位創投（VC）看上 Boba Lab，願意投資 500 萬，但開會時只問了兩個問題：
+      </div>
+      <div class="speaker"><span class="ava">💼</span>投資人 Ms. Chang</div>
+      <div class="bubble">「第一，你的 <span class="vocab">vision 願景</span> 是什麼？
+      第二，給我看你的 <span class="vocab">SWOT analysis</span>。」</div>
+      <div class="narr">
+        你在白板上寫下：「<b>讓世界任何角落的人，三分鐘內喝到一杯道地台灣珍奶。</b>」
+        ——具體明確、有重點、可行、一聽就懂、長期穩定。這就是好願景的五特質。<br><br>
+        接著，是 SWOT 時間。判斷鐵則：<b>先問內外（自己的事？環境的事？），再問利弊。</b>
+      </div>`,
+    next:'ch4_2()'
+  });
+}
+function ch4_2(){
+  sortGame({
+    tag:'最終章｜SWOT 四象限挑戰',
+    title:'🧭 把 Boba Lab 的現況放進正確象限',
+    intro:'判斷心法：<b>內部</b>＝跟競爭對手比的自身條件（S/W）；<b>外部</b>＝環境變化的影響（O/T）。',
+    cats:[
+      {t:'S 優勢', en:'Strengths（內部・有利）'},
+      {t:'W 劣勢', en:'Weaknesses（內部・不利）'},
+      {t:'O 機會', en:'Opportunities（外部・有利）'},
+      {t:'T 威脅', en:'Threats（外部・不利）'}
+    ],
+    items:[
+      {t:'Boba Lab 擁有獨家「常溫珍珠保存技術」專利。', a:0,
+       fb:'企業內部擁有的獨家技術、專利 → <b>S 優勢</b>。'},
+      {t:'歐美掀起亞洲茶飲熱潮，海外訂單需求大增。', a:2,
+       fb:'外在環境變化帶來有利影響 → <b>O 機會</b>。'},
+      {t:'公司只有五個人，海外行銷人才與資金都不足。', a:1,
+       fb:'內部資源不足、與對手相比不利 → <b>W 劣勢</b>。'},
+      {t:'國際大品牌宣布明年也要推出常溫珍奶，大舉搶進市場。', a:3,
+       fb:'外部新競爭者加入 → <b>T 威脅</b>。⚠️ 反過來：「競爭者退出市場」是 O 機會，不是優勢！'},
+      {t:'美國政府調降台灣食品進口關稅，還提供物流補助。', a:2,
+       fb:'⚠️ 統測最大陷阱（107）：外國政府的優惠是<b>外在環境</b>條件 → <b>O 機會</b>，不是你的優勢！'}
+    ],
+    next:'ch4_3()'
+  });
+}
+function ch4_3(){
+  quizScene({
+    tag:'最終章｜策略抉擇 ①',
+    body:`
+      <div class="narr">
+        投資人點頭：「盤點得不錯。現在——<b>你有獨家技術（S），又遇上歐美茶飲熱潮＋關稅利多（O）</b>，
+        這 500 萬你打算怎麼用？」
+      </div>`,
+    q:'內部有優勢（S）＋外部有機會（O），教科書上的正解策略是？',
+    options:[
+      {t:'(A) 縮減營運規模，降低成本支出', en:'downsize', fb:'這是 WT <b>防禦性</b>策略——兩壞才縮，你現在是兩好！'},
+      {t:'(B) 增加投資、擴大生產規模，全力搶攻', en:'expand', ok:true,
+       fb:'<b>SO 增長性策略</b>：乘勝追擊、擴大生產抓住商機（109、113 統測同構題）。'},
+      {t:'(C) 透過策略聯盟引進外部資源', en:'strategic alliance', fb:'這是 WO <b>扭轉性</b>策略——自己弱才需要抱大腿。'},
+      {t:'(D) 開拓新市場以分散風險', en:'diversify', fb:'這是 ST <b>多元性</b>策略——環境有威脅時才轉移陣地。'}
+    ],
+    explain:'四策略記法：<b>兩好衝（SO 增長）、兩壞縮（WT 防禦）、我弱找聯盟（WO 扭轉）、我強就分散（ST 多元）</b>。',
+    next:'ch4_4()'
+  });
+}
+function ch4_4(){
+  quizScene({
+    tag:'最終章｜策略抉擇 ②（110 統測進階款）',
+    body:`
+      <div class="narr">
+        一年後劇情反轉：國際大牌真的殺進來削價競爭（<b>T 威脅</b>）。
+        幸好你手上仍握有技術專利與死忠粉絲（<b>S 優勢</b>）。你決定——
+        善用技術，跨足「<b>常溫手搖甜點</b>」全新品類，不跟對方在珍奶紅海裡互砍。
+      </div>`,
+    q:'「善用自身優勢、開拓新市場以分散風險」屬於哪種策略？',
+    options:[
+      {t:'(A) SO 增長性策略'},
+      {t:'(B) WO 扭轉性策略'},
+      {t:'(C) ST 多元性策略', ok:true,
+       fb:'<b>S＋T → ST 多元性策略</b>：善用有利條件、尋找新發展機會、開拓新市場以分散風險（107 統測綠能汽車同款）。'},
+      {t:'(D) WT 防禦性策略'}
+    ],
+    explain:'ST 與 SO 的差別只在「環境」：環境好就地擴大（SO）；環境有威脅就帶著優勢開新戰場（ST）。',
+    next:'ch4_end()'
+  });
+}
+function ch4_end(){
+  setCup(4);
+  storyScene({
+    tag:'最終章完成 ✔',
+    title:'珍奶杯，滿了',
+    body:`
+      <div class="narr">
+        三年後，Boba Lab 的常溫珍奶在 12 個國家上架。受訪時記者問你成功祕訣，你笑著說：
+      </div>
+      <div class="speaker"><span class="ava">🧋</span>阿芸</div>
+      <div class="bubble">「其實都寫在高三的商業概論第二章裡——<br>
+      用<b>企業家精神</b>開始、認清<b>風險</b>、備好<b>保險</b>、
+      正面迎擊<b>危機</b>，然後用<b>願景</b>和 <b>SWOT</b> 決定每一步。」</div>`,
+    btn:'查看創業成績單 🏆', next:'ending()'
+  });
+}
+
+/* ───────────── 結局 ───────────── */
+function ending(){
+  const rate = S.total? Math.round(S.correct/S.total*100):0;
+  const score = Math.round(rate*0.5 + S.cash*0.25 + S.rep*0.25);
+  let grade, title;
+  if(score>=90){grade='S';title='傳奇創業家｜熊彼得看了都想投資你';}
+  else if(score>=75){grade='A';title='明日之星｜統測 SWOT 題已是你的送分題';}
+  else if(score>=60){grade='B';title='潛力新秀｜再複習一輪口訣就能封頂';}
+  else {grade='C';title='熱血學徒｜重玩一次，資金商譽都會回來！';}
+  render(`
+    <span class="chapterTag">創業成績單 FINAL REPORT</span>
+    <div class="grade">${grade}</div>
+    <div class="gradeTitle">${title}</div>
+    <div class="statRow">
+      <div><div class="n">${S.correct}/${S.total}</div><div class="l">答對題數</div></div>
+      <div><div class="n">${S.cash}</div><div class="l">💰 最終資金</div></div>
+      <div><div class="n">${S.rep}</div><div class="l">⭐ 最終商譽</div></div>
+    </div>
+    <div class="recap">
+      <h3>🗺 你走過的知識地圖（CH2 一條龍）</h3>
+      2.1 誰來創業 → 五特質（自創瘋魚競）、熊彼得五創新（產雞料理事務所）<br>
+      2.2 怎麼開始 → SOHO 兩把尺、房東房客獲利表、內部「經資合」外部「市法災」<br>
+      2.3 怎麼防護 → 三大責任險一秒分、危機六原則（積極真統治責任靈活扛）、三階段<br>
+      2.4 怎麼走遠 → 願景五特質、SWOT（先內外再利弊）、四策略（兩好衝兩壞縮）
+      <h3>📖 本遊戲出現的應英必背字</h3>
+      entrepreneur · innovation · risk-taking · creative destruction · SOHO · freelancer ·
+      e-commerce · insurance · liability · claim · crisis management · vision ·
+      SWOT (Strengths / Weaknesses / Opportunities / Threats) · strategic alliance · expand · diversify · downsize
+    </div>
+    <div style="text-align:center">
+      <button class="btn" onclick="location.reload()">🔄 再創業一次</button>
+    </div>
+  `);
+}
+
+start();
+</script>
+</body>
+</html>

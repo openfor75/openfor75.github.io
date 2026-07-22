@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>桃氣手搖・請人風雲|CH7 人力資源管理</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
+    background:#faf6ef; color:#3a3230; min-height:100vh;
+    display:flex; flex-direction:column; max-width:560px; margin:0 auto;
+  }
+  header {
+    padding:14px 16px 10px; background:#faf6ef; position:sticky; top:0; z-index:5;
+    border-bottom:1px solid #e8dfd2;
+  }
+  header h1 { font-size:17px; color:#1f6f6b; letter-spacing:1px; }
+  .hud { display:flex; justify-content:space-between; font-size:13px; color:#8a7f74; margin-top:6px; }
+  .bar { height:6px; background:#e8dfd2; border-radius:3px; margin-top:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0%; background:#1f6f6b; transition:width .4s; }
+  main { flex:1; padding:16px; }
+  .scene {
+    background:#fff; border-radius:14px; padding:18px 16px;
+    box-shadow:0 2px 10px rgba(90,70,50,.08); font-size:16.5px; line-height:1.85;
+    animation:pop .35s ease-out;
+  }
+  @keyframes pop { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+  .scene .who { font-size:13px; color:#c96f2f; letter-spacing:2px; margin-bottom:6px; }
+  /* 劇情中的名詞:點擊查看定義 */
+  .t { color:#1f6f6b; font-weight:700; border-bottom:2px dotted #1f6f6b; cursor:pointer; }
+  .chips { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:12.5px; background:#e6f2f1; color:#1f6f6b; border-radius:99px; padding:3px 10px; }
+  .choices { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+  .choices button {
+    font-family:inherit; font-size:15.5px; text-align:left; line-height:1.6;
+    padding:12px 14px; border-radius:12px; border:1.5px solid #d9cdbc;
+    background:#fffdf9; color:#3a3230; cursor:pointer;
+  }
+  .choices button:active { transform:scale(.985); }
+  .fb { margin-top:14px; border-radius:12px; padding:14px; font-size:15.5px; line-height:1.8;
+        animation:pop .3s ease-out; }
+  .fb.ok  { background:#e6f2ec; border:1.5px solid #79ab8f; }
+  .fb.no  { background:#fdf1e2; border:1.5px solid #d9a75f; }
+  .fb .tag { font-weight:700; margin-bottom:4px; display:block; }
+  .fb button, .end button {
+    margin-top:12px; font-family:inherit; font-size:15px; padding:10px 20px;
+    border:none; border-radius:99px; background:#1f6f6b; color:#fff; cursor:pointer;
+  }
+  /* 名詞圖鑑 */
+  .dexbtn {
+    position:fixed; right:14px; bottom:14px; z-index:6;
+    background:#c96f2f; color:#fff; border:none; border-radius:99px;
+    padding:10px 16px; font-family:inherit; font-size:14px;
+    box-shadow:0 3px 8px rgba(90,70,50,.25); cursor:pointer;
+  }
+  .overlay {
+    position:fixed; inset:0; background:rgba(40,32,28,.5); z-index:10;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.show { display:flex; }
+  .sheet {
+    background:#faf6ef; width:100%; max-width:560px; max-height:75vh;
+    border-radius:16px 16px 0 0; padding:16px; overflow-y:auto;
+  }
+  .sheet h2 { font-size:16px; color:#1f6f6b; margin-bottom:10px; }
+  .entry { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; font-size:14.5px; line-height:1.7; }
+  .entry .en { color:#c96f2f; font-size:13px; }
+  .end { text-align:center; padding:6px 2px; }
+  .end .score { font-size:30px; color:#1f6f6b; font-weight:800; margin:8px 0; }
+  .end ul { text-align:left; margin:12px 0 0 18px; font-size:15px; line-height:1.9; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="gtitle">遊戲標題</h1>
+  <div class="hud"><span id="prog"></span><span id="score"></span></div>
+  <div class="bar"><i id="fill"></i></div>
+</header>
+
+<main id="main"></main>
+
+<button class="dexbtn" id="dexbtn">📖 名詞圖鑑 <span id="dexn">0</span></button>
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2>名詞圖鑑(點畫面其他地方關閉)</h2>
+    <div id="dexlist"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   桃氣手搖・請人風雲|商業概論 CH7 人力資源管理
+   前情提要:上一章小桃的「桃氣手搖」開幕爆紅——本章續集:
+   店紅了,人不夠了。12 個經營決策+1 個結局,約 12~15 分鐘。
+   ============================================================ */
+const GAME = { title:"桃氣手搖・請人風雲|CH7 人力資源管理", totalScenes:13, passLine:9 };
+const TOTAL_TERMS = 26;
+
+const SCENES = {
+  start:{
+    who:"第 1 話|一個人撐不住了",
+    text:`「桃氣手搖」爆紅,小桃一天搖四百杯,搖到手抽筋。她決定:請人!死黨阿凱說:「直接發限動『徵人!意者私訊』就好啦。」小桃想起商概課本——管人是一門完整的學問,叫<span class="t" data-k="hrm">人力資源管理</span>,而請人前的第一步應該是……`,
+    terms:[
+      {k:"hrm", term:"人力資源管理", en:"Human Resources Management, HRM", def:"企業為激發員工潛能、達成組織目標,所做的規劃、招募、徵選、訓練、績效考核、薪資福利等管理活動;範圍為選、用、育、晉、留。"},
+      {k:"ja", term:"工作分析", en:"job analysis", def:"又稱職務分析,是人力資源管理的基礎;分析工作內容、職責、方法與資格條件,產出工作說明書與工作規範,作為招募、培訓、任用、考核的依據。"}
+    ],
+    choices:[
+      { label:"先做工作分析:想清楚這個缺每天要做什麼事、需要什麼條件的人。", ok:true,
+        fb:`正解!<span class="t" data-k="ja">工作分析</span>是人力資源管理的<b>基礎</b>:先弄清楚工作內容、職責與資格條件,之後的招募、訓練、核薪、考核全都以它為依據。`, next:"s2" },
+      { label:"先發限動再說,有人來再想!", ok:false,
+        fb:`人真的來了——一位不能站班、只想坐著滑手機的……。沒做<span class="t" data-k="ja">工作分析</span>就亂徵,最容易請到不對的人。劇情修正:小桃乖乖坐下來,把職缺內容與條件寫清楚。`, next:"s2" }
+    ]
+  },
+  s2:{
+    who:"第 2 話|徵人啟事怎麼寫",
+    text:`分析完成!工作分析會產出兩份書面成果:寫「事」的<span class="t" data-k="jd">工作說明書</span>、寫「人」的<span class="t" data-k="js">工作規範</span>。徵人啟事該怎麼寫?`,
+    terms:[
+      {k:"jd", term:"工作說明書", en:"job description", def:"以書面說明特定職務的工作內容、方法、職責、地點——「對事」;是制定工作規範的依據。"},
+      {k:"js", term:"工作規範", en:"job specification", def:"以書面說明特定職務需具備的資格條件(學歷、經歷、能力、證照、個人特質)——「對人」。"}
+    ],
+    choices:[
+      { label:"工作內容:點餐、搖茶、封膜、清潔;條件:高中職以上、能站班、假日可排——事與人都寫清楚。", ok:true,
+        fb:`專業!<b>工作內容、職責、地點</b>屬於<span class="t" data-k="jd">工作說明書</span>(對事);<b>學經歷、能力、特質</b>屬於<span class="t" data-k="js">工作規範</span>(對人),而且說明書是制定規範的依據。應徵者一看就知道自己適不適合。`, next:"s3" },
+      { label:"只寫「薪優!氣氛佳!歡迎加入桃氣大家庭」,保留神祕感。", ok:false,
+        fb:`結果來了五十個人,四十九個以為是網美打卡缺……。少了<span class="t" data-k="jd">工作說明書</span>與<span class="t" data-k="js">工作規範</span>,雙方認知落差超大,面試全部白忙。劇情修正:重寫啟事,把事與人寫清楚。`, next:"s3" }
+    ]
+  },
+  s3:{
+    who:"第 3 話|二店店長找誰",
+    text:`生意好到要開二店!店長人選有兩派:資深員工阿凱(熟客都認識他),或是重金挖角對面品牌的明星店長。你會?`,
+    terms:[
+      {k:"ir", term:"內部招募", en:"internal recruitment", def:"由組織內部拔擢、遞補、調職取得人力;成本低、激勵士氣、員工熟悉企業文化可省訓練成本,但人才有限、易阻礙創新。"},
+      {k:"er", term:"外部招募", en:"external recruitment", def:"經組織外部取得人力(自薦、引薦、校園徵才、人力仲介等);來源多元、帶來新觀念,但成本較高、打擊內部士氣。"}
+    ],
+    choices:[
+      { label:"拔擢阿凱——自己人最懂桃氣。", ok:true,
+        fb:`這是<span class="t" data-k="ir">內部招募</span>:成本低、激勵士氣、熟悉企業文化可省訓練成本;課本的徵選原則也說「<b>內舉優先於外聘</b>」。缺點是較難帶進新觀念——之後可用訓練與觀摩考察補強。`, next:"s4" },
+      { label:"挖角明星店長——直接複製別人的成功!", ok:false,
+        fb:`<span class="t" data-k="er">外部招募</span>確實能注入新觀念、新技術,但成本高、還會打擊內部士氣——阿凱聽到風聲,搖茶的手都涼了。店長職缺課本建議「內舉優先於外聘」。劇情修正:阿凱升店長,全店歡呼!`, next:"s4" }
+    ]
+  },
+  s4:{
+    who:"第 4 話|工讀生二選一",
+    text:`二店徵工讀生,面試到最後剩兩位:小芸,零經驗但反應快、一點就通;大雄,有飲調丙級證照,但面試全程臭臉滑手機。名額只有一個……`,
+    terms:[
+      {k:"apt", term:"性向測驗", en:"aptitude test", def:"測應徵者「未來」的潛在能力與發展潛力。"},
+      {k:"ach", term:"成就測驗", en:"achievement test", def:"又稱技能測驗;測應徵者「過去」累積的專業知識與能力,如證照、檢定。"}
+    ],
+    choices:[
+      { label:"錄取小芸——潛力與態度都好,可以慢慢教。", ok:true,
+        fb:`你看中的「未來潛力」正是<span class="t" data-k="apt">性向測驗</span>要測的;證照與檢定則屬<span class="t" data-k="ach">成就測驗</span>(過去累積的學習成效)。潛力派加上良好訓練,常常後來居上;面試同時看出了個性與態度——那是人格測驗關注的重點。`, next:"s5" },
+      { label:"錄取大雄——有證照,即戰力!", ok:false,
+        fb:`證照代表<span class="t" data-k="ach">成就測驗</span>層次的「過去成就」,但<b>面試</b>正是在看人品與態度——大雄上工三天就跟客人吵架……。劇情修正:改錄取小芸,「潛力(<span class="t" data-k="apt">性向測驗</span>所測)+好態度」比較耐用。`, next:"s5" }
+    ]
+  },
+  s5:{
+    who:"第 5 話|小芸的第一天",
+    text:`小芸明天報到。阿凱拍胸脯:「直接丟上櫃檯,實戰最快!」小桃遲疑了——新人上場前,是不是該先……`,
+    terms:[
+      {k:"bjt", term:"職前訓練", en:"before-job training, BJT", def:"針對新進人員的訓練,又稱始業訓練、引導訓練、養成教育;方式如建教合作、開班講習、現場實習。"},
+      {k:"ojt", term:"在職訓練", en:"on-job training, OJT", def:"在職員工參與的訓練,又稱職內訓練;如學徒訓練(見習/教練制)、進修訓練、短期講習、工作輪調、觀摩考察。"}
+    ],
+    choices:[
+      { label:"先辦半天講習認識菜單與 SOP,再到現場實習跟班一週。", ok:true,
+        fb:`這就是<span class="t" data-k="bjt">職前訓練</span>(又稱始業訓練、引導訓練):讓新人快速了解環境與任務。正式上工後,再由資深的阿凱邊做邊教——那叫<b>學徒訓練</b>,屬於<span class="t" data-k="ojt">在職訓練</span>(OJT)。順序:先職前、後在職。`, next:"s6" },
+      { label:"直接上戰場,錯中學最快!", ok:false,
+        fb:`第一單「微糖去冰」被做成「全糖加冰」,Google 評論一顆星洗版……。沒有<span class="t" data-k="bjt">職前訓練</span>就上場,錯誤成本反而更高。劇情修正:補辦講習+跟班實習,之後再靠<span class="t" data-k="ojt">在職訓練</span>持續升級。`, next:"s6" }
+    ]
+  },
+  s6:{
+    who:"第 6 話|老員工的倦怠",
+    text:`搖茶三年的老員工魚丸最近像靈魂出竅:「每天搖一樣的茶,我快變成搖搖機器人了……」怎麼救?`,
+    terms:[
+      {k:"enlarge", term:"工作擴大化", en:"job enlargement", def:"水平方向增加「同類型」工作;任務變多但難度、權限、職責不變,短期有新鮮感、長期仍乏味。"},
+      {k:"enrich", term:"工作豐富化", en:"job enrichment", def:"垂直方向加深工作,賦予較高權限與責任;可提高滿意度與成就感、降低流動率。"},
+      {k:"rot", term:"工作輪調", en:"job rotation", def:"有計畫地讓員工輪流從事不同工作,又稱交叉訓練;培養多元技能、利於代理制度,常用於管理人才培育。"}
+    ],
+    choices:[
+      { label:"那你多顧兩台搖茶機,比較充實?", ok:false,
+        fb:`這是<span class="t" data-k="enlarge">工作擴大化</span>:水平增加「同類型」工作,難度、權限、職責都沒變——短期有新鮮感,長期一樣無聊。魚丸:「所以是無聊乘以三?」劇情修正:換個方向想。`, next:"s7" },
+      { label:"讓你輪調外場學點餐,再把煮珍珠品管與叫貨交給你全權負責。", ok:true,
+        fb:`一次用了兩招:<span class="t" data-k="rot">工作輪調</span>(輪流從事不同工作、培養多元技能,又稱交叉訓練)+<span class="t" data-k="enrich">工作豐富化</span>(垂直加深,賦予更高權限與責任,提高成就感、降低流動率)。魚丸眼睛都亮了。`, next:"s7" }
+    ]
+  },
+  s7:{
+    who:"第 7 話|薪水怎麼算",
+    text:`二店開張前要訂薪資制度。阿凱熱血提案:「按杯數抽成!搖越多領越多!」`,
+    terms:[
+      {k:"piece", term:"計件制", en:"piece-rate pay", def:"以完成件數計薪(薪資=件數×單位工資);適合重複性高、強調產量速度、過程不易監督的工作;具激勵作用但品質較無保障。"},
+      {k:"time", term:"計時制", en:"time-rate pay", def:"以工作時間計薪(薪資=時間×單位工資);適合重視品質、規模較小、不宜計件的工作;收入穩定但激勵作用弱。"},
+      {k:"je", term:"工作評價", en:"job evaluation", def:"又稱工作分級、工作分等;比較各「職位」的責任輕重、難易與危險程度以評定相對價值,作為核薪依據、達到同工同酬。"}
+    ],
+    choices:[
+      { label:"就用計件制,衝產量!", ok:false,
+        fb:`<span class="t" data-k="piece">計件制</span>適合重複性高、強調產量與速度、過程不易監督的工作;但員工為了衝杯數,珍珠沒煮透就出杯——<b>品質砸了招牌</b>。手搖飲重品質,劇情修正:改回計時。`, next:"s8" },
+      { label:"用計時制打底,表現優於標準另發獎金。", ok:true,
+        fb:`<span class="t" data-k="time">計時制</span>適合<b>重視品質</b>、規模不大的店;搭配<b>獎工制</b>(表現優於標準值即額外發給獎金)兼顧穩定與激勵。若店再擴大,還會先用<span class="t" data-k="je">工作評價</span>幫各職位「秤身價」,作為核薪基礎、達到同工同酬。`, next:"s8" }
+    ]
+  },
+  s8:{
+    who:"第 8 話|夜班的哀號",
+    text:`晚班的小芸苦著臉:「收店都半夜十二點,騎車回家好累……」小桃想補償辛苦的晚班同事,該給什麼?`,
+    terms:[
+      {k:"allow", term:"津貼", en:"allowance", def:"針對特殊勞動條件(夜班、超時、外勤)給的補貼性報酬,目的在補貼員工生活支出。"},
+      {k:"bonus", term:"獎金", en:"bonus", def:"依績效高低給的額外報酬(考績、年終、全勤、提案獎金),通常以貨幣支付,目的在激勵員工努力工作。"}
+    ],
+    choices:[
+      { label:"發夜班津貼!", ok:true,
+        fb:`<span class="t" data-k="allow">津貼</span>是針對「特殊勞動條件」給的<b>補貼性報酬</b>(夜班、超時、外勤交通),目的在補貼生活支出——對症下藥。`, next:"s9" },
+      { label:"發全勤獎金!", ok:false,
+        fb:`<span class="t" data-k="bonus">獎金</span>是依「績效表現」給的<b>額外報酬</b>(考績、全勤、提案),目的在激勵努力;但小芸的辛苦來自「夜班」這個勞動條件,該給的是<span class="t" data-k="allow">津貼</span>。發全勤獎金,反而讓她生病也不敢請假……劇情修正:改發夜班津貼。`, next:"s9" }
+    ]
+  },
+  s9:{
+    who:"第 9 話|福利選哪個",
+    text:`帳上有盈餘了!小桃想幫大家加福利,員工心聲票選第一名:「三餐外食好貴!」預算只夠做一件事……`,
+    terms:[
+      {k:"benefit", term:"員工福利", en:"employee benefits", def:"薪資以外另行提供的補助與設施;自發性福利四類:經濟性(給錢)、娛樂性(給玩)、設施性(給用)、教育性(給學,限員工本人)。"}
+    ],
+    choices:[
+      { label:"每天供一餐營養員工餐。", ok:true,
+        fb:`抓到福利的<b>需要原則</b>與<b>生活原則</b>:優先滿足員工迫切的基本生活需求。<span class="t" data-k="benefit">員工福利</span>四大類順便複習——經濟性給錢、娛樂性給玩、設施性給用(員工餐廳就是)、教育性給學。`, next:"s10" },
+      { label:"砸錢辦五星飯店尾牙抽 iPhone!", ok:false,
+        fb:`尾牙(娛樂性福利)很炫,但一年一次、花費大,和「每天吃飯貴」的迫切需求不對頻——違反<span class="t" data-k="benefit">員工福利</span>的<b>需要原則</b>與經濟原則。劇情修正:先供員工餐,尾牙明年再說。`, next:"s10" }
+    ]
+  },
+  s10:{
+    who:"第 10 話|第一次打考績",
+    text:`年底考核。小桃心想:「小芸嘴甜人緣好,整體表現一定最棒,直接給滿分!」阿凱連忙攔住:「老闆,這樣打分數會出事……」`,
+    terms:[
+      {k:"pa", term:"績效評估", en:"performance appraisal", def:"又稱工作考核;以科學化、系統化方式評估員工的工作成果與表現,作為調薪、升遷、獎懲、教育訓練的依據。"},
+      {k:"halo", term:"暈輪效果", en:"halo effect", def:"又稱月暈效果;以員工「某項個人特質」推論其整體表現,產生以偏概全的缺失。"},
+      {k:"grs", term:"圖表測量法", en:"graphic rating scale", def:"依工作性質設計考核項目、逐項評分再加總;最常使用、最受歡迎的績效評估方法。"},
+      {k:"deg360", term:"360 度績效評估", en:"360-degree feedback", def:"由上司、部屬、受評者本人、同儕、顧客及供應商共同評估;資訊多元、較公正,但員工可能互相勾結。"}
+    ],
+    choices:[
+      { label:"憑整體印象打,快又直覺!", ok:false,
+        fb:`用「人緣好」一項特質推論全部表現,正是<span class="t" data-k="halo">暈輪效果</span>(以偏概全)!<span class="t" data-k="pa">績效評估</span>應對事不對人。劇情修正:阿凱連夜設計考核表救場。`, next:"s11" },
+      { label:"設計考核項目逐項評分,再納入同事與顧客的回饋。", ok:true,
+        fb:`逐項評分加總是最常使用、最受歡迎的<span class="t" data-k="grs">圖表測量法</span>;同時由上司、部屬、本人、同儕、顧客、供應商評分,就是<span class="t" data-k="deg360">360 度績效評估</span>——資訊多元、更公正。考核結果將作為調薪、升遷、獎懲的依據(獎懲記得「獎重於懲、對事不對人」)。`, next:"s11" }
+    ]
+  },
+  s11:{
+    who:"第 11 話|旺季排班大作戰",
+    text:`盛夏爆單!小桃盤算:「大家連上十二天班、每天做十二小時,撐過這波就發財了!」`,
+    terms:[
+      {k:"lsa", term:"勞動基準法", en:"Labor Standards Act", def:"規定勞動條件「最低標準」的法律:工資、工時(每日 8、每週 40)、加班(連同正常每日≤12、每月加班≤46)、休息、童工、退休等。"},
+      {k:"rest", term:"一例一休", en:"one day off + one rest day", def:"勞工每 7 日應有 2 日休息:1 日例假(僅天災、事變、突發事件可出勤,工資加倍)、1 日休息日(徵得勞工同意可出勤,加給 1⅓、1⅔)。"}
+    ],
+    choices:[
+      { label:"衝了,年輕人扛得住!", ok:false,
+        fb:`<span class="t" data-k="lsa">勞動基準法</span>警報!勞工每 7 日應有 2 日休息(<span class="t" data-k="rest">一例一休</span>),每日正常工時 8 小時、加班連同正常每日不得超過 12 小時、每月加班不得超過 46 小時——違法會挨罰,店紅了更會上新聞。劇情修正:重新排班並加徵計時人力。`, next:"s12" },
+      { label:"依法排班:徵得同意才加班,加班費照給。", ok:true,
+        fb:`正解!<span class="t" data-k="lsa">勞動基準法</span>是勞動條件的<b>最低標準</b>:休息日出勤須徵得勞工同意,加班費以 1 又 1/3、1 又 2/3 加成;例假日原則不得出勤(天災事變除外),出勤工資<b>加倍發給</b>。合法經營才走得遠。`, next:"s12" }
+    ]
+  },
+  s12:{
+    who:"第 12 話|魚丸的退休金",
+    text:`尾牙(平價熱炒版)上,做滿三年的魚丸舉杯問:「老闆,我的退休金……有在幫我存嗎?」全場安靜。`,
+    terms:[
+      {k:"pension", term:"勞退新制", en:"new labor pension system", def:"法源《勞工退休金條例》;雇主每月提繳工資 6% 以上至勞工「個人退休金專戶」,勞工可自願提繳至多 6%;年資可累計、專戶帶著走,年滿 60 歲可請領(年資滿 15 年可選月退)。"}
+    ],
+    choices:[
+      { label:"小店不用啦,以後再說!", ok:false,
+        fb:`違法!依<span class="t" data-k="pension">勞退新制</span>(法源:《勞工退休金條例》),雇主每月至少提繳工資 <b>6%</b> 到勞工個人退休金專戶,勞工另可自願提繳至多 6%。劇情修正:小桃隔天立刻補辦提繳。`, next:"fin" },
+      { label:"當然!每月至少提繳你工資 6% 進個人專戶,你也可以自提最多 6%。", ok:true,
+        fb:`完全正確!<span class="t" data-k="pension">勞退新制</span>重點:雇主固定提繳 6% 以上、專戶所有權屬於勞工、換公司年資照樣累計、年滿 60 歲可請領(年資滿 15 年可選月退)。魚丸感動舉杯:「敬桃氣!」`, next:"fin" }
+    ]
+  },
+  fin:{
+    end:true,
+    who:"最終話|二店開幕",
+    text:`「桃氣手搖」二店盛大開幕:阿凱站上店長位,小芸帶著新人,魚丸的珍珠品管全市聞名。小桃終於懂了——找對人(選才)、擺對位子(用才)、教會他(育才)、給他舞台(晉才)、讓他願意留下(留才),<b>人力資源管理</b>就是把「人」變成店裡最重要的資產。<br><br><b>自我檢核清單</b>(每一項都能不看課本說出意思,才算通關):<br>① 工作分析與它的兩大產出(說明書對事、規範對人)<br>② 內部 vs 外部招募的優缺點<br>③ 性向測驗(未來潛力)vs 成就測驗(過去成就)<br>④ 職前/在職/職外訓練的分類<br>⑤ 工作擴大化(水平)vs 豐富化(垂直)vs 輪調<br>⑥ 計時制 vs 計件制的適用場合<br>⑦ 津貼(補貼)vs 獎金(激勵)<br>⑧ 福利四類:經、娛、設、教<br>⑨ 暈輪效果、圖表測量法、360 度評估<br>⑩ 工時 8-40-12-46、一例一休、勞退 6%`
+  }
+};
+
+/* ===== 引擎 ===== */
+let cur="start", score=0, seen=0, dex={};
+const $=id=>document.getElementById(id);
+$("gtitle").textContent=GAME.title;
+
+function collect(s){ (s.terms||[]).forEach(t=>{ if(!dex[t.k]){ dex[t.k]=t; } }); renderDex(); }
+function renderDex(){
+  const arr=Object.values(dex);
+  $("dexn").textContent=arr.length+" / "+TOTAL_TERMS;
+  if(arr.length>=TOTAL_TERMS){ $("dexbtn").innerHTML="🏆 圖鑑全收集!"+arr.length+" / "+TOTAL_TERMS; }
+  $("dexlist").innerHTML=arr.map(t=>
+    `<div class="entry"><b>${t.term}</b> <span class="en">${t.en}</span><br>${t.def}</div>`).join("")
+    || "<div class='entry'>還沒有收集到名詞,回劇情裡找找看!</div>";
+}
+function hud(){
+  $("prog").textContent=`進度 ${Math.min(seen,GAME.totalScenes)} / ${GAME.totalScenes}`;
+  $("score").textContent=`決策分 ${score}`;
+  $("fill").style.width=(Math.min(seen,GAME.totalScenes)/GAME.totalScenes*100)+"%";
+}
+function show(id){
+  cur=id; const s=SCENES[id]; seen++; collect(s); hud();
+  if(s.end){ return ending(s); }
+  $("main").innerHTML=`
+    <div class="scene">
+      <div class="who">${s.who||""}</div>
+      <div>${s.text}</div>
+      <div class="chips">${(s.terms||[]).map(t=>`<span class="chip">${t.term}</span>`).join("")}</div>
+      <div class="choices">${s.choices.map((c,i)=>`<button data-i="${i}">${c.label}</button>`).join("")}</div>
+      <div id="fbslot"></div>
+    </div>`;
+  document.querySelectorAll(".choices button").forEach(b=>b.onclick=()=>pick(+b.dataset.i));
+}
+function pick(i){
+  const c=SCENES[cur].choices[i];
+  if(c.ok) score++;
+  hud();
+  document.querySelectorAll(".choices button").forEach(b=>b.disabled=true);
+  $("fbslot").innerHTML=`
+    <div class="fb ${c.ok?"ok":"no"}">
+      <span class="tag">${c.ok?"✔ 好決策!":"✘ 等等,這樣有風險"}</span>${c.fb}
+      <br><button id="go">繼續 →</button>
+    </div>`;
+  $("go").onclick=()=>show(c.next);
+}
+function ending(s){
+  let grade, msg;
+  if(score>=11){ grade="🏆 金牌老闆"; msg="你已經抓到人力資源管理的精髓:選對人、養好人、留住人!"; }
+  else if(score>=GAME.passLine){ grade="✔ 合格店長"; msg="大方向都對了!回頭看看做錯那幾題的解析,下一輪挑戰滿分。"; }
+  else { grade="📖 實習店長"; msg="桃氣二店差點開不成……再玩一次,仔細讀每個解析在說什麼。"; }
+  $("main").innerHTML=`
+    <div class="scene end">
+      <div class="who">${s.who||""}</div>
+      <div style="text-align:left">${s.text}</div>
+      <div class="score">${grade}|決策分 ${score} / 12</div>
+      <div>${msg}</div>
+      <ul><li>打開右下角「名詞圖鑑」:26 個名詞,每個都能不看定義說出意思嗎?</li></ul>
+      <button onclick="location.reload()">再玩一次</button>
+    </div>`;
+}
+/* 名詞點擊與圖鑑開關 */
+document.addEventListener("click",e=>{
+  const t=e.target.closest(".t");
+  if(t){ const d=dex[t.dataset.k]; if(d) alert(`${d.term}(${d.en})\n\n${d.def}`); }
+});
+$("dexbtn").onclick=()=>$("overlay").classList.add("show");
+$("overlay").onclick=e=>{ if(e.target.id==="overlay") $("overlay").classList.remove("show"); };
+
+show("start");
+</script>
+</body>
+</html>

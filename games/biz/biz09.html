@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>嬤嬤辣創業記|第9章 商業法律</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
+    background:#faf6ef; color:#3a3230; min-height:100vh;
+    display:flex; flex-direction:column; max-width:560px; margin:0 auto;
+  }
+  header {
+    padding:14px 16px 10px; background:#faf6ef; position:sticky; top:0; z-index:5;
+    border-bottom:1px solid #e8dfd2;
+  }
+  header h1 { font-size:17px; color:#1f6f6b; letter-spacing:1px; }
+  .hud { display:flex; justify-content:space-between; font-size:13px; color:#8a7f74; margin-top:6px; }
+  .bar { height:6px; background:#e8dfd2; border-radius:3px; margin-top:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0%; background:#1f6f6b; transition:width .4s; }
+  main { flex:1; padding:16px; padding-bottom:70px; }
+  .scene {
+    background:#fff; border-radius:14px; padding:18px 16px;
+    box-shadow:0 2px 10px rgba(90,70,50,.08); font-size:16.5px; line-height:1.85;
+    animation:pop .35s ease-out;
+  }
+  @keyframes pop { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+  .scene .who { font-size:13px; color:#c96f2f; letter-spacing:2px; margin-bottom:6px; }
+  /* 劇情中的名詞:點擊查看定義 */
+  .t { color:#1f6f6b; font-weight:700; border-bottom:2px dotted #1f6f6b; cursor:pointer; }
+  .chips { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:12.5px; background:#e6f2f1; color:#1f6f6b; border-radius:99px; padding:3px 10px; }
+  .choices { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+  .choices button {
+    font-family:inherit; font-size:15.5px; text-align:left; line-height:1.6;
+    padding:12px 14px; border-radius:12px; border:1.5px solid #d9cdbc;
+    background:#fffdf9; color:#3a3230; cursor:pointer;
+  }
+  .choices button:active { transform:scale(.985); }
+  .fb { margin-top:14px; border-radius:12px; padding:14px; font-size:15.5px; line-height:1.8;
+        animation:pop .3s ease-out; }
+  .fb.ok  { background:#e6f2ec; border:1.5px solid #79ab8f; }
+  .fb.no  { background:#fdf1e2; border:1.5px solid #d9a75f; }
+  .fb .tag { font-weight:700; margin-bottom:4px; display:block; }
+  .fb button, .end button {
+    margin-top:12px; font-family:inherit; font-size:15px; padding:10px 20px;
+    border:none; border-radius:99px; background:#1f6f6b; color:#fff; cursor:pointer;
+  }
+  /* 名詞圖鑑 */
+  .dexbtn {
+    position:fixed; right:14px; bottom:14px; z-index:6;
+    background:#c96f2f; color:#fff; border:none; border-radius:99px;
+    padding:10px 16px; font-family:inherit; font-size:14px;
+    box-shadow:0 3px 8px rgba(90,70,50,.25); cursor:pointer;
+  }
+  .overlay {
+    position:fixed; inset:0; background:rgba(40,32,28,.5); z-index:10;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.show { display:flex; }
+  .sheet {
+    background:#faf6ef; width:100%; max-width:560px; max-height:75vh;
+    border-radius:16px 16px 0 0; padding:16px; overflow-y:auto;
+  }
+  .sheet h2 { font-size:16px; color:#1f6f6b; margin-bottom:10px; }
+  .entry { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; font-size:14.5px; line-height:1.7; }
+  .entry .en { color:#c96f2f; font-size:13px; }
+  .end { text-align:center; padding:6px 2px; }
+  .end .score { font-size:30px; color:#1f6f6b; font-weight:800; margin:8px 0; }
+  .end ul { text-align:left; margin:12px 0 0 18px; font-size:15px; line-height:1.9; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="gtitle">遊戲載入中…</h1>
+  <div class="hud"><span id="prog"></span><span id="score"></span></div>
+  <div class="bar"><i id="fill"></i></div>
+</header>
+
+<main id="main"></main>
+
+<button class="dexbtn" id="dexbtn">📖 名詞圖鑑 <span id="dexn">0</span></button>
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2>名詞圖鑑(點畫面其他地方關閉)</h2>
+    <div id="dexlist"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   《嬤嬤辣創業記》第9章 商業法律
+   高三生小澄把阿嬤的祖傳辣醬做成品牌,
+   十二個經營決策,走完整章的法律關卡。
+   ============================================================ */
+const GAME = { title:"嬤嬤辣創業記|CH9 商業法律", totalScenes:13, passLine:9 };
+const TOTAL_TERMS = 23;
+
+const SCENES = {
+  start:{
+    who:"第 1 話|阿嬤的配方",
+    text:`高三的小澄把阿嬤的祖傳辣醬帶去園遊會,一小時完售,同學瘋狂敲碗「開店啦!」。
+      創業第一題:這罐配方要怎麼受法律保護——去申請
+      <span class="t" data-k="patent">專利權</span>,還是把它當
+      <span class="t" data-k="tsecret">營業秘密</span>藏好?`,
+    terms:[
+      {k:"patent", term:"專利權", en:"patent", def:"向經濟部智慧財產局申請核准後,享有排除他人使用的權利;僅負民事責任。發明 20 年、設計 15 年、新型 10 年。"},
+      {k:"invention", term:"發明專利", en:"invention patent", def:"從無到有的全新創作,自申請日起保護 20 年;醫藥、農藥及其製造方法得申請延長,最多 5 年且以 1 次為限。"},
+      {k:"tsecret", term:"營業秘密", en:"trade secret", def:"可用於生產、銷售或經營的方法、技術、製程、配方等資訊;免申請註冊,三要件持續存在即受永久保護。"}
+    ],
+    choices:[
+      { label:"申請發明專利!拿到 20 年獨家保護,超安心。", ok:false,
+        fb:"小心!一旦申請<b>專利</b>,配方內容就必須<b>公開</b>,而且<b>發明專利最長只保護 20 年</b>,期滿人人可用。可口可樂配方一百多年不申請專利,走的正是<b>營業秘密</b>路線——不公開,要件持續就<b>永久保護</b>。學姊律師及時攔下小澄,改走營業秘密。", next:"s2" },
+      { label:"學可口可樂:不申請、不公開,把配方當營業秘密守住。", ok:true,
+        fb:"正解!<b>營業秘密</b>免申請、免註冊,只要三要件持續存在就受<b>永久保護</b>;申請專利反而要公開配方,最長也只有 20 年——課本「辣油配方」考題的標準答案就是這個思路。", next:"s2" }
+    ]
+  },
+  s2:{
+    who:"第 2 話|保密不是用嘴說",
+    text:`決定走營業秘密路線後,問題來了:阿嬤的配方筆記就貼在廚房牆上,連鄰居阿姨都看得到。
+      想成立<span class="t" data-k="secret3">營業秘密三要件</span>,小澄該怎麼做?`,
+    terms:[
+      {k:"secret3", term:"營業秘密三要件", en:"requirements of a trade secret", def:"非他人知悉、具經濟價值、合理保密措施——三者須同時具備、缺一不可。"}
+    ],
+    choices:[
+      { label:"口頭交代大家「不要說出去」就好,自己人不會背叛。", ok:false,
+        fb:"這樣<b>「合理保密措施」是零分</b>——法院會認定你根本沒把它當秘密,三要件缺一,連營業秘密的門票都拿不到。劇情修正:小澄把配方鎖進保險箱,關鍵比例只有她和阿嬤知道。", next:"s3" },
+      { label:"配方鎖進保險箱、員工簽保密契約、關鍵比例只有小澄和阿嬤各知一半。", ok:true,
+        fb:"專業!<b>非他人知悉</b>、<b>具經濟價值</b>、<b>合理保密措施</b>三顆星集滿,法律才會出手保護。據說可口可樂配方鎖在銀行保險箱,要三位高階主管一起到場才打得開。", next:"s3" }
+    ]
+  },
+  s3:{
+    who:"第 3 話|品牌搶註危機",
+    text:`「嬤嬤辣」的名字和辣椒阿嬤 Logo 設計出爐,超可愛。小澄想先衝一波上市,
+      合夥的同學阿哲卻提醒:<span class="t" data-k="tm">商標權</span>採
+      <span class="t" data-k="ff">先申請主義</span>,江湖上還有一種人叫
+      <span class="t" data-k="squat">網路蟑螂</span>……`,
+    terms:[
+      {k:"tm", term:"商標權", en:"trademark", def:"具識別性的標識(文字、圖形、記號、顏色、立體形狀、動態、全像圖、聲音等),向智慧財產局註冊核准後取得;自註冊公告當日起 10 年,可不斷延展。"},
+      {k:"ff", term:"先申請主義", en:"first-to-file principle", def:"二人以上就相同權利申請時,由先送件的人取得——比手速,不比誰先想到。"},
+      {k:"squat", term:"網路蟑螂", en:"cybersquatting", def:"惡意搶先註冊他人商標文字為網域名稱,造成混淆或高價轉售牟利。"}
+    ],
+    choices:[
+      { label:"先上市搶市場,商標之後再補登記。", ok:false,
+        fb:"危險!商標採<b>註冊主義+先申請主義</b>——誰先送件誰贏。品牌一紅,搶註者馬上出手(「馬祖藍眼淚」就被搶註、開價 10 萬授權費)。劇情修正:阿哲連夜幫小澄向<b>經濟部智慧財產局</b>遞件,驚險保住品牌。", next:"s4" },
+      { label:"上市前先向經濟部智慧財產局申請商標註冊。", ok:true,
+        fb:"漂亮!註冊核准後自<b>註冊公告當日起 10 年</b>,屆滿<b>前後 6 個月</b>可申請延展、每次 10 年,理論上能罩品牌一輩子;但記得<b>連續 3 年未使用會被廢止</b>。", next:"s4" }
+    ]
+  },
+  s4:{
+    who:"第 4 話|官網的照片",
+    text:`架設官網需要美食照。阿哲在美食部落格看到一張超誘人的辣椒特寫,順手就想抓下來用;
+      小澄猶豫了——這會不會踩到<span class="t" data-k="cr">著作權</span>?`,
+    terms:[
+      {k:"cr", term:"著作權", en:"copyright", def:"著作完成那一刻自動享有(創作保護主義),免登記;侵權須負民事與刑事責任(告訴乃論)。"},
+      {k:"repro", term:"重製", en:"reproduction", def:"著作財產權之一;未經授權複製他人的圖文影音,就是侵害重製權。"},
+      {k:"cc", term:"創用 CC", en:"Creative Commons", def:"公眾授權模式:在著作權人設定的條件(姓名標示、非商業性、禁止改作、相同方式分享)下可自由使用,不須額外取得授權。"}
+    ],
+    choices:[
+      { label:"網路上的圖大家都在抓,先用再說。", ok:false,
+        fb:"停!照片在按下快門完成的那一刻就自動有<b>著作權</b>(<b>創作保護主義</b>),未經授權下載使用就是侵害<b>重製</b>權,要負民事、刑事責任。劇情修正:圖火速下架,兩人自己動手拍。", next:"s5" },
+      { label:"自己拍產品照,不足的找「創用 CC」授權圖,並依規定標示作者姓名。", ok:true,
+        fb:"內行!<b>創用 CC</b> 是公眾授權:在著作權人設定的條件下(如<b>姓名標示</b>、<b>非商業性</b>)可自由使用;順帶一提,官網要轉貼別家<b>官方產品照片、基本功能介紹</b>也要授權,但產品名稱、貨號、單價不具原創性,可自由使用。", next:"s5" }
+    ]
+  },
+  s5:{
+    who:"第 5 話|包裝怎麼寫",
+    text:`準備量產上架,包裝設計稿有兩版。行銷鬼才阿哲的 A 版印著大大的「吃了感冒秒好、抗癌聖品」……
+      小澄手上還捏著<span class="t" data-k="fsa">食安法</span>和
+      <span class="t" data-k="cla">商品標示法</span>的講義。`,
+    terms:[
+      {k:"fsa", term:"食品安全衛生管理法", en:"Act Governing Food Safety and Sanitation", def:"主管機關為衛福部。食品外包裝應以中文標示品名、內容物、有效日期、營養標示等;食品不得為醫療效能之標示、宣傳或廣告。"},
+      {k:"cla", term:"商品標示法", en:"Commodity Labeling Act", def:"一般商品標示以中文為主,須清晰顯著、內外一致;不得虛偽不實、違反法律或違背公序良俗。食品的標示則優先依食安法。"}
+    ],
+    choices:[
+      { label:"用 A 版!療效聽起來超猛,一定大賣。", ok:false,
+        fb:"直接踩線——<b>食安法規定食品不得為「醫療效能」之標示、宣傳或廣告</b>,巴西堅果廣告喊「抗癌」就被認定違規。劇情修正:主管機關來函警告,包裝全面重印,小澄含淚記帳。", next:"s6" },
+      { label:"用 B 版:以中文清楚標示品名、成分、有效日期、營養標示與廠商資訊。", ok:true,
+        fb:"正確!食品外包裝應以<b>中文</b>明顯標示品名、內容物、<b>有效日期</b>、<b>營養標示</b>、原產地等;一般商品則依<b>商品標示法</b>——標示要<b>清晰顯著、內外一致</b>。", next:"s6" }
+    ]
+  },
+  s6:{
+    who:"第 6 話|廣告的分寸",
+    text:`網路廣告投放前,阿哲擬了標題:「辣度全銀河第一!提神效果優於市售 30 倍!」
+      數據?沒有,感覺啦。<span class="t" data-k="fta">公平交易法</span>的
+      <span class="t" data-k="fad">不實廣告</span>條款正在旁邊看著。`,
+    terms:[
+      {k:"fta", term:"公平交易法", en:"Fair Trade Act", def:"主管機關為公平交易委員會;規範「限制競爭行為」(獨占濫用、結合、聯合、約定轉售價格)與「不公平競爭行為」(仿冒、不實廣告、損害信譽等)。"},
+      {k:"fad", term:"不實廣告", en:"false advertising", def:"商品或廣告不得為虛偽不實或引人錯誤之表示;明知不實仍刊登的媒體,與廣告主負連帶損害賠償責任。"}
+    ],
+    choices:[
+      { label:"就這樣投!網路廣告大家都馬很浮誇。", ok:false,
+        fb:"<b>公平法</b>規定商品或廣告不得為<b>虛偽不實或引人錯誤</b>之表示——「吸附力優於市售 30 倍」的口罩業者就被罰 10 萬;連<b>明知不實仍刊登的媒體都要連帶賠償</b>。劇情修正:廣告被檢舉下架,改版重投。", next:"s7" },
+      { label:"改用實測辣度數據與真實顧客評價,不誇大。", ok:true,
+        fb:"穩!有憑有據的廣告才走得遠——<b>不實廣告</b>同時受<b>公平交易法</b>與<b>消費者保護法</b>雙重規範,罰起來又快又痛。", next:"s7" }
+    ]
+  },
+  s7:{
+    who:"第 7 話|第一筆退貨",
+    text:`網店開張!第 5 天客服響起:客人說「辣椒阿嬤抱枕」跟想像不一樣,要退貨。
+      阿哲想在賣場公告「售出概不退換」……<span class="t" data-k="cpa">消費者保護法</span>表示有話要說。`,
+    terms:[
+      {k:"cpa", term:"消費者保護法", en:"Consumer Protection Act", def:"規範四大區塊:保障健康與安全(含無過失責任)、定型化契約、特種交易、消費資訊。"},
+      {k:"cool", term:"七日猶豫期", en:"7-day cooling-off period", def:"通訊交易或訪問交易,消費者自收到商品隔天起 7 日內可解除契約,無須說明理由、不負擔任何費用。是猶豫期,不是試用期。"},
+      {k:"sfc", term:"定型化契約", en:"standard form contract", def:"業者單方預先擬定的契約;應提供 30 日以內審閱期,違反誠信原則、顯失公平之條款無效。"}
+    ],
+    choices:[
+      { label:"公告「特價品售出概不退換」,拒絕退貨。", ok:false,
+        fb:"不行——網購屬<b>通訊交易</b>,消費者自收到商品<b>隔天起 7 日內</b>可<b>無條件解除契約</b>,不必說明理由、不必負擔費用;而「概不退換」這種<b>定型化契約</b>條款<b>違反誠信原則,無效</b>。劇情修正:乖乖受理退貨,反而多了一位回頭客。", next:"s8" },
+      { label:"依消保法受理 7 日內退貨,並把退貨流程寫清楚、寫友善。", ok:true,
+        fb:"正解!<b>七日猶豫期</b>是法定權利,規則寫得越清楚,顧客越敢下單。(小提醒:猶豫期是「反悔期」不是試用期,而且只有通訊與訪問交易才有。)", next:"s8" }
+    ]
+  },
+  s8:{
+    who:"第 8 話|會員名單的誘惑",
+    text:`某飲料廠商私訊:「跟你買會員名單,一筆 5 元,現金結。」
+      小澄看著後台三千筆姓名、電話與地址,想起
+      <span class="t" data-k="pdpa">個資法</span>……`,
+    terms:[
+      {k:"pdpa", term:"個人資料保護法", en:"Personal Data Protection Act", def:"規範個資的蒐集、處理、利用;蒐集時應告知目的與當事人權利,未經同意不得作目的外利用,違者負民事與刑事責任。"}
+    ],
+    choices:[
+      { label:"賣!資料放著也是放著,現金真香。", ok:false,
+        fb:"這是紅線!會員資料是為了「出貨、售後」而蒐集,<b>未經當事人同意挪作目的外利用</b>,違反<b>個資法</b>,要負<b>民事與刑事責任</b>(Google 就因違反歐盟個資規範遭罰 1.6 億)。劇情修正:小澄回絕,並全面檢視個資控管。", next:"s9" },
+      { label:"拒絕,並向會員清楚告知蒐集目的,提供查詢、更正、刪除的權利。", ok:true,
+        fb:"正確!蒐集個資應告知<b>機關名稱、目的、資料類別、利用方式與當事人權利</b>;當事人得請求<b>查詢、更正、刪除、停止利用</b>。把客人的個資當客人的錢一樣保管。", next:"s9" }
+    ]
+  },
+  s9:{
+    who:"第 9 話|中央廚房開工",
+    text:`訂單爆量,小澄租下小型中央廚房,請了兩位工讀生——其中學弟小凱才 17 歲。
+      深夜炒醬的高溫油鍋前,班表怎麼排?<span class="t" data-k="osha">職安法</span>登場。`,
+    terms:[
+      {k:"osha", term:"職業安全衛生法", en:"Occupational Safety and Health Act", def:"保障工作者安全健康:雇主不得使未滿 18 歲者、妊娠中及分娩後未滿 1 年之女性從事危險性或有害性工作;發生嚴重職災應於 8 小時內通報。"}
+    ],
+    choices:[
+      { label:"讓小凱顧大夜班的高溫油鍋,年輕人體力好。", ok:false,
+        fb:"違法!<b>職安法</b>規定雇主<b>不得使未滿 18 歲者從事危險性或有害性工作</b>(妊娠中及分娩後未滿 1 年的女性勞工同樣受保護)。劇情修正:小凱改做包裝,高溫工序由成年師傅接手。", next:"s10" },
+      { label:"高溫工序由成年師傅負責,小凱做包裝;備妥滅火器、辦教育訓練與健檢。", ok:true,
+        fb:"專業雇主!設置<b>安全衛生設施</b>、保護<b>未成年與有孕勞工</b>都是雇主義務;若發生嚴重職災,應於 <b>8 小時內通報</b>勞動檢查機構。", next:"s10" }
+    ]
+  },
+  s10:{
+    who:"第 10 話|同業的飯局",
+    text:`三家辣醬品牌的老闆約吃飯,酒過三巡拋出提案:
+      「原料漲成這樣,我們三家一起漲 30 元,誰都不准偷降價,穩賺!」
+      ——教科書等級的<span class="t" data-k="cartel">聯合行為</span>邀請函。`,
+    terms:[
+      {k:"cartel", term:"聯合行為", en:"concerted action", def:"具競爭關係的事業以契約、協議共同決定價格、數量、交易對象等;公平交易法採原則禁止、例外許可。"},
+      {k:"mono", term:"獨占", en:"monopoly", def:"事業在市場處於無競爭狀態或具壓倒性地位。公平法不禁止獨占,但禁止濫用獨占地位(不當定價、阻礙競爭等)。"}
+    ],
+    choices:[
+      { label:"加入!大家一起漲,消費者沒得選。", ok:false,
+        fb:"這是<b>聯合行為</b>——競爭同業協議<b>共同決定價格</b>,公平法<b>原則禁止、例外許可</b>;味全、統一、光泉就因聯合調漲鮮乳價被公平會重罰 3 千萬。劇情修正:小澄藉口趕工落跑,逃過一劫。", next:"s11" },
+      { label:"婉拒,回家依自己的成本結構定價。", ok:true,
+        fb:"聰明!價格要在市場上各憑本事。順帶一題:<b>獨占本身不違法</b>,公平法禁止的是<b>濫用獨占地位</b>——長得大不是罪,聯手操縱才是。", next:"s11" }
+    ]
+  },
+  s11:{
+    who:"第 11 話|大通路的合約",
+    text:`連鎖超市捎來上架邀約!採購傳來電子合約:「用
+      <span class="t" data-k="esig">電子簽章</span>簽一簽就生效。」
+      阿哲皺眉:「電子的……真的有法律效力嗎?」`,
+    terms:[
+      {k:"esig", term:"電子簽章", en:"electronic signature", def:"依附於電子文件的認證資料,效力等同書面簽名蓋章;四原則:鑑別性、完整性(真實性)、隱密性、不可否認性。"}
+    ],
+    choices:[
+      { label:"不放心,堅持印出來、殺去對方總部當面蓋章。", ok:false,
+        fb:"其實不必——依<b>電子簽章法</b>,經認證的電子簽章<b>效力等同傳統書面簽名蓋章</b>,立法宗旨就是確保並推廣電子交易。來回奔波三天後,小澄默默改用電子簽章。", next:"s12" },
+      { label:"確認平台經合法認證後,以電子簽章完成簽約。", ok:true,
+        fb:"正確!<b>電子簽章</b>四原則:<b>鑑別</b>(身分沒被冒用)、<b>完整</b>(內容沒被竄改)、<b>隱密</b>(資料沒被偷看)、<b>不可否認</b>(雙方賴不掉)——電商時代的印章。", next:"s12" }
+    ]
+  },
+  s12:{
+    who:"第 12 話|老臣的離職",
+    text:`元老師傅阿國被競爭對手高薪挖角,他熟悉大半製程。
+      提離職這天,辦公室氣氛凝結——關於
+      <span class="t" data-k="nc">競業禁止</span>,小澄該怎麼收尾?`,
+    terms:[
+      {k:"nc", term:"競業禁止", en:"non-compete clause", def:"約定離職後一定期間內不得投效同業或經營同類業務;期間最長不得超過 2 年,雇主每月補償不得低於勞工離職時月平均工資 50%。"}
+    ],
+    choices:[
+      { label:"當初什麼都沒簽,只能祝福他——配方應該記不起來吧?", ok:false,
+        fb:"高風險!沒有保密與<b>競業禁止</b>約定,營業秘密外洩很難防(台積電與離職研發處長的訴訟纏鬥多年就是經典案例)。補課:離職後競業禁止<b>最長 2 年</b>,雇主<b>每月補償不得低於離職時月平均工資 50%</b>。劇情修正:緊急協商,阿國簽下保密承諾。", next:"endS" },
+      { label:"依當初簽好的條款:2 年內不得投效同業,公司按月給付至少月平均工資 50% 的補償。", ok:true,
+        fb:"佈局完整!<b>競業禁止</b>要「有期限(≤2 年)、有補償(≥50%)」才站得住腳;搭配保密契約與<b>兼職禁止</b>(經理人、監察人)規範,營業秘密才守得住。", next:"endS" }
+    ]
+  },
+  endS:{
+    end:true,
+    who:"最終話|一年後",
+    text:`「嬤嬤辣」進了全台超市,阿嬤在電視訪問裡笑得合不攏嘴。小澄翻著商概課本突然發現:專利、商標、著作權、營業秘密、公平法、消保法……這一年遇到的每個難關,全都寫在第 9 章裡。法規也許嚴格、有時甚至跟不上時代,但守住它,品牌才走得遠。`,
+    check:[
+      "專利三要件(新穎、進步、產業利用)與年限梯:發明 20/設計 15/新型 10",
+      "商標:先申請主義、10 年可延展、連續 3 年未用廢止",
+      "著作權:創作保護主義;人格權不可讓與、財產權終身+50 年",
+      "營業秘密三要件+競業禁止(≤2 年、補償 ≥50%)",
+      "公平法:聯合行為原則禁止;獨占不違法、濫用才違法;不實廣告",
+      "消保法:7 日猶豫期、定型化契約 30 日審閱、無過失責任",
+      "個資法:告知義務、不得目的外利用",
+      "職安法:未滿 18 歲與有孕勞工的保護、嚴重職災 8 小時通報",
+      "食安法:食品中文標示、不得宣稱醫療效能",
+      "電子簽章四原則、創用 CC 四要素"
+    ]
+  }
+};
+
+/* ===== 引擎 ===== */
+let cur="start", score=0, seen=0, dex={};
+const $=id=>document.getElementById(id);
+$("gtitle").textContent=GAME.title;
+
+function collect(s){ (s.terms||[]).forEach(t=>{ if(!dex[t.k]){ dex[t.k]=t; } }); renderDex(); }
+function renderDex(){
+  const arr=Object.values(dex);
+  $("dexn").textContent=arr.length+"/"+TOTAL_TERMS;
+  $("dexbtn").firstChild.textContent=(arr.length>=TOTAL_TERMS?"🏆 圖鑑全收集!":"📖 名詞圖鑑 ");
+  $("dexlist").innerHTML=(arr.length>=TOTAL_TERMS?"<div class='entry' style='background:#e6f2ec'><b>🏆 恭喜!23 個法律名詞全數收集完成。</b><br>試試看:每一個都能不看定義說出意思嗎?</div>":"")
+    + (arr.map(t=>
+    `<div class="entry"><b>${t.term}</b> <span class="en">${t.en}</span><br>${t.def}</div>`).join("")
+    || "<div class='entry'>還沒有收集到名詞,回劇情裡找找看!</div>");
+}
+function hud(){
+  $("prog").textContent=`進度 ${Math.min(seen,GAME.totalScenes)} / ${GAME.totalScenes}`;
+  $("score").textContent=`決策分 ${score}`;
+  $("fill").style.width=(Math.min(seen,GAME.totalScenes)/GAME.totalScenes*100)+"%";
+}
+function show(id){
+  cur=id; const s=SCENES[id]; seen++; collect(s); hud();
+  if(s.end){ return ending(s); }
+  $("main").innerHTML=`
+    <div class="scene">
+      <div class="who">${s.who||""}</div>
+      <div>${s.text}</div>
+      <div class="chips">${(s.terms||[]).map(t=>`<span class="chip">${t.term} ${t.en}</span>`).join("")}</div>
+      <div class="choices">${s.choices.map((c,i)=>`<button data-i="${i}">${c.label}</button>`).join("")}</div>
+      <div id="fbslot"></div>
+    </div>`;
+  window.scrollTo(0,0);
+  document.querySelectorAll(".choices button").forEach(b=>b.onclick=()=>pick(+b.dataset.i));
+}
+function pick(i){
+  const c=SCENES[cur].choices[i];
+  if(c.ok) score++;
+  hud();
+  document.querySelectorAll(".choices button").forEach(b=>b.disabled=true);
+  $("fbslot").innerHTML=`
+    <div class="fb ${c.ok?"ok":"no"}">
+      <span class="tag">${c.ok?"✔ 好決策!":"✘ 等等,這樣有法律風險"}</span>${c.fb}
+      <br><button id="go">繼續 →</button>
+    </div>`;
+  $("go").onclick=()=>show(c.next);
+}
+function ending(s){
+  const total=GAME.totalScenes-1;
+  const passed=score>=GAME.passLine;
+  $("main").innerHTML=`
+    <div class="scene end">
+      <div class="who">${s.who||""}</div>
+      <div style="text-align:left">${s.text}</div>
+      <div class="score">決策分 ${score} / ${total}</div>
+      <div>${passed?"你已經有守法經營者的思維了!":"再玩一次,把每則解析裡的粗體字看清楚——那些就是考點。"}</div>
+      <ul>${(s.check||[]).map(x=>`<li>${x}</li>`).join("")}</ul>
+      <ul><li>最後自我檢核:打開📖名詞圖鑑,每個名詞你能不看定義說出意思嗎?</li></ul>
+      <button onclick="location.reload()">再玩一次</button>
+    </div>`;
+}
+/* 名詞點擊與圖鑑開關 */
+document.addEventListener("click",e=>{
+  const t=e.target.closest(".t");
+  if(t){ const d=dex[t.dataset.k]; if(d) alert(`${d.term}(${d.en})\n\n${d.def}`); }
+});
+$("dexbtn").onclick=()=>$("overlay").classList.add("show");
+$("overlay").onclick=e=>{ if(e.target.id==="overlay") $("overlay").classList.remove("show"); };
+
+show("start");
+</script>
+</body>
+</html>

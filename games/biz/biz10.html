@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>阿嬤的古早味・電商創業記|商概 CH10 商業未來發展</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:"PingFang TC","Microsoft JhengHei",sans-serif;
+    background:#faf6ef; color:#3a3230; min-height:100vh;
+    display:flex; flex-direction:column; max-width:560px; margin:0 auto;
+  }
+  header {
+    padding:14px 16px 10px; background:#faf6ef; position:sticky; top:0; z-index:5;
+    border-bottom:1px solid #e8dfd2;
+  }
+  header h1 { font-size:17px; color:#1f6f6b; letter-spacing:1px; }
+  .hud { display:flex; justify-content:space-between; font-size:13px; color:#8a7f74; margin-top:6px; }
+  .bar { height:6px; background:#e8dfd2; border-radius:3px; margin-top:6px; overflow:hidden; }
+  .bar i { display:block; height:100%; width:0%; background:#1f6f6b; transition:width .4s; }
+  main { flex:1; padding:16px; }
+  .scene {
+    background:#fff; border-radius:14px; padding:18px 16px;
+    box-shadow:0 2px 10px rgba(90,70,50,.08); font-size:16.5px; line-height:1.85;
+    animation:pop .35s ease-out;
+  }
+  @keyframes pop { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+  .scene .who { font-size:13px; color:#c96f2f; letter-spacing:2px; margin-bottom:6px; }
+  /* 劇情中的名詞:點擊查看定義 */
+  .t { color:#1f6f6b; font-weight:700; border-bottom:2px dotted #1f6f6b; cursor:pointer; }
+  .chips { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+  .chip { font-size:12.5px; background:#e6f2f1; color:#1f6f6b; border-radius:99px; padding:3px 10px; }
+  .choices { margin-top:14px; display:flex; flex-direction:column; gap:10px; }
+  .choices button {
+    font-family:inherit; font-size:15.5px; text-align:left; line-height:1.6;
+    padding:12px 14px; border-radius:12px; border:1.5px solid #d9cdbc;
+    background:#fffdf9; color:#3a3230; cursor:pointer;
+  }
+  .choices button:active { transform:scale(.985); }
+  .fb { margin-top:14px; border-radius:12px; padding:14px; font-size:15.5px; line-height:1.8;
+        animation:pop .3s ease-out; }
+  .fb.ok  { background:#e6f2ec; border:1.5px solid #79ab8f; }
+  .fb.no  { background:#fdf1e2; border:1.5px solid #d9a75f; }
+  .fb .tag { font-weight:700; margin-bottom:4px; display:block; }
+  .fb button, .end button {
+    margin-top:12px; font-family:inherit; font-size:15px; padding:10px 20px;
+    border:none; border-radius:99px; background:#1f6f6b; color:#fff; cursor:pointer;
+  }
+  /* 名詞圖鑑 */
+  .dexbtn {
+    position:fixed; right:14px; bottom:14px; z-index:6;
+    background:#c96f2f; color:#fff; border:none; border-radius:99px;
+    padding:10px 16px; font-family:inherit; font-size:14px;
+    box-shadow:0 3px 8px rgba(90,70,50,.25); cursor:pointer;
+  }
+  .overlay {
+    position:fixed; inset:0; background:rgba(40,32,28,.5); z-index:10;
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.show { display:flex; }
+  .sheet {
+    background:#faf6ef; width:100%; max-width:560px; max-height:75vh;
+    border-radius:16px 16px 0 0; padding:16px; overflow-y:auto;
+  }
+  .sheet h2 { font-size:16px; color:#1f6f6b; margin-bottom:10px; }
+  .entry { background:#fff; border-radius:10px; padding:10px 12px; margin-bottom:8px; font-size:14.5px; line-height:1.7; }
+  .entry .en { color:#c96f2f; font-size:13px; }
+  .end { text-align:center; padding:6px 2px; }
+  .end .score { font-size:26px; color:#1f6f6b; font-weight:800; margin:8px 0; }
+  .end ul { text-align:left; margin:12px 0 0 18px; font-size:15px; line-height:1.9; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1 id="gtitle"></h1>
+  <div class="hud"><span id="prog"></span><span id="score"></span></div>
+  <div class="bar"><i id="fill"></i></div>
+</header>
+
+<main id="main"></main>
+
+<button class="dexbtn" id="dexbtn">📖 名詞圖鑑 <span id="dexn">0</span></button>
+<div class="overlay" id="overlay">
+  <div class="sheet">
+    <h2>名詞圖鑑(點畫面其他地方關閉)</h2>
+    <div id="dexlist"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   商概 CH10 商業未來發展|阿嬤的古早味・電商創業記
+   11 個場景、10 個決策點、22 個圖鑑名詞
+   ============================================================ */
+const GAME = { title:"阿嬤的古早味・電商創業記", totalScenes:11, passLine:6 };
+const TOTAL_TERMS = 22;
+
+const SCENES = {
+  start:{
+    who:"第 1 話|爆紅的阿嬤蛋糕",
+    text:`小芸把阿嬤做的古早味蛋糕帶到班上,下課三分鐘被搶購一空。死黨阿哲眼睛發亮:「開網店啦!這年頭什麼都能上網賣——只要交易經過網路,就叫
+      <span class="t" data-k="ec">電子商務</span>。」小芸有點心動,又有點怕。`,
+    terms:[
+      {k:"ec", term:"電子商務", en:"e-commerce", def:"任何經由「電子化形式」進行的商業交易活動(經濟部商業發展署)。特性:不受時空限制、買賣雙方即時互動、節省實體店面成本、消費者自主性與隱密性高。"}
+    ],
+    choices:[
+      { label:"衝了!網路賣東西不受時空限制,連睡覺時都有人下單。", ok:true,
+        fb:"沒錯!電子商務的四大特性:不受時空限制、買賣雙方即時互動、節省實體店面成本、消費者自主性與隱密性「高」。半夜十二點也能成交,實體店做不到。", next:"s2" },
+      { label:"先不要,網路交易公開透明、隱密性很差,感覺會被騙。", ok:false,
+        fb:"剛好講反了——網購不必面對店員,想買什麼慢慢挑慢慢比,隱密性是「高」不是差(這是考古題最愛的陷阱字!)。至於安全疑慮,後面劇情會教你怎麼解。阿哲拍胸脯掛保證,小芸決定放手一試。", next:"s2" }
+    ]
+  },
+  s2:{
+    who:"第 2 話|選一個家",
+    text:`兩人存款加起來只有 5,000 元。開店第一題:店要開在哪?阿哲列出三條路——自己架官網的
+      <span class="t" data-k="p1">自行管理型</span>、付租金租空間的
+      <span class="t" data-k="p2">租用型</span>,還是直接進駐蝦皮這種
+      <span class="t" data-k="p3">第三方大型</span> 平台?`,
+    terms:[
+      {k:"p1", term:"自行管理型", en:"self-hosted platform", def:"店家自行架設平台(設主機、設計網頁、買網域與伺服器)。優:即時更新、掌握銷售數據、資料安全不外洩;缺:開發及維護成本較高。例:博客來、momo、PChome。"},
+      {k:"p2", term:"租用型(託管型)", en:"hosted platform", def:"店家支付租金,向電商平台業者租用網路空間。優:開發成本低、平台負責維護;缺:更新速度慢、須付平台費用。例:SHOPLINE、91APP、Cyberbiz。"},
+      {k:"p3", term:"第三方大型", en:"third-party marketplace", def:"店家支付開店費用,在買賣雙方以外的第三方建置的電商平台販售。優:平台知名度高、瀏覽量大;缺:須支付平台相關費用。例:蝦皮商城、露天市集。"}
+    ],
+    choices:[
+      { label:"自己架官網最帥,銷售數據跟資料全在自己手上!", ok:false,
+        fb:"自行管理型確實能即時更新頁面、掌握銷售數據、確保資料不外洩——但設主機、買網域、租伺服器,「開發及維護成本最高」,5,000 元連零頭都不夠。修正:小芸先把官網夢收進抽屜,改從大平台起步。", next:"s3" },
+      { label:"租用型吧,付點租金,網站維護交給平台業者扛。", ok:true,
+        fb:"合理!租用型開發成本低、維護有人負責,新東陽、台灣正官庄都是這樣經營官網。小提醒:更新速度較慢,而且流量得自己想辦法——小芸最後為了人潮,同步在蝦皮也開了賣場。", next:"s3" },
+      { label:"進駐蝦皮商城!平台知名度高、瀏覽量大,馬上有人潮。", ok:true,
+        fb:"聰明!對沒沒無聞的新手,第三方大型平台「自帶流量」是最大優勢,代價是要付平台相關費用。「阿嬤的古早味」賣場,正式開張!", next:"s3" }
+    ]
+  },
+  s3:{
+    who:"第 3 話|訂單與團媽",
+    text:`開張首週熱鬧滾滾:隔壁班學姊下單兩盒——企業賣給消費者,這叫
+      <span class="t" data-k="b2c">B2C</span>;小芸上「烘焙王」食材網訂麵粉——企業對企業,是
+      <span class="t" data-k="b2b">B2B</span>;學姊吃不完,把一盒轉賣給同學——消費者賣消費者,
+      <span class="t" data-k="c2c">C2C</span>。當晚,一位「團媽」私訊:「我揪了 30 位媽媽,一次訂 40 盒,打 8 折才下單。」`,
+    terms:[
+      {k:"b2c", term:"B2C 企業對消費者", en:"business to consumer", def:"企業透過網路與消費者交易,又稱「電子商店」,是目前最常見的電子商務類型。例:博客來、PChome 24h、PXGo!。"},
+      {k:"b2b", term:"B2B 企業對企業", en:"business to business", def:"企業與企業之間透過網路交易,利用 EDI、EOS 進行上下游供應鏈連結,提升交易效率。例:台灣經貿網、阿里巴巴國際站。"},
+      {k:"c2c", term:"C2C 消費者對消費者", en:"consumer to consumer", def:"消費者之間透過網路交易,拍賣網是典型;平台僅提供交易機制、收取刊登費與手續費,不參與買賣。例:露天市集、Yahoo 奇摩拍賣。"},
+      {k:"c2b", term:"C2B 消費者對企業", en:"consumer to business", def:"有相同需求的消費者匯集成社群,以「集體議價」爭取團購優惠,以團購網居多。判斷關鍵:消費者「主動」。"}
+    ],
+    choices:[
+      { label:"接!消費者主動集結殺價就是 C2B 集體議價——薄利多銷,順便打進媽媽圈。", ok:true,
+        fb:"答對了!消費者匯集需求、集體議價、主導權在買方——這就是 C2B。40 盒出貨當天,媽媽們的社團被蛋糕洗版,訂單開始滾雪球。", next:"s4" },
+      { label:"不接。而且這哪算團購?團購應該是廠商自己開團才對。", ok:false,
+        fb:"順序搞反囉!判斷團購是 C2B 還是 B2C,關鍵看「誰主動」:網友自己揪=C2B;廠商設團購網站邀大家=B2C(統測 102、103 年連著考這個分辨)。修正:團媽轉頭要找別家,小芸急忙追回這筆訂單,學到寶貴一課。", next:"s4" }
+    ]
+  },
+  s4:{
+    who:"第 4 話|錢要怎麼收",
+    text:`訂單變多,新客人卻在聊天室猶豫:「先匯款給你,結果收不到貨怎麼辦?」金流,成了信任的第一關。阿哲查到平台有
+      <span class="t" data-k="tpp">第三方支付</span> 的代收代付機制,兩人盯著螢幕討論起來。`,
+    terms:[
+      {k:"tpp", term:"第三方支付", en:"third-party payment", def:"由第三方中立平台進行「代收代付」:買方先付款給平台保管,確認收到商品無誤後,平台才將款項撥給賣方。主管機關:數位發展部數位產業署。例:LINE Pay、支付寶、Pi 錢包、微信支付。"}
+    ],
+    choices:[
+      { label:"規矩就是先轉帳後出貨,不信任就別買。", ok:false,
+        fb:"陌生賣家喊先付款,十個客人九個跑——電商要解決的正是「看不到對方」的信任問題。修正:阿哲研究一晚,隔天開通代收代付,流失的客人又回來了。", next:"s5" },
+      { label:"開通代收代付:買家先把錢交給平台保管,確認收貨後平台才撥款給我。", ok:true,
+        fb:"正解!這就是第三方支付的核心——由第三方「中立」平台代收代付,買家不怕被雷、賣家不怕被賴帳。加碼考點:第三方支付的主管機關是「數位發展部數位產業署」,和其他三種支付(皆金管會)不一樣!", next:"s5" },
+      { label:"全面改成面交收現金,最實在。", ok:false,
+        fb:"面交=回到「受時空限制」的老路,電子商務最大的優勢直接歸零,外縣市訂單全飛了。修正:面交保留給鄰近熟客,線上一律走代收代付。", next:"s5" }
+    ]
+  },
+  s5:{
+    who:"第 5 話|市集擺攤日",
+    text:`週末文創市集人潮爆滿,攤位前此起彼落:「可以嗶悠遊卡嗎?」「有 Apple Pay 嗎?」「我只有街口耶!」預算只夠先導入一種收款方式——
+      <span class="t" data-k="card">電子票證</span>、
+      <span class="t" data-k="epay">電子支付</span>,還是
+      <span class="t" data-k="nfc">行動裝置信用卡</span>?小芸該怎麼選?`,
+    terms:[
+      {k:"card", term:"電子票證(儲值卡)", en:"stored-value card", def:"以電子、磁力或光學形式「儲值」的多用途支付工具;實務上僅有儲值功能,以 RFID 感應支付。主管機關:金管會。例:悠遊卡、一卡通、icash。"},
+      {k:"epay", term:"電子支付", en:"electronic payment", def:"開立電子支付帳戶,可進行「儲值、轉帳及代收代付」,掃 QR Code 支付,功能最完整。主管機關:金管會。例:街口支付、悠遊付、iPASS MONEY、icash Pay、LINE Pay Money。"},
+      {k:"nfc", term:"行動裝置信用卡", en:"mobile credit card", def:"以行動裝置「綁定信用卡」作為支付工具,如同把信用卡裝進手機,以 NFC 感應;不能儲值、轉帳、代收代付。主管機關:金管會。例:Apple Pay、Google Pay、Samsung Pay。"}
+    ],
+    choices:[
+      { label:"租感應讀卡機,收悠遊卡、一卡通這類電子票證,嗶一下就好。", ok:false,
+        fb:"電子票證走 RFID 感應沒錯,但它實務上「只有儲值功能」(統測 112 年就考過這個實務觀點),而且滿街的掃碼族全接不到。修正:小芸隔天加辦店家收款碼,總算誰都收得了。", next:"s6" },
+      { label:"申請一組店家收款 QR Code——街口、悠遊付、LINE Pay 通通掃得過。", ok:true,
+        fb:"聰明!掃 QR Code 一次接住「電子支付」與「第三方支付」兩大族群;其中電子支付是全能型——儲值、轉帳、代收代付通通行,主管機關為金管會。口訣送你:「票只儲、支全能、三方代、卡不沾」。", next:"s6" },
+      { label:"租 NFC 感應機,收 Apple Pay、Google Pay 這種行動裝置信用卡。", ok:false,
+        fb:"行動裝置信用卡=把信用卡裝進手機,NFC 靠一下就付款,體驗很潮;但它不能儲值、不能轉帳、不能代收代付,而且市集裡掃碼族遠多於刷卡族。修正:改辦 QR Code,順利收單。", next:"s6" }
+    ]
+  },
+  s6:{
+    who:"第 6 話|線上牽線下",
+    text:`怪事出現:市集常常開攤兩小時就完售,晚來的客人撲空;網路賣場的流量卻卡住不動。阿哲盯著兩邊的數字:「這可以用
+      <span class="t" data-k="o2o">O2O</span> 把它們『牽』起來吧?」`,
+    terms:[
+      {k:"o2o", term:"O2O 離線商務模式", en:"Online to Offline", def:"「線上交易、線下消費」的商務模式,又稱線上線下模式;業者在網路發送廣告、折扣、預約訊息,消費者線上下單後再到實體店面消費,是一種「虛實整合」。例:Uber、Gomaji。"}
+    ],
+    choices:[
+      { label:"推出「網路預購 95 折、市集現場取貨」——線上下單、線下消費!", ok:true,
+        fb:"這正是 O2O 離線商務模式:線上交易、線下消費,又稱線上線下模式、虛實整合——三個名字統測都認,還考過「以上皆是」!預購讓備貨精準、撲空客歸零,折扣碼也把線上流量帶起來了。", next:"s7" },
+      { label:"線上歸線上、市集歸市集,分開經營比較單純。", ok:false,
+        fb:"分開經營,等於放著「虛實整合」的綜效不用——Uber、Gomaji 都是靠 O2O 把網路流量變成現場生意。修正:阿哲偷偷上線預購表單,一小時湧進 30 張訂單,小芸只好認輸照做。", next:"s7" }
+    ]
+  },
+  s7:{
+    who:"第 7 話|飲料攤的提案",
+    text:`隔壁「茶茶屋」老闆娘端著冬瓜檸檬走過來:「妹妹,合作啦——買你的蛋糕送我的飲料折價券,買我的飲料送你的蛋糕折價券,互相導客!」阿哲小聲說:「這聽起來像課本說的
+      <span class="t" data-k="cross">業際整合</span>?還是
+      <span class="t" data-k="ally">策略聯盟</span>?」`,
+    terms:[
+      {k:"cross", term:"業際整合化", en:"cross-industry integration", def:"不同企業利用「各自專長」與接觸顧客的管道進行合作,提供更多元完善的服務、創造商機——互相拉抬、換粉。例:全聯×無印良品店中店、7-11×匯豐銀行回饋活動。"},
+      {k:"ally", term:"策略聯盟", en:"strategic alliance", def:"企業間透過合作引進「外部資源」,追求 1+1>2 的效果、提升雙方競爭力。例:鴻海×裕隆合攻電動車。與業際整合概念相近,考題通常只放其中一個當選項。"}
+    ],
+    choices:[
+      { label:"成交!不同行業各出專長、互相拉抬換粉,穩賺。", ok:true,
+        fb:"這就是「業際整合化」——不同企業以各自專長與顧客管道合作,像全聯×無印良品開店中店。它的近親「策略聯盟」強調引進外部資源、追求 1+1>2(如鴻海×裕隆);兩者概念重疊,考題通常一次只放一個,兩個都要認得。", next:"s8" },
+      { label:"不要,發別人的折價券等於幫別人打廣告,虧。", ok:false,
+        fb:"換個角度想:她的客人平常根本不會走到你攤位前——合作是用「對方的客群」換「自己的曝光」,創造原本不存在的商機。修正:試辦一週,兩攤業績各漲三成,老闆娘還多請你一杯冬瓜檸檬。", next:"s8" }
+    ]
+  },
+  s8:{
+    who:"第 8 話|爆單危機",
+    text:`節慶檔期訂單翻倍,兩人烤到半夜,隔天還有段考。時間被「烤蛋糕以外」的事吃掉一大半:印單、包裝、跑超商寄件⋯⋯阿哲翻著課本喃喃:「要不要試試
+      <span class="t" data-k="outs">策略性外包</span>?聽說宅配業者的
+      <span class="t" data-k="logi">物流</span> 都自動化了。」`,
+    terms:[
+      {k:"outs", term:"策略性外包", en:"strategic outsourcing", def:"基於「成本效益」考量,將核心業務保留在企業內,非核心、不符成本效益的業務外包給專業廠商,以專業分工提升效率。例:Nike 委外製造、星巴克將門市外的咖啡零售交給雀巢。"},
+      {k:"logi", term:"物流智慧化", en:"smart logistics", def:"結合網路科技、感測器、RFID、AI、GPS 與自動化物流設備,達到精簡人力、提高揀貨速度與配送效率。例:亞馬遜 Amazon Key 智慧送貨。"}
+    ],
+    choices:[
+      { label:"烘焙是命根子自己顧,包裝出貨整包交給宅配物流處理。", ok:true,
+        fb:"教科書級的「策略性外包」:核心業務(阿嬤配方與烘焙)留在手上,非核心、不符成本效益的雜務交給專業——Nike 專注設計、把製造外包,同一個邏輯。宅配用低溫車、條碼掃描與路線系統送貨,你也順便見識了「物流智慧化」。", next:"s9" },
+      { label:"連烘焙都外包給食品代工廠,我們專心接單就好。", ok:false,
+        fb:"危險!外包的鐵則是「核心不能丟」——阿嬤的配方與手感就是這間店的核心競爭力,交出去等於把靈魂賣掉,品質一走鐘,招牌就砸了。修正:代工試做一批,兩人試吃完默默把合約收回來。", next:"s9" },
+      { label:"全部自己來,少睡一點就好。", ok:false,
+        fb:"精神可嘉,但企業委外的出發點正是「成本效益」考量(統測考過!):你的一小時拿去烤蛋糕,產值遠高於拿去排隊寄件。修正:硬撐三天後,小芸在超商寄件櫃檯前睡著,醒來乖乖打給宅配簽約。", next:"s9" }
+    ]
+  },
+  s9:{
+    who:"第 9 話|報表上的岔路",
+    text:`期末結算:阿嬤古早味穩定熱銷;上月試賣的「黑糖布朗尼」詢問度爆表;「抹茶戚風」卻乏人問津,食材一直過期報廢。阿哲攤開報表:「
+      <span class="t" data-k="st">穩定</span>、
+      <span class="t" data-k="gr">成長</span>、
+      <span class="t" data-k="re">縮減</span>、
+      <span class="t" data-k="mix">混合</span>——葛魯克的四條路,我們走哪條?」`,
+    terms:[
+      {k:"st", term:"穩定策略", en:"stability strategy", def:"現況佳、展望良好、環境穩定時,以「原有產品」採行與過去相同或相近的目標,維持既有市占率,又稱「溫和的成長策略」。例:有豐食品北海鱈魚香絲。"},
+      {k:"gr", term:"成長策略", en:"growth strategy", def:"藉由「擴充原產業或開發新事業」大幅提升經營績效,為多數企業「主要」的經營策略。例:星巴克計劃 2030 年前門市達 5.5 萬家。"},
+      {k:"re", term:"縮減策略", en:"retrenchment strategy", def:"資金缺乏、營運不良、景氣不佳時,減少產品或服務以縮減規模、降低成本;為企業「最不願採行」的策略,如縮編、裁員。例:國泰航空裁員 8,500 人。"},
+      {k:"mix", term:"混合策略", en:"combination strategy", def:"各部門績效表現不均時,衡量不同部門的發展狀況「混合運用」以上策略。例:王品集團的汰弱留強布局。"}
+    ],
+    choices:[
+      { label:"全線加碼!三種口味通通加倍生產、廣告打好打滿。", ok:false,
+        fb:"衝勁十足,但「成長策略」適合整體展望看好時全面擴充;現在三條產品線表現不均,資源全撒等於把錢也砸進賣不動的抹茶裡。修正:重開會議,重新分配資源。", next:"s10" },
+      { label:"熱銷的穩定做、爆紅的加碼衝、賣不動的忍痛停產。", ok:true,
+        fb:"漂亮!衡量不同部門(產品線)的表現、同時運用穩定+成長+縮減——這就是「混合策略」,王品集團的「汰弱留強」正是經典示範。四策略口訣:「好日穩、想衝成、缺錢縮、不平混」。", next:"s10" },
+      { label:"全面縮編,只留最賺的一款,其他都收掉。", ok:false,
+        fb:"「縮減策略」是資金缺乏、營運不良、景氣差時的止血手段,也是企業「最不願採行」的策略;你整體營運健康,只有單一產品疲軟,一刀全砍太傷。修正:只停抹茶線,其他照常。", next:"s10" },
+      { label:"維持原樣就好,改來改去很累。", ok:false,
+        fb:"「穩定策略」(溫和的成長策略)適合現況佳、環境穩定、各線表現平穩時;但你明明有爆品沒加碼、有賠錢貨在失血——放著不動,布朗尼的商機就被別攤搶走了。修正:阿哲把報表拍在桌上,兩人重新排兵布陣。", next:"s10" }
+    ]
+  },
+  s10:{
+    who:"第 10 話|抱枕的誘惑",
+    text:`布朗尼產線穩定後,阿哲滑著統測考古題突然抬頭:「人家甜點工作室都出周邊商品了——我們也來做『阿嬤蛋糕造型抱枕』跟帆布袋啦!」跨出烘焙圈,這一步該不該踏?課本管這叫
+      <span class="t" data-k="div">多角化經營</span>。`,
+    terms:[
+      {k:"div", term:"多角化經營", en:"diversification", def:"企業跨足其他領域以維持營運成長、擴大規模,讓資源發揮最大效益;最重要的目的是「分散風險」。例:統一企業從麵粉一路跨足食品、金融、物流、超商。"}
+    ],
+    choices:[
+      { label:"小量試做!跨足周邊能分散風險,雞蛋別放同一個籃子。", ok:true,
+        fb:"這就是「多角化經營」——跨足其他領域維持成長、擴大規模,而它「最重要的目的是分散風險」(統測愛考這句)。先小量試做更是穩健原則的展現;統一企業就是從麵粉一路多角化成食品龍頭。", next:"endg" },
+      { label:"不要,烘焙才是本業,做抱枕太不務正業。", ok:false,
+        fb:"專注沒有錯,但想像一下:哪天雞蛋麵粉大漲、蛋糕毛利被吃光,周邊商品就是幫你撐現金流的第二隻腳——「分散風險」正是多角化的核心價值。修正:阿哲自掏腰包試做 10 個抱枕,上架三天完售,小芸眼睛都亮了。", next:"endg" }
+    ]
+  },
+  endg:{
+    end:true,
+    who:"最終話|畢業典禮",
+    text:"畢業典禮那天,「阿嬤的古早味」粉專突破一萬追蹤。阿嬤看著小芸把課本名詞一個個變成真實的決策,笑瞇瞇地說:「阮孫仔,比電視上的董事長還厲害。」——平台、模式、支付、策略,這一章,你已經親手經營過一遍了。"
+  }
+};
+
+/* ===== 引擎 ===== */
+let cur="start", score=0, seen=0, dex={};
+const $=id=>document.getElementById(id);
+$("gtitle").textContent=GAME.title;
+
+function collect(s){
+  (s.terms||[]).forEach(t=>{ if(!dex[t.k]){ dex[t.k]=t; } });
+  renderDex();
+  if(Object.keys(dex).length>=TOTAL_TERMS){
+    const b=$("dexbtn");
+    b.innerHTML="📖 圖鑑 <span id='dexn'>"+TOTAL_TERMS+" / "+TOTAL_TERMS+"</span> 🎉 全收集!";
+    b.style.background="#1f6f6b";
+  }
+}
+function renderDex(){
+  const arr=Object.values(dex);
+  const n=$("dexn");
+  if(n) n.textContent=arr.length+" / "+TOTAL_TERMS;
+  $("dexlist").innerHTML=arr.map(t=>
+    `<div class="entry"><b>${t.term}</b> <span class="en">${t.en}</span><br>${t.def}</div>`).join("")
+    || "<div class='entry'>還沒有收集到名詞,回劇情裡找找看!</div>";
+}
+function hud(){
+  $("prog").textContent=`進度 ${Math.min(seen,GAME.totalScenes)} / ${GAME.totalScenes}`;
+  $("score").textContent=`決策分 ${score} / 10`;
+  $("fill").style.width=(Math.min(seen,GAME.totalScenes)/GAME.totalScenes*100)+"%";
+}
+function show(id){
+  cur=id; const s=SCENES[id]; seen++; collect(s); hud();
+  if(s.end){ return ending(s); }
+  $("main").innerHTML=`
+    <div class="scene">
+      <div class="who">${s.who||""}</div>
+      <div>${s.text}</div>
+      <div class="chips">${(s.terms||[]).map(t=>`<span class="chip">${t.term} ${t.en}</span>`).join("")}</div>
+      <div class="choices">${s.choices.map((c,i)=>`<button data-i="${i}">${c.label}</button>`).join("")}</div>
+      <div id="fbslot"></div>
+    </div>`;
+  document.querySelectorAll(".choices button").forEach(b=>b.onclick=()=>pick(+b.dataset.i));
+}
+function pick(i){
+  const c=SCENES[cur].choices[i];
+  if(c.ok) score++;
+  hud();
+  document.querySelectorAll(".choices button").forEach(b=>b.disabled=true);
+  $("fbslot").innerHTML=`
+    <div class="fb ${c.ok?"ok":"no"}">
+      <span class="tag">${c.ok?"✔ 好決策!":"✘ 等等,這樣行不通"}</span>${c.fb}
+      <br><button id="go">繼續 →</button>
+    </div>`;
+  $("go").onclick=()=>show(c.next);
+}
+function ending(s){
+  let title, comment;
+  if(score>=9){ title="🏆 金牌店長"; comment="你幾乎每個決策都踩在概念的甜蜜點上——統測遇到情境題,就用今天這套直覺作答!"; }
+  else if(score>=6){ title="🌱 穩健小老闆"; comment="大方向都對,少數概念還會滑手。回頭把答錯那幾關的解析再讀一次,你就是金牌。"; }
+  else { title="📚 見習生再出發"; comment="別灰心,每個解析都是重點整理。帶著圖鑑再玩一輪,這次換你當老闆!"; }
+  $("main").innerHTML=`
+    <div class="scene end">
+      <div class="who">${s.who||""}</div>
+      <div style="text-align:left">${s.text}</div>
+      <div class="score">${title}|決策分 ${score} / 10</div>
+      <div>${comment}</div>
+      <ul>
+        <li>自我檢核:三種電商平台(自行管理/租用/第三方大型)的優缺點,我說得出來</li>
+        <li>B2B、B2C、C2B、C2C——我會「先看誰對誰,再看誰主動」</li>
+        <li>四種行動支付:「票只儲、支全能、三方代、卡不沾」,含感應方式與主管機關</li>
+        <li>O2O=線上交易、線下消費=虛實整合,三個名字都認得</li>
+        <li>業際整合、策略聯盟、策略性外包、多角化,我分得出差別</li>
+        <li>葛魯克四策略適用時機:「好日穩、想衝成、缺錢縮、不平混」</li>
+        <li>打開名詞圖鑑(22 個),每個名詞不看定義也講得出意思</li>
+      </ul>
+      <button onclick="location.reload()">再玩一次</button>
+    </div>`;
+}
+/* 名詞點擊與圖鑑開關 */
+document.addEventListener("click",e=>{
+  const t=e.target.closest(".t");
+  if(t){ const d=dex[t.dataset.k]; if(d) alert(`${d.term}(${d.en})\n\n${d.def}`); }
+});
+$("dexbtn").onclick=()=>$("overlay").classList.add("show");
+$("overlay").onclick=e=>{ if(e.target.id==="overlay") $("overlay").classList.remove("show"); };
+
+show("start");
+</script>
+</body>
+</html>

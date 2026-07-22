@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>翻轉商店街：小語的創業之路｜商概 CH1 互動遊戲</title>
+<style>
+  :root{
+    --bg:#14202b; --card:#1e3040; --card-2:#25394c;
+    --amber:#ffc24b; --mint:#57d0b4; --coral:#ff7b6b;
+    --ink:#f2f6f8; --sub:#9db3c2; --line:#33495c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    background:var(--bg); color:var(--ink); min-height:100vh;
+    font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+    display:flex; justify-content:center; padding:20px 14px 60px;
+  }
+  .wrap{width:100%; max-width:560px;}
+  /* ── 頂部招牌 ── */
+  header{ text-align:center; margin-bottom:18px;}
+  .eyebrow{
+    display:inline-block; font-size:12px; letter-spacing:.35em; color:var(--amber);
+    border:1px solid var(--amber); border-radius:999px; padding:4px 14px 4px 17px; margin-bottom:10px;
+  }
+  h1{font-size:26px; font-weight:900; letter-spacing:.08em;}
+  h1 span{color:var(--mint);}
+  .sub{color:var(--sub); font-size:13px; margin-top:6px; letter-spacing:.1em;}
+
+  /* ── 珍奶進度杯（簽名元素） ── */
+  .cupbar{
+    display:flex; align-items:center; gap:14px; background:var(--card);
+    border:1px solid var(--line); border-radius:16px; padding:12px 16px; margin-bottom:16px;
+  }
+  .cup{flex-shrink:0;}
+  .cupinfo{flex:1;}
+  .cupinfo b{color:var(--amber); font-size:15px;}
+  .cupinfo p{color:var(--sub); font-size:12px; margin-top:3px;}
+  .score-chip{
+    background:var(--card-2); border-radius:10px; padding:6px 12px; text-align:center;
+    font-size:12px; color:var(--sub);
+  }
+  .score-chip b{display:block; color:var(--mint); font-size:18px;}
+
+  /* ── 場景卡 ── */
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:18px;
+    padding:22px 20px; animation:pop .35s ease;
+  }
+  @keyframes pop{from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:none;}}
+  .tag{
+    display:inline-block; background:var(--card-2); color:var(--mint);
+    font-size:12px; letter-spacing:.15em; border-radius:6px; padding:4px 10px; margin-bottom:12px;
+  }
+  .story{
+    background:var(--card-2); border-left:3px solid var(--amber); border-radius:0 10px 10px 0;
+    padding:12px 14px; font-size:14.5px; line-height:1.8; color:#e3ecf2; margin-bottom:16px;
+  }
+  .q{font-size:17px; font-weight:800; line-height:1.6; margin-bottom:14px;}
+  .opt{
+    display:block; width:100%; text-align:left; background:var(--bg);
+    border:1px solid var(--line); border-radius:12px; color:var(--ink);
+    padding:12px 14px; font-size:14.5px; line-height:1.6; margin-bottom:10px;
+    cursor:pointer; transition:border-color .15s, background .15s; font-family:inherit;
+  }
+  .opt:hover{border-color:var(--amber);}
+  .opt.correct{border-color:var(--mint); background:rgba(87,208,180,.12);}
+  .opt.wrong{border-color:var(--coral); background:rgba(255,123,107,.12);}
+  .opt:disabled{cursor:default; opacity:.85;}
+
+  .explain{
+    display:none; margin-top:14px; border-top:1px dashed var(--line); padding-top:14px;
+    font-size:14px; line-height:1.8; animation:pop .3s ease;
+  }
+  .explain .verdict{font-weight:900; font-size:15px; margin-bottom:6px;}
+  .verdict.good{color:var(--mint);} .verdict.bad{color:var(--coral);}
+  .vocab{
+    margin-top:10px; background:var(--card-2); border-radius:10px; padding:10px 12px; font-size:13px;
+  }
+  .vocab b{color:var(--amber);}
+  .vocab i{color:var(--sub); font-style:normal;}
+
+  .btn{
+    display:block; width:100%; margin-top:16px; background:var(--amber); color:#20232a;
+    border:none; border-radius:12px; padding:14px; font-size:16px; font-weight:900;
+    letter-spacing:.2em; cursor:pointer; font-family:inherit; transition:transform .12s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn.ghost{background:transparent; color:var(--mint); border:1px solid var(--mint);}
+
+  /* ── 結局 ── */
+  .ending h2{font-size:22px; font-weight:900; color:var(--amber); margin-bottom:8px; text-align:center;}
+  .ending .title-badge{
+    text-align:center; font-size:34px; font-weight:900; letter-spacing:.1em;
+    color:var(--mint); margin:14px 0 6px;
+  }
+  .ending .final-note{color:var(--sub); font-size:13.5px; text-align:center; margin-bottom:16px;}
+  .map{border-top:1px dashed var(--line); padding-top:14px; font-size:13.5px; line-height:2;}
+  .map b{color:var(--amber);}
+  footer{margin-top:22px; text-align:center; color:var(--sub); font-size:11.5px; letter-spacing:.1em;}
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">商業概論 CH1 素養闖關</div>
+    <h1>翻轉商店街<span>：小語的創業之路</span></h1>
+    <div class="sub">從擺攤少女到社會企業家，8 關讀懂「商業基本概念」</div>
+  </header>
+
+  <div class="cupbar">
+    <svg class="cup" width="46" height="66" viewBox="0 0 46 66" aria-hidden="true">
+      <line x1="30" y1="2" x2="18" y2="20" stroke="#ffc24b" stroke-width="4" stroke-linecap="round"/>
+      <path d="M6 14 L40 14 L35 62 Q23 66 11 62 Z" fill="#25394c" stroke="#33495c" stroke-width="2"/>
+      <clipPath id="cupclip"><path d="M7 15 L39 15 L34.4 61 Q23 64.5 11.6 61 Z"/></clipPath>
+      <rect id="tea" x="7" y="62" width="32" height="0" fill="#c98a4b" opacity=".85" clip-path="url(#cupclip)"/>
+      <g id="pearls" clip-path="url(#cupclip)"></g>
+    </svg>
+    <div class="cupinfo">
+      <b id="stage-label">序章</b>
+      <p>答對一關，杯裡就多一顆珍珠。集滿 8 顆，喝下屬於你的畢業級珍奶！</p>
+    </div>
+    <div class="score-chip">得分<b id="score">0</b></div>
+  </div>
+
+  <div id="screen"></div>
+
+  <footer>中壢家商 商經科 × 應用英文科｜商業概論總複習</footer>
+</div>
+
+<script>
+const scenes=[
+ {tag:"第 1 關｜1.1.1 商業活動的成立要件",
+  story:"高三的小語用碎布縫了一批超可愛的飲料杯套。她做了四件事——請判斷哪一件才算真正踏入「商業」的世界。",
+  q:"下列哪一個行為屬於「商業活動」？",
+  opts:[
+   {t:"把杯套免費送給好朋友當生日禮物",ok:false,why:"沒有「營利目的」，不符合四要件的第一條。"},
+   {t:"園遊會義賣杯套，全數捐給流浪動物之家",ok:false,why:"義賣以公益為目的，非以營利為目的，不算商業活動。"},
+   {t:"同學說：「我用一杯 50 嵐跟你換杯套！」小語答應了",ok:true,why:"雖然沒付「錢」，但雙方自願、合法，且有等值交換（勞務或物品皆可）——四要件全數成立！"},
+   {t:"在車站硬把杯套塞給路人並要求付錢",ok:false,why:"不是出於雙方自願，可能還觸犯《社會秩序維護法》。"}],
+  key:"商業四要件＝營利＋交易＋自願＋合法，四個「同時」成立才算。口訣：贏了交易，願意守法。",
+  vocab:[["transaction","交易"],["barter","以物易物"]]},
+
+ {tag:"第 2 關｜1.1.1 商業經營五要素",
+  story:"訂單越來越多！小語盤點手上的資源：一台縫紉機、一手好車工、一點存款，還有願意讓她賒帳進布料的布行老闆。",
+  q:"小語「精湛的縫紉技術」屬於哪一項商業經營要素？",
+  opts:[
+   {t:"商品",ok:false,why:"商品是「經營的標的物」——她賣的杯套才是商品。"},
+   {t:"勞動",ok:true,why:"技術、體力、知識、經驗、態度，都是從業人員付出的勞心勞力＝勞動要素。"},
+   {t:"資本",ok:false,why:"縫紉機、存款、專利商標才是資本（有形＋無形資產）。"},
+   {t:"商業信用",ok:false,why:"布行老闆「相信她未來還得起錢」而讓她賒帳，那才是商業信用。"}],
+  key:"五要素口訣：商、勞、資、信、組——商人勞累攢資本，信用組織自然來。",
+  vocab:[["labor","勞動"],["capital","資本"]]},
+
+ {tag:"第 3 關｜1.1.1 生產的種類與效用",
+  story:"小語升級產線：向工廠收購「碎布」（別人眼中的垃圾），加工縫成杯套，再宅配寄給高雄的客人。",
+  q:"「把碎布加工縫製成杯套」這個動作，屬於哪種生產、創造哪種效用？",
+  opts:[
+   {t:"原始生產，本源效用",ok:false,why:"原始生產是直接利用自然資源，例如農夫種棉花。"},
+   {t:"形式生產，形式效用",ok:true,why:"改變物品原有型態（碎布→杯套）＝形式生產（工業生產），創造形式效用。"},
+   {t:"效用生產，地方效用",ok:false,why:"「宅配到高雄」那一段才是——運輸創造地方（空間）效用。"},
+   {t:"勞務生產，勞務效用",ok:false,why:"勞務生產是提供服務本身，例如老師教學、演員表演。"}],
+  key:"生產四類口訣：原、形、效、勞；效用生產再細分：產（權）、時（間）、地（方）——產地直送要準時。",
+  vocab:[["utility","效用"],["processing","加工"]]},
+
+ {tag:"第 4 關｜1.1.2 交易方式的演進",
+  story:"客人問：「可以 LINE Pay 嗎？我綁信用卡。」小語突然發現，自己一路走過了課本上整段商業發展史。",
+  q:"客人「用綁定信用卡的行動支付」付款，屬於哪個交易時期？",
+  opts:[
+   {t:"物物交換時期",ok:false,why:"那是第 1 關「用飲料換杯套」的等級。"},
+   {t:"貨幣交易時期",ok:false,why:"掏出紙鈔、硬幣才是貨幣交易。注意：紙幣是貨幣時期的工具，不是信用時期！"},
+   {t:"信用交易時期",ok:true,why:"信用卡＝以信用為基礎、可延遲支付的媒介，是商業發展的「最高」交易階段。"},
+   {t:"家庭生產時期",ok:false,why:"這是「產銷經營觀點」的分類，跟交易方式是兩條不同的時間軸。"}],
+  key:"交易演進：物→幣→信。加碼考點：信用卡缺「計價標準、價值儲藏」功能，所以它不是貨幣！",
+  vocab:[["currency","貨幣"],["credit transaction","信用交易"]]},
+
+ {tag:"第 5 關｜1.1.3 商業的組織型態",
+  story:"生意做大了！好友阿哲說：「我出 50 萬，但我只想以出資額為限負責；經營和其他一切責任都歸你。」兩人決定登記成立公司。",
+  q:"「一位負無限清償責任＋一位以出資額為限負有限責任」的公司，是哪一種型態？",
+  opts:[
+   {t:"獨資",ok:false,why:"獨資只有 1 人出資，且業主負無限清償責任。"},
+   {t:"合夥",ok:false,why:"一般合夥的所有合夥人都要負「連帶無限」清償責任。"},
+   {t:"兩合公司",ok:true,why:"無限責任股東＋有限責任股東各 1 人以上＝兩合公司（順帶一提：它是全台家數最少的公司型態）。"},
+   {t:"股份有限公司",ok:false,why:"股份有限公司全體股東都以「所認股份」為限負責。"}],
+  key:"比較題常考：家數最多＝有限公司；最有名＝股份有限公司；最少＝兩合公司；近似合夥＝無限公司。",
+  vocab:[["unlimited liability","無限清償責任"],["shareholder","股東"]]},
+
+ {tag:"第 6 關｜1.1.4 現代商業的特質（統測最愛）",
+  story:"公司步上軌道：小語把「車縫」外包給代工廠，自己專心設計；官網上客人還能「輸入名字」訂做專屬刺繡杯套。",
+  q:"「客人輸入名字、訂做專屬刺繡杯套」符合哪一項現代商業特質？",
+  opts:[
+   {t:"生產標準化",ok:false,why:"標準化是 SOP 大量生產、降低成本（規模經濟）——注意：它促進的不是專業分工！"},
+   {t:"商品客製化",ok:true,why:"因應消費者多樣需求、注重個人獨特性而量身訂做＝客製化。"},
+   {t:"分工專業化",ok:false,why:"「把車縫外包、自己專心設計」那件事才是分工專業化。"},
+   {t:"業際整合化",ok:false,why:"那是不同企業各出專長、合作共享擴大市場，例如電信業×科技業合開購物商城。"}],
+  key:"特質判斷心法：量身訂做→客製化｜SOP 一致→標準化｜外包核心以外→專業分工｜跨足不同領域→多角化｜跨公司合作→業際整合。",
+  vocab:[["customization","客製化"],["outsourcing","外包"]]},
+
+ {tag:"第 7 關｜1.2.2 企業社會責任（Carroll 四責任）",
+  story:"年底結算，公司賺錢了！小語做了四件事：依法繳稅、幫員工加薪、拒絕誇大不實的行銷，還捐了 300 個杯套給偏鄉小學。",
+  q:"「主動捐 300 個杯套給偏鄉小學」是善盡哪一種社會責任？",
+  opts:[
+   {t:"經濟責任",ok:false,why:"幫員工加薪、給合理薪資，那是經濟責任（企業「最基本的責任」）。"},
+   {t:"法律責任",ok:false,why:"依法繳稅是法律責任（企業「最基本的修養」）。"},
+   {t:"倫理責任",ok:false,why:"拒絕不實行銷、不違背善良風俗，是被動回應社會期待的倫理責任。"},
+   {t:"自由裁量責任",ok:true,why:"量力而為、自發性參與慈善活動＝自由裁量（慈善）責任，是唯一「自願性」責任。"}],
+  key:"口訣：經、法、倫、慈——前三個是義務，慈善靠自願。陷阱：最基本「責任」＝經濟；最基本「修養」＝法律。",
+  vocab:[["CSR (Corporate Social Responsibility)","企業社會責任"],["philanthropy","慈善"]]},
+
+ {tag:"最終關｜1.3.3 社會企業",
+  story:"小語做了一個重大決定：轉型！公司開始培訓並雇用二度就業婦女擔任縫紉師，用「賣杯套的營收」養活整個計畫，不接受捐款，盈餘持續投入擴大培訓。",
+  q:"小語的公司轉型後，最符合下列哪一種組織？它的「核心目標」是什麼？",
+  opts:[
+   {t:"非營利組織——核心目標是賺取最大利潤",ok:false,why:"NPO 靠「捐助」維持營運，且受法律限制不得分配盈餘，跟小語的模式不同。"},
+   {t:"社會企業——核心目標是解決社會問題",ok:true,why:"用創新商業模式獲利、營運自給自足，把利潤拿來解決社會及環境問題＝社會企業（113、114 統測連兩年考）！"},
+   {t:"一般營利企業——核心目標是提升知名度",ok:false,why:"一般營利企業的成立目的是賺取最大利潤，盈餘依股東會決議分配。"},
+   {t:"社會企業——核心目標是靠各界捐款做公益",ok:false,why:"前半對、後半錯！社會企業「不靠捐款」，靠商業營運自給自足——這正是 114 統測的陷阱選項。"}],
+  key:"三方比較：一般企業（賺最大利潤）↔ 社會企業（營運自足、解決社會問題、可提撥部分盈餘）↔ NPO（靠捐助、不得分配盈餘）。",
+  vocab:[["social enterprise","社會企業"],["sustainability","永續"]]}
+];
+
+let idx=0, score=0, pearls=0;
+const screen=document.getElementById("screen");
+const scoreEl=document.getElementById("score");
+const stageLabel=document.getElementById("stage-label");
+
+function fillCup(){
+  document.getElementById("tea").setAttribute("y",62-pearls*5.9);
+  document.getElementById("tea").setAttribute("height",pearls*5.9);
+  const g=document.getElementById("pearls"); g.innerHTML="";
+  for(let i=0;i<pearls;i++){
+    const cx=13+(i%3)*10+(Math.floor(i/3)%2)*3, cy=58-Math.floor(i/3)*8;
+    g.innerHTML+=`<circle cx="${cx}" cy="${cy}" r="3.6" fill="#2b1a10" stroke="#4a2e1b" stroke-width="1"/>`;
+  }
+}
+
+function renderIntro(){
+  stageLabel.textContent="序章";
+  screen.innerHTML=`<div class="card">
+    <span class="tag">STORY</span>
+    <div class="story">高三應英科的小語，手很巧，縫了一批超可愛的飲料杯套。她從「送同學東西」開始，一路走到「經營一家改變社會的公司」。<br><br>這條路上的每個抉擇，都藏著《商業概論》第 1 章的關鍵概念——換你替她做決定。</div>
+    <p style="color:var(--sub);font-size:13px;line-height:1.8">🧋 共 8 關｜答對得 1 顆珍珠｜每關附統測考點與英文單字<br>選錯不會扣分，但解析一定要看完！</p>
+    <button class="btn" onclick="renderScene()">開 始 創 業</button>
+  </div>`;
+}
+
+function renderScene(){
+  const s=scenes[idx];
+  stageLabel.textContent=`第 ${idx+1} / 8 關`;
+  let optsHtml=s.opts.map((o,i)=>`<button class="opt" data-i="${i}">${"ABCD"[i]}. ${o.t}</button>`).join("");
+  let vocabHtml=s.vocab.map(v=>`<b>${v[0]}</b> <i>${v[1]}</i>`).join("　｜　");
+  screen.innerHTML=`<div class="card">
+    <span class="tag">${s.tag}</span>
+    <div class="story">${s.story}</div>
+    <div class="q">Q. ${s.q}</div>
+    ${optsHtml}
+    <div class="explain" id="explain">
+      <div class="verdict" id="verdict"></div>
+      <div id="why"></div>
+      <div style="margin-top:8px">📌 <b style="color:var(--amber)">考點筆記：</b>${s.key}</div>
+      <div class="vocab">🔤 應英加值單字：${vocabHtml}</div>
+      <button class="btn" onclick="next()">${idx===scenes.length-1?"看 結 局":"下 一 關"}</button>
+    </div>
+  </div>`;
+  document.querySelectorAll(".opt").forEach(btn=>{
+    btn.addEventListener("click",()=>answer(parseInt(btn.dataset.i)));
+  });
+}
+
+function answer(i){
+  const s=scenes[idx];
+  const btns=document.querySelectorAll(".opt");
+  btns.forEach((b,j)=>{
+    b.disabled=true;
+    if(s.opts[j].ok) b.classList.add("correct");
+    else if(j===i) b.classList.add("wrong");
+  });
+  const v=document.getElementById("verdict"), w=document.getElementById("why");
+  if(s.opts[i].ok){
+    score++; pearls++; scoreEl.textContent=score; fillCup();
+    v.textContent="✅ 答對！＋1 顆珍珠"; v.classList.add("good");
+    w.textContent=s.opts[i].why;
+  }else{
+    v.textContent="❌ 差一點！正解是「"+s.opts.find(o=>o.ok).t+"」"; v.classList.add("bad");
+    w.innerHTML="你的選項："+s.opts[i].why+"<br>正解說明："+s.opts.find(o=>o.ok).why;
+  }
+  document.getElementById("explain").style.display="block";
+  document.getElementById("explain").scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+function next(){
+  idx++;
+  if(idx<scenes.length) renderScene();
+  else renderEnd();
+}
+
+function renderEnd(){
+  stageLabel.textContent="結局";
+  let title,note;
+  if(score===8){title="🏆 社會企業家";note="滿分滿杯！你不只懂商業，還懂商業存在的意義。";}
+  else if(score>=6){title="💼 準 CEO";note="概念扎實！回頭補上錯的那幾關，統測穩了。";}
+  else if(score>=4){title="🧢 創業實習生";note="骨架有了，把「考點筆記」抄進筆記本再戰一輪。";}
+  else{title="🌱 商業小萌新";note="沒關係，小語一開始也只是送同學杯套。再玩一次，珍珠會滿的。";}
+  screen.innerHTML=`<div class="card ending">
+    <h2>創業旅程完成</h2>
+    <div class="title-badge">${title}</div>
+    <div class="final-note">得分 ${score} / 8　珍珠 ${pearls} 顆<br>${note}</div>
+    <div class="map">
+      <b>小語的故事＝本章的脈絡：</b><br>
+      🧵 用飲料換杯套 → <b>商業四要件</b>（1.1.1）<br>
+      💪 好手藝＋賒帳進貨 → <b>五要素</b>（1.1.1）<br>
+      ✂️ 碎布變杯套 → <b>生產與效用</b>（1.1.1）<br>
+      📱 LINE Pay 綁卡 → <b>交易演進</b>（1.1.2）<br>
+      🤝 找阿哲合資 → <b>組織型態</b>（1.1.3）<br>
+      🪡 外包＋刺繡訂做 → <b>現代商業特質</b>（1.1.4）<br>
+      🎁 捐杯套給偏鄉 → <b>Carroll 四責任</b>（1.2.2）<br>
+      🌏 雇用二度就業婦女 → <b>社會企業</b>（1.3.3）<br><br>
+      商業的起點是「賺錢」，但這一章想告訴你：<br>走得遠的商業，終點都是「讓社會變得更好」。
+    </div>
+    <button class="btn" onclick="restart()">再 玩 一 次</button>
+  </div>`;
+}
+
+function restart(){
+  idx=0; score=0; pearls=0; scoreEl.textContent=0; fillCup(); renderIntro();
+}
+
+renderIntro();
+</script>
+</body>
+</html>

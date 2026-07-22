@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>金桃柑仔店重生記｜CH4 商業的經營型態</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&family=Noto+Serif+TC:wght@700;900&family=Kosugi+Maru&display=swap" rel="stylesheet">
+<style>
+:root{
+  --night:#101F2C; --night2:#16293A; --paper:#F7F3E8; --ink:#25313C;
+  --neonO:#FF8A3D; --neonT:#3FD0B6; --neonP:#F26D8D; --err:#E85C4A; --ok:#2FA36B;
+  --line:#D8D0BC;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{
+  font-family:'Noto Sans TC',sans-serif; background:var(--night); color:var(--paper);
+  min-height:100vh; overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse 60% 40% at 70% -5%, rgba(63,208,182,.10), transparent 60%),
+    radial-gradient(ellipse 50% 35% at 15% 105%, rgba(255,138,61,.10), transparent 60%);
+}
+/* 街景星點 */
+.stars{position:fixed;inset:0;pointer-events:none;opacity:.5;z-index:0;
+  background-image:radial-gradient(1px 1px at 12% 18%, #fff8 50%, transparent 51%),
+  radial-gradient(1px 1px at 78% 8%, #fff6 50%, transparent 51%),
+  radial-gradient(1.5px 1.5px at 55% 28%, #fff5 50%, transparent 51%),
+  radial-gradient(1px 1px at 32% 6%, #fff7 50%, transparent 51%),
+  radial-gradient(1px 1px at 90% 22%, #fff5 50%, transparent 51%);}
+.wrap{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:16px 16px 90px;}
+
+/* 頂部霓虹招牌 */
+.signboard{
+  text-align:center;padding:18px 12px 14px;margin-bottom:14px;
+  border:3px solid var(--neonO);border-radius:14px;
+  background:linear-gradient(180deg,#1B3040,#132433);
+  box-shadow:0 0 18px rgba(255,138,61,.35), inset 0 0 24px rgba(255,138,61,.08);
+  position:relative;
+}
+.signboard .sub{font-size:.72rem;letter-spacing:.35em;color:var(--neonT);margin-bottom:4px;}
+.signboard h1{
+  font-family:'Noto Serif TC',serif;font-weight:900;font-size:1.55rem;letter-spacing:.08em;
+  color:#FFD9B8;text-shadow:0 0 8px rgba(255,138,61,.9),0 0 22px rgba(255,138,61,.55);
+  animation:flick 4.5s infinite;
+}
+@keyframes flick{0%,93%,100%{opacity:1}94%{opacity:.55}95%{opacity:1}97%{opacity:.7}98%{opacity:1}}
+@media (prefers-reduced-motion: reduce){.signboard h1{animation:none}}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:.8rem;}
+.hud .cash{color:var(--neonT);font-weight:900;font-variant-numeric:tabular-nums;}
+.hud .stage{color:#9FB3C2;}
+
+/* 收據卡（主要內容載體） */
+.receipt{
+  background:var(--paper);color:var(--ink);border-radius:10px;padding:22px 20px 26px;
+  box-shadow:0 10px 30px rgba(0,0,0,.45);
+  position:relative;
+}
+.receipt::before,.receipt::after{
+  content:"";position:absolute;left:0;right:0;height:10px;
+  background:radial-gradient(circle at 8px 0, transparent 6px, var(--paper) 6.5px);
+  background-size:16px 10px;background-repeat:repeat-x;
+}
+.receipt::before{top:-9px;transform:scaleY(-1);}
+.receipt::after{bottom:-9px;}
+.tag{display:inline-block;font-size:.7rem;font-weight:700;letter-spacing:.2em;
+  color:var(--paper);background:var(--ink);padding:3px 10px;border-radius:99px;margin-bottom:10px;}
+.receipt h2{font-family:'Noto Serif TC',serif;font-size:1.25rem;font-weight:900;margin-bottom:10px;line-height:1.4;}
+.receipt p{font-size:.95rem;line-height:1.85;margin-bottom:10px;}
+.receipt .talk{border-left:4px solid var(--neonO);padding:6px 12px;background:#EFE8D6;border-radius:0 8px 8px 0;margin:12px 0;font-size:.92rem;line-height:1.8;}
+.talk b{color:#B4541E;}
+.divider{border:none;border-top:2px dashed var(--line);margin:14px 0;}
+
+/* 題目 */
+.qmeta{display:flex;justify-content:space-between;font-size:.75rem;color:#7A8794;margin-bottom:6px;font-weight:700;}
+.qtext{font-size:1.02rem;font-weight:700;line-height:1.75;margin-bottom:14px;}
+.opts{display:grid;gap:10px;}
+.opt{
+  font-family:inherit;font-size:.95rem;text-align:left;line-height:1.6;
+  padding:12px 14px;border-radius:10px;border:2px solid var(--ink);
+  background:#FDFBF4;color:var(--ink);cursor:pointer;font-weight:500;
+  transition:transform .08s, background .15s;
+}
+.opt:active{transform:scale(.985);}
+.opt:focus-visible{outline:3px solid var(--neonO);outline-offset:2px;}
+.opt.correct{background:#DFF3E6;border-color:var(--ok);font-weight:700;}
+.opt.wrong{background:#FBE3DE;border-color:var(--err);}
+.opt.dim{opacity:.45;pointer-events:none;}
+.opt.locked{pointer-events:none;}
+
+/* 解說 */
+.explain{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:.9rem;line-height:1.8;display:none;}
+.explain.show{display:block;animation:pop .25s ease;}
+.explain.good{background:#E3F4EA;border:2px solid var(--ok);}
+.explain.bad{background:#FCEAE6;border:2px solid var(--err);}
+.explain .verdict{font-weight:900;font-size:1rem;margin-bottom:4px;}
+.explain .point{margin-top:6px;font-size:.82rem;color:#5B4A21;background:#F4ECD4;border-radius:6px;padding:6px 8px;}
+@keyframes pop{from{transform:translateY(6px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* 按鈕 */
+.btnrow{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap;}
+.btn{
+  font-family:inherit;font-size:1rem;font-weight:900;letter-spacing:.1em;
+  padding:13px 22px;border-radius:99px;border:none;cursor:pointer;flex:1;min-width:140px;
+  background:var(--neonO);color:#3A1D07;box-shadow:0 4px 0 #B4541E;
+  transition:transform .08s;
+}
+.btn:active{transform:translateY(2px);box-shadow:0 2px 0 #B4541E;}
+.btn.ghost{background:#E9E2CE;color:var(--ink);box-shadow:0 4px 0 #B9AE8E;}
+.btn:focus-visible{outline:3px solid var(--neonT);outline-offset:2px;}
+
+/* 章節收據結算 */
+.ledger{font-family:'Kosugi Maru','Noto Sans TC',monospace;background:#FFFDF6;border:2px solid var(--ink);
+  border-radius:8px;padding:14px;margin:12px 0;font-size:.85rem;line-height:2;}
+.ledger .lrow{display:flex;justify-content:space-between;border-bottom:1px dotted #C9C0A8;}
+.ledger .lrow:last-child{border-bottom:none;font-weight:900;}
+.stamp{
+  display:inline-block;transform:rotate(-8deg);border:3px solid var(--err);color:var(--err);
+  font-weight:900;font-size:1.05rem;padding:4px 14px;border-radius:8px;letter-spacing:.2em;margin-top:8px;
+  opacity:.9;
+}
+.stamp.pass{border-color:var(--ok);color:var(--ok);}
+
+/* 進度點 */
+.dots{display:flex;gap:6px;justify-content:center;margin:12px 0 0;}
+.dots span{width:9px;height:9px;border-radius:50%;background:#3A4C5C;}
+.dots span.on{background:var(--neonT);box-shadow:0 0 6px var(--neonT);}
+.dots span.done{background:var(--neonO);}
+
+/* 結局 */
+.grade{font-family:'Noto Serif TC',serif;font-size:1.9rem;font-weight:900;text-align:center;color:#B4541E;margin:8px 0 2px;}
+.gradesub{text-align:center;font-size:.9rem;color:#6B5B36;margin-bottom:10px;}
+.smallnote{font-size:.75rem;color:#8A94A0;text-align:center;margin-top:14px;line-height:1.7;}
+.receipt .small{font-size:.8rem;color:#7A8794;line-height:1.7;}
+@media(max-width:420px){
+  .signboard h1{font-size:1.3rem;}
+  .receipt{padding:18px 14px 22px;}
+}
+</style>
+</head>
+<body>
+<div class="stars" aria-hidden="true"></div>
+<div class="wrap">
+  <header class="signboard">
+    <div class="sub">商業概論 CH4 · 商業的經營型態</div>
+    <h1>金桃柑仔店 重生記</h1>
+    <div class="hud">
+      <div class="stage" id="hudStage">序章</div>
+      <div class="cash">營業額 NT$ <span id="hudCash">0</span></div>
+    </div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+  </header>
+  <main class="receipt" id="stagePanel" aria-live="polite"></main>
+</div>
+
+<script>
+/* ================= 遊戲資料 ================= */
+const CH = [
+ {id:0, name:"序章", title:"阿嬤的最後一張發票"},
+ {id:1, name:"第一章", title:"招牌的秘密：業種 vs 業態"},
+ {id:2, name:"第二章", title:"轉型之路：六大有店鋪型態"},
+ {id:3, name:"第三章", title:"螢幕另一端：無店鋪的世界"},
+ {id:4, name:"第四章", title:"進貨大作戰：批發與物流"},
+ {id:5, name:"終章", title:"開幕日 BOSS 戰"},
+];
+
+/* 每題結構：q 題目, o 選項, a 正解index, g 答對解說, b 答錯解說, p 考點 */
+const Q = {
+1:[
+ {q:"重開店的第一步是搞懂分類。巷口「池上米專賣的老米店」，招牌一看就知道賣什麼——它屬於？",
+  o:["業種店（以商品種類區分）","業態店（以經營型態區分）"],a:0,
+  g:"沒錯！販售特定商品、招牌即商品＝業種店。",
+  b:"米店只賣「米」這種特定商品，是業種店。業態店是像超商那種賣多類商品＋多樣服務的店。",
+  p:"業種＝商品種類；業態＝經營型態（91統測起的常客）"},
+ {q:"阿嬤的柑仔店隔壁開了 7-11：賣吃的、代收費、影印、取包裹。7-11 屬於？",
+  o:["業種店","業態店"],a:1,
+  g:"正確！多類商品＋多樣化服務＝業態店。",
+  b:"超商賣「多類」商品又提供多樣服務，靠經營型態取勝，是業態店——這是統測最愛的陷阱。",
+  p:"便利商店＝業態（綜合商品零售業）"},
+ {q:"你觀察：老米店雖然只賣米，但白米、糙米、紫米、越南米樣樣齊全。這叫產品線——？",
+  o:["窄而深","廣而淺"],a:0,
+  g:"對！業種店＝種類少（窄）、款式齊全（深）。",
+  b:"只賣一類（窄）但款式超齊（深）→ 業種店的招牌特徵。「廣而淺」是超商那種什麼都有但每樣只有一兩款。",
+  p:"業種：窄而深／業態：廣而淺"},
+ {q:"顧問告訴你：「業態店扮演的是替◯◯採購商品的角色。」空格是？",
+  o:["製造商（銷售代理）","顧客（採購代理）"],a:1,
+  g:"漂亮！業態店＝顧客的採購代理，賣暢銷、淘汰滯銷。",
+  b:"業態店是幫「顧客」把好貨挑進來（採購代理）；幫「製造商」出清商品的銷售代理是業種店。",
+  p:"業種＝銷售代理／業態＝採購代理（92、97統測）"},
+ {q:"你決定把柑仔店改成 24 小時營業，服務夜貓子與晚班工人。這屬於新興業態興起的哪個原因？",
+  o:["滿足消費者的需求","填補市場空隙","因應市場競爭","技術創新"],a:0,
+  g:"正確！因生活習慣改變而生的服務＝滿足消費者需求。",
+  b:"為夜貓族、晚班族而做＝滿足「消費者」的需求。填補空隙是看到市場空位（無關競爭）；因應競爭是被對手逼著轉型。",
+  p:"新興業態四原因：滿・填・競・技"},
+ {q:"隔壁鎮完全沒有大賣場，一家量販店嗅到商機進駐。這是？",
+  o:["滿足消費者需求","填補市場空隙","因應市場競爭","技術創新"],a:1,
+  g:"沒錯！原有業態間出現空位、商機浮現＝填補市場空隙（與競爭無關）。",
+  b:"關鍵字「該區沒有、商機浮現」＝填補市場空隙。注意：它強調的是空位，不是對手競爭。",
+  p:"填補空隙（無對手）vs 因應競爭（有對手）＝灰色地帶題王"},
+],
+2:[
+ {q:"你手上只有小店面（約 30 坪），想主打「立即性、便利性」商品與服務。該走哪個型態？",
+  o:["便利商店","超級市場","量販店","百貨公司"],a:0,
+  g:"正確！20~70坪、立即性便利性、食品占50%以上＝便利商店。",
+  b:"小坪數（20~70坪）＋立即性便利性＝便利商店的專屬人設。超市要300~500坪、量販要2000坪起跳。",
+  p:"CVS：20~70坪／15-35歲客群占70%／價位最高"},
+ {q:"媽媽客群反映：「想買生鮮蔬果和日用品，一次買齊。」哪個型態以「生鮮食品為主、日常用品為輔」？",
+  o:["便利商店","超級市場","量販店","專賣店"],a:1,
+  g:"答對！生鮮為主、日用為輔、設在住宅區＝超級市場。",
+  b:"「生鮮為主、日用為輔」是超市的定義句（110、112統測原題），量販店是「日用品為主、大包裝」。",
+  p:"超市：300~500坪／中價位／住宅區"},
+ {q:"三種業態的商品單價排序，正確的是？",
+  o:["量販店＞超市＞超商","超商＞超市＞量販店","超市＞超商＞量販店"],a:1,
+  g:"正確！越大間越便宜：超商＞超市＞量販。",
+  b:"記「價位天梯」：便利商店最貴（賣便利）、量販店最便宜（大量進貨壓低成本）。",
+  p:"單價：超商＞超市＞量販（104、112統測）"},
+ {q:"鎮上的購物中心靠一家超大影城吸引人潮，這種「靈魂店」稱為？",
+  o:["旗艦店","主力商店（anchor store）","自營櫃","複合店"],a:1,
+  g:"沒錯！主力商店＝購物中心的核心店，塑造差異化、產生集客力。",
+  b:"購物中心的靈魂店＝主力商店（anchor store），可以是百貨、超市、影城、書店——不一定是百貨公司！",
+  p:"主力商店為購物中心特色；百貨公司「無」主力商店"},
+ {q:"你打算推出自家品牌「金桃嚴選」茶葉蛋，委託食品廠代工、只在自己店裡賣。零售商開發自有品牌的原因「不包括」？",
+  o:["提高毛利率","塑造產品同質性","強化品牌印象","建立顧客忠誠度"],a:1,
+  g:"正確！自有品牌是為了「差異化」，塑造同質性剛好相反。",
+  b:"自有品牌六目的：提高毛利、強化印象、差異化、低價需求、減少缺貨、顧客忠誠——「同質性」是反義陷阱。",
+  p:"自有品牌＝private brand；目的是差異化"},
+ {q:"量販店結合倉儲與賣場、兼具批發商性質，但經濟部將它歸類為？",
+  o:["批發業","零售業","物流業"],a:1,
+  g:"答對！量販店雖兼批發性質，經濟部仍歸「零售業」。",
+  b:"這是111統測考點：量販店＝結合倉儲與賣場、兼批發性質，但官方分類是「零售業」。",
+  p:"量販店→歸零售業（111統測）"},
+],
+3:[
+ {q:"你架了網路商店。客人下單一包「金桃烏龍茶」宅配到府——這屬於網購商品的？",
+  o:["實體商品","數位化商品","線上服務商品"],a:0,
+  g:"正確！寄送實物給你＝實體商品。",
+  b:"判斷句：最後拿到什麼？拿到「實物」＝實體商品；「下載」＝數位化；「系統服務你」＝線上服務。",
+  p:"網購商品三分類（102/108/113/114統測年年考）"},
+ {q:"你加賣「沖茶教學影片」，付款後立即下載觀看。這是？",
+  o:["實體商品","數位化商品","線上服務商品"],a:1,
+  g:"沒錯！可下載、經傳輸完成交易＝數位化商品（同類：Line貼圖、KKBOX、防毒軟體）。",
+  b:"付款後「下載」使用＝數位化商品。訂位、訂票、查詢那種才是線上服務商品。",
+  p:"下載＝數位化；113統測防毒軟體原題"},
+ {q:"你再推出「線上預約茶席座位系統」。顧客上網預約時段——這是？",
+  o:["實體商品","數位化商品","線上服務商品"],a:2,
+  g:"正確！透過網路「服務系統」取得資訊或預約＝線上服務商品（同類：訂房網、售票系統、104）。",
+  b:"預約、訂票、查詢＝透過服務系統＝線上服務商品，不是數位化商品——這是最常混淆的一組。",
+  p:"訂票/訂房/人力銀行＝線上服務商品"},
+ {q:"行銷大師柯特勒把無店鋪經營分為三大類。下列何者「不是」其中之一？",
+  o:["自動販賣","直效行銷","人員銷售","複合式經營"],a:3,
+  g:"答對！三分法＝自動販賣、直效行銷、人員銷售（口訣：自直人）。複合式經營是有店鋪的趨勢。",
+  b:"柯特勒三分法口訣「自直人」：自動販賣／直效行銷／人員銷售。複合式經營屬有店鋪經營策略。",
+  p:"Kotler三分法（93、94統測）"},
+ {q:"大學學長私訊你：「加入我的事業！入會費 68,000，拉一個人抽 2 萬，商品不能退貨。」這最可能是？",
+  o:["合法的多層次傳銷","老鼠會（非法）","直效行銷","展示販售"],a:1,
+  g:"警報解除！高額入會費＋拉人頭抽佣＋不可退貨＝老鼠會三大紅旗。",
+  b:"紅旗辨識：合法傳銷＝小額入會、賣商品賺零售利潤、期限內可退貨、每年向公平會報備。三項全違反＝老鼠會。",
+  p:"傳銷vs老鼠會四維比較（93、105統測）＋公平會報備"},
+ {q:"你婉拒學長後思考：「直銷」在課本分類中屬於？",
+  o:["直效行銷的一種","人員銷售的一種","自動販賣的一種"],a:1,
+  g:"正確！直銷＝直接銷售＝人員銷售（含多層次傳銷）。直效行銷是隔著媒體，兩者不同！",
+  b:"全章最大地雷：直效行銷（隔媒體：視話錄網）≠ 直銷（面對面＝人員銷售）。名字像，血緣完全不同。",
+  p:"直效行銷≠直銷（課本重點連結原文）"},
+],
+4:[
+ {q:"店要擴大，你去找批發商談進貨。批發商願意讓你「先拿貨、月底結帳」——這展現批發商對零售商的？",
+  o:["融資功能","產銷分工功能","市場情報功能"],a:0,
+  g:"正確！月結、賒銷、開短期支票＝融資功能。",
+  b:"月結＝先拿貨後付錢＝借你錢週轉＝融資功能。注意：「讓你刷信用卡」不算課本定義的融資方式。",
+  p:"批發商對零售商：月結融資／少量多樣配送／協助行銷／培訓諮詢"},
+ {q:"茶葉大盤商 A：向製造商大量進貨後轉售。飲料代理商 B：不擁有商品、代原廠銷售抽佣金。誰「擁有」商品所有權？",
+  o:["A 大盤商","B 代理商","兩者都有"],a:0,
+  g:"沒錯！商品批發商（大中盤）有所有權賺價差；代理商無所有權、抽佣金、不負盈虧。",
+  b:"一刀切在「所有權」：有→賺買賣價差（商品批發商、經銷商）；無→抽佣金（代理商、居間商）。",
+  p:"依所有權分類（95、107統測）"},
+ {q:"你發現：汎德是 BMW 台灣「總代理」，德誼是 Apple 台灣「經銷商」。兩者最大差異是？",
+  o:["販售商品種類不同","是否擁有商品所有權","銷售區域不同"],a:1,
+  g:"正確！代理商（無所有權、抽佣、不負盈虧）vs 經銷商（買斷、賺價差、自負盈虧）。",
+  b:"口訣「代虛經實」：代理商是虛的（沒貨、抽佣、不擔虧）；經銷商是實的（買斷、賺差、自負盈虧）。",
+  p:"代理vs經銷四維比較（107、111統測）；例：汎德BMW／德誼Apple"},
+ {q:"統一「企業」（製造商）為掌握銷售通路、向下整合成立捷盟行銷。捷盟屬於哪型物流中心？",
+  o:["零售商型 R.D.C","製造商型 M.D.C","轉運型 T.D.C","批發商型 W.D.C"],a:1,
+  g:"答對！製造商向「下」整合＝M.D.C。若題目改成統一「超商」（零售商）成立，就變 R.D.C 向上整合——看主詞！",
+  b:"口訣「M下R上」：製造商在上游往下走（MDC）；零售商在下游往上爬（RDC）。102統測名場面：捷盟看題目主詞作答。",
+  p:"四型物流中心（102、112統測）"},
+ {q:"物流中心的功能「不包括」下列何者？",
+  o:["多樣少量、高頻率配送","縮短通路流程、降低流通成本","研發設計新商品"],a:2,
+  g:"正確！物流中心無「製造、研發、設計」功能——這是統測反覆考的鐵律。",
+  b:"物流中心只做進貨、分類、加工、儲存、配送。「研發新品」是製造商的事（92、114統測）。",
+  p:"物流中心無製造/研發/設計功能"},
+ {q:"全聯的生鮮處理中心把產地水果洗、切、分級、真空包裝後冷藏直送。生鮮食品的特性「不包括」？",
+  o:["易腐性","季節性","齊一性","粗重性"],a:2,
+  g:"沒錯！生鮮外觀樣式不一＝「非」齊一性。齊一性是反義陷阱。",
+  b:"生鮮六特性：季節、耗損、易腐、粗重、「非齊一」、受自然環境限制——選項寫「齊一性」就是錯的。",
+  p:"生鮮特性反向題＋配送車隊須「專用」（冷凍/冷藏/常溫）"},
+],
+5:[
+ {q:"【綜合】開幕企劃書上寫：「本店定位為業態店」。下列敘述何者「錯誤」？",
+  o:["以滿足顧客多元需求為理念","產品線廣而淺","業主具豐富商品知識、擅長出清商品","販售暢銷品、淘汰滯銷品"],a:2,
+  g:"正確！「豐富商品知識＋出清商品」是業種店人設；業態店擅長的是掌握顧客情報。",
+  b:"業種＝商品知識豐富、出清商品；業態＝顧客情報豐富、淘汰滯銷。兩組人設不能混。",
+  p:"4.1 五維對照——選項互換是統測慣用手法"},
+ {q:"【綜合】各業態隨國民所得依序發展：1,000美元→3,000→6,000→10,000→12,000，順序是？",
+  o:["百貨→超市→超商→量販→購物中心","超市→百貨→量販→超商→購物中心","百貨→超商→超市→購物中心→量販"],a:0,
+  g:"答對！口訣：一千百貨、三千超市、六千超商、一萬量販、萬二購物。",
+  b:"記「百超商販購 1-3-6-10-12」：所得越高、解鎖的業態越大型多元。",
+  p:"所得與業態發展軸（課本註解＋彙整表）"},
+ {q:"【英文】顧客是外國交換生，指著招牌問：Is this a “convenience store”? 他說的是？",
+  o:["便利商店","百貨公司","量販店"],a:0,
+  g:"Correct! convenience store (CVS)＝便利商店。department store＝百貨、hypermarket＝量販。",
+  b:"convenience＝便利。補充：supermarket 超市、shopping mall 購物中心、specialty store 專賣店。",
+  p:"應英必備：CVS / department store / hypermarket / anchor store"},
+ {q:"【英文】新聞標題：Police bust a “pyramid scheme” disguised as MLM. 意思是警方破獲——？",
+  o:["假冒多層次傳銷的老鼠會","合法的直效行銷公司","自動販賣機竊案"],a:0,
+  g:"Correct! pyramid scheme＝老鼠會（金字塔騙局）；MLM＝multi-level marketing 多層次傳銷。",
+  b:"pyramid scheme＝老鼠會；MLM＝合法多層次傳銷。一組必背對照單字。",
+  p:"MLM vs pyramid scheme"},
+ {q:"【綜合】哪一組「全部」採自助式銷售？",
+  o:["超商、超市、量販店","百貨、購物中心、專賣店","超商、百貨、專賣店"],a:0,
+  g:"正確！自助派：超商/超市/量販；專人派：百貨/購物中心/專賣店。",
+  b:"銷售方式兩派：自助＝商市販；專人服務＝百購專。三者共同特徵題（95統測）常從這裡出。",
+  p:"自助 vs 專人——六型態橫向比較"},
+ {q:"【最終題】開幕前夜，你在筆記本寫下這條供應鏈，正確的是？",
+  o:["製造商→零售商→批發商→消費者","製造商→批發商→零售商→消費者","批發商→製造商→零售商→消費者"],a:1,
+  g:"完美收尾！製造→批發（大盤→中盤）→零售（通路最後一棒）→最終消費者。金桃柑仔店，正式重生！",
+  b:"傳統行銷通路：製造商→批發商→零售商→消費者。零售＝最後階段、批發＝中間連結、不碰散客。",
+  p:"通路全圖＝CH4 跨章統整主軸"},
+]
+};
+
+/* ================= 遊戲狀態 ================= */
+let S = {chapter:0, qIdx:0, cash:0, chCorrect:0, log:[], answered:false};
+const P = document.getElementById('stagePanel');
+const hudCash = document.getElementById('hudCash');
+const hudStage = document.getElementById('hudStage');
+const dotsEl = document.getElementById('dots');
+
+function money(n){return n.toLocaleString('zh-Hant');}
+function updHUD(){
+  hudCash.textContent = money(S.cash);
+  hudStage.textContent = CH[S.chapter].name+"・"+CH[S.chapter].title;
+  dotsEl.innerHTML = CH.map((c,i)=>`<span class="${i<S.chapter?'done':i===S.chapter?'on':''}"></span>`).join('');
+}
+function addCash(n){
+  const from=S.cash; S.cash+=n; const t0=performance.now();
+  (function tick(t){const p=Math.min((t-t0)/450,1);hudCash.textContent=money(Math.round(from+n*p));if(p<1)requestAnimationFrame(tick);})(t0);
+}
+
+/* ================= 畫面 ================= */
+const INTRO = {
+0:{story:`<span class="tag">序章</span>
+<h2>阿嬤的最後一張發票</h2>
+<p>桃園中壢，深夜的巷口。阿嬤經營了四十年的「金桃柑仔店」拉下鐵門——隔壁的超商、街尾的全聯，把老店的客人一個一個帶走了。</p>
+<div class="talk">阿嬤：「憨孫仔，這間店就交給你了。要記住——<b>做生意，先看懂『店』是怎麼分類的</b>，才知道自己站在哪裡、要往哪裡去。」</div>
+<p>你是剛升高三的店長候選人。接下來的六個章節，每答對一題就能為老店賺進 <b>NT$1,000</b> 營業額。準備好讓金桃柑仔店重生了嗎？</p>`,
+btn:"接下鑰匙，開始經營"},
+1:{story:`<span class="tag">第一章</span>
+<h2>招牌的秘密</h2>
+<p>重生第一步：走上街頭做「田野調查」。阿嬤說過，看懂一間店，先看它是<b>業種</b>還是<b>業態</b>。</p>
+<div class="talk">口訣護身符：「<b>種窄業廣</b>」——業<b>種</b>線<b>窄</b>而深（職人）、業<b>態</b>線<b>廣</b>而淺（全能）。新興業態四原因：「<b>滿・填・競・技</b>」。</div>`,
+btn:"出發調查（6 題）"},
+2:{story:`<span class="tag">第二章</span>
+<h2>轉型之路</h2>
+<p>調查完畢，該決定金桃的新型態了。超商、超市、量販、百貨、購物中心、專賣店——六大天王，各有人設、坪數與價位。</p>
+<div class="talk">價位天梯：「<b>超商＞超市＞量販</b>」（越大間越便宜）。所得解鎖順序：「<b>百超商販購 1-3-6-10-12</b>」。</div>`,
+btn:"開始選型態（6 題）"},
+3:{story:`<span class="tag">第三章</span>
+<h2>螢幕另一端</h2>
+<p>實體店穩了，你決定進軍「無店鋪」世界——把整個網路變成賣場。但線上世界也有陷阱：一位學長的私訊正在閃爍……</p>
+<div class="talk">柯特勒三分法口訣：「<b>自直人</b>」。判斷金句：「<b>見面三分情是人員，隔著螢幕是直效，投幣不理人是自販</b>」。</div>`,
+btn:"上線營運（6 題）"},
+4:{story:`<span class="tag">第四章</span>
+<h2>進貨大作戰</h2>
+<p>訂單暴增，貨從哪裡來？你走進批發市場與物流園區——大盤、中盤、代理商、經銷商、四種物流中心，全在這裡等你。</p>
+<div class="talk">口訣：「<b>代虛經實</b>」（代理虛、經銷實）＋「<b>M下R上</b>」（製造商向下、零售商向上蓋物流）。</div>`,
+btn:"殺進批發市場（6 題）"},
+5:{story:`<span class="tag">終章</span>
+<h2>開幕日 BOSS 戰</h2>
+<p>明天就是「新・金桃」盛大開幕。深夜，阿嬤泡了兩杯茶，出了最後六道題——包含兩題<b>英文</b>，因為她說：「做生意，眼光要放到全世界。」</p>
+<div class="talk">阿嬤：「答完這六題，這間店，就真正是你的了。」</div>`,
+btn:"接受最終試煉（6 題）"}
+};
+
+function showIntro(){
+  updHUD();
+  const it=INTRO[S.chapter];
+  P.innerHTML = it.story + `<hr class="divider"><div class="btnrow"><button class="btn" id="goBtn">${it.btn}</button></div>`;
+  document.getElementById('goBtn').onclick = ()=>{ S.qIdx=0; S.chCorrect=0; showQ(); };
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function showQ(){
+  updHUD(); S.answered=false;
+  const list=Q[S.chapter], item=list[S.qIdx];
+  P.innerHTML = `
+   <span class="tag">${CH[S.chapter].name}</span>
+   <div class="qmeta"><span>第 ${S.qIdx+1} / ${list.length} 題</span><span>答對 +NT$1,000</span></div>
+   <div class="qtext">${item.q}</div>
+   <div class="opts" role="group">${item.o.map((t,i)=>`<button class="opt" data-i="${i}">${String.fromCharCode(65+i)}. ${t}</button>`).join('')}</div>
+   <div class="explain" id="exp"></div>
+   <div class="btnrow" id="nextRow" style="display:none"><button class="btn" id="nextBtn">下一步</button></div>`;
+  P.querySelectorAll('.opt').forEach(btn=>btn.onclick=()=>answer(+btn.dataset.i, item));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function answer(i,item){
+  if(S.answered) return; S.answered=true;
+  const good = i===item.a;
+  const exp=document.getElementById('exp');
+  P.querySelectorAll('.opt').forEach((b,idx)=>{
+    b.classList.add('locked');
+    if(idx===item.a) b.classList.add('correct');
+    else if(idx===i) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  if(good){ S.chCorrect++; addCash(1000); }
+  exp.className='explain show '+(good?'good':'bad');
+  exp.innerHTML=`<div class="verdict">${good?'✅ 答對了！營業額 +NT$1,000':'❌ 差一點！這題不算分，但一定要記住——'}</div>
+    <div>${good?item.g:item.b}</div>
+    <div class="point">📌 考點：${item.p}</div>`;
+  const row=document.getElementById('nextRow'); row.style.display='flex';
+  document.getElementById('nextBtn').onclick=()=>{
+    if(S.qIdx < Q[S.chapter].length-1){ S.qIdx++; showQ(); } else { chapterEnd(); }
+  };
+  document.getElementById('nextBtn').focus();
+}
+
+function chapterEnd(){
+  const total=Q[S.chapter].length;
+  S.log.push({name:CH[S.chapter].title, score:S.chCorrect, total});
+  const pass=S.chCorrect>=Math.ceil(total*0.5);
+  const isLast = S.chapter===5;
+  P.innerHTML=`
+   <span class="tag">章節結算</span>
+   <h2>${CH[S.chapter].name}｜${CH[S.chapter].title}</h2>
+   <div class="ledger">
+     <div class="lrow"><span>本章答對</span><span>${S.chCorrect} / ${total} 題</span></div>
+     <div class="lrow"><span>本章進帳</span><span>NT$ ${money(S.chCorrect*1000)}</span></div>
+     <div class="lrow"><span>累計營業額</span><span>NT$ ${money(S.cash)}</span></div>
+   </div>
+   <div style="text-align:center"><span class="stamp ${pass?'pass':''}">${pass?'章 節 通 過':'需 再 複 習'}</span></div>
+   <hr class="divider">
+   <div class="btnrow">
+     <button class="btn ghost" id="retryBtn">重打本章</button>
+     <button class="btn" id="contBtn">${isLast?'查看最終結算':'前往下一章'}</button>
+   </div>`;
+  document.getElementById('retryBtn').onclick=()=>{
+    S.cash -= S.chCorrect*1000; S.log.pop(); S.qIdx=0; S.chCorrect=0; updHUD(); showQ();
+  };
+  document.getElementById('contBtn').onclick=()=>{
+    if(isLast){ finale(); } else { S.chapter++; showIntro(); }
+  };
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function finale(){
+  updHUD();
+  const totalQ = Object.values(Q).reduce((a,l)=>a+l.length,0);
+  const totalC = S.log.reduce((a,r)=>a+r.score,0);
+  const pct = totalC/totalQ;
+  let grade,sub;
+  if(pct>=0.9){grade="🏆 傳說店王";sub="阿嬤含淚：「這間店交給你，我放一百二十個心！」CH4 已被你完全制霸。";}
+  else if(pct>=0.75){grade="🥇 金牌店長";sub="開幕大排長龍！只剩少數觀念要磨，統測穩了八成。";}
+  else if(pct>=0.5){grade="🥈 儲備幹部";sub="店開起來了，但常錯的考點要回學習單複習「常見迷思概念」區。";}
+  else {grade="🌱 熱血工讀生";sub="別灰心！建議先讀學習單的口訣區，再回來重新挑戰各章。";}
+  P.innerHTML=`
+   <span class="tag">最終結算</span>
+   <div class="grade">${grade}</div>
+   <div class="gradesub">${sub}</div>
+   <div class="ledger">
+     ${S.log.map(r=>`<div class="lrow"><span>${r.name}</span><span>${r.score}/${r.total}</span></div>`).join('')}
+     <div class="lrow"><span>總營業額</span><span>NT$ ${money(S.cash)}</span></div>
+   </div>
+   <hr class="divider">
+   <p style="font-weight:700">🎓 你在這趟旅程真正學會的事：</p>
+   <p class="small">① 分類的眼光（業種/業態）→ ② 通路的座標（零售＝最後一棒）→ ③ 型態的選擇（六大有店鋪＋無店鋪三分法）→ ④ 供應鏈的幕後（批發/物流/代理vs經銷）。<br>商業經營型態不是背誦名詞，而是回答同一個問題：<b>「怎麼把對的商品，用對的方式，交到對的人手上？」</b></p>
+   <div class="btnrow">
+     <button class="btn ghost" id="againBtn">重新開店</button>
+   </div>
+   <p class="smallnote">金桃柑仔店重生記 · 商業概論 CH4 總複習遊戲<br>建議搭配《CH4 學習單與備課指南》一起使用</p>`;
+  document.getElementById('againBtn').onclick=()=>{ S={chapter:0,qIdx:0,cash:0,chCorrect:0,log:[],answered:false}; showIntro(); };
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+showIntro();
+</script>
+</body>
+</html>
