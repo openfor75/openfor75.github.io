@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="color-scheme" content="light only">
-<title>會計方程式｜解題闖關（選擇12流程修正版）</title>
+<title>會計方程式｜解題闖關</title>
 <style>
 :root{
   color-scheme:light only;
@@ -191,6 +191,80 @@ const LEVELS=[
  answers:{"1.r.0":440000,"2.c.0":430000,"2.r.0":440000,"2.e.0":330000,"3.pl.0":110000,"4.c.0":540000},
  signed:["1.c.0","3.pl.0"],
  steps:["期末權益＝900,000－360,000＝<b>540,000</b>。","結帳前權益＝480,000－50,000＝<b>430,000</b>（提取只影響權益，不經過損益）。","本期損益＝540,000－430,000＝<b>110,000（淨利）</b>。","收益＝本期損益＋費損＝110,000＋330,000＝<b>440,000</b>。","驗算結帳前：900,000＝360,000＋430,000＋440,000－330,000 ✓"]
+},
+{
+ type:"algebra",page:"題庫",no:"進階挑戰 4（單選6改編・107統測）",title:"代數關係＋權益變動",
+ body:"鍾勻事務所 X3 年期初權益餘額為 <b>$200,000</b>，當年度發生的權益交易如下：①期中業主曾經提取 <b>$30,000</b> 自用；②業主年底再投資 <b>$100,000</b>。已知 X3 年期末負債餘額為資產餘額之<b>半數再減少 $80,000</b>，權益餘額為負債餘額的 <b>2 倍</b>。",
+ ask:"求：①期末負債　②期末資產與權益　③結帳前權益　④當年營業結果（判斷淨利或淨損）",
+ hint:"先算結帳前權益：期初－提取＋再投資。再令 A＝L＋C＝3L 代入負債關係式解 L；最後用「期末權益－結帳前權益」求本期損益。",
+ formulaQuestions:[
+  {title:"① 負債與資產的關係",options:["L＝0.5A－80,000","L＝0.5A＋80,000","A＝0.5L－80,000"],correct:0},
+  {title:"② 權益與負債的關係",options:["L＝2C","C＝L÷2","C＝2L"],correct:2},
+  {title:"③ 全部改用 L 表示後（A＝L＋C＝3L）",options:["1.5L＋80,000＝L","1.5L－80,000＝L","0.5L－80,000＝3L"],correct:1}
+ ],
+ numbers:[
+  {key:"L",label:"期末負債 L",answer:160000},
+  {key:"A",label:"期末資產 A",answer:480000},
+  {key:"C",label:"期末權益 C",answer:320000},
+  {key:"PRE",label:"結帳前權益",answer:270000},
+  {key:"PL",label:"本期損益",answer:50000}
+ ],
+ steps:["結帳前權益＝期初 200,000－提取 30,000＋再投資 100,000＝<b>270,000</b>（業主的動作不經過損益）。","令期末負債為 L：C＝2L，A＝L＋C＝3L。","代入 L＝0.5A－80,000：L＝1.5L－80,000 → 0.5L＝80,000 → L＝<b>160,000</b>。","期末資產 A＝3L＝<b>480,000</b>；期末權益 C＝2L＝<b>320,000</b>。","本期損益＝期末權益 320,000－結帳前權益 270,000＝<b>50,000（淨利）</b>。"]
+},
+{
+ type:"matrix",page:"題庫",no:"進階挑戰 5（單選3改編）",title:"完整推算：從期初到收益",
+ body:"立信商店期初資產 <b>$32,000</b>，負債 <b>$20,000</b>，當年增資 <b>$3,000</b>，提取 <b>$5,000</b>，若期末資產 <b>$43,000</b>，負債 <b>$35,000</b>，當年費損為 <b>$15,000</b>。",
+ ask:"求：①期初權益　②結帳前與期末權益　③本期損益（判斷淨利或淨損）　④當年收益",
+ hint:"提取要輸入負數。權益變少不一定是虧損；收益＝本期損益＋費損。",
+ known:{"0.a.0":32000,"0.l.0":20000,"1.c.0":3000,"1.c.1":-5000,"1.e.0":15000,"4.a.0":43000,"4.l.0":35000},
+ labels:{"0.a.0":"期初資產","0.l.0":"期初負債","0.c.0":"①期初權益","1.c.0":"當年增資","1.c.1":"業主提取","1.e.0":"當年費損","1.r.0":"④當年收益","2.c.0":"結帳前權益","2.r.0":"結帳前收益","2.e.0":"結帳前費損","3.pl.0":"③本期損益","4.a.0":"期末資產","4.l.0":"期末負債","4.c.0":"②期末權益"},
+ answers:{"0.c.0":12000,"1.r.0":13000,"2.c.0":10000,"2.r.0":13000,"2.e.0":15000,"3.pl.0":-2000,"4.c.0":8000},
+ signed:["1.c.1","3.pl.0"],
+ steps:["期初權益＝32,000－20,000＝<b>12,000</b>。","結帳前權益＝12,000＋3,000－5,000＝<b>10,000</b>。","期末權益＝43,000－35,000＝<b>8,000</b>。","本期損益＝8,000－10,000＝<b>－2,000（淨損）</b>。","當年收益＝費損 15,000＋本期損益（－2,000）＝<b>13,000</b>；驗算：13,000－15,000＝－2,000 ✓"]
+},
+{
+ type:"matrix",page:"題庫",no:"進階挑戰 6（單選4改編）",title:"損益為零的權益變動",
+ body:"東江企業年初成立時投資額為 <b>$600,000</b>，全年收益 <b>$150,000</b>，費損 <b>$150,000</b>，另業主曾經提取 <b>$30,000</b> 自用，年底時再投資 <b>$200,000</b>。",
+ ask:"求：東江企業年底的權益為若干？",
+ hint:"收益與費損剛好相等，本期損益會是多少？提取記得輸入負數。",
+ known:{"0.c.0":600000,"1.c.0":-30000,"1.c.1":200000,"1.r.0":150000,"1.e.0":150000},
+ labels:{"0.c.0":"年初投資（期初權益）","1.c.0":"業主提取","1.c.1":"年底再投資","1.r.0":"全年收益","1.e.0":"全年費損","2.c.0":"結帳前權益","2.r.0":"結帳前收益","2.e.0":"結帳前費損","3.pl.0":"本期損益","4.c.0":"年底權益"},
+ answers:{"2.c.0":770000,"2.r.0":150000,"2.e.0":150000,"3.pl.0":0,"4.c.0":770000},
+ signed:["1.c.0","3.pl.0"],
+ steps:["本期損益＝收益 150,000－費損 150,000＝<b>0</b>（不賺不賠）。","結帳前權益＝600,000－30,000＋200,000＝<b>770,000</b>。","年底權益＝770,000＋0＝<b>770,000</b>。這一年權益的變動全部來自業主的動作。"]
+},
+{
+ type:"matrix",page:"題庫",no:"進階挑戰 7（單選5改編）",title:"由期末權益倒推費損",
+ body:"業主期初投資 <b>$150,000</b> 成立本商店，而期末資產有 <b>$350,000</b>，期末負債為 <b>$300,000</b>，當年收益 <b>$50,000</b>。",
+ ask:"求：費損為若干？",
+ hint:"年中沒有增資或提取，結帳前權益就等於期初投資。先求本期損益，再倒推費損。",
+ known:{"0.c.0":150000,"1.r.0":50000,"4.a.0":350000,"4.l.0":300000},
+ labels:{"0.c.0":"期初投資","1.r.0":"當年收益","1.e.0":"當年費損","2.c.0":"結帳前權益","2.r.0":"結帳前收益","2.e.0":"結帳前費損","3.pl.0":"本期損益","4.a.0":"期末資產","4.l.0":"期末負債","4.c.0":"期末權益"},
+ answers:{"1.e.0":150000,"2.c.0":150000,"2.r.0":50000,"2.e.0":150000,"3.pl.0":-100000,"4.c.0":50000},
+ signed:["3.pl.0"],
+ steps:["期末權益＝350,000－300,000＝<b>50,000</b>。","結帳前權益＝期初投資 <b>150,000</b>（年中無增資、提取）。","本期損益＝50,000－150,000＝<b>－100,000（淨損）</b>。","費損＝收益 50,000－（－100,000）＝<b>150,000</b>。"]
+},
+{
+ type:"matrix",page:"題庫",no:"進階挑戰 8（單選6改編）",title:"公司組織：現金股利與淨利",
+ body:"小春公司期初之權益餘額為 <b>$210,000</b>，期末餘額為 <b>$400,000</b>，若該公司本年度因現金增資所增加之權益為 <b>$110,000</b>，發放現金股利 <b>$40,000</b>。",
+ ask:"求：該公司本年之淨利為若干？",
+ hint:"公司發放現金股利，效果如同業主提取——讓權益減少、不經過損益，要輸入負數。",
+ known:{"0.c.0":210000,"1.c.0":110000,"1.c.1":-40000,"4.c.0":400000},
+ labels:{"0.c.0":"期初權益","1.c.0":"現金增資","1.c.1":"現金股利","2.c.0":"結帳前權益","3.pl.0":"本年淨利","4.c.0":"期末權益"},
+ answers:{"2.c.0":280000,"3.pl.0":120000},
+ signed:["1.c.1","3.pl.0"],
+ steps:["結帳前權益＝210,000＋110,000－40,000＝<b>280,000</b>（現金股利如同提取，減少權益、不經過損益）。","本年淨利＝期末權益 400,000－結帳前權益 280,000＝<b>120,000</b>。"]
+},
+{
+ type:"matrix",page:"題庫",no:"進階挑戰 9（單選7改編）",title:"含淨損倒推期末負債",
+ body:"日華商店期初資產 <b>$600,000</b>，期初負債 <b>$200,000</b>，期末資產 <b>$880,000</b>，本期增資 <b>$100,000</b>，本期提取 <b>$20,000</b>，本期淨損 <b>$50,000</b>。",
+ ask:"求：期末負債為若干？",
+ hint:"淨損是負的本期損益，填入時要按 ± 鍵。期末負債＝期末資產－期末權益。",
+ known:{"0.a.0":600000,"0.l.0":200000,"1.c.0":100000,"1.c.1":-20000,"3.pl.0":-50000,"4.a.0":880000},
+ labels:{"0.a.0":"期初資產","0.l.0":"期初負債","0.c.0":"期初權益","1.c.0":"本期增資","1.c.1":"本期提取","2.c.0":"結帳前權益","3.pl.0":"本期淨損","4.a.0":"期末資產","4.l.0":"期末負債","4.c.0":"期末權益"},
+ answers:{"0.c.0":400000,"2.c.0":480000,"4.c.0":430000,"4.l.0":450000},
+ signed:["1.c.1","3.pl.0"],
+ steps:["期初權益＝600,000－200,000＝<b>400,000</b>。","結帳前權益＝400,000＋100,000－20,000＝<b>480,000</b>。","期末權益＝480,000－50,000＝<b>430,000</b>（淨損讓權益變少）。","期末負債＝880,000－430,000＝<b>450,000</b>。"]
 }
 ];
 
@@ -343,7 +417,7 @@ function checkChoiceFlow(q){const hasOpt=!!q.options;const expected=q.choiceFlow
 function renderChoice(q){const isAudit=q.type==="audit";$("#main").innerHTML=qCard(q)+commonToolbar()+(isAudit?`<section class="card audit-box"><h3>🧭 這一關不是硬算，而是檢查題目是否自洽</h3><div class="audit-eq">結帳前比例先決定一組 <code>L、C</code>；結帳後若只做結帳分錄，<code>L</code> 原則上不應改變。</div></section>`:"")+`<section class="card"><div class="choice-list">${q.options.map((o,i)=>`<button class="choice" data-choice="${i}"><span class="letter">${String.fromCharCode(65+i)}</span><span>${o}</span></button>`).join("")}</div></section><section class="toolbar"><button class="btn gold" id="checkChoice" style="flex:1">送出答案</button></section><section class="card feedback" id="feedback"></section>`;wireCommon();document.querySelectorAll(".choice").forEach(b=>b.onclick=()=>{state.selected=+b.dataset.choice;document.querySelectorAll(".choice").forEach(x=>x.classList.remove("selected"));b.classList.add("selected");beep(540)});$("#checkChoice").onclick=()=>checkChoice(q)}
 function checkChoice(q){if(state.selected===null)return toast("請先選一個答案");state.attempts++;const buttons=[...document.querySelectorAll(".choice")];buttons.forEach((b,i)=>{b.disabled=true;if(i===q.correct)b.classList.add("correct");if(i===state.selected&&i!==q.correct)b.classList.add("incorrect")});if(state.selected===q.correct)finishLevel(q,1,1);else{save.streak=0;persist();updateHud();const fb=$("#feedback");fb.className="card feedback show bad";fb.innerHTML=`<h3>這個選項不是答案</h3><p>查看提示或重新作答，再從資料關係逐步檢查。</p>`;$("#checkChoice").disabled=true;setTimeout(()=>{buttons.forEach(b=>{b.disabled=false;b.classList.remove("correct","incorrect","selected")});state.selected=null;$("#checkChoice").disabled=false},1100);beep(170,.2,"sawtooth")}}
 
-function renderAlgebra(q){$("#main").innerHTML=qCard(q)+commonToolbar()+`<section class="card formula-board">${q.formulaQuestions.map((f,fi)=>`<div class="formula-step"><h3>${f.title}</h3><div class="formula-options">${f.options.map((o,oi)=>`<button class="formula-option" data-fi="${fi}" data-oi="${oi}">${o}</button>`).join("")}</div></div>`).join("")}<div class="formula-step"><h3>④ 算出三個金額</h3><div class="numeric-row">${q.numbers.map(n=>`<div class="num-card"><label>${n.label}</label><input class="num-input" inputmode="numeric" data-num="${n.key}" placeholder="輸入金額"></div>`).join("")}</div></div></section><section class="toolbar"><button class="btn gold" id="checkAlg" style="flex:1">驗證推理</button></section><section class="card feedback" id="feedback"></section>`;wireCommon();state.formulaSelections=state.formulaSelections.length?q.formulaQuestions.map((_,i)=>state.formulaSelections[i]??null):q.formulaQuestions.map(()=>null);document.querySelectorAll(".formula-option").forEach(b=>b.onclick=()=>{const fi=+b.dataset.fi,oi=+b.dataset.oi;state.formulaSelections[fi]=oi;document.querySelectorAll(`[data-fi="${fi}"]`).forEach(x=>x.classList.remove("selected"));b.classList.add("selected");beep(540)});$("#checkAlg").onclick=()=>checkAlgebra(q)}
+function renderAlgebra(q){$("#main").innerHTML=qCard(q)+commonToolbar()+`<section class="card formula-board">${q.formulaQuestions.map((f,fi)=>`<div class="formula-step"><h3>${f.title}</h3><div class="formula-options">${f.options.map((o,oi)=>`<button class="formula-option" data-fi="${fi}" data-oi="${oi}">${o}</button>`).join("")}</div></div>`).join("")}<div class="formula-step"><h3>④ 算出${q.numbers.length}個金額</h3><div class="numeric-row">${q.numbers.map(n=>`<div class="num-card"><label>${n.label}</label><input class="num-input" inputmode="numeric" data-num="${n.key}" placeholder="輸入金額"></div>`).join("")}</div></div></section><section class="toolbar"><button class="btn gold" id="checkAlg" style="flex:1">驗證推理</button></section><section class="card feedback" id="feedback"></section>`;wireCommon();state.formulaSelections=state.formulaSelections.length?q.formulaQuestions.map((_,i)=>state.formulaSelections[i]??null):q.formulaQuestions.map(()=>null);document.querySelectorAll(".formula-option").forEach(b=>b.onclick=()=>{const fi=+b.dataset.fi,oi=+b.dataset.oi;state.formulaSelections[fi]=oi;document.querySelectorAll(`[data-fi="${fi}"]`).forEach(x=>x.classList.remove("selected"));b.classList.add("selected");beep(540)});$("#checkAlg").onclick=()=>checkAlgebra(q)}
 function checkAlgebra(q){if(state.formulaSelections.some(v=>v===null))return toast("三個公式都要選");const inputs=[...document.querySelectorAll(".num-input")];if(inputs.some(i=>i.value.trim()===""))return toast("三個金額都要填");state.attempts++;let ok=0,total=q.formulaQuestions.length+q.numbers.length;q.formulaQuestions.forEach((f,fi)=>{const buttons=document.querySelectorAll(`[data-fi="${fi}"]`);buttons.forEach((b,oi)=>{b.classList.remove("correct","incorrect");if(oi===f.correct)b.classList.add("correct");if(oi===state.formulaSelections[fi]&&oi!==f.correct)b.classList.add("incorrect")});if(state.formulaSelections[fi]===f.correct)ok++});inputs.forEach(inp=>{const n=q.numbers.find(x=>x.key===inp.dataset.num);inp.classList.remove("right","wrong");if(Number(inp.value.replace(/,/g,""))===n.answer){ok++;inp.classList.add("right")}else inp.classList.add("wrong")});if(ok===total)finishLevel(q,ok,total);else{save.streak=0;persist();updateHud();const fb=$("#feedback");fb.className="card feedback show bad";fb.innerHTML=`<h3>推理完成 ${ok}/${total}</h3><p>紅色項目需修正；綠色項目已正確。</p>`;beep(170,.2,"sawtooth")}}
 
 function scoreFor(){return Math.max(50,100-(state.attempts-1)*10-(state.hintUsed?10:0))}
