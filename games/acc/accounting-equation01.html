@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta name="color-scheme" content="light only">
 <meta name="supported-color-schemes" content="light">
-<title>潔淨小舖的第一年｜會計方程式</title>
+<title>衛生組長的雜貨舖的第一年｜會計方程式</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -325,7 +325,7 @@ input.txt{font-family:inherit;font-size:1rem;color:var(--ink);border:1.5px solid
 <body>
 
 <header>
-  <h1>潔淨小舖的第一年</h1>
+  <h1>衛生組長的雜貨舖的第一年</h1>
   <div class="bar">
     <span id="snd">🔊</span>
     <span>得分 <b id="score-text">0</b></span>
@@ -395,10 +395,10 @@ input.txt{font-family:inherit;font-size:1rem;color:var(--ink);border:1.5px solid
 <!-- 開始：企業個體假設 -->
 <div class="overlay" id="ov-start">
   <div class="panel">
-    <h2>潔淨小舖的第一年</h2>
+    <h2>衛生組長的雜貨舖的第一年</h2>
     <p>你在巷口開了一間賣掃把、拖把、清潔劑的小店。<br>但在開始之前，有一件事一定要先搞清楚 👇</p>
     <div class="identity">
-      <span class="big-you">在這個遊戲裡，「你」＝潔淨小舖</span>
+      <span class="big-you">在這個遊戲裡，「你」＝衛生組長的雜貨舖</span>
       你不是老闆，<b>你就是那間商店本身</b>。<br>
       商店有自己的一本帳，跟老闆家裡的錢<b>完全分開</b>——這叫<b>企業個體假設</b>。<br>
       所以每一筆交易都要問：<b>對商店來說</b>，什麼增加了、什麼減少了？
@@ -457,13 +457,13 @@ input.txt{font-family:inherit;font-size:1rem;color:var(--ink);border:1.5px solid
 
 <script>
 /* ══════════════════════════════════════════════════════
-   潔淨小舖的第一年｜會計方程式
-   企業個體假設 → 五筆交易逐行記錄 → 期末三問 → 結帳
+   衛生組長的雜貨舖的第一年｜會計方程式
+   企業個體假設 → 七筆交易帶讀示範（看分錄→我知道了→自動入帳） → 期末加總 → 結帳
    ══════════════════════════════════════════════════════ */
 
 const EV=[
  {d:"1/1", tag:"1 / 1 開業",
-  s:"老闆拿出自己的積蓄，在巷口租下店面，「潔淨小舖」開張了！",
+  s:"老闆拿出自己的積蓄，在巷口租下店面，「衛生組長的雜貨舖」開張了！",
   deal:"老闆<u>投入現金 600,000</u> 給商店<u>開業</u>",
   amt:600000, k:{a:600000,c:600000},
   q:"對<em>商店</em>來說，哪兩個會計項目變動了？",
@@ -736,97 +736,50 @@ function start(){
 
 function showEvent(){
   const ev=EV[idx];
-  locked=false;firstTry=true;
+  locked=false;
   $("#stage-tag").textContent=ev.tag;
   $("#ev-date").textContent=ev.d;
   $("#ev-story").textContent=ev.s;
   $("#ev-deal").innerHTML=ev.deal;
-  askEl.innerHTML=ev.q+`<span class="sub">提示：看題目畫底線的關鍵字</span>`;
-  optsEl.style.display="";
-  optsEl.innerHTML=ev.opts.map((o,i)=>
-    `<button class="opt" data-i="${i}">${o[0]}<small>${o[1]}</small></button>`).join("");
-  [...optsEl.querySelectorAll(".opt")].forEach(b=>b.addEventListener("click",()=>pickDir(+b.dataset.i)));
-  numpad.style.display="none";
-  $("#jecard").style.display="none";
-  fbmsg.classList.remove("show");fbmsg.innerHTML="";
-  nextBtn.style.display="none";
-  updateHUD();paintLedger();
-}
-
-function pickDir(i){
-  if(locked) return;
-  const ev=EV[idx];
-  const btns=[...optsEl.querySelectorAll(".opt")];
-  if(i===ev.a){
-    locked=true;totalQ++;
-    btns.forEach((b,bi)=>b.classList.add(bi===ev.a?"right":"dim"));
-    if(firstTry){score+=10;correctN++;popup("+10");}
-    beep(560,.09);
-    fbmsg.innerHTML=ev.e;fbmsg.classList.add("show");
-    showJE();
-  }else{
-    if(firstTry){wrongAll.push({d:ev.d,t:"會計項目"});totalQ++;}
-    firstTry=false;
-    btns[i].classList.add("wrong");
-    beep(150,.25,"sawtooth",.14);
-    $("#ev").classList.remove("shake");void $("#ev").offsetWidth;$("#ev").classList.add("shake");
-    fbmsg.innerHTML="再想想：這筆是<b>商店做生意的結果</b>，還是<b>老闆自己的動作</b>？";
-    fbmsg.classList.add("show");
-  }
-}
-
-/* 顯示正確分錄，並在同一畫面填金額 */
-function showJE(){
-  const ev=EV[idx], je=ev.je;
-  const jc=$("#jecard");
+  // 直接展示正確分錄與金額（帶讀，不出選擇題）
+  const je=ev.je, jc=$("#jecard");
   jc.style.display="";
   jc.innerHTML=
-    `<div class="je-t">正 確 分 錄</div>
+    `<div class="je-t">分　錄</div>
      <div class="je-line"><span class="lb">借</span><span class="ac">${je.dr[0]}</span>
        <span class="el el-${je.dr[1]}">${je.dr[1]}</span>
-       <span class="am" id="je-am-d">？</span></div>
+       <span class="am filled">${fmt(ev.amt)}</span></div>
      <div class="je-line cr"><span class="lb">貸</span><span class="ac">${je.cr[0]}</span>
        <span class="el el-${je.cr[1]}">${je.cr[1]}</span>
-       <span class="am" id="je-am-c">？</span></div>`;
-  askEl.innerHTML=`這筆分錄的金額是多少？<span class="sub">填好會直接寫進上方帳頁</span>`;
-  optsEl.style.display="none";
-  numpad.style.display="";
-  $("#numlabel").textContent="輸入金額（不用打逗號）";
-  calcReset();
+       <span class="am filled">${fmt(ev.amt)}</span></div>`;
+  askEl.innerHTML=`先看懂這筆交易的分錄與金額<span class="sub">對照題目底線的關鍵字，想想金額會寫進上方帳頁的哪幾欄</span>`;
+  optsEl.style.display="none";optsEl.innerHTML="";
+  numpad.style.display="none";
+  fbmsg.innerHTML=ev.e;fbmsg.classList.add("show");
+  // 帳頁先以「？」預告這筆會落在哪幾欄
   const pend={d:ev.d};
   Object.keys(ev.k).forEach(k=>pend[k]="?");
   paintLedger(pend);
-  $("#btn-num").onclick=()=>{
-    const v=calcValue();
-    if(v===null) return;
-    if(v===ev.amt){
-      totalQ++;correctN++;score+=10;popup("+10");beep(660,.1);
-      ["je-am-d","je-am-c"].forEach(id=>{
-        const el=$("#"+id);
-        if(el){el.textContent=fmt(ev.amt);el.classList.add("filled");}
-      });
-      const row={d:ev.d};
-      for(const k in ev.k) row[k]=ev.k[k];
-      rows.push(row);
-      A+=ev.k.a||0;L+=ev.k.l||0;C+=ev.k.c||0;R+=ev.k.r||0;X+=ev.k.x||0;
-      if(ev.k.c>0) openC+=ev.k.c;
-      if(ev.k.c<0) drawC+=-ev.k.c;
-      numpad.style.display="none";
-      paintLedger();
-      // 帳頁寫入後，短暫停留讓學生看到數字進帳，再自動進下一題
-      setTimeout(()=>{
-        idx++;updateHUD();
-        if(idx>=EV.length) goEndBalance();
-        else showEvent();
-      },900);
-    }else{
-      totalQ++;
-      wrongAll.push({d:ev.d,t:"金額"});
-      beep(150,.25,"sawtooth",.14);
-      fbmsg.innerHTML="金額不對喔，再看一次題目畫底線的地方。";
-      fbmsg.classList.add("show");
-    }
-  };
+  showNext("我知道了，寫進帳頁 ✓",writeEvent);
+  updateHUD();
+}
+
+/* 按「我知道了」→ 金額自動寫進帳頁，稍作停留後進下一筆 */
+function writeEvent(){
+  const ev=EV[idx];
+  const row={d:ev.d};
+  for(const k in ev.k) row[k]=ev.k[k];
+  rows.push(row);
+  A+=ev.k.a||0;L+=ev.k.l||0;C+=ev.k.c||0;R+=ev.k.r||0;X+=ev.k.x||0;
+  if(ev.k.c>0) openC+=ev.k.c;
+  if(ev.k.c<0) drawC+=-ev.k.c;
+  beep(660,.1);
+  paintLedger();
+  setTimeout(()=>{
+    idx++;updateHUD();
+    if(idx>=EV.length) goEndBalance();
+    else showEvent();
+  },900);
 }
 
 /* ── 期末三問 ── */
@@ -855,7 +808,7 @@ function goEndBalance(){
   $("#ov-note").classList.remove("hidden");
   $("#note-title").textContent="12 / 31 結帳前";
   $("#note-body").innerHTML=
-    `<p>一年過去了，七筆交易都記進帳頁。<br>現在把每一欄<b>直的加起來</b>，算出期末餘額。</p>
+    `<p>一年過去了，七筆交易都寫進帳頁。<br>從這裡開始換你動手：把每一欄<b>直的加起來</b>，算出期末餘額。</p>
      <div class="keyrule">
        這時候方程式有<b>五</b>個要素：
        <span class="eqline">資產 ＝ 負債 ＋ 權益 ＋ 收益 − 費損</span>
@@ -1203,7 +1156,7 @@ $("#btn-make-card").addEventListener("click",async()=>{
   $("#player-name").style.borderColor="";
   const d=new Date(),p=n=>String(n).padStart(2,"0");
   const dt=`${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-  const mName="會計方程式.潔淨小舖";
+  const mName="會計方程式.衛生組長的雜貨舖";
   const scoreTxt=$("#end-score").textContent.trim();
   const code=vcode(`${VSALT}|${name}|${mName}|${scoreTxt}|${dt}`);
   const s1=$("#end-correct").textContent.trim(),s2=$("#end-acc").textContent.trim(),s3=$("#end-pl").textContent.trim();
@@ -1216,7 +1169,7 @@ $("#btn-make-card").addEventListener("click",async()=>{
   for(let x=26;x<W;x+=26){g.beginPath();g.moveTo(x,0);g.lineTo(x,H);g.stroke();}
   g.strokeStyle="#1C2B3A";g.lineWidth=3;g.strokeRect(14,14,W-28,H-28);
   g.textAlign="center";g.fillStyle="#1C2B3A";
-  g.font='900 44px "Noto Sans TC",sans-serif';g.fillText("潔淨小舖的第一年",W/2,86);
+  g.font='900 44px "Noto Sans TC",sans-serif';g.fillText("衛生組長的雜貨舖的第一年",W/2,86);
   g.font='700 22px "Noto Sans TC",sans-serif';g.fillStyle="#5E7085";g.fillText("會 計 方 程 式 結 業 證 明",W/2,122);
   g.fillStyle="#1C2B3A";g.font='900 40px "Noto Sans TC",sans-serif';g.fillText(name,W/2,194);
   g.font='700 22px "Noto Sans TC",sans-serif';g.fillStyle="#5E7085";g.fillText(`模式：${mName}`,W/2,234);
