@@ -67,6 +67,11 @@ h3{font-size:17px;margin:0 0 8px}
 .qmeta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
 .tag{background:#eef2f6;color:var(--sub);border-radius:6px;padding:2px 9px;font-size:13px}
 .qtext{font-size:18px;line-height:1.75;font-weight:500}
+.prevbox{background:#f4f7fa;border:1px solid var(--line);border-left:4px solid var(--sub);
+  border-radius:8px;padding:9px 11px;margin-bottom:10px;font-size:15px;color:var(--sub);line-height:1.65}
+.prevbox b{display:block;font-size:13px;color:var(--brand);margin-bottom:3px}
+.prevbox .ans{margin-top:6px;font-size:14px;font-variant-numeric:tabular-nums}
+.prevbox .ans i{font-style:normal;color:var(--ink)}
 
 /* ---------- 分錄列 ---------- */
 .side{margin-bottom:12px}
@@ -237,6 +242,7 @@ h3{font-size:17px;margin:0 0 8px}
   <div class="wrap">
     <div class="card">
       <div class="qmeta" id="qMeta"></div>
+      <div id="qPrev"></div>
       <div class="qtext" id="qText"></div>
     </div>
 
@@ -382,6 +388,15 @@ function accRank(name){
   return (name in ORDER_IDX) ? ORDER_IDX[name] : 9999;
 }
 
+/* 連動題:題目寫「承上題」者,需先看到前一題才答得出來 */
+var PREREQ = { "A13":"A12", "A15":"A14", "A19":"A18" };
+function prereqOf(key){ return PREREQ[key] || null; }
+function getQ(key){
+  var i;
+  for(i = 0; i < QUESTIONS.length; i++){ if(QUESTIONS[i].key === key) return QUESTIONS[i]; }
+  return null;
+}
+
 var ACC_MAP = {};
 ACCOUNTS.forEach(function(a){ ACC_MAP[a.name] = a.cls; });
 
@@ -466,6 +481,33 @@ function buildHome(){
   $("btnWrongAll").disabled = (n === 0);
 }
 
+/* 把連動題的前置題一併帶入,並確保前置題排在其後續題之前 */
+function withPrereq(list){
+  var keys = {}, out = [];
+  list.forEach(function(q){ keys[q.key] = 1; });
+  list.forEach(function(q){
+    var p = prereqOf(q.key);
+    if(p && !keys[p]){
+      var pq = getQ(p);
+      if(pq){ out.push(pq); keys[p] = 1; }
+    }
+    out.push(q);
+  });
+  // 去重後,依「前置題必須在後續題之前」重新整理
+  var seen = {}, uniq = [];
+  out.forEach(function(q){ if(!seen[q.key]){ seen[q.key] = 1; uniq.push(q); } });
+  var ordered = [], placed = {};
+  uniq.forEach(function(q){
+    var p = prereqOf(q.key);
+    if(p && !placed[p]){
+      var pq = getQ(p);
+      if(pq && seen[p]){ ordered.push(pq); placed[p] = 1; }
+    }
+    if(!placed[q.key]){ ordered.push(q); placed[q.key] = 1; }
+  });
+  return ordered;
+}
+
 function pickQuestions(setId){
   if(setId === "A" || setId === "B"){
     return QUESTIONS.filter(function(q){ return q.ver === setId; })
@@ -477,15 +519,27 @@ function pickQuestions(setId){
       var j = Math.floor(Math.random() * (i + 1));
       var t = pool[i]; pool[i] = pool[j]; pool[j] = t;
     }
-    return pool.slice(0, 10);
+    // 先抽 10 題,補入前置題後可能超過 10,從尾端刪去不影響連動的題目
+    var sel = withPrereq(pool.slice(0, 10));
+    while(sel.length > 10){
+      var cut = -1, z;
+      for(z = sel.length - 1; z >= 0; z--){
+        var isPrereqOfNext = sel.some(function(x){ return prereqOf(x.key) === sel[z].key; });
+        if(!isPrereqOfNext){ cut = z; break; }
+      }
+      if(cut < 0) break;
+      sel.splice(cut, 1);
+    }
+    return sel;
   }
   if(setId === "W"){
     var set = {};
     REC.wrong.forEach(function(k){ set[k] = 1; });
-    return QUESTIONS.filter(function(q){ return set[q.key]; })
-                    .slice().sort(function(a,b){
-                      return a.ver === b.ver ? a.no - b.no : (a.ver < b.ver ? -1 : 1);
-                    });
+    var wl = QUESTIONS.filter(function(q){ return set[q.key]; })
+                      .slice().sort(function(a,b){
+                        return a.ver === b.ver ? a.no - b.no : (a.ver < b.ver ? -1 : 1);
+                      });
+    return withPrereq(wl);
   }
   return [];
 }
@@ -511,6 +565,25 @@ function renderQuestion(){
   S.graded = false; S.noEntry = false;
 
   $("qText").textContent = q.text;
+
+  // 「承上題」:若前一題不在畫面上(隨機卷/錯題重練),顯示前置題內容供對照
+  var pv = $("qPrev"); pv.innerHTML = "";
+  var pk = prereqOf(q.key);
+  if(pk){
+    var shownBefore = (S.idx > 0 && S.list[S.idx - 1].key === pk);
+    var pq = getQ(pk);
+    if(pq && !shownBefore){
+      var box = el("div","prevbox");
+      box.appendChild(el("b","上一題(本題接續此題)"));
+      box.appendChild(document.createTextNode(pq.text));
+      var ans = el("div","ans");
+      var dr = pq.dr.map(function(a){ return a.acct + " " + fmt(a.amt); }).join("、");
+      var cr = pq.cr.map(function(a){ return a.acct + " " + fmt(a.amt); }).join("、");
+      ans.appendChild(el("i","","上題分錄:借 " + dr + ";貸 " + cr));
+      box.appendChild(ans);
+      pv.appendChild(box);
+    }
+  }
   var m = $("qMeta"); m.innerHTML = "";
   m.appendChild(el("span","tag", q.ver + " 卷 第 " + q.no + " 題"));
   m.appendChild(el("span","tag", q.cat));
@@ -782,14 +855,19 @@ function calcKey(k){
       CALC.cur = String(r); CALC.acc = null; CALC.op = null; CALC.fresh = true;
     }
   }
-  else{ // 數字 / . / 000
+  else{ // 數字 / . / 00
+    // 00 只是「補兩個零」,不是獨立數字:結果或空白狀態下按它不應改變數值
+    if(k === "00"){
+      if(CALC.fresh) return calcRender();          // 剛算完/剛開啟 → 不動作
+      if(CALC.cur === "" || CALC.cur === "0") return calcRender();
+      CALC.cur += "00";
+      if(CALC.cur.replace(/[^\d]/g,"").length > 12) CALC.cur = CALC.cur.slice(0, -2);
+      return calcRender();
+    }
     if(CALC.fresh){ CALC.cur = ""; CALC.fresh = false; }
     if(k === "."){
       if(CALC.cur.indexOf(".") >= 0) return calcRender();
       CALC.cur = (CALC.cur === "" ? "0" : CALC.cur) + ".";
-    }else if(k === "00"){
-      if(CALC.cur === "" || CALC.cur === "0") CALC.cur = "0";
-      else CALC.cur += "00";
     }else{
       if(CALC.cur === "0") CALC.cur = k;
       else CALC.cur += k;
