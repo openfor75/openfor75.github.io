@@ -82,11 +82,15 @@ h3{font-size:17px;margin:0 0 8px}
 .jrow .acct span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .jrow .acct.empty{color:#9aa7b4}
 .jrow .acct.set{border-color:var(--brand);font-weight:600}
-.jrow .amt{width:118px;flex:0 0 118px;min-height:var(--tap);padding:8px 10px;border:1.5px solid var(--line);
+.jrow .amt{width:104px;flex:0 0 104px;min-height:var(--tap);padding:8px 8px;border:1.5px solid var(--line);
   border-radius:9px;text-align:right;font-variant-numeric:tabular-nums;font-size:16px;background:#fff}
 .jrow .amt:focus,.jrow .acct:focus{outline:2px solid var(--brand);outline-offset:1px}
-.jrow .del{flex:0 0 40px;min-height:var(--tap);border-radius:9px;background:#f0f3f6;color:var(--sub);font-size:20px;
+.jrow .calcbtn{flex:0 0 38px;min-height:var(--tap);border-radius:9px;background:#eef2f6;color:var(--brand);
+  font-size:17px;display:flex;align-items:center;justify-content:center;border:1.5px solid #dde5ec}
+.jrow .calcbtn:active{background:#dde7f0}
+.jrow .del{flex:0 0 34px;min-height:var(--tap);border-radius:9px;background:#f0f3f6;color:var(--sub);font-size:19px;
   display:flex;align-items:center;justify-content:center}
+.jrow.mark-ok .calcbtn,.jrow.mark-bad .calcbtn,.jrow.mark-ok .del,.jrow.mark-bad .del{opacity:.45}
 .jrow.mark-ok .acct,.jrow.mark-ok .amt{border-color:var(--ok);background:var(--ok-bg)}
 .jrow.mark-bad .acct,.jrow.mark-bad .amt{border-color:var(--bad);background:var(--bad-bg)}
 .rowmsg{font-size:14px;margin:-4px 0 8px 2px;font-weight:600}
@@ -104,6 +108,36 @@ h3{font-size:17px;margin:0 0 8px}
 .totals.ok .t.diff{color:var(--ok);font-weight:700}
 .totals .acts{display:flex;gap:8px;margin-top:8px}
 .totals .acts>*{flex:1}
+.totals .tools{display:flex;gap:8px;margin-top:8px}
+.totals .tools>button{flex:1;min-height:40px;border-radius:9px;background:#eef2f6;color:var(--brand);
+  font-weight:700;font-size:15px;border:1.5px solid #d4dee7}
+.totals .tools>button:active{background:#dde7f0}
+.totals .tools>button[disabled]{opacity:.4}
+
+/* ---------- 計算機 ---------- */
+.calcwrap{position:fixed;inset:0;z-index:70;background:rgba(20,28,36,.5);display:flex;
+  align-items:flex-end;justify-content:center}
+@media(min-width:700px){.calcwrap{align-items:center}}
+.calc{background:var(--card);border-radius:16px 16px 0 0;width:100%;max-width:420px;
+  padding:12px 12px calc(12px + env(safe-area-inset-bottom))}
+@media(min-width:700px){.calc{border-radius:16px}}
+.calc .chead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.calc .chead b{font-size:16px}
+.calc .disp{background:#f4f7fa;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:8px;
+  text-align:right;font-variant-numeric:tabular-nums;min-height:64px;display:flex;flex-direction:column;justify-content:center}
+.calc .disp .expr{font-size:14px;color:var(--sub);min-height:20px;word-break:break-all}
+.calc .disp .val{font-size:28px;font-weight:800;line-height:1.15;word-break:break-all}
+.calc .pad{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.calc .pad button{min-height:52px;border-radius:10px;background:#f0f3f6;font-size:20px;font-weight:700}
+.calc .pad button:active{background:#e0e7ee}
+.calc .pad button.op{background:#e6eef6;color:var(--brand)}
+.calc .pad button.fn{background:#eceff3;color:var(--sub);font-size:16px}
+.calc .pad button.eq{background:var(--brand);color:#fff}
+.calc .apply{margin-top:8px;display:flex;gap:8px}
+.calc .apply>button{flex:1;min-height:46px;border-radius:10px;font-weight:700}
+.calc .apply .use{background:var(--brand);color:#fff}
+.calc .apply .cancel{background:#e3e8ee;color:var(--ink)}
+.calc .hint{font-size:13px;color:var(--sub);margin-top:6px;text-align:center}
 
 /* ---------- 項目選擇器 ---------- */
 .sheet{position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(20,28,36,.5)}
@@ -140,10 +174,15 @@ h3{font-size:17px;margin:0 0 8px}
 .verdict.ok{background:var(--ok-bg);color:var(--ok);border:1px solid #b6e0c6}
 .verdict.bad{background:var(--bad-bg);color:var(--bad);border:1px solid #f2c2bc}
 .journal{background:#fbfcfd;border:1px solid var(--line);border-radius:10px;padding:14px 12px;font-variant-numeric:tabular-nums}
-.jline{display:flex;align-items:baseline;gap:8px;padding:3px 0;font-size:16.5px}
-.jline .nm{flex:1 1 auto}
+.jline{display:flex;align-items:baseline;gap:6px;padding:3px 0;font-size:16.5px}
+.jline .nm{flex:1 1 auto;min-width:0}
 .jline.cr .nm{padding-left:2.2em}
-.jline .v{flex:0 0 auto;font-weight:600;min-width:96px;text-align:right}
+.jline .v{flex:0 0 auto;font-weight:600;width:92px;text-align:right}
+.jline .v.blank{opacity:0}
+.jhead{display:flex;gap:6px;padding:0 0 5px;border-bottom:1px solid var(--line);margin-bottom:6px;
+  font-size:13px;color:var(--sub);font-weight:700}
+.jhead .nm{flex:1 1 auto}
+.jhead .v{flex:0 0 auto;width:92px;text-align:center}
 .notebox{background:var(--warn-bg);border:1px solid #f0d9a8;color:#6b4400;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:15px}
 
 /* ---------- 總結 ---------- */
@@ -226,9 +265,47 @@ h3{font-size:17px;margin:0 0 8px}
   <div class="totals" id="totals">
     <div class="t"><span>借方合計　<b id="tDr">0</b></span><span>貸方合計　<b id="tCr">0</b></span></div>
     <div class="t diff" id="tDiff"><span id="diffText">尚未輸入</span></div>
+    <div class="tools" id="toolRow">
+      <button id="btnFillDiff">補差額</button>
+      <button id="btnCalc">計算機</button>
+    </div>
     <div class="acts">
       <button class="btn" id="btnSubmit">送出批改</button>
       <button class="btn hide" id="btnNext">下一題 ›</button>
+    </div>
+  </div>
+
+  <!-- 計算機 -->
+  <div class="calcwrap hide" id="calcWrap">
+    <div class="calc">
+      <div class="chead">
+        <b id="calcTitle">計算機</b>
+        <button class="iconbtn" id="calcClose">關閉</button>
+      </div>
+      <div class="disp">
+        <div class="expr" id="calcExpr"></div>
+        <div class="val" id="calcVal">0</div>
+      </div>
+      <div class="pad">
+        <button class="fn" data-k="C">AC</button>
+        <button class="fn" data-k="back">⌫</button>
+        <button class="fn" data-k="%">%</button>
+        <button class="op" data-k="/">÷</button>
+        <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+        <button class="op" data-k="*">×</button>
+        <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+        <button class="op" data-k="-">−</button>
+        <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+        <button class="op" data-k="+">＋</button>
+        <button data-k="00">00</button><button data-k="0">0</button>
+        <button data-k=".">.</button>
+        <button class="eq" data-k="=">＝</button>
+      </div>
+      <div class="apply">
+        <button class="cancel" id="calcCancel">取消</button>
+        <button class="use" id="calcUse">填入金額</button>
+      </div>
+      <div class="hint" id="calcHint"></div>
     </div>
   </div>
 </div>
@@ -274,6 +351,36 @@ var CLS = {
 var CLS_ORDER = ["A","L","C","R","E"];
 var LS_KEY = "jrnl_practice_v1";
 var MAX_ROWS = 4;
+
+/* 類別內排序:依台科大《會計項目彙總》之財報表達順序(流動性由高至低) */
+var ORDER = [
+  /* A 資產:流動資產(現金及約當現金 → 金融資產 → 應收票據 → 應收帳款 → 存貨
+     → 預付款項 → 其他流動資產)→ 非流動資產(不動產廠房及設備 → 其他非流動資產) */
+  "現金","銀行存款","透過損益按公允價值衡量之金融資產",
+  "應收票據","應收帳款","備抵損失-應收帳款","存貨",
+  "預付貨款","預付租金","預付保險費","預付廣告費",
+  "進項稅額","暫付款",
+  "土地成本","房屋及建築成本","機器設備成本","運輸設備成本","辦公設備成本",
+  "存出保證金",
+  /* L 負債:流動負債(合約負債 → 應付票據 → 應付帳款 → 其他應付款 → 其他流動負債)
+     → 非流動負債(存入保證金) */
+  "預收貨款","應付票據","應付帳款","應付薪資","銷項稅額","代收款","存入保證金",
+  /* C 權益 */
+  "業主資本","業主往來",
+  /* R 收益:營業收入(銷貨收入及其抵銷)→ 營業外收入 */
+  "銷貨收入","銷貨退回","銷貨折讓",
+  "其他收入","利息收入","租金收入","佣金收入",
+  /* E 費損:營業成本(進貨及其抵銷)→ 營業費用 → 營業外支出 */
+  "進貨","進貨費用","進貨退出","進貨折讓",
+  "薪資支出","租金支出","文具用品","旅費","運費","郵電費","修繕費","廣告費",
+  "水電瓦斯費","保險費","交際費","捐贈","佣金支出","職工福利","書報雜誌","其他費用",
+  "其他損失","利息費用"
+];
+var ORDER_IDX = {};
+ORDER.forEach(function(n, i){ if(!(n in ORDER_IDX)) ORDER_IDX[n] = i; });
+function accRank(name){
+  return (name in ORDER_IDX) ? ORDER_IDX[name] : 9999;
+}
 
 var ACC_MAP = {};
 ACCOUNTS.forEach(function(a){ ACC_MAP[a.name] = a.cls; });
@@ -453,6 +560,12 @@ function renderRows(){
       });
       wrap.appendChild(inp);
 
+      var cbt = el("button","calcbtn","🖩");
+      cbt.title = "用計算機算這一列";
+      cbt.disabled = S.graded;
+      cbt.addEventListener("click", function(){ openCalc(side, i); });
+      wrap.appendChild(cbt);
+
       var del = el("button","del","×");
       del.disabled = S.graded;
       del.addEventListener("click", function(){
@@ -485,10 +598,17 @@ function updateTotals(){
   $("tCr").textContent = fmt(c);
   var t = $("totals");
   t.classList.remove("ok","bad");
+  $("toolRow").classList.toggle("hide", S.graded);
+  $("btnFillDiff").disabled = (d === c);
+
   if(S.noEntry){ $("diffText").textContent = "已選擇「不作分錄」"; return; }
   if(d === 0 && c === 0){ $("diffText").textContent = "尚未輸入"; return; }
   if(d === c){ t.classList.add("ok"); $("diffText").textContent = "✓ 借貸平衡"; }
-  else { t.classList.add("bad"); $("diffText").textContent = "✕ 借貸不平衡,差額 " + fmt(Math.abs(d - c)); }
+  else {
+    t.classList.add("bad");
+    $("diffText").textContent = "✕ 借貸不平衡,差額 " + fmt(Math.abs(d - c)) +
+      "(" + (d > c ? "貸方" : "借方") + "不足)";
+  }
 }
 
 /* ============ 項目選擇器 ============ */
@@ -538,7 +658,9 @@ function renderAccList(){
     box.appendChild(el("div","empty-note","請先點上方五大類,或直接輸入名稱搜尋。"));
   }
   list.sort(function(a,b){
-    return CLS_ORDER.indexOf(a.cls) - CLS_ORDER.indexOf(b.cls) || a.name.localeCompare(b.name,"zh-Hant");
+    return CLS_ORDER.indexOf(a.cls) - CLS_ORDER.indexOf(b.cls)
+        || accRank(a.name) - accRank(b.name)
+        || a.name.localeCompare(b.name,"zh-Hant");
   });
   list.forEach(function(a){
     var b = el("button","accbtn");
@@ -557,6 +679,176 @@ function chooseAcct(name){
   S.noEntry = false;
   closeSheet();
   renderRows();
+}
+
+/* ============ 補差額 ============ */
+function firstBlankAmtRow(){
+  // 優先找「已選項目但金額空白」的列;其次找完全空白的列
+  var cands = [
+    {side:"dr",rows:S.drRows}, {side:"cr",rows:S.crRows}
+  ];
+  var i, j;
+  for(i = 0; i < 2; i++){
+    for(j = 0; j < cands[i].rows.length; j++){
+      if(cands[i].rows[j].acct && cands[i].rows[j].amt === "")
+        return { side:cands[i].side, idx:j, rows:cands[i].rows };
+    }
+  }
+  return null;
+}
+function doFillDiff(){
+  if(S.graded) return;
+  var d = sumOf(S.drRows), c = sumOf(S.crRows);
+  var diff = d - c;
+  if(diff === 0){ toast("借貸已平衡,無差額可補"); return; }
+  var need = Math.abs(diff);
+  var wantSide = diff > 0 ? "cr" : "dr";   // 借大於貸 → 補貸方
+  var rows = wantSide === "dr" ? S.drRows : S.crRows;
+
+  // 1) 該側有「已選項目、金額空白」的列 → 直接填
+  var k, target = -1;
+  for(k = 0; k < rows.length; k++){
+    if(rows[k].acct && rows[k].amt === ""){ target = k; break; }
+  }
+  // 2) 否則找該側完全空白的列
+  if(target < 0){
+    for(k = 0; k < rows.length; k++){
+      if(!rows[k].acct && rows[k].amt === ""){ target = k; break; }
+    }
+  }
+  // 3) 否則新增一列
+  if(target < 0){
+    if(rows.length >= MAX_ROWS){
+      toast((wantSide === "dr" ? "借方" : "貸方") + "已達 4 列,請先調整金額");
+      return;
+    }
+    rows.push(blankRow());
+    target = rows.length - 1;
+  }
+  rows[target].amt = need;
+  S.noEntry = false;
+  renderRows();
+  toast((wantSide === "dr" ? "借方" : "貸方") + "已補上差額 " + fmt(need) +
+        (rows[target].acct ? "" : ",請記得選會計項目"));
+}
+
+/* ============ 計算機 ============ */
+var CALC = { cur:"0", acc:null, op:null, fresh:true, target:null };
+
+function calcRender(){
+  $("calcVal").textContent = CALC.cur === "" ? "0" :
+    (CALC.cur.indexOf(".") >= 0
+      ? (function(){
+          var p = CALC.cur.split(".");
+          return fmt(parseInt(p[0] || "0", 10)) + "." + p[1];
+        })()
+      : fmt(parseInt(CALC.cur, 10)));
+  var opTxt = { "+":"＋", "-":"−", "*":"×", "/":"÷" };
+  $("calcExpr").textContent = CALC.acc === null ? ""
+    : fmt(CALC.acc) + " " + (opTxt[CALC.op] || "");
+}
+function calcNum(){ return parseFloat(CALC.cur || "0") || 0; }
+function calcApplyOp(){
+  var b = calcNum();
+  if(CALC.acc === null || CALC.op === null) return b;
+  var a = CALC.acc, r = a;
+  if(CALC.op === "+") r = a + b;
+  else if(CALC.op === "-") r = a - b;
+  else if(CALC.op === "*") r = a * b;
+  else if(CALC.op === "/") r = (b === 0 ? a : a / b);
+  return Math.round(r * 100) / 100;
+}
+function calcKey(k){
+  if(k === "C"){ CALC.cur = "0"; CALC.acc = null; CALC.op = null; CALC.fresh = true; }
+  else if(k === "back"){
+    if(!CALC.fresh){
+      CALC.cur = CALC.cur.length > 1 ? CALC.cur.slice(0, -1) : "0";
+      if(CALC.cur === "0") CALC.fresh = true;
+    }
+  }
+  else if(k === "%"){
+    var v = calcNum() / 100;
+    CALC.cur = String(Math.round(v * 100) / 100); CALC.fresh = true;
+  }
+  else if(k === "+" || k === "-" || k === "*" || k === "/"){
+    if(CALC.op !== null && !CALC.fresh){ CALC.acc = calcApplyOp(); }
+    else if(CALC.acc === null){ CALC.acc = calcNum(); }
+    CALC.op = k; CALC.fresh = true;
+    CALC.cur = String(CALC.acc);
+  }
+  else if(k === "="){
+    if(CALC.op !== null){
+      var r = calcApplyOp();
+      CALC.cur = String(r); CALC.acc = null; CALC.op = null; CALC.fresh = true;
+    }
+  }
+  else{ // 數字 / . / 000
+    if(CALC.fresh){ CALC.cur = ""; CALC.fresh = false; }
+    if(k === "."){
+      if(CALC.cur.indexOf(".") >= 0) return calcRender();
+      CALC.cur = (CALC.cur === "" ? "0" : CALC.cur) + ".";
+    }else if(k === "00"){
+      if(CALC.cur === "" || CALC.cur === "0") CALC.cur = "0";
+      else CALC.cur += "00";
+    }else{
+      if(CALC.cur === "0") CALC.cur = k;
+      else CALC.cur += k;
+    }
+    if(CALC.cur.replace(/[^\d]/g,"").length > 12) CALC.cur = CALC.cur.slice(0, -1);
+  }
+  calcRender();
+}
+function openCalc(side, idx){
+  if(S.graded) return;
+  CALC.target = (side && idx !== undefined) ? { side:side, idx:idx } : null;
+  CALC.cur = "0"; CALC.acc = null; CALC.op = null; CALC.fresh = true;
+
+  if(CALC.target){
+    var rows = side === "dr" ? S.drRows : S.crRows;
+    var r = rows[idx];
+    if(typeof r.amt === "number"){ CALC.cur = String(r.amt); CALC.fresh = true; }
+    $("calcTitle").textContent = (side === "dr" ? "借方" : "貸方") +
+      "第 " + (idx + 1) + " 列" + (r.acct ? "・" + r.acct : "");
+    $("calcHint").textContent = "算完按「填入金額」帶回該列";
+  }else{
+    $("calcTitle").textContent = "計算機";
+    var d = sumOf(S.drRows), c = sumOf(S.crRows);
+    $("calcHint").textContent = (d || c)
+      ? "目前差額 " + fmt(Math.abs(d - c)) + ",可按「填入金額」自動補到不足的一方"
+      : "算完按「填入金額」補到金額空白的列";
+  }
+  calcRender();
+  show("calcWrap");
+}
+function closeCalc(){ hide("calcWrap"); CALC.target = null; }
+
+function calcUse(){
+  if(CALC.op !== null) calcKey("=");
+  var v = Math.round(calcNum());
+  if(v <= 0){ toast("金額須大於 0"); return; }
+  var t = CALC.target;
+  if(!t){
+    // 未指定列:補到不足的一方
+    var d = sumOf(S.drRows), c = sumOf(S.crRows);
+    var side = (d > c) ? "cr" : "dr";
+    var rows = side === "dr" ? S.drRows : S.crRows;
+    var k, idx = -1;
+    for(k = 0; k < rows.length; k++){
+      if(rows[k].acct && rows[k].amt === ""){ idx = k; break; }
+    }
+    if(idx < 0){ for(k = 0; k < rows.length; k++){ if(!rows[k].acct && rows[k].amt === ""){ idx = k; break; } } }
+    if(idx < 0){
+      if(rows.length >= MAX_ROWS){ toast("該側已達 4 列,請直接點金額欄輸入"); return; }
+      rows.push(blankRow()); idx = rows.length - 1;
+    }
+    t = { side:side, idx:idx };
+  }
+  var trows = t.side === "dr" ? S.drRows : S.crRows;
+  trows[t.idx].amt = v;
+  S.noEntry = false;
+  closeCalc();
+  renderRows();
+  toast((t.side === "dr" ? "借方" : "貸方") + "第 " + (t.idx + 1) + " 列已填入 " + fmt(v));
 }
 
 /* ============ 批改 ============ */
@@ -639,16 +931,23 @@ function showResult(q, correct, msgs){
   if(q.dr.length === 0 && q.cr.length === 0){
     jr.appendChild(el("div","jline","(本題無須作分錄)"));
   }else{
+    var hd = el("div","jhead");
+    hd.appendChild(el("span","nm","會計項目"));
+    hd.appendChild(el("span","v","借方"));
+    hd.appendChild(el("span","v","貸方"));
+    jr.appendChild(hd);
     q.dr.forEach(function(a){
       var l = el("div","jline dr");
       l.appendChild(el("span","nm", a.acct));
-      l.appendChild(el("span","v", fmt(a.amt)));
+      l.appendChild(el("span","v", fmt(a.amt)));       // 借方欄
+      l.appendChild(el("span","v blank", "0"));        // 貸方欄留白
       jr.appendChild(l);
     });
     q.cr.forEach(function(a){
       var l = el("div","jline cr");
       l.appendChild(el("span","nm", a.acct));
-      l.appendChild(el("span","v", fmt(a.amt)));
+      l.appendChild(el("span","v blank", "0"));        // 借方欄留白
+      l.appendChild(el("span","v", fmt(a.amt)));       // 貸方欄
       jr.appendChild(l);
     });
   }
@@ -735,6 +1034,17 @@ $("btnSkip").addEventListener("click", function(){
 $("btnBack").addEventListener("click", function(){
   hide("quiz"); show("home"); buildHome(); window.scrollTo(0,0);
 });
+$("btnFillDiff").addEventListener("click", doFillDiff);
+$("btnCalc").addEventListener("click", function(){ openCalc(); });
+$("calcClose").addEventListener("click", closeCalc);
+$("calcCancel").addEventListener("click", closeCalc);
+$("calcUse").addEventListener("click", calcUse);
+$("calcWrap").addEventListener("click", function(e){ if(e.target === $("calcWrap")) closeCalc(); });
+document.querySelector(".calc .pad").addEventListener("click", function(e){
+  var b = e.target.closest("button");
+  if(b && b.dataset.k) calcKey(b.dataset.k);
+});
+
 $("sheetClose").addEventListener("click", closeSheet);
 $("sheet").addEventListener("click", function(e){ if(e.target === $("sheet")) closeSheet(); });
 $("sheetSearch").addEventListener("input", function(){
