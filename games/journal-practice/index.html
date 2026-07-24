@@ -14,6 +14,11 @@
   --tap:46px;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+/* 停用 iOS「連點兩下放大」:只作用於可點擊元件,雙指縮放仍保留 */
+button,input,.btn,.pick,.accbtn,.clsbtn,.addrow,.iconbtn,.jrow .acct,
+.jrow .amt,.jrow .del,.jrow .calcbtn,.calc .pad button,.totals .tools>button{
+  touch-action:manipulation;
+}
 html,body{margin:0;padding:0}
 body{
   font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
@@ -856,18 +861,13 @@ function calcKey(k){
     }
   }
   else{ // 數字 / . / 00
-    // 00 只是「補兩個零」,不是獨立數字:結果或空白狀態下按它不應改變數值
-    if(k === "00"){
-      if(CALC.fresh) return calcRender();          // 剛算完/剛開啟 → 不動作
-      if(CALC.cur === "" || CALC.cur === "0") return calcRender();
-      CALC.cur += "00";
-      if(CALC.cur.replace(/[^\d]/g,"").length > 12) CALC.cur = CALC.cur.slice(0, -2);
-      return calcRender();
-    }
     if(CALC.fresh){ CALC.cur = ""; CALC.fresh = false; }
     if(k === "."){
       if(CALC.cur.indexOf(".") >= 0) return calcRender();
       CALC.cur = (CALC.cur === "" ? "0" : CALC.cur) + ".";
+    }else if(k === "00"){
+      if(CALC.cur === "" || CALC.cur === "0") CALC.cur = "0";
+      else CALC.cur += "00";
     }else{
       if(CALC.cur === "0") CALC.cur = k;
       else CALC.cur += k;
@@ -1146,6 +1146,18 @@ $("btnReset").addEventListener("click", function(){
     saveRec(); buildHome(); toast("已清除紀錄");
   }
 });
+
+/* ---- 防止 iOS 連點兩下放大畫面(touch-action 在舊版 Safari 不一定生效)---- */
+(function(){
+  var lastTap = 0;
+  document.addEventListener("touchend", function(e){
+    var t = e.target.closest && e.target.closest("button,.pick,.accbtn,.jrow .acct");
+    if(!t) return;                                   // 一般區域不干涉
+    var now = Date.now();
+    if(now - lastTap < 400){ e.preventDefault(); }   // 阻止第二下觸發放大
+    lastTap = now;
+  }, { passive:false });
+})();
 
 buildHome();
 </script>
