@@ -111,51 +111,58 @@ h3{font-size:17px;margin:0 0 8px}
 
 /* ---------- 合計列 ---------- */
 .totals{position:sticky;bottom:0;z-index:15;background:var(--card);border-top:1px solid var(--line);
-  padding:6px 12px calc(8px + env(safe-area-inset-bottom));max-height:82vh;overflow-y:auto;
+  padding:4px 12px calc(6px + env(safe-area-inset-bottom));max-height:88vh;overflow-y:auto;
   box-shadow:0 -4px 16px rgba(30,55,85,.07)}
-.totals .t{display:flex;justify-content:space-between;font-size:15px;font-variant-numeric:tabular-nums}
-.totals .t b{font-size:16px}
+.totals .t{display:flex;justify-content:space-between;font-size:14px;font-variant-numeric:tabular-nums}
+.totals .t b{font-size:15px}
+.totals .t.diff{font-size:13px;margin-top:1px}
 .totals.bad .t.diff{color:var(--bad);font-weight:700}
 .totals.ok .t.diff{color:var(--ok);font-weight:700}
-.totals .acts{display:flex;gap:8px;margin-top:8px}
+.totals .acts{display:flex;gap:8px;margin-top:6px}
 .totals .acts>*{flex:1}
+.totals .acts .btn{min-height:42px;padding:8px 16px}
 .totals .tools{display:flex;gap:8px;margin-top:8px}
 .totals .tools>button{flex:1;min-height:40px;border-radius:9px;background:#eef2f6;color:var(--brand);
   font-weight:700;font-size:15px;border:1.5px solid #d4dee7}
 .totals .tools>button:active{background:#dde7f0}
 .totals .tools>button[disabled]{opacity:.4}
 
-/* ---------- 計算機(常駐底部,與送出批改同一區) ---------- */
+/* ---------- 計算機(常駐底部,精簡高度) ---------- */
 .calctoggle{width:100%;display:flex;justify-content:space-between;align-items:center;
-  min-height:38px;padding:4px 2px 6px;font-size:14.5px;font-weight:800;color:var(--brand);
+  min-height:30px;padding:2px 2px 4px;font-size:13.5px;font-weight:800;color:var(--brand);
   touch-action:manipulation}
 .calctoggle .chev{transition:transform .2s}
 .calctoggle.closed .chev{transform:rotate(-90deg)}
-.calc{border-top:1px solid var(--line);padding-top:8px;margin-bottom:8px}
+.calc{border-top:1px solid var(--line);padding-top:6px;margin-bottom:6px}
 .calc.collapsed{display:none}
-.calc.idle{opacity:.92}
-.calc .ctop{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:6px}
-.calc .target{font-size:14px;color:var(--sub);line-height:1.4;flex:1 1 auto;min-width:0}
-.calc .target b{color:var(--brand)}
-.calc .chint{font-size:12px;color:var(--warn);text-align:right;font-weight:700;flex:0 0 auto;max-width:44%}
-.calc .disp{border:1.5px solid var(--ink);border-radius:9px;background:#f9fbfd;padding:5px 11px;
-  min-height:52px;display:flex;flex-direction:column;justify-content:center;text-align:right;margin-bottom:7px}
-.calc .disp .expr{min-height:1em;font-size:12.5px;color:var(--sub);white-space:nowrap;overflow:hidden}
-.calc .disp .val{font-size:25px;color:var(--brand);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.25}
+/* 目標與顯示合併成一列:左邊寫在填哪一格,右邊是數字 */
+.calc .ctop{display:flex;justify-content:space-between;gap:8px;align-items:center;
+  border:1.5px solid var(--ink);border-radius:9px;background:#f9fbfd;padding:4px 10px;
+  min-height:44px;margin-bottom:6px}
+.calc .target{font-size:12.5px;color:var(--sub);line-height:1.3;flex:1 1 auto;min-width:0;
+  overflow:hidden;text-overflow:ellipsis}
+.calc .target b{color:var(--brand);display:block;font-size:13px}
+.calc .chint{display:none}
+.calc .disp{flex:0 0 auto;text-align:right;max-width:62%;min-width:0}
+.calc .disp .expr{min-height:0;font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;line-height:1.2}
+.calc .disp .val{font-size:21px;color:var(--brand);font-weight:800;font-variant-numeric:tabular-nums;
+  line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .calc .disp .val.neg{color:var(--bad)}
-.calc .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.calc .key{border:1px solid var(--line);border-radius:9px;background:#fff;min-height:46px;
-  font-size:19px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;
+.calc .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.calc .key{border:1px solid var(--line);border-radius:8px;background:#fff;min-height:40px;
+  font-size:17px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;
   touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}
-.calc .key:active{background:#dbe4ee;transform:scale(.96)}
+.calc .key:active{background:#dbe4ee;transform:scale(.95)}
 .calc .key.op{background:#f1f5fa;color:var(--brand)}
-.calc .key.fn{background:#fff1f2;color:var(--bad);font-size:17px}
-.calc .key.put{background:#e5a323;color:#fff;border-color:#e5a323;font-size:16px}
+.calc .key.fn{background:#fff1f2;color:var(--bad);font-size:15px}
+.calc .key.put{background:#e5a323;color:#fff;border-color:#e5a323;font-size:14.5px}
+.calc .key.wide{grid-column:span 2}
 .calc .key:disabled{opacity:.38;transform:none!important}
-@media(max-height:740px){
-  .calc .key{min-height:42px;font-size:18px}
-  .calc .disp{min-height:46px;padding:3px 10px}
-  .calc .disp .val{font-size:22px}
+@media(max-height:700px){
+  .calc .key{min-height:36px;font-size:16px}
+  .calc .ctop{min-height:40px;padding:3px 9px}
+  .calc .disp .val{font-size:19px}
 }
 
 /* ---------- 項目選擇器 ---------- */
@@ -290,33 +297,32 @@ h3{font-size:17px;margin:0 0 8px}
     </button>
     <section class="calc idle" id="calc">
       <div class="ctop">
-        <div class="target" id="calcTarget">👆 請先點一個要填的金額欄</div>
-        <div class="chint" id="calcHint">計算機一直留在這裡,不會忽然出現或消失</div>
-      </div>
-      <div class="disp">
-        <div class="expr" id="calcExpr"></div>
-        <div class="val" id="calcVal">0</div>
+        <div class="target" id="calcTarget">👆 點上方金額欄開始計算</div>
+        <div class="disp">
+          <div class="expr" id="calcExpr"></div>
+          <div class="val" id="calcVal">0</div>
+        </div>
       </div>
       <div class="keys">
         <button class="key" data-k="7">7</button>
         <button class="key" data-k="8">8</button>
         <button class="key" data-k="9">9</button>
         <button class="key op" data-k="/">÷</button>
+        <button class="key fn" data-k="del">⌫</button>
         <button class="key" data-k="4">4</button>
         <button class="key" data-k="5">5</button>
         <button class="key" data-k="6">6</button>
         <button class="key op" data-k="*">×</button>
+        <button class="key fn" data-k="clear">C</button>
         <button class="key" data-k="1">1</button>
         <button class="key" data-k="2">2</button>
         <button class="key" data-k="3">3</button>
         <button class="key op" data-k="-">－</button>
+        <button class="key fn" data-k="diff">補差額</button>
         <button class="key" data-k="0">0</button>
         <button class="key" data-k="00">00</button>
-        <button class="key fn" data-k="del">⌫</button>
-        <button class="key op" data-k="+">＋</button>
-        <button class="key fn" data-k="clear">C</button>
-        <button class="key fn" data-k="diff">補差額</button>
         <button class="key" data-k="eq">＝</button>
+        <button class="key op" data-k="+">＋</button>
         <button class="key put" data-k="put">填入</button>
       </div>
     </section>
@@ -852,9 +858,8 @@ function selectAmtCell(side, idx){
   }
   $("calc").classList.remove("idle");
   setKeysEnabled(true);
-  $("calcTarget").innerHTML = "正在填:<b>" + (side === "dr" ? "借方" : "貸方") +
-    "第 " + (idx + 1) + " 列" + (r.acct ? "・" + r.acct : "") + "</b>";
-  $("calcHint").textContent = "算完按「填入」帶回該列";
+  $("calcTarget").innerHTML = "正在填<b>" + (side === "dr" ? "借方" : "貸方") +
+    (idx + 1) + (r.acct ? "・" + r.acct : "") + "</b>";
   renderRows();
   paintCalc();
 }
@@ -872,7 +877,6 @@ function refreshCalcUI(){
     c.classList.add("idle");
     CALC.target = null; calcReset(); paintCalc();
     $("calcTarget").innerHTML = "本題已批改";
-    $("calcHint").textContent = "";
     setKeysEnabled(false);
     var dk = document.querySelector('.calc .key[data-k="diff"]');
     if(dk) dk.disabled = true;
@@ -880,8 +884,7 @@ function refreshCalcUI(){
   }
   if(!CALC.target){
     c.classList.add("idle");
-    $("calcTarget").innerHTML = "👆 請先點一個要填的金額欄";
-    $("calcHint").textContent = "計算機一直留在這裡,不會忽然出現或消失";
+    $("calcTarget").innerHTML = "👆 點上方金額欄開始計算";
     setKeysEnabled(false);
   }else{
     c.classList.remove("idle");
@@ -901,7 +904,6 @@ function calcPut(){
   calcReset();
   renderRows();
   paintCalc();
-  $("calcHint").textContent = "已填入,可繼續點下一個金額欄";
   toast((CALC.target.side === "dr" ? "借方" : "貸方") +
         "第 " + (CALC.target.idx + 1) + " 列已填入 " + fmt(v));
 }
