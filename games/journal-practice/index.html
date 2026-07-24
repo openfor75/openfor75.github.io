@@ -111,7 +111,8 @@ h3{font-size:17px;margin:0 0 8px}
 
 /* ---------- 合計列 ---------- */
 .totals{position:sticky;bottom:0;z-index:15;background:var(--card);border-top:1px solid var(--line);
-  padding:10px 12px calc(10px + env(safe-area-inset-bottom));}
+  padding:6px 12px calc(8px + env(safe-area-inset-bottom));max-height:82vh;overflow-y:auto;
+  box-shadow:0 -4px 16px rgba(30,55,85,.07)}
 .totals .t{display:flex;justify-content:space-between;font-size:15px;font-variant-numeric:tabular-nums}
 .totals .t b{font-size:16px}
 .totals.bad .t.diff{color:var(--bad);font-weight:700}
@@ -124,31 +125,37 @@ h3{font-size:17px;margin:0 0 8px}
 .totals .tools>button:active{background:#dde7f0}
 .totals .tools>button[disabled]{opacity:.4}
 
-/* ---------- 計算機(比照會計方程式遊戲:常駐、不彈窗) ---------- */
-.calc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px}
-.calc.idle{background:#fbfcfe}
-.calc .ctop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;
-  border-bottom:1px dashed var(--line);padding-bottom:8px;margin-bottom:9px}
-.calc .target{font-size:14.5px;color:var(--sub);line-height:1.5}
+/* ---------- 計算機(常駐底部,與送出批改同一區) ---------- */
+.calctoggle{width:100%;display:flex;justify-content:space-between;align-items:center;
+  min-height:38px;padding:4px 2px 6px;font-size:14.5px;font-weight:800;color:var(--brand);
+  touch-action:manipulation}
+.calctoggle .chev{transition:transform .2s}
+.calctoggle.closed .chev{transform:rotate(-90deg)}
+.calc{border-top:1px solid var(--line);padding-top:8px;margin-bottom:8px}
+.calc.collapsed{display:none}
+.calc.idle{opacity:.92}
+.calc .ctop{display:flex;justify-content:space-between;gap:8px;align-items:baseline;margin-bottom:6px}
+.calc .target{font-size:14px;color:var(--sub);line-height:1.4;flex:1 1 auto;min-width:0}
 .calc .target b{color:var(--brand)}
-.calc .chint{font-size:12.5px;color:var(--warn);text-align:right;font-weight:700;flex:0 0 auto;max-width:46%}
-.calc .disp{border:1.5px solid var(--ink);border-radius:10px;background:#f9fbfd;padding:8px 12px;
-  min-height:68px;display:flex;flex-direction:column;justify-content:center;text-align:right;margin-bottom:9px}
-.calc .disp .expr{min-height:1em;font-size:13px;color:var(--sub);white-space:nowrap;overflow:hidden}
-.calc .disp .val{font-size:27px;color:var(--brand);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+.calc .chint{font-size:12px;color:var(--warn);text-align:right;font-weight:700;flex:0 0 auto;max-width:44%}
+.calc .disp{border:1.5px solid var(--ink);border-radius:9px;background:#f9fbfd;padding:5px 11px;
+  min-height:52px;display:flex;flex-direction:column;justify-content:center;text-align:right;margin-bottom:7px}
+.calc .disp .expr{min-height:1em;font-size:12.5px;color:var(--sub);white-space:nowrap;overflow:hidden}
+.calc .disp .val{font-size:25px;color:var(--brand);font-weight:800;font-variant-numeric:tabular-nums;line-height:1.25}
 .calc .disp .val.neg{color:var(--bad)}
 .calc .keys{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.calc .key{border:1px solid var(--line);border-radius:9px;background:#fff;min-height:52px;
-  font-size:20px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;
-  touch-action:manipulation;user-select:none;-webkit-user-select:none}
-.calc .key:active{background:#eef2f6;transform:translateY(1px)}
+.calc .key{border:1px solid var(--line);border-radius:9px;background:#fff;min-height:46px;
+  font-size:19px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;
+  touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}
+.calc .key:active{background:#dbe4ee;transform:scale(.96)}
 .calc .key.op{background:#f1f5fa;color:var(--brand)}
-.calc .key.fn{background:#fff1f2;color:var(--bad);font-size:18px}
-.calc .key.put{background:var(--warn-b,#e5a323);color:#fff;border-color:#e5a323;font-size:17px}
+.calc .key.fn{background:#fff1f2;color:var(--bad);font-size:17px}
+.calc .key.put{background:#e5a323;color:#fff;border-color:#e5a323;font-size:16px}
 .calc .key:disabled{opacity:.38;transform:none!important}
-@media(max-width:400px){
-  .calc .key{min-height:48px;font-size:19px}
-  .calc .disp .val{font-size:24px}
+@media(max-height:740px){
+  .calc .key{min-height:42px;font-size:18px}
+  .calc .disp{min-height:46px;padding:3px 10px}
+  .calc .disp .val{font-size:22px}
 }
 
 /* ---------- 項目選擇器 ---------- */
@@ -274,7 +281,13 @@ h3{font-size:17px;margin:0 0 8px}
       <div id="noteBox"></div>
     </div>
 
-    <!-- 計算機:常駐於頁面,不彈窗 -->
+
+  </div>
+
+  <div class="totals" id="totals">
+    <button class="calctoggle" id="btnCalcToggle" aria-expanded="true">
+      <span>🖩 計算機</span><span class="chev" id="calcChev">▾</span>
+    </button>
     <section class="calc idle" id="calc">
       <div class="ctop">
         <div class="target" id="calcTarget">👆 請先點一個要填的金額欄</div>
@@ -307,9 +320,6 @@ h3{font-size:17px;margin:0 0 8px}
         <button class="key put" data-k="put">填入</button>
       </div>
     </section>
-  </div>
-
-  <div class="totals" id="totals">
     <div class="t"><span>借方合計　<b id="tDr">0</b></span><span>貸方合計　<b id="tCr">0</b></span></div>
     <div class="t diff" id="tDiff"><span id="diffText">尚未輸入</span></div>
     <div class="acts">
@@ -1139,10 +1149,6 @@ $("btnSkip").addEventListener("click", function(){
 $("btnBack").addEventListener("click", function(){
   hide("quiz"); show("home"); buildHome(); window.scrollTo(0,0);
 });
-document.querySelector(".calc .keys").addEventListener("click", function(e){
-  var b = e.target.closest("button");
-  if(b && b.dataset.k && !b.disabled) calcKey(b.dataset.k);
-});
 
 $("sheetClose").addEventListener("click", closeSheet);
 $("sheet").addEventListener("click", function(e){ if(e.target === $("sheet")) closeSheet(); });
@@ -1168,16 +1174,45 @@ $("btnReset").addEventListener("click", function(){
   }
 });
 
-/* ---- 防止 iOS 連點兩下放大畫面(touch-action 在舊版 Safari 不一定生效)---- */
+/* 計算機收合 */
+function setCalcOpen(open){
+  $("calc").classList.toggle("collapsed", !open);
+  $("btnCalcToggle").classList.toggle("closed", !open);
+  $("btnCalcToggle").setAttribute("aria-expanded", open ? "true" : "false");
+  try{ localStorage.setItem("jrnl_calc_open", open ? "1" : "0"); }catch(e){}
+}
+$("btnCalcToggle").addEventListener("click", function(){
+  setCalcOpen($("calc").classList.contains("collapsed"));
+});
 (function(){
-  var lastTap = 0;
-  document.addEventListener("touchend", function(e){
-    var t = e.target.closest && e.target.closest("button,.pick,.accbtn,.jrow .acct");
-    if(!t) return;                                   // 一般區域不干涉
-    var now = Date.now();
-    if(now - lastTap < 400){ e.preventDefault(); }   // 阻止第二下觸發放大
-    lastTap = now;
-  }, { passive:false });
+  var v = null;
+  try{ v = localStorage.getItem("jrnl_calc_open"); }catch(e){}
+  setCalcOpen(v !== "0");
+})();
+
+
+(function(){
+  var keys = document.querySelector(".calc .keys");
+  var fired = 0;
+  function hit(e){
+    var b = e.target.closest && e.target.closest("button");
+    if(!b || !b.dataset.k || b.disabled) return;
+    e.preventDefault();          // 同時阻止 iOS 連點放大與後續 click 重複觸發
+    fired = Date.now();
+    calcKey(b.dataset.k);
+  }
+  if(window.PointerEvent){
+    // pointerdown 已涵蓋滑鼠與觸控,不需再掛 click(否則會重複計入)
+    keys.addEventListener("pointerdown", hit);
+  }else{
+    keys.addEventListener("touchstart", hit, { passive:false });
+    // 舊瀏覽器沒有 pointer 事件:用 click 補,並避開剛觸發過的 touchstart
+    keys.addEventListener("click", function(e){
+      if(Date.now() - fired < 700) return;
+      var b = e.target.closest("button");
+      if(b && b.dataset.k && !b.disabled) calcKey(b.dataset.k);
+    });
+  }
 })();
 
 buildHome();
