@@ -85,6 +85,18 @@ button{cursor:pointer}
 .addrow{margin:7px 0 0 30px;border:none;background:none;color:var(--ink2);font-size:14.5px;font-weight:700;padding:6px 4px}
 .jsum{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:9px;border-top:2px dashed #D8CFC4;font-size:15px;font-weight:800}
 .jsum .bal{color:var(--green)} .jsum .off{color:var(--red)}
+.vpick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:11px 0 3px}
+.vpick button{min-height:42px;border:2.5px solid var(--ink);border-radius:11px;background:#fff;font-size:14px;font-weight:800;padding:2px}
+.vpick button.on{background:var(--ink);color:#FFFDF8}
+.vhint{font-size:13px;color:var(--ink2);margin:2px 0 0 2px}
+.fld.fixed{background:#F3EFE7;border-bottom-style:solid;border-bottom-color:var(--ink3);font-weight:800;color:var(--ink2)}
+.lockmk{font-size:12px}
+.vwarn{margin-top:10px;background:#FDECEA;border:2px solid var(--red);border-radius:11px;padding:7px 10px;font-size:14.5px;color:var(--red);font-weight:700}
+.vsw{border:2px solid var(--ink3);background:#fff;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:800;color:var(--ink2);margin-left:4px}
+.vsw.on{background:var(--ink);color:#FFFDF8;border-color:var(--ink)}
+#toast{position:fixed;left:50%;transform:translateX(-50%) translateY(14px);bottom:calc(50% - 20px);z-index:60;background:var(--ink);color:#FFFDF8;
+       padding:11px 20px;border-radius:999px;font-weight:800;font-size:15.5px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+#toast.on{opacity:.96;transform:translateX(-50%) translateY(0)}
 .cardbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px}
 .cardbar .sp{flex:1;min-width:0}
 .navrow{display:flex;gap:9px;margin:18px 0 6px}
@@ -219,6 +231,10 @@ var SUPPLEMENT = [
 ];
 var CLSNAME = {A:'資產',L:'負債',C:'權益',R:'收益',E:'費損'};
 var CONTRA = /^(備抵|累計折舊)/;
+var VT = { CI:{n:'現金收入',full:'現金收入傳票',lock:'dr'},
+           CO:{n:'現金支出',full:'現金支出傳票',lock:'cr'},
+           CT:{n:'現金轉帳',full:'現金轉帳傳票'},
+           JT:{n:'分錄轉帳',full:'分錄轉帳傳票'} };
 
 function baseChart(){
   if (window.ACCOUNTS && window.ACCOUNTS.length) {
@@ -323,10 +339,10 @@ function today(){ var d=new Date(); return d.getFullYear()+'/'+('0'+(d.getMonth(
 /* ==========================================================
    3. 狀態與儲存
    ========================================================== */
-var S={screen:'home', set:null, idx:0, ans:{}, checks:0, name:'', checked:false, cell:null};
+var S={screen:'home', set:null, idx:0, ans:{}, checks:0, name:'', checked:false, cell:null, vmode:false};
 function key(id){ return 'ais_v1_'+id; }
 function load(id){ try{ return JSON.parse(localStorage.getItem(key(id))) || null; }catch(e){ return null; } }
-function save(){ if(!S.set) return; try{ localStorage.setItem(key(S.set.id), JSON.stringify({ans:S.ans,checks:S.checks,name:S.name})); }catch(e){} }
+function save(){ if(!S.set) return; try{ localStorage.setItem(key(S.set.id), JSON.stringify({ans:S.ans,checks:S.checks,name:S.name,vmode:S.vmode})); }catch(e){} }
 
 function blankCard(){ return {dr:[{acct:'',amt:null}], cr:[{acct:'',amt:null}]}; }
 function ensure(no){
@@ -338,13 +354,21 @@ function txnOf(no){ var r=null; S.set.txns.forEach(function(t){ if(t.no===no) r=
 function lineOK(l){ return l.acct && l.amt!==null && l.amt!==undefined && l.amt!==0; }
 function cardFilled(c){ return c.dr.some(lineOK) && c.cr.some(lineOK); }
 function cardEmpty(c){ var f=function(l){ return l.acct||l.amt; }; return !c.dr.some(f) && !c.cr.some(f); }
-function doneOf(a){
+function doneOf(a,vm){
   if(!a) return false;
   if(a.noEntry) return true;
   var cs=(a.cards||[]).filter(function(c){ return !cardEmpty(c); });
-  return cs.length>0 && cs.every(cardFilled);
+  if(!cs.length) return false;
+  return cs.every(function(c){ return cardFilled(c) && (!vm || !!c.v); });
 }
-function isDone(no){ return doneOf(S.ans[no]); }
+function isDone(no){ return doneOf(S.ans[no], S.vmode); }
+function hasCash(c){ return c.dr.concat(c.cr).some(function(l){ return l.acct==='現金'; }); }
+function vWarn(c){
+  if(!S.vmode||!c.v) return '';
+  if(c.v==='CT' && !hasCash(c)) return '現金轉帳傳票必須有「現金」,這張沒有。';
+  if(c.v==='JT' && hasCash(c))  return '分錄轉帳傳票不可以出現「現金」。';
+  return '';
+}
 function doneCount(){ var n=0; S.set.txns.forEach(function(t){ if(isDone(t.no)) n++; }); return n; }
 
 /* ==========================================================
@@ -383,7 +407,7 @@ function renderHome(){
   SETS.forEach(function(s){
     var st=load(s.id), n=0, done=0;
     n=s.txns.length;
-    if(st&&st.ans){ s.txns.forEach(function(t){ if(doneOf(st.ans[t.no])) done++; }); }
+    if(st&&st.ans){ s.txns.forEach(function(t){ if(doneOf(st.ans[t.no], st.vmode)) done++; }); }
     h+='<div class="setcard"><h2>'+esc(s.title)+(s.demo?' <span class="pill soft">示範</span>':'')+'</h2>'+
        '<div class="no">試題編號 '+esc(s.examNo||'—')+'　'+esc(s.period||'')+'</div>'+
        '<div style="margin:9px 0 4px">'+
@@ -413,6 +437,7 @@ function openSet(id){
   S.set=s; buildChart(s);
   var st=load(id)||{};
   S.ans=st.ans||{}; S.checks=st.checks||0; S.name=st.name||''; S.checked=false; S.idx=0;
+  S.vmode=(st.vmode!==undefined)? st.vmode : !!s.voucher;
   for(var i=0;i<s.txns.length;i++){ if(!isDone(s.txns[i].no)){ S.idx=i; break; } }
   renderWork();
 }
@@ -426,10 +451,12 @@ function topWork(){
    '<div class="row1"><button class="btn ghost" id="back">← 題組</button>'+
    '<div class="title" style="text-align:center">'+esc(S.set.title)+'</div>'+
    '<button class="btn ghost" id="grid">⊞ 第'+t.no+'題</button></div>'+
-   '<div class="notes">📌 '+esc(S.set.basis||'')+(S.set.notes&&S.set.notes.length?'｜'+S.set.notes.map(esc).join('｜'):'')+'</div>'+
+   '<div class="notes">📌 '+esc(S.set.basis||'')+(S.set.notes&&S.set.notes.length?'｜'+S.set.notes.map(esc).join('｜'):'')+
+   ' <button class="vsw'+(S.vmode?' on':'')+'" id="vtoggle">🧾 傳票模式 '+(S.vmode?'開':'關')+'</button></div>'+
    '<div class="prog"><i style="width:'+Math.round(d/n*100)+'%"></i></div>';
-  $('#back').onclick=function(){ save(); renderHome(); };
+  $('#back').onclick=function(){ leave(); renderHome(); };
   $('#grid').onclick=openGrid;
+  $('#vtoggle').onclick=function(){ S.vmode=!S.vmode; save(); renderWork(); topWork(); };
 }
 function renderWork(){
   S.screen='work'; S.cell=null; dock(true); topWork();
@@ -464,8 +491,17 @@ function renderWork(){
   $('#app').onclick=workClick;
 }
 function cardHTML(t,c,ci){
+  var lock = (S.vmode && c.v && VT[c.v].lock) || null;
   function rows(side){
     var arr=c[side], out='';
+    if(lock===side){
+      var l0=arr[0]||{acct:'現金',amt:null};
+      return '<div class="jrow '+side+'">'+
+        '<div class="mk">'+(side==='dr'?'借':'貸')+'</div>'+
+        '<div class="fld fixed">現金 <span class="lockmk">🔒</span></div>'+
+        '<button class="amt'+(l0.amt?'':' ph')+'" data-c="'+ci+'" data-s="'+side+'" data-r="0" data-f="amt">'+
+          (l0.amt?fmt(l0.amt):'金額')+'</button><span class="del"></span></div>';
+    }
     arr.forEach(function(l,ri){
       out+='<div class="jrow '+side+'">'+
         '<div class="mk">'+(side==='dr'?'借':'貸')+'</div>'+
@@ -481,9 +517,17 @@ function cardHTML(t,c,ci){
   }
   var dt=0,ct=0; c.dr.forEach(function(l){ if(lineOK(l)) dt+=l.amt; }); c.cr.forEach(function(l){ if(lineOK(l)) ct+=l.amt; });
   var diff=dt-ct;
+  var vpick='';
+  if(S.vmode){
+    vpick='<div class="vpick">'+['CI','CO','CT','JT'].map(function(k){
+      return '<button data-act="v" data-c="'+ci+'" data-v="'+k+'" class="'+(c.v===k?'on':'')+'">'+VT[k].n+'</button>';
+    }).join('')+'</div>'+(c.v?'':'<div class="vhint">先選這張傳票的種類</div>');
+  }
+  var wm=S.vmode?vWarn(c):'';
   return '<div class="jcard">'+
-    '<div class="jhead"><div class="t">日 記 簿</div><div class="d">'+esc((t.date||'').replace('/','月')+'日')+'</div></div>'+
-    rows('dr')+rows('cr')+
+    '<div class="jhead"><div class="t">'+(S.vmode&&c.v?esc(VT[c.v].full):'日 記 簿')+'</div><div class="d">'+esc((t.date||'').replace('/','月')+'日')+'</div></div>'+
+    vpick+rows('dr')+rows('cr')+
+    (wm?'<div class="vwarn">⚠ '+wm+'</div>':'')+
     '<div class="jsum"><span>借 '+fmt(dt)+'　貸 '+fmt(ct)+'</span>'+
     (diff===0?'<span class="bal">'+((dt||ct)?'借貸平衡 ✓':'　')+'</span>':'<span class="off">差額 '+fmt(Math.abs(diff))+'</span>')+
     '</div></div>';
@@ -494,6 +538,16 @@ function workClick(e){
   if(cell){ pickCell(cell); return; }
   var b=e.target.closest('[data-act]'); if(!b) return;
   var act=b.getAttribute('data-act');
+  if(act==='v'){
+    var vc=a.cards[+b.dataset.c], vk=b.getAttribute('data-v');
+    vc.v=vk;
+    var lk=VT[vk].lock;
+    if(lk){
+      var keep=vc[lk].filter(function(l){ return l.acct==='現金'; })[0] || vc[lk].filter(lineOK)[0] || {};
+      vc[lk]=[{acct:'現金', amt:keep.amt||null}];
+    }
+    save(); renderWork(); return;
+  }
   if(act==='add'){ a.cards[+b.dataset.c][b.dataset.s].push({acct:'',amt:null}); save(); renderWork(); }
   else if(act==='del'){ a.cards[+b.dataset.c][b.dataset.s].splice(+b.dataset.r,1); save(); renderWork(); }
   else if(act==='addcard'){ a.cards.push(blankCard()); save(); renderWork(); window.scrollTo(0,document.body.scrollHeight); }
@@ -502,9 +556,40 @@ function workClick(e){
     if(cardEmpty(last)||confirm('刪除第 '+a.cards.length+' 筆分錄?已填的內容會清除。')){ a.cards.pop(); save(); renderWork(); } }
   else if(act==='noentry'){ if(confirm('確定本題不作分錄?已填的內容會清除。')){ a.noEntry=true; a.cards=[]; save(); renderWork(); topWork(); } }
   else if(act==='undo-noentry'){ a.noEntry=false; a.cards=[]; ensure(t.no); save(); renderWork(); topWork(); }
-  else if(act==='prev'){ save(); S.idx--; renderWork(); }
-  else if(act==='next'){ save(); S.idx++; renderWork(); }
-  else if(act==='report'){ save(); renderReport(); }
+  else if(act==='prev'){ leave(); S.idx--; renderWork(); }
+  else if(act==='next'){ leave(); S.idx++; renderWork(); }
+  else if(act==='report'){ leave(); if(doneCount()===S.set.txns.length) renderReport(); else renderWork(); }
+}
+function autoDiff(no){
+  var a=S.ans[no]; if(!a||a.noEntry) return 0;
+  var filled=0;
+  a.cards.forEach(function(c){
+    if(cardEmpty(c)) return;
+    var blanks=[], d=0, cr=0;
+    ['dr','cr'].forEach(function(sd){
+      c[sd].forEach(function(l,i){
+        if(l.acct && !l.amt) blanks.push({s:sd,i:i});
+        else if(lineOK(l)){ if(sd==='dr') d+=l.amt; else cr+=l.amt; }
+      });
+    });
+    if(blanks.length===1){                       // 只有一格金額空著才自動補
+      var need = blanks[0].s==='dr' ? cr-d : d-cr;
+      if(need>0){ c[blanks[0].s][blanks[0].i].amt=need; filled+=need; }
+    }
+  });
+  if(filled) save();
+  return filled;
+}
+function leave(){
+  var f=autoDiff(S.set.txns[S.idx].no);
+  if(f) toast('已自動補上差額 '+fmt(f));
+  save();
+}
+function toast(m){
+  var e=document.getElementById('toast');
+  if(!e){ e=document.createElement('div'); e.id='toast'; document.body.appendChild(e); }
+  e.textContent=m; e.className='on';
+  clearTimeout(e._t); e._t=setTimeout(function(){ e.className=''; }, 2400);
 }
 function pickCell(el){
   document.querySelectorAll('.fld.on,.amt.on').forEach(function(x){ x.classList.remove('on'); });
@@ -593,7 +678,7 @@ function fillCell(){
   var v = C.op!==null&&C.buf!=='' ? apply(C.acc,C.op,parseFloat(C.buf)) : calcVal();
   v = Math.round(v);
   var a=ensure(S.cell.no); a.cards[S.cell.c][S.cell.s][S.cell.r].amt = v||null;
-  save(); calcReset(); renderWork();
+  save(); calcReset(); renderWork(); openPad(false);   // 填完自動收起,把畫面還給分錄
 }
 function fillDiff(){
   if(!S.cell || S.cell.f!=='amt'){ $('#calcHint').textContent='請先點要補的那一格金額欄'; return; }
@@ -625,6 +710,7 @@ function openAudit(){
   });
 }
 function sideOf(v){ return v>=0?'借':'貸'; }
+function sv(v){ return sideOf(v)+' '+fmt(Math.abs(v)); }   // 借/貸 + 絕對值,不出現正負號
 function paintAudit(root){
   var P=post(false), bal=P.bal, led=P.led, h='';
   if(auMode==='t' && auAcct){
@@ -635,9 +721,9 @@ function paintAudit(root){
       run += (r.side==='dr'? r.amt : -r.amt);
       h+='<div class="rl"><span class="n">'+(r.no==='期初'?'期初餘額':'第'+r.no+'題 '+esc(r.date))+'</span>'+
          '<span class="v">'+(r.side==='dr'?'借':'貸')+' '+fmt(r.amt)+'</span>'+
-         '<span class="v muted" style="width:96px;text-align:right">'+sideOf(run)+fmt(run)+'</span></div>';
+         '<span class="v muted" style="width:100px;text-align:right">'+sv(run)+'</span></div>';
     });
-    h+='<div class="rl tot"><span class="n">期末餘額</span><span class="v">'+sideOf(bal[auAcct]||0)+' '+fmt(bal[auAcct]||0)+'</span></div></div>';
+    h+='<div class="rl tot"><span class="n">期末餘額</span><span class="v">'+sv(bal[auAcct]||0)+'</span></div></div>';
     root.innerHTML=h; return;
   }
   if(auMode==='tb'){
@@ -664,7 +750,7 @@ function paintAudit(root){
   items.forEach(function(a){
     var v=bal[a.name]||0, act=(led[a.name]||[]).length;
     h+='<button class="acctrow" data-uacct="'+esc(a.name)+'"><span>'+esc(a.name)+(act?'':' <span class="small muted">未使用</span>')+'</span>'+
-       '<span class="v">'+(v?sideOf(v)+' '+fmt(v):'0')+'</span></button>';
+       '<span class="v">'+(v?sv(v):'0')+'</span></button>';
   });
   root.innerHTML=h;
 }
@@ -678,7 +764,7 @@ function openGrid(){
   }).join('')+'</div><p class="small muted" style="margin-top:12px">綠底=已登入,可以隨時回去修改。</p>';
   sheet('跳到第幾題', h, function(root){
     root.addEventListener('click', function(e){
-      var b=e.target.closest('[data-go]'); if(b){ save(); S.idx=+b.getAttribute('data-go'); closeSheet(); renderWork(); }
+      var b=e.target.closest('[data-go]'); if(b){ leave(); S.idx=+b.getAttribute('data-go'); closeSheet(); renderWork(); }
     });
   });
 }
@@ -744,7 +830,7 @@ function renderReport(){
   window.scrollTo(0,0);
 }
 function line(name,val,cls,bad,fixv){
-  return '<div class="rl '+(cls||'')+'"><span class="n'+(bad?' bad':'')+'">'+esc(name)+(bad?' <span class="fix">正確 '+fmt(fixv)+'</span>':'')+'</span>'+
+  return '<div class="rl '+(cls||'')+'"><span class="n'+(bad?' bad':'')+'">'+esc(name)+(bad?' <span class="fix">正確 '+fmt(Math.abs(fixv))+'</span>':'')+'</span>'+
          '<span class="v'+(bad?' bad':'')+'">'+val+'</span></div>';
 }
 function trialHTML(bal,bad){
@@ -753,7 +839,7 @@ function trialHTML(bal,bad){
     var v=bal[a.name]||0; if(!v && !(a.name in bad)) return;
     if(v>0) dt+=v; else ct+=-v;
     var b=(a.name in bad);
-    body+='<div class="rl"><span class="n'+(b?' bad':'')+'">'+esc(a.name)+(b?' <span class="fix">正確 '+(bad[a.name]>=0?'借':'貸')+fmt(bad[a.name])+'</span>':'')+'</span>'+
+    body+='<div class="rl"><span class="n'+(b?' bad':'')+'">'+esc(a.name)+(b?' <span class="fix">正確 '+sv(bad[a.name])+'</span>':'')+'</span>'+
           '<span class="v" style="width:100px;text-align:right">'+(v>0?fmt(v):'')+'</span>'+
           '<span class="v" style="width:100px;text-align:right">'+(v<0?fmt(-v):'')+'</span></div>';
   });
