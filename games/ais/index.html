@@ -218,6 +218,7 @@ button{cursor:pointer}
 <!-- ▼▼▼ 題組檔:新增一個題組就在這裡加一行 ▼▼▼ -->
 <script src="accounts.js"></script>
 <script src="sets/set01.js"></script>
+<script src="sets/set02.js"></script>
 <!-- ▲▲▲ ▲▲▲ -->
 
 <script>
@@ -264,7 +265,7 @@ function sig(name,setId,first,last,date){
   n=h32(SALT+'#'+raw,987654321); for(var j=0;j<4;j++){ out+=A.charAt(n%32); n=Math.floor(n/32); }
   return out;
 }
-var CONTRA = /^(備抵|累計折舊)/;
+var CONTRA = /^(備抵|累計折舊|累計攤銷)/;
 var VT = { CI:{n:'現金收入',full:'現金收入傳票',lock:'dr'},
            CO:{n:'現金支出',full:'現金支出傳票',lock:'cr'},
            CT:{n:'現金轉帳',full:'現金轉帳傳票'},
@@ -1008,14 +1009,14 @@ function profit(bal){
   var r=0,e=0;
   CHART.forEach(function(a){ var v=bal[a.name]||0; if(a.cls==='R') r+= -v; if(a.cls==='E') e+= v; });
   var p=r-e;
-  if(S.set.endingInventory!==null && S.set.endingInventory!==undefined){
-    p += S.set.endingInventory - (openingOf('存貨'));
+  if(!S.set.cogsAccount && S.set.endingInventory!==null && S.set.endingInventory!==undefined){
+    p += S.set.endingInventory - (openingOf('存貨'));   // 銷貨成本法已由調整分錄結轉,不可再推算一次
   }
   return p;
 }
 function openingOf(n){ var v=0; (S.set.opening||[]).forEach(function(o){ if(o.acct===n) v=(o.side==='dr'?o.amt:-o.amt); }); return v; }
 function bsHTML(bal,bad){
-  var EI=S.set.endingInventory, useEI=(EI!==null&&EI!==undefined);
+  var EI=S.set.endingInventory, useEI=(EI!==null&&EI!==undefined&&!S.set.cogsAccount);
   var h='<div class="rep"><h3>資產負債表</h3><div class="sub">'+esc(S.set.title)+'　'+esc(S.set.period||'')+'　期末</div>';
   var at=0;
   h+='<div class="sec">資產</div>';
@@ -1042,7 +1043,7 @@ function bsHTML(bal,bad){
   return h+'</div>';
 }
 function isHTML(bal,bad){
-  var EI=S.set.endingInventory, useEI=(EI!==null&&EI!==undefined), h='';
+  var EI=S.set.endingInventory, useEI=(EI!==null&&EI!==undefined), CA=S.set.cogsAccount, h='';
   var B=function(n){ return bal[n]||0; };
   if(!useEI){
     h='<div class="rep"><h3>收益及費損類餘額表</h3><div class="sub">'+esc(S.set.title)+'　'+esc(S.set.period||'')+'　(本題組未提供期末存貨)</div>';
@@ -1063,8 +1064,14 @@ function isHTML(bal,bad){
   if(sret) h+=line('減:銷貨退回','('+fmt(sret)+')','ind',('銷貨退回' in bad),bad['銷貨退回']);
   if(sall) h+=line('減:銷貨折讓','('+fmt(sall)+')','ind',('銷貨折讓' in bad),bad['銷貨折讓']);
   h+='<div class="rl tot"><span class="n">銷貨淨額</span><span class="v">'+fmt(net)+'</span></div>';
+  var cogs;
+  if(CA){                                   // 銷貨成本法:直接印調整分錄結轉出來的餘額
+    cogs=B(CA);
+    h+='<div class="sec">銷貨成本</div>';
+    h+=line(CA,fmt(cogs),'tot',(CA in bad),bad[CA]);
+  } else {
   var bi=openingOf('存貨'), pu=B('進貨'), pf=B('進貨費用'), pr=-B('進貨退出'), pa=-B('進貨折讓');
-  var pnet=pu+pf-pr-pa, avail=bi+pnet, cogs=avail-EI;
+  var pnet=pu+pf-pr-pa, avail=bi+pnet; cogs=avail-EI;
   h+='<div class="sec">銷貨成本</div>';
   h+=line('期初存貨',fmt(bi),'ind');
   h+=line('進貨',fmt(pu),'ind',('進貨' in bad),bad['進貨']);
@@ -1075,12 +1082,13 @@ function isHTML(bal,bad){
   h+=line('可供銷售商品總額',fmt(avail),'ind');
   h+=line('減:期末存貨','('+fmt(EI)+')','ind');
   h+='<div class="rl tot"><span class="n">銷貨成本</span><span class="v">'+fmt(cogs)+'</span></div>';
+  }
   var gp=net-cogs;
   h+='<div class="rl tot"><span class="n">'+(gp>=0?'營業毛利':'營業毛損')+'</span><span class="v">'+fmt(Math.abs(gp))+'</span></div>';
   var opx=0;
   h+='<div class="sec">營業費用</div>';
   CHART.forEach(function(a){
-    if(a.cls!=='E'||PURCH.indexOf(a.name)>=0||NONOPE.indexOf(a.name)>=0) return;
+    if(a.cls!=='E'||PURCH.indexOf(a.name)>=0||NONOPE.indexOf(a.name)>=0||a.name===CA) return;
     var v=B(a.name); if(!v && !(a.name in bad)) return; opx+=v;
     h+=line(a.name,fmt(v),'ind',(a.name in bad),bad[a.name]);
   });
