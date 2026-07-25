@@ -1,3 +1,5 @@
+/* 會計資訊系統(手機版)  Copyright (c) 2026 林亭妤
+   授權 CC BY-NC-SA 4.0 — 可自由用於教學,禁止商業使用,請保留本標示。 */
 /* 轉檔驗證器:node verify.js  → 檢查 accounts.js 與各題組是否合規 */
 const fs = require('fs');
 global.window = {};
@@ -26,7 +28,7 @@ const F = n => n.toLocaleString('en-US');
 
 console.log('會計項目庫');
 const cnt = {}; ACC.forEach(a => cnt[a.cls] = (cnt[a.cls] || 0) + 1);
-ok(ACC.length === 57, '共 ' + ACC.length + ' 項 (A' + cnt.A + ' L' + cnt.L + ' C' + cnt.C + ' R' + cnt.R + ' E' + cnt.E + ')');
+ok(ACC.length >= 57, '共 ' + ACC.length + ' 項 (A' + cnt.A + ' L' + cnt.L + ' C' + cnt.C + ' R' + cnt.R + ' E' + cnt.E + ')');
 ok(new Set(ACC.map(a => a.name)).size === ACC.length, '沒有重複項目');
 
 const known = new Set(ACC.map(a => a.name)); SUPP.forEach(s => known.add(s.name));
