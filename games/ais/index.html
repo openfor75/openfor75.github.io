@@ -2,7 +2,7 @@
 <!--
   ============================================================
   會計資訊系統(手機版) v1.0
-  Copyright (c) 2026 林亭妤
+  Copyright (c) 2026 教會計的林ㄊㄩ
   授權:CC BY-NC-SA 4.0(姓名標示－非商業性－相同方式分享)
         https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-Hant
   可自由用於教學,禁止商業使用,散布或改作請保留本標示與原始網址。
@@ -69,6 +69,22 @@ button{cursor:pointer}
 .hero{padding:26px 0 10px}
 .hero h1{font-size:31px;font-weight:900;margin:0;letter-spacing:.06em;line-height:1.25}
 .hero p{margin:8px 0 0;color:var(--ink2);font-size:15.5px}
+.resume{margin-bottom:14px}
+.setline{display:flex;gap:7px;align-items:stretch;margin-bottom:9px}
+.setrow{flex:1;min-width:0;text-align:left;background:#fff;border:2.5px solid var(--ink);border-radius:15px;
+        box-shadow:3px 4px 0 rgba(31,27,24,.10);padding:11px 13px;font-family:inherit;font-size:17px}
+.setrow:active{transform:translate(2px,2px);box-shadow:1px 2px 0 rgba(31,27,24,.10)}
+.sr-t{font-size:17.5px;font-weight:900;display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.sr-no{font-size:12.5px;font-weight:700;color:var(--ink3)}
+.sr-b{height:7px;background:#EDE6DB;border:1.5px solid var(--ink);border-radius:999px;margin-top:8px;overflow:hidden}
+.sr-b i{display:block;height:100%;background:var(--ink)}
+.sr-m{display:flex;justify-content:space-between;gap:8px;font-size:12.5px;color:var(--ink2);margin-top:5px}
+.setclear{flex:none;width:48px;border:2px solid var(--ink3);border-radius:13px;background:#fff;color:var(--ink2);
+        font-size:13px;font-weight:800;font-family:inherit;padding:0}
+.chips{display:flex;gap:6px;margin:2px 0 13px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.chips button{flex:none;min-height:40px;padding:0 14px;border:2.5px solid var(--ink);border-radius:999px;background:#fff;
+        font-weight:800;font-size:14.5px;font-family:inherit}
+.chips button.on{background:var(--ink);color:#FFFDF8}
 .setcard{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:5px 6px 0 rgba(31,27,24,.10);padding:16px;margin:16px 0}
 .setcard h2{margin:0;font-size:22px;font-weight:900}
 .setcard .no{font-size:14px;color:var(--ink2);margin-top:2px}
@@ -76,6 +92,7 @@ button{cursor:pointer}
 /* ---------- 日記簿卡 ---------- */
 .qbox{background:#fff;border:3px solid var(--ink);border-radius:18px;padding:13px 15px;margin:14px 0 4px;box-shadow:5px 6px 0 rgba(31,27,24,.10)}
 .qbox .qno{font-weight:900;font-size:15px;color:var(--ink2);letter-spacing:.08em}
+.qbox .qdate{color:var(--ink);font-size:16px;border-bottom:2px solid var(--amber-b);padding-bottom:1px}
 .qbox .qtx{margin-top:5px;font-size:17.5px;line-height:1.75}
 .cardlabel{font-size:14px;font-weight:800;color:var(--ink2);margin:16px 0 -6px 2px}
 .jcard{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:5px 6px 0 rgba(31,27,24,.10);padding:13px 14px 14px;margin:12px 0}
@@ -231,25 +248,14 @@ button{cursor:pointer}
 <script src="accounts.js"></script>
 <script src="sets/set01.js"></script>
 <script src="sets/set02.js"></script>
-<script src="sets/set03.js"></script>
-<script src="sets/set04.js"></script>
-<script src="sets/set05.js"></script>
-<script src="sets/set06.js"></script>
-<script src="sets/set07.js"></script>
-<script src="sets/set08.js"></script>
-<script src="sets/set09.js"></script>
-<script src="sets/set10.js"></script>
-<script src="sets/set11.js"></script>
-<script src="sets/set12.js"></script>
-<script src="sets/set13.js"></script>
 <!-- ▲▲▲ ▲▲▲ -->
 
 <script>
 (function(){
 'use strict';
-/* 會計資訊系統(手機版) — Copyright (c) 2026 林亭妤 — CC BY-NC-SA 4.0
+/* 會計資訊系統(手機版) — Copyright (c) 2026 教會計的林ㄊㄩ — CC BY-NC-SA 4.0
    非商業教學用途可自由使用,散布或改作請保留署名與原始網址。 */
-var APP = { name:'會計資訊系統', ver:'1.0', author:'林亭妤', license:'CC BY-NC-SA 4.0' };
+var APP = { name:'會計資訊系統', ver:'1.0', author:'教會計的林ㄊㄩ', owner:'林亭妤', license:'CC BY-NC-SA 4.0' };
 
 /* ==========================================================
    0. 會計項目庫
@@ -421,6 +427,13 @@ function ensure(no){
   if(S.ans[no].cards.length===0 && !S.ans[no].noEntry) S.ans[no].cards.push(blankCard());
   return S.ans[no];
 }
+function fullDate(t){                       // 民國102年12月2日 — 年份取自題組的 period
+  var d=(t.date||''), p=d.split('/');
+  if(!p[0]) return '';
+  var tail=parseInt(p[0],10)+'月'+(p[1]?parseInt(p[1],10)+'日':'');
+  var y=(S.set.period||'').match(/民國\s*(\d+)\s*年/);
+  return y ? '民國'+y[1]+'年'+tail : tail;
+}
 function txnOf(no){ var r=null; S.set.txns.forEach(function(t){ if(t.no===no) r=t; }); return r; }
 function lineOK(l){ return l.acct && l.amt!==null && l.amt!==undefined && l.amt!==0; }
 function cardFilled(c){ return c.dr.some(lineOK) && c.cr.some(lineOK); }
@@ -481,45 +494,77 @@ function post(useStandard){
 /* ==========================================================
    5. 首頁
    ========================================================== */
+var HS={q:'', f:'all'};
+function setStat(x){
+  var st=load(x.id), n=x.txns.length, done=0;
+  if(st&&st.ans) x.txns.forEach(function(t){ if(doneOf(st.ans[t.no], st.vs||(st.vmode?4:0))) done++; });
+  return {done:done, n:n, first:(st&&st.first!==undefined)?st.first:null};
+}
 function renderHome(){
-  S.screen='home'; dock(false);
+  S.screen='home'; dock(false); S.set=null;
   $('#topbar').innerHTML='<div class="row1"><div class="title">會計資訊系統</div><span class="pill soft">手機版</span></div>';
-  var h='<div class="hero"><h1>今天要記<br>哪一本帳?</h1><p>選一個題組,照題目逐筆登入分錄。<br>登完可以查帳、輸出報表,再對帳找錯。</p></div>';
-  SETS.forEach(function(s){
-    var st=load(s.id), n=0, done=0;
-    n=s.txns.length;
-    if(st&&st.ans){ s.txns.forEach(function(t){ if(doneOf(st.ans[t.no], st.vs||(st.vmode?4:0))) done++; }); }
-    h+='<div class="setcard"><h2>'+esc(s.title)+(s.demo?' <span class="pill soft">示範</span>':'')+'</h2>'+
-       '<div class="no">試題編號 '+esc(s.examNo||'—')+'　'+esc(s.period||'')+'</div>'+
-       '<div style="margin:9px 0 4px">'+
-         '<span class="pill">'+esc(s.basis||'')+'</span>'+
-         (s.notes||[]).map(function(x){return '<span class="pill soft">'+esc(x)+'</span>';}).join('')+
-       '</div>'+
-       '<div class="prog"><i style="width:'+(n?Math.round(done/n*100):0)+'%"></i></div>'+
-       '<div class="small muted" style="margin:6px 0 11px">已登 '+done+' / 共 '+n+' 個題號</div>'+
-       '<div style="display:flex;gap:8px"><button class="btn primary" style="flex:1" data-open="'+s.id+'">'+(done?'續作':'開始')+'</button>'+
-       (done?'<button class="btn ghost" data-clear="'+s.id+'">清除紀錄</button>':'')+'</div></div>';
-  });
-  if(SETS.length<=1){
-    h+='<div class="hr"></div><p class="small muted">題組檔放在 <b>sets/</b> 資料夾,並在 index.html 的「新增題組」區塊加一行 &lt;script&gt; 即可出現在這一頁。</p>';
+  var stats={}, all=SETS.map(function(x){ stats[x.id]=setStat(x); return x; });
+  var last=null; try{ last=localStorage.getItem('ais_last'); }catch(e){}
+  var lastSet=null; SETS.forEach(function(x){ if(x.id===last && stats[x.id].done>0 && stats[x.id].done<stats[x.id].n) lastSet=x; });
+
+  var h='<div class="hero"><h1>今天要記<br>哪一本帳?</h1><p>選一個題組,照題目逐筆登入分錄。</p></div>';
+  if(lastSet){
+    h+='<button class="btn primary wide resume" data-open="'+lastSet.id+'">▶ 繼續 '+esc(lastSet.title)+
+       '(已登 '+stats[lastSet.id].done+' / '+stats[lastSet.id].n+')</button>';
   }
+  if(SETS.length>6){
+    h+='<input class="srch" id="sq" placeholder="搜尋題組名稱或試題編號" autocomplete="off" value="'+esc(HS.q)+'">';
+  }
+  h+='<div class="chips">'+[['all','全部'],['todo','未開始'],['doing','進行中'],['done','已完成']].map(function(c){
+      return '<button data-f="'+c[0]+'" class="'+(HS.f===c[0]?'on':'')+'">'+c[1]+'</button>'; }).join('')+'</div>';
+
+  var rows='', shown=0;
+  all.forEach(function(x){
+    var st=stats[x.id], pct=st.n?Math.round(st.done/st.n*100):0;
+    var state = st.done===0?'todo':(st.done>=st.n?'done':'doing');
+    if(HS.f!=='all' && HS.f!==state) return;
+    if(HS.q && (x.title+' '+(x.examNo||'')).indexOf(HS.q)<0) return;
+    shown++;
+    rows+='<div class="setline">'+
+      '<button class="setrow" data-open="'+x.id+'">'+
+        '<div class="sr-t">'+esc(x.title)+(x.demo?' <span class="sr-no">示範</span>':'')+
+          '<span class="sr-no">'+esc(x.examNo||'')+'</span></div>'+
+        '<div class="sr-b"><i style="width:'+pct+'%"></i></div>'+
+        '<div class="sr-m"><span>'+(state==='done'?'✓ 已完成':'已登 '+st.done+' / '+st.n+' 題')+'</span>'+
+          '<span>'+(st.first!==null?'正式成績 '+st.first+' 分':'')+'</span></div>'+
+      '</button>'+
+      (st.done>0?'<button class="setclear" data-clear="'+x.id+'">清除</button>':'')+
+    '</div>';
+  });
+  h+=rows||'<div class="rep" style="padding:16px;text-align:center"><span class="muted">沒有符合的題組</span></div>';
+  h+='<div class="small muted" style="margin-top:10px">顯示 '+shown+' / 共 '+SETS.length+' 組</div>';
   h+='<div class="hr"></div><a class="btn ghost" href="check.html" style="display:inline-flex;align-items:center;text-decoration:none">🔎 老師:驗證學生成績卡</a>'+
      '<div class="foot">'+esc(APP.name)+' v'+APP.ver+'　·　© 2026 '+esc(APP.author)+
      '　·　<a href="LICENSE.md">'+esc(APP.license)+'</a><br>可自由用於教學,禁止商業使用。本站不蒐集任何個人資料。</div>'+
      '<div style="height:20px"></div>';
   $('#app').innerHTML=h;
+  $('#app').oninput=function(e){
+    if(e.target.id==='sq'){ HS.q=e.target.value.trim(); paintRows(); }
+  };
   $('#app').onclick=function(e){
+    var f=e.target.closest('[data-f]'); if(f){ HS.f=f.getAttribute('data-f'); renderHome(); return; }
     var b=e.target.closest('[data-open]'); if(b){ openSet(b.getAttribute('data-open')); return; }
     var c=e.target.closest('[data-clear]');
     if(c){ var id=c.getAttribute('data-clear');
       if(confirm('確定要清除這個題組的所有作答紀錄?清除後無法復原。')){
-        if(confirm('再確認一次:真的要清除?')){ localStorage.removeItem(key(id)); renderHome(); } } }
+        if(confirm('再確認一次:真的要清除?')){ try{ localStorage.removeItem(key(id)); }catch(e){} renderHome(); } } }
   };
+}
+function paintRows(){                      // 搜尋時只重畫清單,輸入框不動
+  var keep=$('#sq'), pos=keep?keep.selectionStart:0;
+  renderHome();
+  var el=$('#sq'); if(el){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(e){} }
 }
 function openSet(id){
   var s=null; SETS.forEach(function(x){ if(x.id===id) s=x; });
   if(!s) return;
   S.set=s; buildChart(s);
+  try{ localStorage.setItem('ais_last', id); }catch(e){}
   var st=load(id)||{};
   S.ans=st.ans||{}; S.checks=st.checks||0; S.name=st.name||''; S.checked=false; S.idx=0;
   S.vs=(st.vs!==undefined)? st.vs : null;                       // null = 還沒選過登錄方式
@@ -547,7 +592,7 @@ function topWork(){
    '<div class="row1"><button class="btn ghost" id="back">← 題組</button>'+
    '<div class="title" style="text-align:center">'+esc(S.set.title)+'</div>'+
    '<button class="btn ghost" id="grid">⊞ 第'+t.no+'題</button></div>'+
-   '<div class="notes">📌 '+esc(S.set.basis||'')+(S.set.notes&&S.set.notes.length?'｜'+S.set.notes.map(esc).join('｜'):'')+
+   '<div class="notes">📌 '+(S.set.period?esc(S.set.period)+'｜':'')+esc(S.set.basis||'')+(S.set.notes&&S.set.notes.length?'｜'+S.set.notes.map(esc).join('｜'):'')+
    ' <span class="vsw'+(S.vs?' on':'')+'" id="vtoggle">🧾 '+(S.vs?(S.vs===3?'三分法傳票':'四分法傳票'):'日記簿')+'</span></div>'+
    '<div class="prog"><i style="width:'+Math.round(d/n*100)+'%"></i></div>';
   $('#back').onclick=function(){ leave(); renderHome(); };
@@ -575,7 +620,8 @@ function setMode(v){ S.vs=v; save(); }   // 只在進題組時決定一次,之�
 function renderWork(){
   S.screen='work'; S.cell=null; dock(true); topWork();
   var t=S.set.txns[S.idx], a=ensure(t.no), n=S.set.txns.length, d=doneCount();
-  var h='<div class="qbox"><div class="qno">第 '+t.no+' 題　'+esc(t.date||'')+'</div><div class="qtx">'+esc(t.text)+'</div></div>';
+  var h='<div class="qbox"><div class="qno">第 '+t.no+' 題　<span class="qdate">'+esc(fullDate(t))+'</span></div>'+
+        '<div class="qtx">'+esc(t.text)+'</div></div>';
   if(a.noEntry){
     h+='<div class="jcard" style="text-align:center;padding:26px 14px">'+
        '<div style="font-size:19px;font-weight:900">本題已標記「不作分錄」</div>'+
