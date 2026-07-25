@@ -64,7 +64,10 @@ sets.forEach(set => {
   ok(td === tc, '過帳後試算表平衡  借 ' + F(td) + ' / 貸 ' + F(tc));
 
   // 報表
-  const clsOf = n => (ACC.find(a => a.name === n) || SUPP.find(a => a.name === n) || { cls: '?' }).cls;
+  const EX = set.extraAccounts || [];
+  const clsOf = n => (ACC.find(a => a.name === n) || SUPP.find(a => a.name === n) || EX.find(a => a.name === n) || { cls: '?' }).cls;
+  const unknown = Object.keys(bal).filter(k => clsOf(k) === '?');
+  ok(unknown.length === 0, '每個項目都查得到五大類' + (unknown.length ? ' → ' + unknown.join('、') : ''));
   const B = n => bal[n] || 0;
   const openOf = n => { let v = 0; set.opening.forEach(o => { if (o.acct === n) v = o.side === 'dr' ? o.amt : -o.amt; }); return v; };
   let R = 0, E = 0;
