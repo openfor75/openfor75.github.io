@@ -134,27 +134,26 @@ h3{font-size:17px;margin:0 0 8px}
 .totals .tools>button[disabled]{opacity:.4}
 
 /* ---------- 計算機(常駐底部,精簡高度) ---------- */
-.calctoggle{width:100%;display:flex;justify-content:space-between;align-items:center;
-  min-height:30px;padding:2px 2px 4px;font-size:13.5px;font-weight:800;color:var(--brand);
-  touch-action:manipulation}
-.calctoggle .chev{transition:transform .2s}
-.calctoggle.closed .chev{transform:rotate(-90deg)}
-.calc{border-top:1px solid var(--line);padding-top:6px;margin-bottom:6px}
-.calc.collapsed{display:none}
-/* 目標與顯示合併成一列:左邊寫在填哪一格,右邊是數字 */
+.calc{padding-top:2px;margin-bottom:6px}
+.calc.collapsed .keys{display:none}
+.calc.collapsed .ctop{margin-bottom:2px}
+/* 顯示列:左邊「正在填哪一格」、中間數字、右邊收合箭頭,全部一列 */
 .calc .ctop{display:flex;justify-content:space-between;gap:8px;align-items:center;
-  border:1.5px solid var(--ink);border-radius:9px;background:#f9fbfd;padding:4px 10px;
-  min-height:44px;margin-bottom:6px}
-.calc .target{font-size:12.5px;color:var(--sub);line-height:1.3;flex:1 1 auto;min-width:0;
+  border:1.5px solid var(--ink);border-radius:9px;background:#f9fbfd;padding:5px 8px 5px 11px;
+  min-height:46px;margin-bottom:6px}
+.calc .target{font-size:12.5px;color:var(--sub);line-height:1.25;flex:0 0 auto;max-width:38%;
   overflow:hidden;text-overflow:ellipsis}
-.calc .target b{color:var(--brand);display:block;font-size:13px}
+.calc .target b{color:var(--brand);display:block;font-size:12.5px}
 .calc .chint{display:none}
-.calc .disp{flex:0 0 auto;text-align:right;max-width:62%;min-width:0}
+.calc .disp{flex:1 1 auto;text-align:right;min-width:0;overflow:hidden}
 .calc .disp .expr{min-height:0;font-size:11px;color:var(--sub);white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;line-height:1.2}
-.calc .disp .val{font-size:21px;color:var(--brand);font-weight:800;font-variant-numeric:tabular-nums;
+.calc .disp .val{font-size:23px;color:var(--brand);font-weight:800;font-variant-numeric:tabular-nums;
   line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .calc .disp .val.neg{color:var(--bad)}
+.calc .chev{flex:0 0 auto;font-size:14px;color:var(--sub);padding:4px 2px 4px 6px;
+  transition:transform .2s;touch-action:manipulation}
+.calc .ctop[aria-expanded="false"] .chev{transform:rotate(-90deg)}
 .calc .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
 .calc .key{border:1px solid var(--line);border-radius:8px;background:#fff;min-height:36px;
   font-size:16.5px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;
@@ -168,8 +167,8 @@ h3{font-size:17px;margin:0 0 8px}
 .calc .key:disabled{opacity:.38;transform:none!important}
 @media(max-height:700px){
   .calc .key{min-height:33px;font-size:15.5px}
-  .calc .ctop{min-height:40px;padding:3px 9px}
-  .calc .disp .val{font-size:19px}
+  .calc .ctop{min-height:42px;padding:4px 8px 4px 10px}
+  .calc .disp .val{font-size:20px}
 }
 
 /* ---------- 項目選擇器 ---------- */
@@ -299,16 +298,14 @@ h3{font-size:17px;margin:0 0 8px}
   </div>
 
   <div class="totals" id="totals">
-    <button class="calctoggle" id="btnCalcToggle" aria-expanded="true">
-      <span>🖩 計算機</span><span class="chev" id="calcChev">▾</span>
-    </button>
     <section class="calc idle" id="calc">
-      <div class="ctop">
-        <div class="target" id="calcTarget">👆 點上方金額欄開始計算</div>
+      <div class="ctop" id="btnCalcToggle" role="button" aria-expanded="true">
+        <div class="target" id="calcTarget">👆 點金額欄開始計算</div>
         <div class="disp">
           <div class="expr" id="calcExpr"></div>
           <div class="val" id="calcVal">0</div>
         </div>
+        <span class="chev" id="calcChev">▾</span>
       </div>
       <div class="keys">
         <button class="key" data-k="7">7</button>
@@ -1290,11 +1287,12 @@ $("btnReset").addEventListener("click", function(){
 /* 計算機收合 */
 function setCalcOpen(open){
   $("calc").classList.toggle("collapsed", !open);
-  $("btnCalcToggle").classList.toggle("closed", !open);
   $("btnCalcToggle").setAttribute("aria-expanded", open ? "true" : "false");
   try{ localStorage.setItem("jrnl_calc_open", open ? "1" : "0"); }catch(e){}
 }
-$("btnCalcToggle").addEventListener("click", function(){
+$("btnCalcToggle").addEventListener("click", function(e){
+  // 只有點到收合箭頭才收合;點數字區(要選欄位或看數字)不觸發
+  if(!e.target.closest(".chev")) return;
   setCalcOpen($("calc").classList.contains("collapsed"));
 });
 (function(){
