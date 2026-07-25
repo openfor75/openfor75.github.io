@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>老師驗證頁 · 會計資訊系統</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#FAF7F0;--ink:#1F1B18;--ink2:#5C534A;--ink3:#9C9188;--red:#C62828;--green:#2E7D5B}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:'Huninn','jf-openhuninn','PingFang TC','Microsoft JhengHei',sans-serif;font-size:17px;line-height:1.6;color:var(--ink);
+ background-color:var(--paper);
+ background-image:repeating-linear-gradient(to bottom,transparent 0 27px,rgba(60,50,40,.09) 27px 28px),
+                  linear-gradient(to right,transparent 0 25px,rgba(206,116,116,.55) 25px 26.5px,transparent 26.5px);
+ background-attachment:local;touch-action:manipulation}
+.wrap{max-width:560px;margin:0 auto;padding:24px 14px 40px 40px}
+h1{font-size:27px;font-weight:900;margin:0 0 4px;letter-spacing:.05em}
+.sub{color:var(--ink2);font-size:15px;margin:0 0 18px}
+.card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:5px 6px 0 rgba(31,27,24,.10);padding:16px;margin:14px 0}
+label{display:block;font-size:14px;font-weight:800;color:var(--ink2);margin:11px 0 4px}
+input,textarea{width:100%;min-height:46px;border:2.5px solid var(--ink);border-radius:13px;padding:9px 12px;background:#fff;
+ font-family:inherit;font-size:16.5px;color:var(--ink)}
+textarea{min-height:78px;line-height:1.6;word-break:break-all}
+.btn{min-height:48px;padding:0 16px;border:2.5px solid var(--ink);border-radius:14px;background:#fff;font-family:inherit;font-size:17px;font-weight:800;
+ box-shadow:3px 3px 0 rgba(31,27,24,.12);width:100%;margin-top:14px;cursor:pointer}
+.btn.primary{background:var(--ink);color:#FFFDF8}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(31,27,24,.12)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.res{padding:18px 16px;text-align:center;border-radius:20px;border:3px solid;margin:16px 0}
+.res.ok{border-color:var(--green);background:#EAF4EF}
+.res.ng{border-color:var(--red);background:#FDECEA}
+.res .t{font-size:23px;font-weight:900}
+.res.ok .t{color:var(--green)} .res.ng .t{color:var(--red)}
+.rl{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:16px;text-align:left}
+.rl b{font-variant-numeric:tabular-nums}
+.note{font-size:14px;color:var(--ink2);line-height:1.75;border-top:2px dashed #D8CFC4;margin-top:20px;padding-top:14px}
+a{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>驗證學生成績卡</h1>
+  <p class="sub">確認截圖上的姓名與分數有沒有被改過。</p>
+
+  <div class="card">
+    <label>方法一:貼上驗證串(學生寄信會附)</label>
+    <textarea id="str" placeholder="王小明|demo|78|100|2026/07/25|AB12-CD34"></textarea>
+    <button class="btn primary" id="go1">驗證這一串</button>
+  </div>
+
+  <div class="card">
+    <label>方法二:照著截圖打(只有截圖時用)</label>
+    <label>姓名</label><input id="nm" autocomplete="off">
+    <label>題組代號</label><input id="sid" placeholder="例如 demo、set01" autocomplete="off">
+    <div class="two">
+      <div><label>正式成績</label><input id="f" inputmode="numeric"></div>
+      <div><label>訂正後成績</label><input id="l" inputmode="numeric"></div>
+    </div>
+    <label>完成日期</label><input id="dt" placeholder="2026/07/25">
+    <label>驗證碼</label><input id="cd" placeholder="AB12-CD34" autocomplete="off">
+    <button class="btn" id="go2">驗證</button>
+  </div>
+
+  <div id="out"></div>
+
+  <p class="note">
+    <b>這個驗證碼能證明什麼</b><br>
+    碼是由姓名、題組、兩個分數、日期一起算出來的。學生把同學的截圖拿來交、或是把分數修圖改掉,驗證碼都會對不上。<br><br>
+    <b>不能證明什麼</b><br>
+    它不能證明這份成績是學生自己做的。演算法寫在網頁裡,程度好的學生看得懂原始碼就能自己算出合法的碼。這是一張封條,不是保險箱。<br><br>
+    題組代號、日期要跟成績卡上一模一樣(日期含斜線)。若您改過 index.html 裡的 SALT,這一頁的 SALT 也要改成一樣。
+  </p>
+  <p class="note" style="border:none;padding-top:0"><a href="index.html">← 回到系統</a></p>
+</div>
+
+<script>
+/* ★ 必須與 index.html 的 SALT 完全相同 */
+var SALT = 'ais-2026-tingyu';
+var PASS_LINE = 60;
+
+function h32(str,seed){ var h=seed>>>0; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; }
+function sig(name,setId,first,last,date){
+  var raw=[name,setId,first,last,date,SALT].join('|');
+  var A='0123456789ABCDEFGHJKMNPQRSTVWXYZ', out='', n;
+  n=h32(raw,2166136261); for(var i=0;i<4;i++){ out+=A.charAt(n%32); n=Math.floor(n/32); }
+  out+='-';
+  n=h32(SALT+'#'+raw,987654321); for(var j=0;j<4;j++){ out+=A.charAt(n%32); n=Math.floor(n/32); }
+  return out;
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
+function show(ok,msg,d){
+  var h='<div class="res '+(ok?'ok':'ng')+'"><div class="t">'+msg+'</div>';
+  if(d){
+    h+='<div style="margin-top:12px">'+
+       '<div class="rl"><span>姓名</span><b>'+esc(d.name)+'</b></div>'+
+       '<div class="rl"><span>題組</span><b>'+esc(d.sid)+'</b></div>'+
+       '<div class="rl"><span>正式成績</span><b>'+esc(d.first)+' 分　'+(Number(d.first)>=PASS_LINE?'及格':'不及格')+'</b></div>'+
+       '<div class="rl"><span>訂正後</span><b>'+esc(d.last)+' 分</b></div>'+
+       '<div class="rl"><span>完成日期</span><b>'+esc(d.date)+'</b></div></div>';
+  }
+  document.getElementById('out').innerHTML=h+'</div>';
+  try{ document.getElementById('out').scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){}
+}
+function check(name,sid,first,last,date,code){
+  name=(name||'').replace(/[|｜\s]/g,''); sid=(sid||'').trim(); date=(date||'').trim();
+  code=(code||'').trim().toUpperCase();
+  if(!name||!sid||first===''||last===''||!date||!code){ show(false,'欄位沒填齊',null); return; }
+  var want=sig(name,sid,String(first).trim(),String(last).trim(),date);
+  var d={name:name,sid:sid,first:String(first).trim(),last:String(last).trim(),date:date};
+  if(want===code) show(true,'✅ 驗證通過',d);
+  else show(false,'❌ 對不上,這張卡被改過或不是這個人的',d);
+}
+document.getElementById('go1').onclick=function(){
+  var p=document.getElementById('str').value.trim().split('|');
+  if(p.length<6){ show(false,'驗證串格式不對,應該有 6 段',null); return; }
+  document.getElementById('nm').value=p[0]; document.getElementById('sid').value=p[1];
+  document.getElementById('f').value=p[2];  document.getElementById('l').value=p[3];
+  document.getElementById('dt').value=p[4]; document.getElementById('cd').value=p[5];
+  check(p[0],p[1],p[2],p[3],p[4],p[5]);
+};
+document.getElementById('go2').onclick=function(){
+  var g=function(i){ return document.getElementById(i).value; };
+  check(g('nm'),g('sid'),g('f'),g('l'),g('dt'),g('cd'));
+};
+</script>
+</body>
+</html>
