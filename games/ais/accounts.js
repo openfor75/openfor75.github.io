@@ -12,7 +12,7 @@ const ACCOUNTS = [
   /* ---- A 資產 19 ---- */
   { name: '現金',                            cls: 'A' },
   { name: '銀行存款',                        cls: 'A' },
-  { name: '透過損益按公允價值衡量之金融資產', cls: 'A' },
+  { name: '強制透過損益按公允價值衡量之金融資產', cls: 'A' },
   { name: '應收票據',                        cls: 'A' },
   { name: '應收帳款',                        cls: 'A' },
   { name: '備抵損失-應收帳款',               cls: 'A' },
