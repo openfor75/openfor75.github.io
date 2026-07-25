@@ -699,7 +699,7 @@ function cardHTML(t,c,ci){
         (arr.length>1?'<button class="del" data-act="del" data-c="'+ci+'" data-s="'+side+'" data-r="'+ri+'">×</button>':'<span class="del"></span>')+
       '</div>';
     });
-    if(arr.length<4) out+='<button class="addrow" data-act="add" data-c="'+ci+'" data-s="'+side+'">＋ 加一列'+(side==='dr'?'借方':'貸方')+'</button>';
+    if(arr.length<8) out+='<button class="addrow" data-act="add" data-c="'+ci+'" data-s="'+side+'">＋ 加一列'+(side==='dr'?'借方':'貸方')+'</button>';
     return out;
   }
   var dt=0,ct=0; c.dr.forEach(function(l){ if(lineOK(l)) dt+=l.amt; }); c.cr.forEach(function(l){ if(lineOK(l)) ct+=l.amt; });
