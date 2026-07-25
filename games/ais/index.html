@@ -848,17 +848,23 @@ function paintAudit(root){
        '<div style="text-align:center;margin-top:9px">'+(dt===ct?'<span class="badge ok">借貸平衡</span>':'<span class="badge ng">相差 '+fmt(Math.abs(dt-ct))+'</span>')+'</div></div>';
     root.innerHTML=h; return;
   }
-  h+='<input class="srch" id="uq" placeholder="搜尋會計項目" autocomplete="off" value="'+esc(auQ)+'">'+
-     '<div class="tabs">'+['A','L','C','R','E'].map(function(c){ return '<button data-utab="'+c+'" class="'+(auTab===c&&!auQ?'on':'')+'">'+CLSNAME[c]+'</button>'; }).join('')+'</div>'+
-     '<button class="btn wide" style="margin-bottom:11px" data-umode="tb">📄 看整張試算表</button>';
-  var pool=usable();
+  if(!root.querySelector('#uq')){                    // 只在第一次(或從別的模式切回來)才建輸入框
+    root.innerHTML='<input class="srch" id="uq" placeholder="搜尋會計項目" autocomplete="off" value="'+esc(auQ)+'">'+
+      '<div class="tabs" id="utabs"></div>'+
+      '<button class="btn wide" style="margin-bottom:11px" data-umode="tb">📄 看整張試算表</button>'+
+      '<div id="ulist"></div>';
+  }
+  root.querySelector('#utabs').innerHTML=['A','L','C','R','E'].map(function(c){
+    return '<button data-utab="'+c+'" class="'+(auTab===c&&!auQ?'on':'')+'">'+CLSNAME[c]+'</button>'; }).join('');
+  var pool=usable(), body='';
   var items = auQ ? pool.filter(function(a){ return a.name.indexOf(auQ)>=0; }) : pool.filter(function(a){ return a.cls===auTab; });
   items.forEach(function(a){
     var v=bal[a.name]||0, act=(led[a.name]||[]).length;
-    h+='<button class="acctrow" data-uacct="'+esc(a.name)+'"><span>'+esc(a.name)+(act?'':' <span class="small muted">未使用</span>')+'</span>'+
+    body+='<button class="acctrow" data-uacct="'+esc(a.name)+'"><span>'+esc(a.name)+(act?'':' <span class="small muted">未使用</span>')+'</span>'+
        '<span class="v">'+(v?sv(v):'0')+'</span></button>';
   });
-  root.innerHTML=h;
+  if(!items.length) body='<div class="small muted">找不到「'+esc(auQ)+'」。</div>';
+  root.querySelector('#ulist').innerHTML=body;
 }
 
 /* ==========================================================
@@ -1122,52 +1128,64 @@ function openLedgerRE(){
   });
   sheet('收益及費損類總分類帳', h+'</div>', null);
 }
+function scoreData(){
+  var sc=scoreNow(), nm=(S.name||'').replace(/[|｜\s]/g,''), date=S.date||today();
+  var code = nm ? sig(nm,S.set.id,S.first,sc.pct,date) : '';
+  return { sc:sc, nm:nm, date:date, code:code, pass:(S.first>=PASS_LINE),
+           str: nm ? [nm,S.set.id,S.first,sc.pct,date,code].join('|') : '' };
+}
+function refreshScore(root){
+  var D=scoreData();
+  root.querySelector('#scn').textContent = D.nm || '請先填姓名';
+  root.querySelector('#vcode').textContent = D.code || '—';
+  root.querySelector('#vcbox').style.display = D.code ? '' : 'none';
+  root.querySelector('#vstr').textContent = D.str;
+  root.querySelector('#mailbox').style.display = D.nm ? '' : 'none';
+}
 function openScore(){
   if(S.first===null){
     sheet('成績卡','<div class="rep" style="text-align:center;padding:22px"><b>還沒有成績</b>'+
       '<div class="small muted" style="margin-top:6px">先在報表頁按一次「對帳」,系統才會鎖定正式成績並發驗證碼。</div></div>', null);
     return;
   }
-  var sc=scoreNow(), pass=(S.first>=PASS_LINE), nm=(S.name||'').replace(/[|｜\s]/g,'');
-  var date=S.date||today();
-  var code = nm ? sig(nm,S.set.id,S.first,sc.pct,date) : '';
-  var str  = nm ? [nm,S.set.id,S.first,sc.pct,date,code].join('|') : '';
+  var D=scoreData();
   var h='<input class="srch" id="nm" placeholder="輸入你的姓名(驗證碼會綁定姓名)" value="'+esc(S.name)+'">'+
    '<div class="card-score" id="sc">'+
      '<div class="small muted">'+esc(S.set.title)+'　'+esc(S.set.examNo||'')+'</div>'+
-     '<div class="big" id="scn">'+(nm?esc(nm):'請先填姓名')+'</div>'+
+     '<div class="big" id="scn"></div>'+
      '<div class="small muted">正式成績(第一次對帳)</div>'+
      '<div style="font-size:38px;font-weight:900;line-height:1.1">'+S.first+' 分</div>'+
-     '<div style="margin:6px 0 12px">'+(pass?'<span class="badge ok">及格</span>':'<span class="badge ng">不及格</span>')+'</div>'+
+     '<div style="margin:6px 0 12px">'+(D.pass?'<span class="badge ok">及格</span>':'<span class="badge ng">不及格</span>')+'</div>'+
      '<div class="rl" style="justify-content:center;gap:16px;font-size:15px">'+
-       '<span>訂正後 <b>'+sc.pct+' 分</b></span><span class="muted">對帳 '+S.checks+' 次</span></div>'+
-     '<div class="small muted" style="margin-top:2px">'+sc.right+' / '+sc.total+' 題正確　·　'+esc(date)+'</div>'+
-     (code?'<div class="vcode"><div class="small">驗證碼</div><div class="cd">'+code+'</div></div>':'')+
+       '<span>訂正後 <b>'+D.sc.pct+' 分</b></span><span class="muted">對帳 '+S.checks+' 次</span></div>'+
+     '<div class="small muted" style="margin-top:2px">'+D.sc.right+' / '+D.sc.total+' 題正確　·　'+esc(D.date)+'</div>'+
+     '<div class="vcode" id="vcbox"><div class="small">驗證碼</div><div class="cd" id="vcode"></div></div>'+
    '</div>'+
-   '<p class="small muted" style="margin-top:12px">截圖這張卡片傳給老師。驗證碼綁定姓名與分數,改任何一項老師都驗得出來。</p>';
-  if(nm){
-    h+='<div class="hr"></div>'+
-       (TEACHER_EMAIL?'':'<input class="srch" id="tm" placeholder="老師的信箱(問老師)" value="'+esc(S.mail)+'">')+
-       (S.sent
-         ? '<div class="rep" style="text-align:center;padding:14px"><b>已經寄出過了</b><div class="small muted" style="margin-top:4px">每個題組只能寄一次。</div></div>'
-         : '<button class="btn primary wide" id="mailbtn">✉ 寄成績給老師(只能寄一次)</button>')+
-       '<div class="strbox"><div class="small muted">驗證串(寄信會自動附上,老師貼進驗證頁一次核對)</div><code>'+esc(str)+'</code></div>';
-  }
+   '<p class="small muted" style="margin-top:12px">截圖這張卡片傳給老師。驗證碼綁定姓名與分數,改任何一項老師都驗得出來。</p>'+
+   '<div id="mailbox"><div class="hr"></div>'+
+     (TEACHER_EMAIL?'':'<input class="srch" id="tm" placeholder="老師的信箱(問老師)" value="'+esc(S.mail)+'">')+
+     (S.sent
+       ? '<div class="rep" style="text-align:center;padding:14px"><b>已經寄出過了</b><div class="small muted" style="margin-top:4px">每個題組只能寄一次。</div></div>'
+       : '<button class="btn primary wide" id="mailbtn">✉ 寄成績給老師(只能寄一次)</button>')+
+     '<div class="strbox"><div class="small muted">驗證串(寄信會自動附上,老師貼進驗證頁一次核對)</div><code id="vstr"></code></div>'+
+   '</div>';
   sheet('成績卡', h, function(root){
+    refreshScore(root);
     root.addEventListener('input', function(e){
-      if(e.target.id==='nm'){ S.name=e.target.value; save(); openScore(); }
+      if(e.target.id==='nm'){ S.name=e.target.value; save(); refreshScore(root); }   // 只更新文字,不動輸入框
       if(e.target.id==='tm'){ S.mail=e.target.value; save(); }
     });
     var mb=root.querySelector('#mailbtn');
     if(mb) mb.onclick=function(){
-      var to=TEACHER_EMAIL||S.mail;
+      var X=scoreData(), to=TEACHER_EMAIL||S.mail;
+      if(!X.nm){ toast('請先填姓名'); return; }
       if(!to){ toast('請先填老師的信箱'); return; }
       if(!confirm('寄出後這個題組就不能再寄了。確定已經訂正完成?')) return;
-      var body=['姓名:'+nm,'題組:'+S.set.title+'('+S.set.id+')',
-                '正式成績(第一次對帳):'+S.first+' 分　'+(pass?'及格':'不及格'),
-                '訂正後成績:'+sc.pct+' 分('+sc.right+'/'+sc.total+' 題)',
-                '對帳次數:'+S.checks+' 次','完成日期:'+date,'驗證碼:'+code,'','驗證串:'+str].join('\n');
-      w_open('mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent('【會計資訊系統】'+S.set.title+' 成績回報 - '+nm)+'&body='+encodeURIComponent(body));
+      var body=['姓名:'+X.nm,'題組:'+S.set.title+'('+S.set.id+')',
+                '正式成績(第一次對帳):'+S.first+' 分　'+(X.pass?'及格':'不及格'),
+                '訂正後成績:'+X.sc.pct+' 分('+X.sc.right+'/'+X.sc.total+' 題)',
+                '對帳次數:'+S.checks+' 次','完成日期:'+X.date,'驗證碼:'+X.code,'','驗證串:'+X.str].join('\n');
+      w_open('mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent('【會計資訊系統】'+S.set.title+' 成績回報 - '+X.nm)+'&body='+encodeURIComponent(body));
       S.sent=true; save(); openScore();
     };
   });
