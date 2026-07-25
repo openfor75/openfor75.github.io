@@ -85,7 +85,15 @@ button{cursor:pointer}
 .addrow{margin:7px 0 0 30px;border:none;background:none;color:var(--ink2);font-size:14.5px;font-weight:700;padding:6px 4px}
 .jsum{display:flex;justify-content:space-between;align-items:center;margin-top:12px;padding-top:9px;border-top:2px dashed #D8CFC4;font-size:15px;font-weight:800}
 .jsum .bal{color:var(--green)} .jsum .off{color:var(--red)}
-.vpick{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:11px 0 3px}
+.vpick{display:grid;gap:5px;margin:11px 0 3px}
+.vpick.c4{grid-template-columns:repeat(4,1fr)} .vpick.c3{grid-template-columns:repeat(3,1fr)}
+.nav4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:16px 0 8px}
+.nav4 .btn{min-height:58px;padding:0 3px;font-size:13.5px;line-height:1.25;box-shadow:2px 3px 0 rgba(31,27,24,.12)}
+.delrow{text-align:right;margin:2px 0 0}
+.modebtn{display:block;width:100%;text-align:left;border:2.5px solid var(--ink);border-radius:15px;background:#fff;
+  padding:12px 14px;margin-bottom:9px;box-shadow:3px 3px 0 rgba(31,27,24,.12);font-family:inherit}
+.modebtn b{display:block;font-size:18px} .modebtn span{display:block;font-size:13.5px;color:var(--ink2);margin-top:2px}
+.modebtn.on{background:var(--ink);color:#FFFDF8} .modebtn.on span{color:#E8E0D4}
 .vpick button{min-height:42px;border:2.5px solid var(--ink);border-radius:11px;background:#fff;font-size:14px;font-weight:800;padding:2px}
 .vpick button.on{background:var(--ink);color:#FFFDF8}
 .vhint{font-size:13px;color:var(--ink2);margin:2px 0 0 2px}
@@ -93,7 +101,7 @@ button{cursor:pointer}
 .fld.fixed{background:#F3EFE7;border-bottom-style:solid;border-bottom-color:var(--ink3);font-weight:800;color:var(--ink2)}
 .lockmk{font-size:12px}
 .vwarn{margin-top:10px;background:#FDECEA;border:2px solid var(--red);border-radius:11px;padding:7px 10px;font-size:14.5px;color:var(--red);font-weight:700}
-.vsw{border:2px solid var(--ink3);background:#fff;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:800;color:var(--ink2);margin-left:4px}
+.vsw{display:inline-block;border:2px solid var(--ink3);background:#fff;border-radius:999px;padding:2px 10px;font-size:13px;font-weight:800;color:var(--ink2);margin-left:4px}
 .vsw.on{background:var(--ink);color:#FFFDF8;border-color:var(--ink)}
 #toast{position:fixed;left:50%;transform:translateX(-50%) translateY(14px);bottom:calc(50% - 20px);z-index:60;background:var(--ink);color:#FFFDF8;
        padding:11px 20px;border-radius:999px;font-weight:800;font-size:15.5px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
@@ -260,7 +268,10 @@ var CONTRA = /^(備抵|累計折舊)/;
 var VT = { CI:{n:'現金收入',full:'現金收入傳票',lock:'dr'},
            CO:{n:'現金支出',full:'現金支出傳票',lock:'cr'},
            CT:{n:'現金轉帳',full:'現金轉帳傳票'},
-           JT:{n:'分錄轉帳',full:'分錄轉帳傳票'} };
+           JT:{n:'分錄轉帳',full:'分錄轉帳傳票'},
+           TR:{n:'轉帳',   full:'轉帳傳票'} };
+var VSETS = { 3:['CI','CO','TR'], 4:['CI','CO','CT','JT'] };
+function vOpts(){ return VSETS[S.vs]||[]; }
 
 function baseChart(){
   if (window.ACCOUNTS && window.ACCOUNTS.length) {
@@ -383,10 +394,10 @@ function today(){ var d=new Date(); return d.getFullYear()+'/'+('0'+(d.getMonth(
 /* ==========================================================
    3. 狀態與儲存
    ========================================================== */
-var S={screen:'home', set:null, idx:0, ans:{}, checks:0, name:'', checked:false, cell:null, vmode:false, first:null, last:null, sent:false, mail:''};
+var S={screen:'home', set:null, idx:0, ans:{}, checks:0, name:'', checked:false, cell:null, vs:0, first:null, last:null, sent:false, mail:''};
 function key(id){ return 'ais_v1_'+id; }
 function load(id){ try{ return JSON.parse(localStorage.getItem(key(id))) || null; }catch(e){ return null; } }
-function save(){ if(!S.set) return; try{ localStorage.setItem(key(S.set.id), JSON.stringify({ans:S.ans,checks:S.checks,name:S.name,vmode:S.vmode,first:S.first,last:S.last,sent:S.sent,mail:S.mail,date:S.date})); }catch(e){} }
+function save(){ if(!S.set) return; try{ localStorage.setItem(key(S.set.id), JSON.stringify({ans:S.ans,checks:S.checks,name:S.name,vs:S.vs,first:S.first,last:S.last,sent:S.sent,mail:S.mail,date:S.date})); }catch(e){} }
 
 function blankCard(){ return {dr:[{acct:'',amt:null}], cr:[{acct:'',amt:null}]}; }
 function ensure(no){
@@ -403,9 +414,9 @@ function doneOf(a,vm){
   if(a.noEntry) return true;
   var cs=(a.cards||[]).filter(function(c){ return !cardEmpty(c); });
   if(!cs.length) return false;
-  return cs.every(function(c){ return cardFilled(c) && (!vm || !!c.v); });
+  return cs.every(function(c){ return cardFilled(c) && (!vm || (!!c.v && (VSETS[vm]||[]).indexOf(c.v)>=0)); });
 }
-function isDone(no){ return doneOf(S.ans[no], S.vmode); }
+function isDone(no){ return doneOf(S.ans[no], S.vs); }
 function hasCash(c){ return c.dr.concat(c.cr).some(function(l){ return l.acct==='現金'; }); }
 /* 四種傳票互斥判定:借方只有現金→現金收入;貸方只有現金→現金支出;
    有現金但不是單純收付→現金轉帳;完全沒有現金→分錄轉帳 */
@@ -418,7 +429,7 @@ function vtypeOf(dr,cr){
   return 'CT';
 }
 function vWarn(c){
-  if(!S.vmode||!c.v) return '';
+  if(S.vs!==4||!c.v) return '';
   if(c.v==='CT' && !hasCash(c)) return '現金轉帳傳票必須有「現金」,這張沒有。';
   if(c.v==='JT' && hasCash(c))  return '分錄轉帳傳票不可以出現「現金」。';
   return '';
@@ -461,7 +472,7 @@ function renderHome(){
   SETS.forEach(function(s){
     var st=load(s.id), n=0, done=0;
     n=s.txns.length;
-    if(st&&st.ans){ s.txns.forEach(function(t){ if(doneOf(st.ans[t.no], st.vmode)) done++; }); }
+    if(st&&st.ans){ s.txns.forEach(function(t){ if(doneOf(st.ans[t.no], st.vs||(st.vmode?4:0))) done++; }); }
     h+='<div class="setcard"><h2>'+esc(s.title)+(s.demo?' <span class="pill soft">示範</span>':'')+'</h2>'+
        '<div class="no">試題編號 '+esc(s.examNo||'—')+'　'+esc(s.period||'')+'</div>'+
        '<div style="margin:9px 0 4px">'+
@@ -492,9 +503,18 @@ function openSet(id){
   S.set=s; buildChart(s);
   var st=load(id)||{};
   S.ans=st.ans||{}; S.checks=st.checks||0; S.name=st.name||''; S.checked=false; S.idx=0;
-  S.vmode=(st.vmode!==undefined)? st.vmode : !!s.voucher;
+  S.vs=(st.vs!==undefined)? st.vs : null;                       // null = 還沒選過登錄方式
+  if(S.vs===null && st.vmode!==undefined) S.vs = st.vmode?4:0;   // 舊版紀錄轉換
   S.first=(st.first===undefined)?null:st.first; S.last=(st.last===undefined)?null:st.last;
   S.sent=!!st.sent; S.mail=st.mail||''; S.date=st.date||'';
+  if(S.vs===null){                                  // 第一次進來先問登錄方式
+    S.vs = (s.voucher===3||s.voucher===4)? s.voucher : (s.voucher?4:0);
+    askMode(function(){ startWork(s); });
+    return;
+  }
+  startWork(s);
+}
+function startWork(s){
   for(var i=0;i<s.txns.length;i++){ if(!isDone(s.txns[i].no)){ S.idx=i; break; } }
   renderWork();
 }
@@ -509,12 +529,30 @@ function topWork(){
    '<div class="title" style="text-align:center">'+esc(S.set.title)+'</div>'+
    '<button class="btn ghost" id="grid">⊞ 第'+t.no+'題</button></div>'+
    '<div class="notes">📌 '+esc(S.set.basis||'')+(S.set.notes&&S.set.notes.length?'｜'+S.set.notes.map(esc).join('｜'):'')+
-   ' <button class="vsw'+(S.vmode?' on':'')+'" id="vtoggle">🧾 傳票模式 '+(S.vmode?'開':'關')+'</button></div>'+
+   ' <span class="vsw'+(S.vs?' on':'')+'" id="vtoggle">🧾 '+(S.vs?(S.vs===3?'三分法傳票':'四分法傳票'):'日記簿')+'</span></div>'+
    '<div class="prog"><i style="width:'+Math.round(d/n*100)+'%"></i></div>';
   $('#back').onclick=function(){ leave(); renderHome(); };
   $('#grid').onclick=openGrid;
-  $('#vtoggle').onclick=function(){ S.vmode=!S.vmode; save(); renderWork(); topWork(); };
 }
+function askMode(after){
+  var cur=S.vs, opt=function(v,t,d){
+    return '<button class="modebtn'+(cur===v?' on':'')+'" data-mode="'+v+'"><b>'+t+'</b><span>'+d+'</span></button>';
+  };
+  sheet('這一組要怎麼登錄?',
+    opt(0,'日記簿','直接寫借貸分錄,不分傳票')+
+    opt(3,'三分法傳票','現金收入傳票、現金支出傳票、轉帳傳票')+
+    opt(4,'四分法傳票','現金收入、現金支出、現金轉帳、分錄轉帳傳票')+
+    '<p class="small muted" style="margin-top:14px">三分法的轉帳傳票沒有現金的限制,單方只有現金也可以用轉帳傳票登。<b>選定後這一組就不能中途更換</b>,要換請回題組列表清除紀錄重做。</p>',
+    function(root){
+      root.addEventListener('click', function(e){
+        var b=e.target.closest('[data-mode]'); if(!b) return;
+        setMode(+b.getAttribute('data-mode'));
+        closeSheet();
+        if(after) after(); else { renderWork(); topWork(); }
+      });
+    });
+}
+function setMode(v){ S.vs=v; save(); }   // 只在進題組時決定一次,之後不再更動
 function renderWork(){
   S.screen='work'; S.cell=null; dock(true); topWork();
   var t=S.set.txns[S.idx], a=ensure(t.no), n=S.set.txns.length, d=doneCount();
@@ -522,21 +560,20 @@ function renderWork(){
   if(a.noEntry){
     h+='<div class="jcard" style="text-align:center;padding:26px 14px">'+
        '<div style="font-size:19px;font-weight:900">本題已標記「不作分錄」</div>'+
-       '<div class="small muted" style="margin-top:6px">若判斷有誤,可以取消標記重新登入。</div>'+
-       '<button class="btn" style="margin-top:14px" data-act="undo-noentry">取消標記</button></div>';
+       '<div class="small muted" style="margin-top:6px">若判斷有誤,可以按下面的「取消不作分錄」重新登入。</div></div>';
   } else {
     a.cards.forEach(function(c,ci){
       if(a.cards.length>1) h+='<div class="cardlabel">第 '+(ci+1)+' 筆</div>';
       h+=cardHTML(t,c,ci);
     });
-    h+='<div class="cardbar">'+
-       (a.cards.length<3?'<button class="btn ghost" data-act="addcard">＋ 再加一筆分錄</button>':'')+
-       (a.cards.length>1?'<button class="btn ghost" data-act="delcard">刪除第 '+a.cards.length+' 筆</button>':'')+
-       '<span class="sp"></span>'+
-       '<button class="btn ghost" data-act="noentry">本題不作分錄</button></div>';
+    if(a.cards.length>1) h+='<div class="delrow"><button class="btn ghost" data-act="delcard">刪除第 '+a.cards.length+' 筆</button></div>';
   }
-  h+='<div class="navrow">'+
+  h+='<div class="nav4">'+
      '<button class="btn" data-act="prev"'+(S.idx===0?' disabled':'')+'>‹ 上一題</button>'+
+     '<button class="btn" data-act="addcard"'+((a.noEntry||a.cards.length>=3)?' disabled':'')+'>＋ 再加一筆分錄</button>'+
+     (a.noEntry
+       ? '<button class="btn" data-act="undo-noentry">取消不作分錄</button>'
+       : '<button class="btn" data-act="noentry">本題不作分錄</button>')+
      '<button class="btn" data-act="next"'+(S.idx===n-1?' disabled':'')+'>下一題 ›</button></div>';
   if(d===n){ h+='<button class="btn primary wide" style="margin:12px 0 8px" data-act="report">📊 輸出報表</button>'; }
   else{
@@ -548,7 +585,7 @@ function renderWork(){
   $('#app').onclick=workClick;
 }
 function cardHTML(t,c,ci){
-  var lock = (S.vmode && c.v && VT[c.v].lock) || null;
+  var lock = (S.vs && c.v && VT[c.v].lock) || null;
   function rows(side){
     var arr=c[side], out='';
     if(lock===side){
@@ -575,15 +612,15 @@ function cardHTML(t,c,ci){
   var dt=0,ct=0; c.dr.forEach(function(l){ if(lineOK(l)) dt+=l.amt; }); c.cr.forEach(function(l){ if(lineOK(l)) ct+=l.amt; });
   var diff=dt-ct;
   var vpick='';
-  if(S.vmode){
-    vpick='<div class="vpick">'+['CI','CO','CT','JT'].map(function(k){
+  if(S.vs){
+    vpick='<div class="vpick c'+vOpts().length+'">'+vOpts().map(function(k){
       return '<button data-act="v" data-c="'+ci+'" data-v="'+k+'" class="'+(c.v===k?'on':'')+'">'+VT[k].n+'</button>';
     }).join('')+'</div>'+(c.v?'':'<div class="vhint">先選傳票種類,才能開始填分錄　<button class="lk" data-act="vhelp">四種怎麼分?</button></div>');
   }
-  var wm=S.vmode?vWarn(c):'';
-  var body = (S.vmode && !c.v) ? '' : (rows('dr')+rows('cr'));
+  var wm=S.vs?vWarn(c):'';
+  var body = (S.vs && !c.v) ? '' : (rows('dr')+rows('cr'));
   return '<div class="jcard">'+
-    '<div class="jhead"><div class="t">'+(S.vmode&&c.v?esc(VT[c.v].full):'日 記 簿')+'</div><div class="d">'+esc((t.date||'').replace('/','月')+'日')+'</div></div>'+
+    '<div class="jhead"><div class="t">'+(S.vs&&c.v?esc(VT[c.v].full):'日 記 簿')+'</div><div class="d">'+esc((t.date||'').replace('/','月')+'日')+'</div></div>'+
     vpick+body+
     (wm?'<div class="vwarn">⚠ '+wm+'</div>':'')+
     '<div class="jsum"><span>借 '+fmt(dt)+'　貸 '+fmt(ct)+'</span>'+
@@ -597,6 +634,14 @@ function workClick(e){
   var b=e.target.closest('[data-act]'); if(!b) return;
   var act=b.getAttribute('data-act');
   if(act==='vhelp'){
+    if(S.vs===3){
+      sheet('三種傳票怎麼分',
+        '<div class="rep"><div class="rl"><span class="n"><b>現金收入傳票</b><br><span class="small muted">借方只有現金</span></span></div>'+
+        '<div class="rl"><span class="n"><b>現金支出傳票</b><br><span class="small muted">貸方只有現金</span></span></div>'+
+        '<div class="rl"><span class="n"><b>轉帳傳票</b><br><span class="small muted">其餘一律用它;有沒有現金都可以</span></span></div>'+
+        '<div class="hr"></div><div class="small muted">銀行存款、應收票據都不算現金。</div></div>', null);
+      return;
+    }
     sheet('四種傳票怎麼分',
       '<div class="rep"><div class="sec">先看這筆分錄有沒有「現金」</div>'+
       '<div class="rl"><span class="n"><b>現金收入傳票</b><br><span class="small muted">借方<u>只有</u>現金</span></span></div>'+
@@ -608,12 +653,14 @@ function workClick(e){
   }
   if(act==='v'){
     var vc=a.cards[+b.dataset.c], vk=b.getAttribute('data-v');
-    vc.v=vk;
     var lk=VT[vk].lock;
     if(lk){
+      var lose=vc[lk].filter(function(l){ return l.acct && l.acct!=='現金'; });
+      if(lose.length && !confirm('改成'+VT[vk].full+','+(lk==='dr'?'借':'貸')+'方只能有「現金」一列。已填的「'+lose[0].acct+'」會被清除,要繼續嗎?')) return;
       var keep=vc[lk].filter(function(l){ return l.acct==='現金'; })[0] || vc[lk].filter(lineOK)[0] || {};
       vc[lk]=[{acct:'現金', amt:keep.amt||null}];
     }
+    vc.v=vk;
     save(); renderWork(); return;
   }
   if(act==='add'){ a.cards[+b.dataset.c][b.dataset.s].push({acct:'',amt:null}); save(); renderWork(); }
@@ -843,15 +890,34 @@ function openGrid(){
    11. 報表與對帳
    ========================================================== */
 function stdV(e){ return e.vtype || vtypeOf(e.dr,e.cr); }
+function wantV(e){                                   // 該制度下的標準傳票別
+  var k=stdV(e);
+  if(S.vs===3) return (k==='CI'||k==='CO')? k : 'TR';
+  return k;
+}
+function vMatch(sv,e){
+  if(!S.vs) return true;
+  if(S.vs===3) return sv===wantV(e) || sv==='TR';    // 轉帳傳票不受限,一律接受
+  return sv===wantV(e);
+}
+function canonJE(dr,cr){
+  function f(ls){ return (ls||[]).filter(lineOK).map(function(l){ return l.acct+'@'+l.amt; }).sort().join('|'); }
+  return 'D['+f(dr)+']C['+f(cr)+']';
+}
 function cmp(t,a){
-  function canon(dr,cr,v){
-    function f(ls){ return (ls||[]).filter(lineOK).map(function(l){ return l.acct+'@'+l.amt; }).sort().join('|'); }
-    return (S.vmode? (v||'?')+'·' : '')+'D['+f(dr)+']C['+f(cr)+']';
+  var std=(t.entries||[]).map(function(e){ return {k:canonJE(e.dr,e.cr), e:e}; });
+  var stu=(a&&!a.noEntry? a.cards:[]).map(function(c){ return {k:canonJE(c.dr,c.cr), v:c.v}; })
+          .filter(function(x){ return x.k!=='D[]C[]'; });
+  if(std.length!==stu.length) return false;
+  var used=[];
+  for(var i=0;i<std.length;i++){
+    var hit=-1;
+    for(var j=0;j<stu.length;j++){ if(!used[j] && stu[j].k===std[i].k){ hit=j; break; } }
+    if(hit<0) return false;
+    used[hit]=true;
+    if(!vMatch(stu[hit].v, std[i].e)) return false;
   }
-  var std=(t.entries||[]).map(function(e){ return canon(e.dr,e.cr,stdV(e)); }).sort();
-  var stu=(a&&!a.noEntry? a.cards:[]).map(function(c){ return canon(c.dr,c.cr,c.v); })
-          .filter(function(x){ return x.indexOf('D[]C[]')<0; }).sort();
-  return std.length===stu.length && std.every(function(v,i){ return v===stu[i]; });
+  return true;
 }
 function scoreNow(){
   var right=0, total=S.set.txns.length;
@@ -895,7 +961,7 @@ function renderReport(){
       h+='<div class="errcard"><b>第 '+t.no+' 題　'+esc(t.date||'')+'</b><div class="small" style="margin-top:3px">'+esc(t.text)+'</div>';
       if((t.entries||[]).length===0){ h+='<div class="stdje"><div class="l"><span>本題不作分錄</span></div></div>'; }
       t.entries.forEach(function(e,i){
-        h+='<div class="stdje">'+(S.vmode?'<div class="small" style="font-weight:800">'+esc(VT[stdV(e)].full)+'</div>':'')+
+        h+='<div class="stdje">'+(S.vs?'<div class="small" style="font-weight:800">'+esc(VT[wantV(e)].full)+(S.vs===3&&wantV(e)!=='TR'?'(或轉帳傳票)':'')+'</div>':'')+
            (t.entries.length>1?'<div class="small muted">第 '+(i+1)+' 筆</div>':'');
         (e.dr||[]).forEach(function(l){ h+='<div class="l"><span>'+esc(l.acct)+'</span><span>'+fmt(l.amt)+'</span></div>'; });
         (e.cr||[]).forEach(function(l){ h+='<div class="l c"><span>'+esc(l.acct)+'</span><span>'+fmt(l.amt)+'</span></div>'; });
