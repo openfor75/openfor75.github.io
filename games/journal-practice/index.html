@@ -108,6 +108,12 @@ h3{font-size:17px;margin:0 0 8px}
 
 .addrow{width:100%;min-height:42px;border:1.5px dashed var(--line);border-radius:9px;color:var(--brand);font-weight:700;background:#fff}
 .addrow:active{background:#f0f6fb}
+/* 「本題不作分錄」:少用功能,做成低調文字連結,避免誤按 */
+.noentry{display:block;margin:10px auto 0;padding:6px 10px;font-size:13.5px;color:var(--sub);
+  text-decoration:underline;text-underline-offset:3px;background:none;touch-action:manipulation}
+.noentry:active{color:var(--ink)}
+.noentry.on{color:var(--warn);font-weight:800;text-decoration:none;
+  border:1.5px solid var(--warn);border-radius:8px;background:var(--warn-bg)}
 
 /* ---------- 合計列 ---------- */
 .totals{position:sticky;bottom:0;z-index:15;background:var(--card);border-top:1px solid var(--line);
@@ -118,9 +124,9 @@ h3{font-size:17px;margin:0 0 8px}
 .totals .t.diff{font-size:13px;margin-top:1px}
 .totals.bad .t.diff{color:var(--bad);font-weight:700}
 .totals.ok .t.diff{color:var(--ok);font-weight:700}
-.totals .acts{display:flex;gap:8px;margin-top:6px}
+.totals .acts{display:flex;gap:8px;margin-top:8px;padding-top:8px;border-top:2px solid var(--line)}
 .totals .acts>*{flex:1}
-.totals .acts .btn{min-height:42px;padding:8px 16px}
+.totals .acts .btn{min-height:44px;padding:8px 16px}
 .totals .tools{display:flex;gap:8px;margin-top:8px}
 .totals .tools>button{flex:1;min-height:40px;border-radius:9px;background:#eef2f6;color:var(--brand);
   font-weight:700;font-size:15px;border:1.5px solid #d4dee7}
@@ -150,17 +156,18 @@ h3{font-size:17px;margin:0 0 8px}
   line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .calc .disp .val.neg{color:var(--bad)}
 .calc .keys{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
-.calc .key{border:1px solid var(--line);border-radius:8px;background:#fff;min-height:40px;
-  font-size:17px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;
+.calc .key{border:1px solid var(--line);border-radius:8px;background:#fff;min-height:36px;
+  font-size:16.5px;font-weight:800;color:var(--ink);display:flex;align-items:center;justify-content:center;
   touch-action:manipulation;user-select:none;-webkit-user-select:none;cursor:pointer}
 .calc .key:active{background:#dbe4ee;transform:scale(.95)}
 .calc .key.op{background:#f1f5fa;color:var(--brand)}
 .calc .key.fn{background:#fff1f2;color:var(--bad);font-size:15px}
 .calc .key.put{background:#e5a323;color:#fff;border-color:#e5a323;font-size:14.5px}
 .calc .key.wide{grid-column:span 2}
+.calc .key.wide3{grid-column:span 3}
 .calc .key:disabled{opacity:.38;transform:none!important}
 @media(max-height:700px){
-  .calc .key{min-height:36px;font-size:16px}
+  .calc .key{min-height:33px;font-size:15.5px}
   .calc .ctop{min-height:40px;padding:3px 9px}
   .calc .disp .val{font-size:19px}
 }
@@ -278,7 +285,7 @@ h3{font-size:17px;margin:0 0 8px}
         <div id="crRows"></div>
         <button class="addrow" id="crAdd">＋ 新增貸方項目</button>
       </div>
-      <button class="btn grey sm" id="btnNoEntry" style="width:100%;margin-top:4px">本題不作分錄</button>
+      <button class="noentry" id="btnNoEntry">本題不作分錄</button>
     </div>
 
     <div class="card hide" id="resultCard">
@@ -318,12 +325,14 @@ h3{font-size:17px;margin:0 0 8px}
         <button class="key" data-k="2">2</button>
         <button class="key" data-k="3">3</button>
         <button class="key op" data-k="-">－</button>
-        <button class="key fn" data-k="diff">補差額</button>
+        <button class="key op" data-k="%">%</button>
         <button class="key" data-k="0">0</button>
         <button class="key" data-k="00">00</button>
-        <button class="key" data-k="eq">＝</button>
+        <button class="key" data-k=".">.</button>
         <button class="key op" data-k="+">＋</button>
-        <button class="key put" data-k="put">填入</button>
+        <button class="key" data-k="eq">＝</button>
+        <button class="key fn wide" data-k="diff">補差額</button>
+        <button class="key put wide3" data-k="put">填入金額</button>
       </div>
     </section>
     <div class="t"><span>借方合計　<b id="tDr">0</b></span><span>貸方合計　<b id="tCr">0</b></span></div>
@@ -680,6 +689,11 @@ function updateTotals(){
   $("crSum").textContent = fmt(c);
   $("tDr").textContent = fmt(d);
   $("tCr").textContent = fmt(c);
+  var ne = $("btnNoEntry");
+  if(ne){
+    ne.classList.toggle("on", !!S.noEntry);
+    ne.textContent = S.noEntry ? "✓ 已標記:本題不作分錄(點此取消)" : "本題不作分錄";
+  }
   var t = $("totals");
   t.classList.remove("ok","bad");
   if(S.noEntry){ $("diffText").textContent = "已選擇「不作分錄」"; return; }
@@ -814,7 +828,7 @@ function doFillDiff(){
 }
 
 /* ============ 計算機(比照會計方程式遊戲的 token 模型) ============ */
-var CALC = { expr:"", tokens:[], sign:1, target:null };
+var CALC = { expr:"", tokens:[], sign:1, target:null, replace:false };
 
 function calcValue(){
   var t = CALC.tokens.slice();
@@ -830,20 +844,46 @@ function calcValue(){
   }
   var r = high[0];
   for(i = 1; i < high.length; i += 2) r = (high[i] === "+") ? r + high[i+1] : r - high[i+1];
-  return Math.round(r);
+  return Math.round(r * 100) / 100;   // 保留兩位小數
+}
+/* 數字轉字串:整數不加 .00,小數最多兩位 */
+function trimNum(v){
+  var a = Math.abs(v);
+  return (a % 1 === 0) ? String(a) : String(Math.round(a * 100) / 100);
+}
+/* 顯示用:整數加千分位,小數保留 */
+function fmtCalc(v){
+  var neg = v < 0, a = Math.abs(v);
+  var ip = Math.floor(a), dp = Math.round((a - ip) * 100);
+  var s = fmt(ip);
+  if(dp > 0) s += "." + (dp < 10 ? "0" + dp : String(dp));
+  return (neg ? "－" : "") + s;
 }
 function paintCalc(){
   var map = { "+":"＋", "-":"－", "*":"×", "/":"÷" };
   var p = CALC.tokens.map(function(x){
-    return (typeof x === "number") ? ((x < 0 ? "－" : "") + fmt(Math.abs(x))) : map[x];
+    return (typeof x === "number") ? fmtCalc(x) : map[x];
   });
-  if(CALC.expr !== "") p.push((CALC.sign < 0 ? "－" : "") + fmt(Number(CALC.expr)));
+  var typing = "";
+  if(CALC.expr !== ""){
+    // 正在輸入中的數字照原樣顯示(保留剛按下的小數點與尾隨的 0)
+    var raw = CALC.expr, disp;
+    if(raw.indexOf(".") >= 0){
+      var pt = raw.split(".");
+      disp = fmt(parseInt(pt[0] || "0", 10)) + "." + pt[1];
+    }else{
+      disp = fmt(parseInt(raw, 10));
+    }
+    typing = (CALC.sign < 0 ? "－" : "") + disp;
+    p.push(typing);
+  }
   $("calcExpr").textContent = p.join(" ");
+  // 還在輸入同一個數字(沒有前置運算)時,主顯示就用原樣,避免 12.5 被寫成 12.50
   var v = calcValue();
-  $("calcVal").textContent = (v < 0 ? "－" : "") + fmt(Math.abs(v));
+  $("calcVal").textContent = (typing !== "" && CALC.tokens.length === 0) ? typing : fmtCalc(v);
   $("calcVal").classList.toggle("neg", v < 0);
 }
-function calcReset(){ CALC.expr = ""; CALC.tokens = []; CALC.sign = 1; }
+function calcReset(){ CALC.expr = ""; CALC.tokens = []; CALC.sign = 1; CALC.replace = false; }
 
 /* 點金額欄 → 指定計算機的填入目標 */
 function selectAmtCell(side, idx){
@@ -855,6 +895,8 @@ function selectAmtCell(side, idx){
   if(typeof r.amt === "number" && r.amt !== 0){
     CALC.expr = String(Math.abs(r.amt));
     CALC.sign = r.amt < 0 ? -1 : 1;
+    // 帶入舊值後,再按數字視為「重新輸入」而非接在後面
+    CALC.replace = true;
   }
   $("calc").classList.remove("idle");
   setKeysEnabled(true);
@@ -896,16 +938,19 @@ function refreshCalcUI(){
 /* 填入目前結果到指定列 */
 function calcPut(){
   if(!CALC.target){ toast("請先點一個要填的金額欄"); return; }
-  var v = calcValue();
+  var raw = calcValue();
+  var v = Math.round(raw);
   if(v <= 0){ toast("金額須大於 0"); return; }
   var rows = CALC.target.side === "dr" ? S.drRows : S.crRows;
   rows[CALC.target.idx].amt = v;
   S.noEntry = false;
+  var hadDec = (raw % 1 !== 0);
   calcReset();
   renderRows();
   paintCalc();
   toast((CALC.target.side === "dr" ? "借方" : "貸方") +
-        "第 " + (CALC.target.idx + 1) + " 列已填入 " + fmt(v));
+        "第 " + (CALC.target.idx + 1) + " 列已填入 " + fmt(v) +
+        (hadDec ? "(小數已四捨五入)" : ""));
 }
 
 /* 補差額:把不足一方的差額直接帶進計算機(或直接填入已選目標) */
@@ -945,14 +990,36 @@ function calcKey(k){
   if(k === "put"){ calcPut(); return; }
   if(k === "clear"){ calcReset(); }
   else if(k === "del"){
+    CALC.replace = false;
     if(CALC.expr){ CALC.expr = CALC.expr.slice(0, -1); if(!CALC.expr) CALC.sign = 1; }
     else CALC.tokens.pop();
   }
   else if(k === "eq"){
     var r = calcValue();
-    CALC.tokens = []; CALC.expr = String(Math.abs(r)); CALC.sign = r < 0 ? -1 : 1;
+    CALC.tokens = []; CALC.expr = trimNum(r); CALC.sign = r < 0 ? -1 : 1;
+    CALC.replace = true;          // 算完再打數字視為重新輸入
+  }
+  else if(k === "%"){
+    // 百分比:有前一個運算元時算「其百分之幾」(2000-2% → 減 40),否則直接除以 100
+    var base = null, i;
+    if(CALC.tokens.length >= 2){
+      var prevOp = CALC.tokens[CALC.tokens.length - 1];
+      if(prevOp === "+" || prevOp === "-"){
+        base = 0;
+        for(i = 0; i < CALC.tokens.length - 1; i += 2){
+          var opb = (i === 0) ? "+" : CALC.tokens[i-1];
+          base = (opb === "-") ? base - CALC.tokens[i] : base + CALC.tokens[i];
+        }
+      }
+    }
+    var cur = CALC.sign * Number(CALC.expr || "0");
+    var pv = (base !== null) ? base * cur / 100 : cur / 100;
+    pv = Math.round(pv * 100) / 100;
+    CALC.expr = trimNum(Math.abs(pv)); CALC.sign = pv < 0 ? -1 : 1;
+    CALC.replace = true;
   }
   else if(k === "+" || k === "-" || k === "*" || k === "/"){
+    CALC.replace = false;
     if(CALC.expr !== ""){
       CALC.tokens.push(CALC.sign * Number(CALC.expr), k);
       CALC.expr = ""; CALC.sign = 1;
@@ -960,9 +1027,19 @@ function calcKey(k){
       CALC.tokens[CALC.tokens.length - 1] = k;
     }
   }
-  else{ // 數字 / 00
-    CALC.expr = (CALC.expr === "0" ? "" : CALC.expr) + k;
-    if(CALC.expr.length > 12) CALC.expr = CALC.expr.slice(0, 12);
+  else{ // 數字 / 00 / 小數點
+    if(CALC.replace){ CALC.expr = ""; CALC.sign = 1; CALC.replace = false; }
+    if(k === "."){
+      if(CALC.expr.indexOf(".") >= 0) return paintCalc();
+      CALC.expr = (CALC.expr === "" ? "0" : CALC.expr) + ".";
+    }else{
+      // 小數最多兩位
+      var dot = CALC.expr.indexOf(".");
+      if(dot >= 0 && CALC.expr.length - dot - 1 >= 2) return paintCalc();
+      CALC.expr = (CALC.expr === "0" ? "" : CALC.expr) + k;
+    }
+    if(CALC.expr.replace(/[^\d]/g,"").length > 12)
+      CALC.expr = CALC.expr.slice(0, CALC.expr.length - (k === "00" ? 2 : 1));
   }
   paintCalc();
 }
@@ -1130,14 +1207,48 @@ $("crAdd").addEventListener("click", function(){
   if(S.crRows.length < MAX_ROWS){ S.crRows.push(blankRow()); S.noEntry = false; renderRows(); }
 });
 $("btnNoEntry").addEventListener("click", function(){
+  if(S.graded) return;
+  // 已標記 → 再按一次取消
+  if(S.noEntry){
+    S.noEntry = false;
+    renderRows();
+    toast("已取消「不作分錄」");
+    return;
+  }
+  // 已經填了東西才確認,避免辛苦做完的分錄被一鍵清空
+  var filled = S.drRows.concat(S.crRows).filter(function(r){
+    return r.acct || r.amt !== "";
+  }).length;
+  if(filled > 0){
+    if(!confirm("你已經填了 " + filled + " 列分錄。\n確定這題「不作分錄」嗎?已填內容會被清除。")) return;
+  }
   S.drRows = [blankRow()]; S.crRows = [blankRow()];
   S.noEntry = true;
+  CALC.target = null; calcReset();
   renderRows();
-  toast("已標記為「本題不作分錄」,請按送出批改");
+  refreshCalcUI();
+  toast("已標記為「本題不作分錄」,再按一次可取消");
 });
 $("btnSubmit").addEventListener("click", function(){
-  var any = S.drRows.concat(S.crRows).some(function(r){ return r.acct || r.amt !== ""; });
-  if(!any && !S.noEntry){ toast("請先建立分錄,或點「本題不作分錄」"); return; }
+  if(S.graded) return;
+  var rows = S.drRows.concat(S.crRows);
+  var any = rows.some(function(r){ return r.acct || r.amt !== ""; });
+  if(!any && !S.noEntry){ toast("請先建立分錄,或點下方「本題不作分錄」"); return; }
+
+  if(!S.noEntry){
+    // 有填一半的列(只選項目沒金額,或有金額沒選項目)
+    var half = rows.filter(function(r){
+      return (r.acct && r.amt === "") || (!r.acct && r.amt !== "");
+    }).length;
+    if(half > 0){
+      if(!confirm("有 " + half + " 列還沒填完(缺項目或缺金額)。\n確定要送出批改嗎?")) return;
+    }else{
+      var d = sumOf(S.drRows), c = sumOf(S.crRows);
+      if(d !== c){
+        if(!confirm("借貸不平衡,差額 " + fmt(Math.abs(d - c)) + "。\n確定要送出批改嗎?")) return;
+      }
+    }
+  }
   doSubmit();
 });
 $("btnNext").addEventListener("click", function(){
