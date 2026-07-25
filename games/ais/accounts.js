@@ -31,6 +31,7 @@ const ACCOUNTS = [
   { name: '存出保證金',                      cls: 'A' },
 
   /* ---- L 負債 7 ---- */
+  { name: '銀行借款',                        cls: 'L' },
   { name: '預收貨款',                        cls: 'L' },
   { name: '應付票據',                        cls: 'L' },
   { name: '應付帳款',                        cls: 'L' },
