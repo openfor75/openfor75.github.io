@@ -36,7 +36,8 @@ const ok = (c, m) => { console.log((c ? '  ✓ ' : '  ✗ ') + m); if (!c) fail+
 const F = n => Number(n).toLocaleString('en-US');
 
 const infer = n =>
-  /^累計折舊|^備抵|^預付|^應收|^暫付|^存出保證金|^進項稅額|成本$/.test(n) ? 'A' :
+  /^銷貨成本|^進貨/.test(n) ? 'E' :
+  /^累計折舊|^累計攤銷|^備抵|^預付|^應收|^暫付|^存出保證金|^進項稅額|成本$/.test(n) ? 'A' :
   /^應付|^預收|^代收|^存入保證金|^銷項稅額|^其他應付/.test(n) ? 'L' :
   /^業主/.test(n) ? 'C' :
   /收入$|^銷貨退回|^銷貨折讓/.test(n) ? 'R' : 'E';
@@ -111,7 +112,8 @@ for (const set of SETS) {
 
   // 6 報表平衡
   const openOf = n => { let v = 0; set.opening.forEach(o => { if (o.acct === n) v = o.side === 'dr' ? o.amt : -o.amt; }); return v; };
-  const EI = set.endingInventory, CA = set.cogsAccount;   // CA:銷貨成本法,銷貨成本已由調整分錄結轉
+  const EI = set.endingInventory;
+  const CA = set.cogsAccount;          // 銷貨成本法:調整分錄已把成本結轉出來,不可再用公式推算一次
   let R = 0, E = 0, A = 0, L = 0, C = 0;
   Object.keys(bal).forEach(k => {
     const cl = clsOf(k); let v = bal[k];
@@ -123,9 +125,15 @@ for (const set of SETS) {
   });
   let profit = R - E;
   if (EI != null && !CA) profit += EI - openOf('存貨');
+  if (CA) {
+    ok(known.has(CA), '銷貨成本項目「' + CA + '」已宣告分類');
+    ok(clsOf(CA) === 'E', '銷貨成本歸在費損類 E');
+    if (EI != null) ok(Math.abs(bal['存貨'] || 0) === EI,
+      '調整後存貨餘額 ' + F(Math.abs(bal['存貨'] || 0)) + ' 等於 endingInventory ' + F(EI));
+  }
   ok(A === L + C + profit, '資產負債表平衡  資產 ' + F(A) + ' = 負債 ' + F(L) + ' + 權益 ' + F(C + profit));
   console.log('    ' + (EI == null ? '未提供期末存貨 → 報表列收益及費損類餘額表'
-    : '期末存貨 ' + F(EI) + ' → 列正式綜合損益表' + (CA ? '(銷貨成本法,成本取「' + CA + '」餘額)' : ''))
+      : '期末存貨 ' + F(EI) + (CA ? '(銷貨成本法,直接印「' + CA + '」餘額)' : '(公式推算銷貨成本)') + ' → 列正式綜合損益表')
     + '　本期' + (profit >= 0 ? '淨利 ' : '淨損 ') + F(Math.abs(profit)));
 
   // 7 傳票別分布
