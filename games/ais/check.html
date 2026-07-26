@@ -2,7 +2,7 @@
 <!--
   ============================================================
   會計資訊系統(手機版) v1.0
-  Copyright (c) 2026 林亭妤
+  Copyright (c) 2026 林亭妤(教會計的林ㄊㄩ)
   授權:CC BY-NC-SA 4.0(姓名標示－非商業性－相同方式分享)
         https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-Hant
   可自由用於教學,禁止商業使用,散布或改作請保留本標示與原始網址。
@@ -55,7 +55,20 @@ a{color:var(--ink)}
   <p class="sub">確認截圖上的姓名與分數有沒有被改過。</p>
 
   <div class="card">
-    <label>方法一:貼上驗證串(學生寄信會附)</label>
+    <label>整班批次驗證 — 把全班的「成績回報碼」一次貼進來(一人一行)</label>
+    <textarea id="batch" style="min-height:120px" placeholder="V1|王小明|set01:100:100,set02:93:100|2026/07/26|ABCD-1234&#10;V1|李小美|set01:87:100|2026/07/26|EFGH-5678"></textarea>
+    <div class="two" style="margin-top:12px">
+      <div><label style="margin-top:0">本次指派題組(逗號分隔,留空=全部)</label><input id="asg" placeholder="set03,set04" autocomplete="off"></div>
+      <div><label style="margin-top:0">截止日(留空=不檢查)</label><input id="due" placeholder="2026/09/20" autocomplete="off"></div>
+    </div>
+    <button class="btn primary" id="gob">驗證並整理成表格</button>
+    <p class="note" style="border:none;padding-top:8px;margin-bottom:0">
+      學生的回報碼可以從郵件複製,或從 Google 表單試算表整欄複製貼上。驗證完可一鍵複製成表格,直接貼進 Excel 登記成績。</p>
+  </div>
+  <div id="bout"></div>
+
+  <div class="card">
+    <label>方法一:貼上單一題組的驗證串(學生寄成績卡時會附)</label>
     <textarea id="str" placeholder="王小明|demo|78|100|2026/07/25|AB12-CD34"></textarea>
     <button class="btn primary" id="go1">驗證這一串</button>
   </div>
@@ -80,7 +93,15 @@ a{color:var(--ink)}
     碼是由姓名、題組、兩個分數、日期一起算出來的。學生把同學的截圖拿來交、或是把分數修圖改掉,驗證碼都會對不上。<br><br>
     <b>不能證明什麼</b><br>
     它不能證明這份成績是學生自己做的。演算法寫在網頁裡,程度好的學生看得懂原始碼就能自己算出合法的碼。這是一張封條,不是保險箱。<br><br>
-    題組代號、日期要跟成績卡上一模一樣(日期含斜線)。若您改過 index.html 裡的 SALT,這一頁的 SALT 也要改成一樣。
+    題組代號、日期要跟成績卡上一模一樣(日期含斜線)。若您改過 index.html 裡的 SALT,這一頁的 SALT 也要改成一樣。<br><br>
+    <b>建議的收成績流程</b><br>
+    請學生用系統首頁的「我的成績總表」產生一行回報碼。回報碼裡帶有<b>每一組的完成日期</b>(第一次對帳的當天),
+    所以<b>學生什麼時候交都沒關係</b>——只要在上面填「本次指派題組」與「截止日」,表格就會標出誰逾期、誰未交,
+    不必要求學生在期限內回報。<br><br>
+    請學生用系統首頁的「我的成績總表」產生一行回報碼,整學期只交一次(不必每個題組各交一次)。
+    收集方式可以是 Google 表單一題、班級 Line 群、或郵件;收到之後整欄複製貼進上面的批次驗證,
+    就會得到一張含各組分數與平均的表格,可一鍵複製到 Excel 登記成績。100 位學生 30 組的情況下,
+    這樣是 100 筆回報碼,而不是 3000 封信。
   </p>
   <p class="note" style="border:none;padding-top:0"><a href="index.html">← 回到系統</a></p>
 </div>
@@ -123,6 +144,82 @@ function check(name,sid,first,last,date,code){
   if(want===code) show(true,'✅ 驗證通過',d);
   else show(false,'❌ 對不上,這張卡被改過或不是這個人的',d);
 }
+function sigBatch(name, field, date){
+  var raw=['V1',name,field,date,SALT].join('|');
+  var A='0123456789ABCDEFGHJKMNPQRSTVWXYZ', out='', k;
+  k=h32(raw,2166136261); for(var i=0;i<4;i++){ out+=A.charAt(k%32); k=Math.floor(k/32); }
+  out+='-';
+  k=h32(SALT+'#B#'+raw,987654321); for(var j=0;j<4;j++){ out+=A.charAt(k%32); k=Math.floor(k/32); }
+  return out;
+}
+var BT=null;
+document.getElementById('gob').onclick=function(){
+  var raw=document.getElementById('batch').value.split(/\r?\n/);
+  var recs=[], ids={}, bad=0;
+  raw.forEach(function(ln){
+    ln=ln.trim(); if(!ln) return;
+    var i=ln.indexOf('V1|'); if(i<0){ recs.push({err:'格式不符', raw:ln}); bad++; return; }
+    var p=ln.slice(i).split('|');
+    if(p.length<5){ recs.push({err:'欄位不足', raw:ln}); bad++; return; }
+    var name=p[1].replace(/[|｜\s]/g,''), field=p[2].trim(), date=p[3].trim(), code=p[4].trim().toUpperCase();
+    var ok = sigBatch(name, field, date)===code;
+    if(!ok) bad++;
+    var sets={};
+    field.split(',').forEach(function(x){
+      var q=x.split(':');
+      if(q.length>=3){ sets[q[0]]={f:+q[1], l:+q[2], d:(q[3]||'')}; ids[q[0]]=1; }
+    });
+    recs.push({name:name, date:date, sets:sets, ok:ok, cnt:Object.keys(sets).length});
+  });
+  if(!recs.length){ document.getElementById('bout').innerHTML=''; return; }
+  var asg=(document.getElementById('asg').value||'').split(/[,,\s]+/).filter(Boolean);
+  var dueRaw=(document.getElementById('due').value||'').replace(/[^0-9]/g,'');
+  var cols = asg.length ? asg : Object.keys(ids).sort();
+  var mode = asg.length && dueRaw;
+  recs.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','zh-Hant'); });
+  var fmtD=function(d){ return d? d.slice(4,6)+'/'+d.slice(6,8) : ''; };
+  var late=0, missing=0;
+  var h='<div class="res '+(bad?'ng':'ok')+'"><div class="t">'+
+    (bad? '⚠ '+recs.length+' 筆中有 '+bad+' 筆需要處理' : '✅ '+recs.length+' 筆全部驗證通過')+'</div></div>';
+  h+='<div class="card" style="overflow:auto"><table style="font-size:13px"><tr><th>姓名</th>'+
+     (mode?'<th>準時</th><th>逾期</th><th>未交</th>':'<th>組數</th><th>平均</th>')+
+     cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('')+'<th>驗證</th></tr>';
+  var tsv=[['姓名'].concat(mode?['準時','逾期','未交']:['組數','平均']).concat(cols).concat(['驗證']).join('\t')];
+  recs.forEach(function(r){
+    if(r.err){ h+='<tr><td colspan="'+(cols.length+5)+'" style="color:#C62828">'+esc(r.err)+':'+esc(r.raw.slice(0,40))+'</td></tr>'; return; }
+    var cells=[], tcells=[], ok=0, lt=0, ms=0;
+    cols.forEach(function(c){
+      var v=r.sets[c];
+      if(!v){ ms++; cells.push('<td style="color:#C62828">未交</td>'); tcells.push('未交'); return; }
+      var isLate = mode && v.d && v.d>dueRaw;
+      var noDate = mode && !v.d;
+      if(isLate) lt++; else if(!noDate) ok++; else ok++;
+      cells.push('<td'+(isLate?' style="color:#C62828;font-weight:900"':'')+'>'+v.f+
+                 (v.d?'<br><span style="font-size:11px;color:#9C9188">'+fmtD(v.d)+(isLate?' 逾期':'')+'</span>':'')+'</td>');
+      tcells.push(v.f+(v.d?' ('+fmtD(v.d)+(isLate?' 逾期':'')+')':''));
+    });
+    late+=lt; missing+=ms;
+    var got=cols.map(function(c){ return r.sets[c]?r.sets[c].f:null; }).filter(function(v){ return v!==null; });
+    var avg=got.length?Math.round(got.reduce(function(a,b){return a+b;},0)/got.length):0;
+    h+='<tr><td><b>'+esc(r.name)+'</b></td>'+
+       (mode?'<td>'+ok+'</td><td'+(lt?' style="color:#C62828;font-weight:900"':'')+'>'+lt+'</td><td'+(ms?' style="color:#C62828;font-weight:900"':'')+'>'+ms+'</td>'
+            :'<td>'+r.cnt+'</td><td><b>'+avg+'</b></td>')+
+       cells.join('')+
+       '<td style="color:'+(r.ok?'#2E7D5B':'#C62828')+';font-weight:900">'+(r.ok?'通過':'對不上')+'</td></tr>';
+    tsv.push([r.name].concat(mode?[ok,lt,ms]:[r.cnt,avg]).concat(tcells).concat([r.ok?'通過':'對不上']).join('\t'));
+  });
+  h+='</table></div>';
+  if(mode) h+='<div class="card" style="padding:12px 15px"><b>指派檢查</b>:'+cols.length+' 組,截止 '+
+     esc(document.getElementById('due').value)+'　·　逾期 '+late+' 人次,未交 '+missing+' 人次</div>';
+  h+='<button class="btn" id="bcopy">複製成表格(可直接貼進 Excel)</button>';
+  document.getElementById('bout').innerHTML=h;
+  BT=tsv.join('\n');
+  document.getElementById('bcopy').onclick=function(){
+    try{ navigator.clipboard.writeText(BT); this.textContent='已複製,去 Excel 貼上'; }
+    catch(e){ this.textContent='請改用電腦操作複製'; }
+  };
+  try{ document.getElementById('bout').scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){}
+};
 document.getElementById('go1').onclick=function(){
   var p=document.getElementById('str').value.trim().split('|');
   if(p.length<6){ show(false,'驗證串格式不對,應該有 6 段',null); return; }
