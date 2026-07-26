@@ -2,7 +2,7 @@
 <!--
   ============================================================
   會計資訊系統(手機版) v1.0
-  Copyright (c) 2026 教會計的林ㄊㄩ
+  Copyright (c) 2026 林亭妤(教會計的林ㄊㄩ)
   授權:CC BY-NC-SA 4.0(姓名標示－非商業性－相同方式分享)
         https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-Hant
   可自由用於教學,禁止商業使用,散布或改作請保留本標示與原始網址。
@@ -62,13 +62,17 @@ button{cursor:pointer}
 #top .row1{display:flex;align-items:center;gap:8px}
 #top .title{font-weight:900;font-size:18px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #top .notes{font-size:13.5px;color:var(--ink2);margin-top:4px;line-height:1.5}
+#top .byline{font-size:13px;color:var(--ink2);margin-top:3px;letter-spacing:.02em}
+#top .byline b{font-size:14.5px;font-weight:900;color:var(--ink)}
 .prog{height:9px;background:#EDE6DB;border:2px solid var(--ink);border-radius:999px;margin-top:7px;overflow:hidden}
 .prog i{display:block;height:100%;background:var(--ink);width:0}
 
 /* ---------- 首頁 ---------- */
 .hero{padding:26px 0 10px}
 .hero h1{font-size:31px;font-weight:900;margin:0;letter-spacing:.06em;line-height:1.25}
-.hero p{margin:8px 0 0;color:var(--ink2);font-size:15.5px}
+.hero .sub1{margin:9px 0 0;font-size:16.5px;font-weight:900;letter-spacing:.04em;color:var(--ink);
+   border-bottom:2.5px solid var(--amber-b);display:inline-block;padding-bottom:2px}
+.hero p{margin:9px 0 0;color:var(--ink2);font-size:15.5px}
 .resume{margin-bottom:14px}
 .setline{display:flex;gap:7px;align-items:stretch;margin-bottom:9px}
 .setrow{flex:1;min-width:0;text-align:left;background:#fff;border:2.5px solid var(--ink);border-radius:15px;
@@ -154,8 +158,13 @@ button{cursor:pointer}
 #pad button.go{background:var(--ink);color:#FFFDF8;font-size:17px}
 #pad button:active{background:var(--amber)}
 .hint{font-size:13px;color:var(--ink2);text-align:center;margin-top:5px}
-.foot{margin-top:22px;padding-top:14px;border-top:2px dashed #D8CFC4;font-size:12.5px;color:var(--ink3);line-height:1.8}
+.foot{margin-top:24px;padding-top:15px;border-top:2px dashed #D8CFC4;line-height:1.75}
+.foot .fby{font-size:18px;font-weight:900;color:var(--ink);letter-spacing:.04em;margin-bottom:4px}
+.foot .fsub{font-size:12.5px;color:var(--ink3)}
+.foot .fsite{font-size:14px;font-weight:800;color:var(--ink2);margin-bottom:6px}
 .foot a{color:var(--ink3)}
+.scby{margin-top:13px;padding-top:10px;border-top:2px dashed #D8CFC4;font-size:12px;color:var(--ink2);line-height:1.7}
+.scby b{font-size:14px;color:var(--ink)}
 
 /* ---------- 抽屜 / 彈層 ---------- */
 .scrim{position:fixed;inset:0;background:rgba(31,27,24,.42);z-index:50;display:none}
@@ -246,6 +255,8 @@ button{cursor:pointer}
 
 <!-- ▼▼▼ 題組檔:新增一個題組就在這裡加一行 ▼▼▼ -->
 <script src="accounts.js"></script>
+<!-- 已預先列到 set40。檔案不存在只會在瀏覽器 console 出現 404,對頁面完全無影響,
+     所以以後新增題組「只要把 sets/setXX.js 上傳」就會自動出現在首頁,不必再改這裡。 -->
 <script src="sets/set01.js"></script>
 <script src="sets/set02.js"></script>
 <script src="sets/set03.js"></script>
@@ -276,14 +287,28 @@ button{cursor:pointer}
 <script src="sets/set28.js"></script>
 <script src="sets/set29.js"></script>
 <script src="sets/set30.js"></script>
+<script src="sets/set31.js"></script>
+<script src="sets/set32.js"></script>
+<script src="sets/set33.js"></script>
+<script src="sets/set34.js"></script>
+<script src="sets/set35.js"></script>
+<script src="sets/set36.js"></script>
+<script src="sets/set37.js"></script>
+<script src="sets/set38.js"></script>
+<script src="sets/set39.js"></script>
+<script src="sets/set40.js"></script>
 <!-- ▲▲▲ ▲▲▲ -->
 
 <script>
 (function(){
 'use strict';
-/* 會計資訊系統(手機版) — Copyright (c) 2026 教會計的林ㄊㄩ — CC BY-NC-SA 4.0
+/* 會計資訊系統(手機版) — Copyright (c) 2026 林亭妤(教會計的林ㄊㄩ) — CC BY-NC-SA 4.0
    非商業教學用途可自由使用,散布或改作請保留署名與原始網址。 */
-var APP = { name:'會計資訊系統', ver:'1.0', author:'教會計的林ㄊㄩ', owner:'林亭妤', license:'CC BY-NC-SA 4.0' };
+var APP = { name:'會計資訊系統', ver:'1.0', author:'教會計的林ㄊㄩ', owner:'林亭妤',
+            license:'CC BY-NC-SA 4.0',
+            site:'youtube.com/@openfor75' };
+/* site 會印在成績卡與首頁頁腳。填頻道或系統網址都可以——建議填頻道,
+   因為成績卡是最常被轉傳的畫面,看到的人可以循著頻道找到您與這套系統。 */
 
 /* ==========================================================
    0. 會計項目庫
@@ -530,12 +555,15 @@ function setStat(x){
 }
 function renderHome(){
   S.screen='home'; dock(false); S.set=null;
-  $('#topbar').innerHTML='<div class="row1"><div class="title">會計資訊系統</div><span class="pill soft">手機版</span></div>';
+  $('#topbar').innerHTML='<div class="row1"><div class="title">會計資訊系統</div><span class="pill soft">手機版</span></div>'+
+    '<div class="byline">designed by <b>'+esc(APP.author)+'</b></div>';
   var stats={}, all=SETS.map(function(x){ stats[x.id]=setStat(x); return x; });
   var last=null; try{ last=localStorage.getItem('ais_last'); }catch(e){}
   var lastSet=null; SETS.forEach(function(x){ if(x.id===last && stats[x.id].done>0 && stats[x.id].done<stats[x.id].n) lastSet=x; });
 
-  var h='<div class="hero"><h1>今天要記<br>哪一本帳?</h1><p>選一個題組,照題目逐筆登入分錄。</p></div>';
+  var h='<div class="hero"><h1>今天要記<br>哪一本帳?</h1>'+
+        '<div class="sub1">會計資訊丙級　分錄練習</div>'+
+        '<p>選一個題組,照題目逐筆登入分錄。</p></div>';
   if(lastSet){
     h+='<button class="btn primary wide resume" data-open="'+lastSet.id+'">▶ 繼續 '+esc(lastSet.title)+
        '(已登 '+stats[lastSet.id].done+' / '+stats[lastSet.id].n+')</button>';
@@ -567,8 +595,11 @@ function renderHome(){
   h+=rows||'<div class="rep" style="padding:16px;text-align:center"><span class="muted">沒有符合的題組</span></div>';
   h+='<div class="small muted" style="margin-top:10px">顯示 '+shown+' / 共 '+SETS.length+' 組</div>';
   h+='<div class="hr"></div><a class="btn ghost" href="check.html" style="display:inline-flex;align-items:center;text-decoration:none">🔎 老師:驗證學生成績卡</a>'+
-     '<div class="foot">'+esc(APP.name)+' v'+APP.ver+'　·　© 2026 '+esc(APP.author)+
-     '　·　<a href="LICENSE.md">'+esc(APP.license)+'</a><br>可自由用於教學,禁止商業使用。本站不蒐集任何個人資料。</div>'+
+     '<div class="foot"><div class="fby">'+esc(APP.author)+'</div>'+
+     (APP.site?'<div class="fsite">'+esc(APP.site)+'</div>':'')+
+     '<div class="fsub">'+esc(APP.name)+'(手機版) v'+APP.ver+'　·　© 2026 '+esc(APP.owner)+
+     '　·　<a href="LICENSE.md">'+esc(APP.license)+'</a></div>'+
+     '<div class="fsub">可自由用於教學,禁止商業使用。本站不蒐集任何個人資料。</div></div>'+
      '<div style="height:20px"></div>';
   $('#app').innerHTML=h;
   $('#app').oninput=function(e){
@@ -699,7 +730,7 @@ function cardHTML(t,c,ci){
         (arr.length>1?'<button class="del" data-act="del" data-c="'+ci+'" data-s="'+side+'" data-r="'+ri+'">×</button>':'<span class="del"></span>')+
       '</div>';
     });
-    if(arr.length<8) out+='<button class="addrow" data-act="add" data-c="'+ci+'" data-s="'+side+'">＋ 加一列'+(side==='dr'?'借方':'貸方')+'</button>';
+    if(arr.length<4) out+='<button class="addrow" data-act="add" data-c="'+ci+'" data-s="'+side+'">＋ 加一列'+(side==='dr'?'借方':'貸方')+'</button>';
     return out;
   }
   var dt=0,ct=0; c.dr.forEach(function(l){ if(lineOK(l)) dt+=l.amt; }); c.cr.forEach(function(l){ if(lineOK(l)) ct+=l.amt; });
@@ -1271,6 +1302,8 @@ function openScore(){
        '<span>訂正後 <b>'+D.sc.pct+' 分</b></span><span class="muted">對帳 '+S.checks+' 次</span></div>'+
      '<div class="small muted" style="margin-top:2px">'+D.sc.right+' / '+D.sc.total+' 題正確　·　'+esc(D.date)+'</div>'+
      '<div class="vcode" id="vcbox"><div class="small">驗證碼</div><div class="cd" id="vcode"></div></div>'+
+     '<div class="scby">'+esc(APP.name)+'(手機版)　·　<b>'+esc(APP.author)+'</b>'+
+       (APP.site?'<br>'+esc(APP.site):'')+'</div>'+
    '</div>'+
    '<p class="small muted" style="margin-top:12px">截圖這張卡片傳給老師。驗證碼綁定姓名與分數,改任何一項老師都驗得出來。</p>'+
    '<div id="mailbox"><div class="hr"></div>'+
