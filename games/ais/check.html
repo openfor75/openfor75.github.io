@@ -57,8 +57,10 @@ a{color:var(--ink)}
   <div class="card">
     <label>整班批次驗證 — 把全班的「成績回報碼」一次貼進來(一人一行)</label>
     <textarea id="batch" style="min-height:120px" placeholder="V1|王小明|set01:100:100,set02:93:100|2026/07/26|ABCD-1234&#10;V1|李小美|set01:87:100|2026/07/26|EFGH-5678"></textarea>
+    <label>班級名單(一行一位,留空=只列有回報的人)</label>
+    <textarea id="roster" style="min-height:82px" placeholder="王小明&#10;李小美&#10;陳大同"></textarea>
     <div class="two" style="margin-top:12px">
-      <div><label style="margin-top:0">本次指派題組(逗號分隔,留空=全部)</label><input id="asg" placeholder="set03,set04" autocomplete="off"></div>
+      <div><label style="margin-top:0">本次指派題組(可寫 set01-set30)</label><input id="asg" placeholder="set03,set04" autocomplete="off"></div>
       <div><label style="margin-top:0">截止日(留空=不檢查)</label><input id="due" placeholder="2026/09/20" autocomplete="off"></div>
     </div>
     <button class="btn primary" id="gob">驗證並整理成表格</button>
@@ -91,10 +93,10 @@ a{color:var(--ink)}
   <p class="note">
     <b>這個驗證碼能證明什麼</b><br>
     碼是由姓名、題組、兩個分數、日期一起算出來的。學生把同學的截圖拿來交、或是把分數修圖改掉,驗證碼都會對不上。<br><br>
-    <b>不能證明什麼</b><br>
-    它不能證明這份成績是學生自己做的。演算法寫在網頁裡,程度好的學生看得懂原始碼就能自己算出合法的碼。這是一張封條,不是保險箱。<br><br>
-    題組代號、日期要跟成績卡上一模一樣(日期含斜線)。若您改過 index.html 裡的 SALT,這一頁的 SALT 也要改成一樣。<br><br>
     <b>建議的收成績流程</b><br>
+    <b>貼上班級名單,沒交的人也會出現在表格裡</b>(紅底標「未回報」),不必再拿名單一個一個核對;
+    名字打錯或不在名單的回報會另外列出來標「不在名單」,方便您回頭確認是誰。
+    指派題組可以寫範圍,例如 <b>set01-set30</b>。<br><br>
     請學生用系統首頁的「我的成績總表」產生一行回報碼。回報碼裡帶有<b>每一組的完成日期</b>(第一次對帳的當天),
     所以<b>學生什麼時候交都沒關係</b>——只要在上面填「本次指派題組」與「截止日」,表格就會標出誰逾期、誰未交,
     不必要求學生在期限內回報。<br><br>
@@ -171,29 +173,79 @@ document.getElementById('gob').onclick=function(){
     });
     recs.push({name:name, date:date, sets:sets, ok:ok, cnt:Object.keys(sets).length});
   });
-  if(!recs.length){ document.getElementById('bout').innerHTML=''; return; }
-  var asg=(document.getElementById('asg').value||'').split(/[,,\s]+/).filter(Boolean);
+  var roster=(document.getElementById('roster').value||'').split(/\r?\n/)
+      .map(function(x){ return x.trim().replace(/\s+/g,''); }).filter(Boolean);
+  if(!recs.length && !roster.length){ document.getElementById('bout').innerHTML=''; return; }
+
+  // 指派題組:支援 set01-set30 這種範圍寫法
+  var asg=[];
+  (document.getElementById('asg').value||'').split(/[,,\s]+/).filter(Boolean).forEach(function(t){
+    var m=t.match(/^set(\d+)\s*[-~至]\s*(?:set)?(\d+)$/i);
+    if(m){ var a=+m[1], b=+m[2];
+      for(var i=Math.min(a,b);i<=Math.max(a,b);i++) asg.push('set'+('0'+i).slice(-2));
+    } else asg.push(t);
+  });
   var dueRaw=(document.getElementById('due').value||'').replace(/[^0-9]/g,'');
   var cols = asg.length ? asg : Object.keys(ids).sort();
   var mode = asg.length && dueRaw;
-  recs.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','zh-Hant'); });
+
+  // 以班級名單為準排列;沒回報的人也要出現
+  var good=recs.filter(function(r){ return !r.err; });
+  var byName={};
+  good.forEach(function(r){ (byName[r.name]=byName[r.name]||[]).push(r); });
+  var display=[];
+  if(roster.length){
+    roster.forEach(function(nm){
+      var q=byName[nm]||[];
+      display.push({ name:nm, rec:q.length?q.shift():null });
+    });
+    Object.keys(byName).forEach(function(nm){
+      byName[nm].forEach(function(r){ display.push({ name:nm, rec:r, extra:true }); });
+    });
+  } else {
+    good.sort(function(a,b){ return (a.name||'').localeCompare(b.name||'','zh-Hant'); });
+    good.forEach(function(r){ display.push({ name:r.name, rec:r }); });
+  }
+
   var fmtD=function(d){ return d? d.slice(4,6)+'/'+d.slice(6,8) : ''; };
-  var late=0, missing=0;
-  var h='<div class="res '+(bad?'ng':'ok')+'"><div class="t">'+
-    (bad? '⚠ '+recs.length+' 筆中有 '+bad+' 筆需要處理' : '✅ '+recs.length+' 筆全部驗證通過')+'</div></div>';
+  var late=0, missing=0, noRep=0, extra=0;
+  var h='<div class="res '+((bad||roster.length&&display.some(function(x){return !x.rec;}))?'ng':'ok')+'"><div class="t">';
+  var head=[];
+  if(roster.length){
+    noRep=display.filter(function(x){ return !x.rec; }).length;
+    extra=display.filter(function(x){ return x.extra; }).length;
+    head.push('名單 '+roster.length+' 人');
+    head.push('已回報 '+(roster.length-noRep)+' 人');
+    if(noRep) head.push('未回報 '+noRep+' 人');
+    if(extra) head.push('不在名單 '+extra+' 筆');
+    if(bad) head.push('驗證未過 '+bad+' 筆');
+  } else {
+    head.push(bad ? recs.length+' 筆中有 '+bad+' 筆驗證未過' : recs.length+' 筆全部驗證通過');
+  }
+  h+= (noRep||bad? '⚠ ':'✅ ')+head.join('　·　')+'</div></div>';
+
   h+='<div class="card" style="overflow:auto"><table style="font-size:13px"><tr><th>姓名</th>'+
      (mode?'<th>準時</th><th>逾期</th><th>未交</th>':'<th>組數</th><th>平均</th>')+
      cols.map(function(c){ return '<th>'+esc(c)+'</th>'; }).join('')+'<th>驗證</th></tr>';
   var tsv=[['姓名'].concat(mode?['準時','逾期','未交']:['組數','平均']).concat(cols).concat(['驗證']).join('\t')];
-  recs.forEach(function(r){
-    if(r.err){ h+='<tr><td colspan="'+(cols.length+5)+'" style="color:#C62828">'+esc(r.err)+':'+esc(r.raw.slice(0,40))+'</td></tr>'; return; }
+
+  display.forEach(function(x){
+    var r=x.rec;
+    if(!r){                                   // 名單上有、但沒回報
+      h+='<tr style="background:#FDECEA"><td><b>'+esc(x.name)+'</b></td>'+
+         (mode?'<td>0</td><td>0</td><td style="color:#C62828;font-weight:900">'+cols.length+'</td>':'<td>0</td><td>—</td>')+
+         cols.map(function(){ return '<td style="color:#C62828">—</td>'; }).join('')+
+         '<td style="color:#C62828;font-weight:900">未回報</td></tr>';
+      tsv.push([x.name].concat(mode?[0,0,cols.length]:[0,'']).concat(cols.map(function(){return '未回報';})).concat(['未回報']).join('\t'));
+      missing+=cols.length;
+      return;
+    }
     var cells=[], tcells=[], ok=0, lt=0, ms=0;
     cols.forEach(function(c){
       var v=r.sets[c];
       if(!v){ ms++; cells.push('<td style="color:#C62828">未交</td>'); tcells.push('未交'); return; }
       var isLate = mode && v.d && v.d>dueRaw;
-      var noDate = mode && !v.d;
-      if(isLate) lt++; else if(!noDate) ok++; else ok++;
+      if(isLate) lt++; else ok++;
       cells.push('<td'+(isLate?' style="color:#C62828;font-weight:900"':'')+'>'+v.f+
                  (v.d?'<br><span style="font-size:11px;color:#9C9188">'+fmtD(v.d)+(isLate?' 逾期':'')+'</span>':'')+'</td>');
       tcells.push(v.f+(v.d?' ('+fmtD(v.d)+(isLate?' 逾期':'')+')':''));
@@ -201,16 +253,20 @@ document.getElementById('gob').onclick=function(){
     late+=lt; missing+=ms;
     var got=cols.map(function(c){ return r.sets[c]?r.sets[c].f:null; }).filter(function(v){ return v!==null; });
     var avg=got.length?Math.round(got.reduce(function(a,b){return a+b;},0)/got.length):0;
-    h+='<tr><td><b>'+esc(r.name)+'</b></td>'+
+    var vtxt=r.ok?(x.extra?'通過(不在名單)':'通過'):'對不上';
+    h+='<tr'+(x.extra?' style="background:#FFFBEF"':'')+'><td><b>'+esc(x.name)+'</b>'+(x.extra?'<br><span style="font-size:11px;color:#C62828">不在名單</span>':'')+'</td>'+
        (mode?'<td>'+ok+'</td><td'+(lt?' style="color:#C62828;font-weight:900"':'')+'>'+lt+'</td><td'+(ms?' style="color:#C62828;font-weight:900"':'')+'>'+ms+'</td>'
             :'<td>'+r.cnt+'</td><td><b>'+avg+'</b></td>')+
        cells.join('')+
-       '<td style="color:'+(r.ok?'#2E7D5B':'#C62828')+';font-weight:900">'+(r.ok?'通過':'對不上')+'</td></tr>';
-    tsv.push([r.name].concat(mode?[ok,lt,ms]:[r.cnt,avg]).concat(tcells).concat([r.ok?'通過':'對不上']).join('\t'));
+       '<td style="color:'+(r.ok?'#2E7D5B':'#C62828')+';font-weight:900">'+esc(vtxt)+'</td></tr>';
+    tsv.push([x.name].concat(mode?[ok,lt,ms]:[r.cnt,avg]).concat(tcells).concat([vtxt]).join('\t'));
+  });
+  recs.filter(function(r){ return r.err; }).forEach(function(r){
+    h+='<tr><td colspan="'+(cols.length+5)+'" style="color:#C62828">'+esc(r.err)+':'+esc(r.raw.slice(0,40))+'</td></tr>';
   });
   h+='</table></div>';
   if(mode) h+='<div class="card" style="padding:12px 15px"><b>指派檢查</b>:'+cols.length+' 組,截止 '+
-     esc(document.getElementById('due').value)+'　·　逾期 '+late+' 人次,未交 '+missing+' 人次</div>';
+     esc(document.getElementById('due').value)+'　·　逾期 '+late+' 人次,未交/未回報 '+missing+' 人次</div>';
   h+='<button class="btn" id="bcopy">複製成表格(可直接貼進 Excel)</button>';
   document.getElementById('bout').innerHTML=h;
   BT=tsv.join('\n');
