@@ -62,8 +62,9 @@ button{cursor:pointer}
 #top .row1{display:flex;align-items:center;gap:8px}
 #top .title{font-weight:900;font-size:18px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #top .notes{font-size:13.5px;color:var(--ink2);margin-top:4px;line-height:1.5}
-#top .byline{font-size:13px;color:var(--ink2);margin-top:3px;letter-spacing:.02em}
-#top .byline b{font-size:14.5px;font-weight:900;color:var(--ink)}
+#top .row1 .title{flex:none}
+#top .byline{flex:1;min-width:0;font-size:11.5px;color:var(--ink3);white-space:nowrap;line-height:1.2}
+#top .byline b{display:block;font-size:13px;font-weight:900;color:var(--ink);letter-spacing:.01em}
 .prog{height:9px;background:#EDE6DB;border:2px solid var(--ink);border-radius:999px;margin-top:7px;overflow:hidden}
 .prog i{display:block;height:100%;background:var(--ink);width:0}
 
@@ -339,6 +340,10 @@ var CLSNAME = {A:'資產',L:'負債',C:'權益',R:'收益',E:'費損'};
 var PASS_LINE = 60;
 var SALT = 'ais-2026-tingyu';
 var TEACHER_EMAIL = '';
+/* 選填:老師的 Google 表單網址。填了之後成績總表會多一顆「開表單送出」。
+   做法:表單建一題「成績回報碼」→ 取「取得預先填入的連結」→ 把該題填任意字再產生連結,
+   然後把連結裡那個值換成 {{DATA}} 貼在這裡。學生按下去表單就已填好,只要送出。 */
+var FORM_URL = '';
 
 /* 驗證碼:把成績卡上每一個字都算進去,改任何一項碼就對不上 */
 function h32(str,seed){ var h=seed>>>0; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; }
@@ -456,7 +461,7 @@ var DEMO = {
   ]
 };
 var SETS = (window.AIS_SETS && window.AIS_SETS.length) ? window.AIS_SETS.slice() : [];
-SETS.push(DEMO);
+SETS.unshift(DEMO);   // 示範題組固定排在首頁最上面
 
 /* ==========================================================
    2. 小工具
@@ -555,14 +560,15 @@ function setStat(x){
 }
 function renderHome(){
   S.screen='home'; dock(false); S.set=null;
-  $('#topbar').innerHTML='<div class="row1"><div class="title">會計資訊系統</div><span class="pill soft">手機版</span></div>'+
-    '<div class="byline">designed by <b>'+esc(APP.author)+'</b></div>';
+  $('#topbar').innerHTML='<div class="row1"><div class="title">會計資訊系統</div>'+
+    '<span class="byline">designed by <b>'+esc(APP.author)+'</b></span>'+
+    '<span class="pill soft">手機版</span></div>';
   var stats={}, all=SETS.map(function(x){ stats[x.id]=setStat(x); return x; });
   var last=null; try{ last=localStorage.getItem('ais_last'); }catch(e){}
   var lastSet=null; SETS.forEach(function(x){ if(x.id===last && stats[x.id].done>0 && stats[x.id].done<stats[x.id].n) lastSet=x; });
 
-  var h='<div class="hero"><h1>今天要記哪一本帳?</h1>'+
-        '<div class="sub1">會計資訊丙級　分錄練習</div>'+
+  var h='<div class="hero"><h1>今天要記<br>哪一本帳?</h1>'+
+        '<div class="sub1">勞動部　會計資訊丙級　分錄練習</div>'+
         '<p>選一個題組,照題目逐筆登入分錄。</p></div>';
   if(lastSet){
     h+='<button class="btn primary wide resume" data-open="'+lastSet.id+'">▶ 繼續 '+esc(lastSet.title)+
@@ -594,7 +600,9 @@ function renderHome(){
   });
   h+=rows||'<div class="rep" style="padding:16px;text-align:center"><span class="muted">沒有符合的題組</span></div>';
   h+='<div class="small muted" style="margin-top:10px">顯示 '+shown+' / 共 '+SETS.length+' 組</div>';
-  h+='<div class="hr"></div><a class="btn ghost" href="check.html" style="display:inline-flex;align-items:center;text-decoration:none">🔎 老師:驗證學生成績卡</a>'+
+  h+='<div class="hr"></div>'+
+     '<button class="btn wide" id="summary" style="margin-bottom:9px">📋 我的成績總表(一次交全部)</button>'+
+     '<a class="btn ghost" href="check.html" style="display:inline-flex;align-items:center;text-decoration:none">🔎 老師:驗證學生成績卡</a>'+
      '<div class="foot"><div class="fby">'+esc(APP.author)+'</div>'+
      (APP.site?'<div class="fsite">'+esc(APP.site)+'</div>':'')+
      '<div class="fsub">'+esc(APP.name)+'(手機版) v'+APP.ver+'　·　© 2026 '+esc(APP.owner)+
@@ -605,6 +613,7 @@ function renderHome(){
   $('#app').oninput=function(e){
     if(e.target.id==='sq'){ HS.q=e.target.value.trim(); paintRows(); }
   };
+  var sm=$('#summary'); if(sm) sm.onclick=openSummary;
   $('#app').onclick=function(e){
     var f=e.target.closest('[data-f]'); if(f){ HS.f=f.getAttribute('data-f'); renderHome(); return; }
     var b=e.target.closest('[data-open]'); if(b){ openSet(b.getAttribute('data-open')); return; }
@@ -1269,6 +1278,104 @@ function openLedgerRE(){
       '<span class="v" style="width:104px;text-align:right">'+sv(bal[a.name]||0)+'</span></div>';
   });
   sheet('收益及費損類總分類帳', h+'</div>', null);
+}
+function allResults(){
+  var out=[];
+  SETS.forEach(function(x){
+    if(x.demo) return;                                  // 示範題組不列入成績回報
+    var st=load(x.id); if(!st || st.first===undefined || st.first===null) return;
+    var done=0, vm=st.vs||(st.vmode?4:0);
+    x.txns.forEach(function(t){ if(doneOf(st.ans&&st.ans[t.no], vm)) done++; });
+    out.push({ id:x.id, title:x.title, first:st.first,
+               last:(st.last===undefined||st.last===null)?st.first:st.last,
+               date:(st.date||'').replace(/[^0-9]/g,''),   // 第一次對帳的日期 → 老師可查是否準時
+               checks:st.checks||0, name:st.name||'', done:done, n:x.txns.length });
+  });
+  return out;
+}
+function sigBatch(name, field, date){                 // 一次涵蓋所有題組的總驗證碼
+  var raw=['V1',name,field,date,SALT].join('|');
+  var A='0123456789ABCDEFGHJKMNPQRSTVWXYZ', out='', k;
+  k=h32(raw,2166136261); for(var i=0;i<4;i++){ out+=A.charAt(k%32); k=Math.floor(k/32); }
+  out+='-';
+  k=h32(SALT+'#B#'+raw,987654321); for(var j=0;j<4;j++){ out+=A.charAt(k%32); k=Math.floor(k/32); }
+  return out;
+}
+function reportOf(name, rows, date){
+  var f=rows.map(function(r){ return r.id+':'+r.first+':'+r.last+(r.date?':'+r.date:''); }).join(',');
+  return 'V1|'+name+'|'+f+'|'+date+'|'+sigBatch(name,f,date);
+}
+function copyText(t){
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t); toast('已複製'); return; } }catch(e){}
+  toast('請長按下方文字自行複製');
+}
+function openSummary(){
+  var rows=allResults();
+  if(!rows.length){
+    sheet('我的成績總表','<div class="rep" style="text-align:center;padding:22px"><b>還沒有任何成績</b>'+
+      '<div class="small muted" style="margin-top:6px">完成一個題組並按過「對帳」之後,成績才會出現在這裡。</div></div>', null);
+    return;
+  }
+  var nm=(S.rname||rows.filter(function(r){return r.name;}).map(function(r){return r.name;}).pop()||'').replace(/[|｜\s]/g,'');
+  var date=today();
+  var line = nm ? reportOf(nm, rows, date) : '';
+  var body='<input class="srch" id="rn" placeholder="輸入你的姓名(回報碼會綁定姓名)" value="'+esc(S.rname||nm)+'">'+
+    '<div class="rep"><h3>我的成績總表</h3><div class="sub" id="rnm">'+(nm?esc(nm):'請先填姓名')+'　·　'+esc(date)+'</div>'+
+    '<div class="rl" style="font-weight:900"><span class="n">題組</span>'+
+      '<span class="v" style="width:78px;text-align:right">完成日</span>'+
+      '<span class="v" style="width:52px;text-align:right">正式</span>'+
+      '<span class="v" style="width:52px;text-align:right">訂正</span></div>';
+  var sum=0;
+  rows.forEach(function(r){
+    sum+=r.first;
+    body+='<div class="rl"><span class="n">'+esc(r.title)+' <span class="small muted">'+esc(r.id)+'</span></span>'+
+      '<span class="v muted" style="width:78px;text-align:right;font-size:13px">'+
+        (r.date?esc(r.date.slice(4,6)+'/'+r.date.slice(6,8)):'—')+'</span>'+
+      '<span class="v" style="width:52px;text-align:right">'+r.first+'</span>'+
+      '<span class="v" style="width:52px;text-align:right">'+r.last+'</span></div>';
+  });
+  body+='<div class="rl tot"><span class="n">共 '+rows.length+' 組　平均</span>'+
+    '<span class="v" style="width:78px"></span>'+
+    '<span class="v" style="width:52px;text-align:right">'+Math.round(sum/rows.length)+'</span>'+
+    '<span class="v" style="width:52px"></span></div></div>';
+  body+='<div id="rbox">'+
+    '<div class="strbox"><div class="small muted">成績回報碼(一次涵蓋全部題組,交這一行就好)</div><code id="rline"></code></div>'+
+    '<div style="display:flex;gap:8px;margin-top:10px">'+
+      '<button class="btn" style="flex:1" id="rcopy">複製回報碼</button>'+
+      (FORM_URL?'<button class="btn primary" style="flex:1" id="rform">開表單送出</button>':'')+
+    '</div>'+
+    (TEACHER_EMAIL||S.mail?'<button class="btn wide" style="margin-top:8px" id="rmail">✉ 用郵件寄給老師</button>':
+      '<input class="srch" id="rtm" style="margin-top:8px" placeholder="老師的信箱(要用郵件寄才需要填)" value="'+esc(S.mail)+'">')+
+    '<p class="small muted" style="margin-top:10px">整學期只要交這一行,不必每個題組各寄一次。回報碼綁定姓名、每一組的分數<b>與完成日期</b>,改任何一個數字老師都驗得出來,老師也查得到每一組是哪天完成的。</p>'+
+    '</div>';
+  sheet('我的成績總表', body, function(root){
+    var paint=function(){
+      var v=(S.rname||'').replace(/[|｜\s]/g,''), dt=today();
+      var l=v?reportOf(v,rows,dt):'';
+      root.querySelector('#rnm').textContent=(v||'請先填姓名')+'　·　'+dt;
+      root.querySelector('#rline').textContent=l;
+      root.querySelector('#rbox').style.display=v?'':'none';
+      return l;
+    };
+    if(S.rname===undefined) S.rname=nm;
+    paint();
+    root.addEventListener('input', function(e){
+      if(e.target.id==='rn'){ S.rname=e.target.value; paint(); }
+      if(e.target.id==='rtm'){ S.mail=e.target.value; }
+    });
+    var c=root.querySelector('#rcopy'); if(c) c.onclick=function(){ copyText(paint()); };
+    var f=root.querySelector('#rform');
+    if(f) f.onclick=function(){ var l=paint(); if(!l){ toast('請先填姓名'); return; }
+      w_open(FORM_URL.indexOf('{{DATA}}')>=0 ? FORM_URL.replace('{{DATA}}', encodeURIComponent(l)) : FORM_URL); };
+    var m=root.querySelector('#rmail');
+    if(m) m.onclick=function(){
+      var l=paint(), to=TEACHER_EMAIL||S.mail;
+      if(!l){ toast('請先填姓名'); return; }
+      if(!to){ toast('請先填老師的信箱'); return; }
+      w_open('mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent('【會計資訊系統】成績回報 - '+(S.rname||''))+
+             '&body='+encodeURIComponent('姓名:'+S.rname+'\n共 '+rows.length+' 組\n\n'+l));
+    };
+  });
 }
 function scoreData(){
   var sc=scoreNow(), nm=(S.name||'').replace(/[|｜\s]/g,''), date=S.date||today();
