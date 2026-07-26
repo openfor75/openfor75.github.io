@@ -45,6 +45,14 @@ textarea{min-height:78px;line-height:1.6;word-break:break-all}
 .res.ok .t{color:var(--green)} .res.ng .t{color:var(--red)}
 .rl{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:16px;text-align:left}
 .rl b{font-variant-numeric:tabular-nums}
+.adv{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:5px 6px 0 rgba(31,27,24,.10);
+ padding:0;margin:14px 0;overflow:hidden}
+.adv summary{padding:15px 16px;font-size:16.5px;font-weight:900;cursor:pointer;list-style:none}
+.adv summary::-webkit-details-marker{display:none}
+.adv[open] summary{border-bottom:2.5px dashed #D8CFC4}
+.advbody{padding:0 16px 16px}
+#gscode{background:#1F1B18;color:#F3EDE2;border-radius:12px;padding:12px;font-size:11px;line-height:1.6;
+ overflow:auto;max-height:300px;white-space:pre;font-family:ui-monospace,Menlo,Consolas,monospace}
 .note{font-size:14px;color:var(--ink2);line-height:1.75;border-top:2px dashed #D8CFC4;margin-top:20px;padding-top:14px}
 a{color:var(--ink)}
 </style>
@@ -68,6 +76,119 @@ a{color:var(--ink)}
       學生的回報碼可以從郵件複製,或從 Google 表單試算表整欄複製貼上。驗證完可一鍵複製成表格,直接貼進 Excel 登記成績。</p>
   </div>
   <div id="bout"></div>
+
+  <details class="adv">
+    <summary>📥 進階(選用):用 Gmail 自動把回報碼收進試算表</summary>
+    <div class="advbody">
+      <p class="note" style="border:none;padding-top:0;margin-top:6px">
+        如果您是<b>請學生用郵件回報</b>,可以用這支 Google Apps Script 自動把信件裡的回報碼撈進試算表,
+        一位學生一列,重複寄不會重複列入,還能設定每天自動執行。<br>
+        <b>它只讀取您自己的信箱</b>,不是對外收集資料的伺服器。<br><br>
+        如果您改用 <b>Google 表單</b>讓學生送出,就完全不需要這一段——答案會直接進試算表。
+      </p>
+      <ol style="font-size:14.5px;line-height:1.9;padding-left:22px">
+        <li>開一個新的 Google 試算表</li>
+        <li>上方選單 <b>擴充功能 → Apps Script</b></li>
+        <li>把預設程式碼刪掉,貼上下面整段,存檔</li>
+        <li>選 <b>collectReports</b> 按「執行」,第一次會要求授權,按同意</li>
+        <li>(選用)左側「觸發條件」→ 新增 → collectReports → 時間驅動 → 日計時器</li>
+      </ol>
+      <button class="btn" id="gscopy" style="margin-top:0">複製整段程式碼</button>
+      <pre id="gscode">/**
+ * 會計資訊系統 — 從 Gmail 自動收集學生的成績回報碼到試算表
+ *
+ * 這支腳本只讀「您自己的信箱」,不是對外收集學生資料的伺服器。
+ *
+ * ── 安裝(一次就好)──────────────────────────────────
+ * 1. 開一個新的 Google 試算表
+ * 2. 上方選單 擴充功能 → Apps Script
+ * 3. 把預設的程式碼全部刪掉,貼上這一整份,存檔
+ * 4. 上方選單選 collectReports,按「執行」。第一次會要求授權,按同意
+ * 5. (選用)左側「觸發條件」→ 新增觸發條件 → collectReports → 時間驅動 →
+ *    日計時器 → 每天跑一次,之後就完全自動
+ *
+ * ── 用法 ────────────────────────────────────────
+ * 執行後,試算表會出現「回報碼」工作表,每位學生一列。
+ * 把「回報碼」那一整欄複製,貼進老師驗證頁的「整班批次驗證」即可。
+ * 同一個回報碼重複寄不會重複列入。
+ * ────────────────────────────────────────────────
+ */
+
+/* ===== 可以改的設定 ===== */
+var SEARCH_QUERY = &#x27;subject:(會計資訊系統) newer_than:180d&#x27;;  // 要撈哪些信
+var SHEET_NAME   = &#x27;回報碼&#x27;;                                  // 寫到哪個工作表
+var DONE_LABEL   = &#x27;成績已收&#x27;;                                // 處理過的信貼這個標籤
+/* ======================= */
+
+function collectReports() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.appendRow([&#x27;收信時間&#x27;, &#x27;寄件者&#x27;, &#x27;信件主旨&#x27;, &#x27;姓名&#x27;, &#x27;組數&#x27;, &#x27;回報碼&#x27;]);
+    sh.setFrozenRows(1);
+  }
+
+  // 已經收過的回報碼,避免重複
+  var seen = {};
+  var last = sh.getLastRow();
+  if (last &gt; 1) {
+    sh.getRange(2, 6, last - 1, 1).getValues().forEach(function (r) {
+      if (r[0]) seen[String(r[0]).trim()] = true;
+    });
+  }
+
+  var label = GmailApp.getUserLabelByName(DONE_LABEL) || GmailApp.createLabel(DONE_LABEL);
+  var threads = GmailApp.search(SEARCH_QUERY + &#x27; -label:&quot;&#x27; + DONE_LABEL + &#x27;&quot;&#x27;, 0, 100);
+  var rows = [], found = 0;
+
+  threads.forEach(function (th) {
+    th.getMessages().forEach(function (msg) {
+      var body = msg.getPlainBody() || &#x27;&#x27;;
+      // 回報碼格式:V1|姓名|setXX:分數:分數:日期,…|日期|XXXX-XXXX
+      var hits = body.match(/V1\|[^|\r\n]+\|[^|\r\n]+\|[^|\r\n]+\|[0-9A-Z]{4}-[0-9A-Z]{4}/g);
+      if (!hits) return;
+      hits.forEach(function (code) {
+        code = code.trim();
+        if (seen[code]) return;
+        seen[code] = true;
+        found++;
+        var p = code.split(&#x27;|&#x27;);
+        var name = p[1];
+        var cnt = p[2].split(&#x27;,&#x27;).filter(String).length;
+        rows.push([msg.getDate(), msg.getFrom(), msg.getSubject(), name, cnt, code]);
+      });
+    });
+    th.addLabel(label);   // 標記處理過,下次不再掃
+  });
+
+  if (rows.length) {
+    sh.getRange(sh.getLastRow() + 1, 1, rows.length, 6).setValues(rows);
+    sh.autoResizeColumns(1, 5);
+  }
+
+  var msg = &#x27;掃描 &#x27; + threads.length + &#x27; 封信,新增 &#x27; + found + &#x27; 筆回報碼。&#x27;;
+  try { ss.toast(msg, &#x27;收集完成&#x27;, 6); } catch (e) {}
+  Logger.log(msg);
+}
+
+/**
+ * 選用:把「回報碼」整欄複製到剪貼簿不方便時,用這個產生純文字清單,
+ * 執行後在「執行紀錄」裡直接複製,貼進老師驗證頁。
+ */
+function exportCodes() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() &lt; 2) { Logger.log(&#x27;目前沒有資料&#x27;); return; }
+  var codes = sh.getRange(2, 6, sh.getLastRow() - 1, 1).getValues()
+                .map(function (r) { return String(r[0]).trim(); })
+                .filter(String);
+  Logger.log(codes.join(&#x27;\n&#x27;));
+}
+</pre>
+      <p class="note" style="border:none;padding-top:6px">
+        執行後試算表會出現「回報碼」工作表。把<b>回報碼那一整欄</b>複製,貼進本頁最上方的批次驗證即可。</p>
+    </div>
+  </details>
 
   <div class="card">
     <label>方法一:貼上單一題組的驗證串(學生寄成績卡時會附)</label>
@@ -102,8 +223,7 @@ a{color:var(--ink)}
     不必要求學生在期限內回報。<br><br>
     請學生用系統首頁的「我的成績總表」產生一行回報碼,整學期只交一次(不必每個題組各交一次)。
     收集方式可以是 Google 表單一題、班級 Line 群、或郵件;收到之後整欄複製貼進上面的批次驗證,
-    就會得到一張含各組分數與平均的表格,可一鍵複製到 Excel 登記成績。100 位學生 30 組的情況下,
-    這樣是 100 筆回報碼,而不是 3000 封信。
+    就會得到一張含各組分數與平均的表格,可一鍵複製到 Excel 登記成績。
   </p>
   <p class="note" style="border:none;padding-top:0"><a href="index.html">← 回到系統</a></p>
 </div>
@@ -283,6 +403,12 @@ document.getElementById('go1').onclick=function(){
   document.getElementById('f').value=p[2];  document.getElementById('l').value=p[3];
   document.getElementById('dt').value=p[4]; document.getElementById('cd').value=p[5];
   check(p[0],p[1],p[2],p[3],p[4],p[5]);
+};
+var gsb=document.getElementById('gscopy');
+if(gsb) gsb.onclick=function(){
+  var t=document.getElementById('gscode').textContent;
+  try{ navigator.clipboard.writeText(t); this.textContent='已複製,去 Apps Script 貼上'; }
+  catch(e){ this.textContent='請長按下方程式碼自行複製'; }
 };
 document.getElementById('go2').onclick=function(){
   var g=function(i){ return document.getElementById(i).value; };
