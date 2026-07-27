@@ -2,7 +2,9 @@
 <!--
   ============================================================
   會計資訊系統(手機版) v1.0
-  Copyright (c) 2026 林亭妤(教會計的林ㄊㄩ)
+  著作人:林亭妤
+  首次發行:2026 年 7 月　發行地:臺灣
+  Copyright (c) 2026 林亭妤
   授權:CC BY-NC-SA 4.0(姓名標示－非商業性－相同方式分享)
         https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-Hant
   可自由用於教學,禁止商業使用,散布或改作請保留本標示與原始網址。
@@ -303,10 +305,14 @@ button{cursor:pointer}
 <script>
 (function(){
 'use strict';
-/* 會計資訊系統(手機版) — Copyright (c) 2026 林亭妤(教會計的林ㄊㄩ) — CC BY-NC-SA 4.0
+/* 會計資訊系統(手機版) — Copyright (c) 2026 林亭妤 — CC BY-NC-SA 4.0
    非商業教學用途可自由使用,散布或改作請保留署名與原始網址。 */
+/* 著作權法第 13 條:在著作上以通常方法表示「著作人本名或別名」與「發行日期及地點」,
+   即推定為著作人、發行日期與地點,舉證責任因此轉換到對方。三個要件缺一不可,
+   所以 owner(本名)、pubDate(首次發行)、pubPlace(發行地)請務必保留。 */
 var APP = { name:'會計資訊系統', ver:'1.0', author:'教會計的林ㄊㄩ', owner:'林亭妤',
             license:'CC BY-NC-SA 4.0',
+            pubDate:'2026 年 7 月', pubPlace:'臺灣',
             site:'youtube.com/@openfor75' };
 /* site 會印在成績卡與首頁頁腳。填頻道或系統網址都可以——建議填頻道,
    因為成績卡是最常被轉傳的畫面,看到的人可以循著頻道找到您與這套系統。 */
@@ -605,8 +611,10 @@ function renderHome(){
      '<a class="btn ghost" href="check.html" style="display:inline-flex;align-items:center;text-decoration:none">🔎 老師:驗證學生成績卡</a>'+
      '<div class="foot"><div class="fby">'+esc(APP.author)+'</div>'+
      (APP.site?'<div class="fsite">'+esc(APP.site)+'</div>':'')+
-     '<div class="fsub">'+esc(APP.name)+'(手機版) v'+APP.ver+'　·　© 2026 '+esc(APP.owner)+
-     '　·　<a href="LICENSE.md">'+esc(APP.license)+'</a></div>'+
+     '<div class="fsub">'+esc(APP.name)+'(手機版) v'+APP.ver+'</div>'+
+     '<div class="fsub">著作人:'+esc(APP.owner)+'('+esc(APP.author)+')</div>'+
+     '<div class="fsub">首次發行:'+esc(APP.pubDate)+'　·　發行地:'+esc(APP.pubPlace)+'</div>'+
+     '<div class="fsub">© 2026 '+esc(APP.owner)+'　·　<a href="LICENSE.md">'+esc(APP.license)+'</a></div>'+
      '<div class="fsub">可自由用於教學,禁止商業使用。本站不蒐集任何個人資料。</div></div>'+
      '<div style="height:20px"></div>';
   $('#app').innerHTML=h;
@@ -1410,6 +1418,7 @@ function openScore(){
      '<div class="small muted" style="margin-top:2px">'+D.sc.right+' / '+D.sc.total+' 題正確　·　'+esc(D.date)+'</div>'+
      '<div class="vcode" id="vcbox"><div class="small">驗證碼</div><div class="cd" id="vcode"></div></div>'+
      '<div class="scby">'+esc(APP.name)+'(手機版)　·　<b>'+esc(APP.author)+'</b>'+
+       '<br>著作人 '+esc(APP.owner)+'　·　'+esc(APP.pubDate)+'　'+esc(APP.pubPlace)+
        (APP.site?'<br>'+esc(APP.site):'')+'</div>'+
    '</div>'+
    '<p class="small muted" style="margin-top:12px">截圖這張卡片傳給老師。驗證碼綁定姓名與分數,改任何一項老師都驗得出來。</p>'+
