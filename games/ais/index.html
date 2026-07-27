@@ -574,7 +574,7 @@ function renderHome(){
   var lastSet=null; SETS.forEach(function(x){ if(x.id===last && stats[x.id].done>0 && stats[x.id].done<stats[x.id].n) lastSet=x; });
 
   var h='<div class="hero"><h1>今天要記<br>哪一本帳?</h1>'+
-        '<div class="sub1">勞動部　會計資訊丙級　分錄練習</div>'+
+        '<div class="sub1">會計資訊丙級　分錄練習</div>'+
         '<p>選一個題組,照題目逐筆登入分錄。</p></div>';
   if(lastSet){
     h+='<button class="btn primary wide resume" data-open="'+lastSet.id+'">▶ 繼續 '+esc(lastSet.title)+
