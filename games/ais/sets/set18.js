@@ -197,7 +197,8 @@ window.AIS_SETS.push({
     12: [['存貨', '15,000', ''],
          ['銷貨成本', '67,000', '']]
   };
-  var CAPTION = '試 算 表(節錄)　民國102年12月31日';
+  var CAP_NAME = '試 算 表(節錄)';
+  var CAP_DATE = '民國 102 年 12 月 31 日';
   var MARK = 'tbx18';           // 已插入的標記,避免重複插入
   var esc = function (s) {
     return String(s).replace(/[&<>"']/g, function (c) {
@@ -219,8 +220,10 @@ window.AIS_SETS.push({
     st.textContent =
       '.' + MARK + '{margin:10px 0 2px;background:#fffdf7;border:3px solid #1f1b18;' +
       'border-radius:14px;padding:9px 10px 10px;box-shadow:4px 5px 0 rgba(31,27,24,.10)}' +
-      '.' + MARK + ' .cap{text-align:center;font-weight:900;font-size:15px;letter-spacing:.06em;' +
-      'padding-bottom:6px;border-bottom:2px solid #1f1b18;margin-bottom:6px}' +
+      '.' + MARK + ' .cap{text-align:center;padding-bottom:6px;border-bottom:2px solid #1f1b18;margin-bottom:6px}' +
+      '.' + MARK + ' .cap b{display:block;font-weight:900;font-size:16px;letter-spacing:.12em;line-height:1.35}' +
+      '.' + MARK + ' .cap i{display:block;font-style:normal;font-weight:900;font-size:14px;' +
+      'letter-spacing:.04em;line-height:1.35;margin-top:1px}' +
       '.' + MARK + ' table{width:100%;border-collapse:collapse;font-size:15.5px}' +
       '.' + MARK + ' th{font-size:13.5px;font-weight:900;color:#6b615a;padding:3px 6px;' +
       'border-bottom:1.5px solid #cfc6bb;text-align:right;white-space:nowrap}' +
@@ -233,7 +236,8 @@ window.AIS_SETS.push({
   }
 
   function tableHTML(rows) {
-    var h = '<div class="' + MARK + '"><div class="cap">' + esc(CAPTION) + '</div><table>' +
+    var h = '<div class="' + MARK + '"><div class="cap"><b>' + esc(CAP_NAME) + '</b><i>' +
+            esc(CAP_DATE) + '</i></div><table>' +
             '<tr><th>會計項目</th><th>借方餘額</th><th>貸方餘額</th></tr>';
     rows.forEach(function (r) {
       h += '<tr><td>' + esc(r[0]) + '</td><td>' + esc(r[1] || '') + '</td><td>' + esc(r[2] || '') + '</td></tr>';
@@ -241,29 +245,55 @@ window.AIS_SETS.push({
     return h + '</table></div>';
   }
 
+  var norm = function (s) { return String(s || '').replace(/\s/g, ''); };
+
+  // 找出畫面上的題目卡。優先用 .qbox;萬一引擎改過 class 名稱,
+  // 就退而求其次:從「第 N 題」字樣往上找它的卡片容器。
+  function cards() {
+    var found = document.querySelectorAll('.qbox');
+    if (found.length) return [].slice.call(found);
+    var out = [], all = document.querySelectorAll('div,section,article,p');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (el.children.length) continue;                       // 只看最內層的文字節點
+      if (!/第\s*\d+\s*題/.test(el.textContent || '')) continue;
+      var box = el.parentElement;
+      if (box && out.indexOf(box) < 0) out.push(box);
+    }
+    return out;
+  }
+
+  function isErrCard(el) {                                    // 對帳畫面的錯誤卡不要插表格
+    for (var n = el; n && n !== document.body; n = n.parentElement) {
+      if (/err/i.test(n.className || '')) return true;
+    }
+    return false;
+  }
+
   function apply() {
     var set = mySet();
     if (!set) return;
-    var boxes = document.querySelectorAll('.qbox');
+    var boxes = cards();
     for (var i = 0; i < boxes.length; i++) {
       var box = boxes[i];
-      if (box.querySelector('.' + MARK)) continue;           // 已經插過了
-      var qno = box.querySelector('.qno'), qtx = box.querySelector('.qtx');
-      if (!qno || !qtx) continue;
-      var m = /第\s*(\d+)\s*題/.exec(qno.textContent || '');
+      if (box.querySelector && box.querySelector('.' + MARK)) continue;   // 已經插過了
+      if (isErrCard(box)) continue;
+      var whole = box.textContent || '';
+      var m = /第\s*(\d+)\s*題/.exec(whole);
       if (!m) continue;
       var no = Number(m[1]), rows = EXCERPT[no];
       if (!rows) continue;
       // 確認畫面上這一題確實是本題組的題目(避免影響其他題組)
       var t = null;
       for (var k = 0; k < set.txns.length; k++) if (set.txns[k].no === no) t = set.txns[k];
-      if (!t || (qtx.textContent || '').replace(/\s/g, '') !== t.text.replace(/\s/g, '')) continue;
+      if (!t || norm(whole).indexOf(norm(t.text)) < 0) continue;
       addStyle();
       box.insertAdjacentHTML('beforeend', tableHTML(rows));
     }
   }
 
   function boot() {
+    if (!document.body) { setTimeout(boot, 50); return; }
     apply();
     if (window.MutationObserver) {
       new MutationObserver(function () { apply(); })
