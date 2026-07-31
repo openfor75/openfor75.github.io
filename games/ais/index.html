@@ -2,7 +2,7 @@
 <!--
   ============================================================
   會計資訊系統(手機版) v1.0
-  著作人:林亭妤
+  著作人:林亭妤 
   首次發行:2026 年 7 月　發行地:臺灣
   Copyright (c) 2026 林亭妤
   授權:CC BY-NC-SA 4.0(姓名標示－非商業性－相同方式分享)
@@ -15,7 +15,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>會計資訊系統 · 手機版</title>
+<title>會計資訊丙級 分錄練習｜會計資訊系統(手機版)</title>
+<meta name="description" content="勞動部會計資訊丙級術科的分錄練習工具。用手機逐題登入傳票或日記簿分錄,隨時查帳看各會計項目餘額,全部登完自動對帳找錯。收錄 14902 系列題組,免費、免註冊、不蒐集個人資料。designed by 教會計的林ㄊㄩ。">
+<meta name="author" content="林亭妤">
+<meta property="og:type" content="website">
+<meta property="og:title" content="會計資訊丙級 分錄練習｜會計資訊系統(手機版)">
+<meta property="og:description" content="用手機練會計資訊丙級分錄:選傳票別、登分錄、隨時查帳、自動對帳找錯。免費免註冊。">
+<meta property="og:locale" content="zh_TW">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
@@ -277,7 +283,7 @@ button{cursor:pointer}
 <script src="sets/set15.js"></script>
 <script src="sets/set16.js"></script>
 <script src="sets/set17.js"></script>
-<script src="sets/set18.js?v=6"></script>
+<script src="sets/set18.js"></script>
 <script src="sets/set19.js"></script>
 <script src="sets/set20.js"></script>
 <script src="sets/set21.js"></script>
@@ -437,7 +443,7 @@ function usable(){ return PICKABLE? CHART.filter(function(a){ return PICKABLE[a.
    1. 內建示範題組(用來驗收引擎;正式題組請放 sets/setXX.js)
    ========================================================== */
 var DEMO = {
-  id:'demo', title:'示範題組', examNo:'給大家練習操作用', demo:true,
+  id:'demo', title:'示範題組', examNo:'引擎驗收用', demo:true,
   basis:'先虛後實', notes:['實地盤存制','不考慮營業稅','金額計算至元'],
   period:'12月',
   opening:[
@@ -574,7 +580,7 @@ function renderHome(){
   var lastSet=null; SETS.forEach(function(x){ if(x.id===last && stats[x.id].done>0 && stats[x.id].done<stats[x.id].n) lastSet=x; });
 
   var h='<div class="hero"><h1>今天要記<br>哪一本帳?</h1>'+
-        '<div class="sub1">會計資訊丙級　分錄練習</div>'+
+        '<div class="sub1">勞動部　會計資訊丙級　分錄練習</div>'+
         '<p>選一個題組,照題目逐筆登入分錄。</p></div>';
   if(lastSet){
     h+='<button class="btn primary wide resume" data-open="'+lastSet.id+'">▶ 繼續 '+esc(lastSet.title)+
@@ -976,8 +982,9 @@ function paintAudit(root){
        '<div class="rep" style="margin-top:12px"><h3>'+esc(auAcct)+'</h3><div class="sub">'+CLSNAME[(POS[auAcct]||{}).cls]+'　明細分類帳</div>';
     rows.forEach(function(r){
       run += (r.side==='dr'? r.amt : -r.amt);
-      h+='<div class="rl"><span class="n">'+(r.no==='期初'?'期初餘額':'第'+r.no+'題 '+esc(r.date))+'</span>'+
-         '<span class="v">'+(r.side==='dr'?'借':'貸')+' '+fmt(r.amt)+'</span>'+
+      var isOpen=(r.no==='期初');
+      h+='<div class="rl"><span class="n">'+(isOpen?'期初餘額':'第'+r.no+'題 '+esc(r.date))+'</span>'+
+         '<span class="v">'+(isOpen?'':(r.side==='dr'?'借':'貸')+' '+fmt(r.amt))+'</span>'+
          '<span class="v muted" style="width:100px;text-align:right">'+sv(run)+'</span></div>';
     });
     h+='<div class="rl tot"><span class="n">期末餘額</span><span class="v">'+sv(bal[auAcct]||0)+'</span></div></div>';
@@ -1271,7 +1278,10 @@ function openLedgerRE(){
     h+='<div class="sec">'+esc(a.name)+'('+((bal[a.name]||0)>=0?'借':'貸')+')</div>';
     rows.forEach(function(r){
       run += (r.side==='dr'? r.amt : -r.amt);
-      if(r.no==='期初'){ h+='<div class="rl ind"><span class="n">上期結轉</span><span class="v">'+fmt(r.amt)+'</span></div>'; }
+      if(r.no==='期初'){   // 官方總分類帳格式:上期結轉本來就印在餘額欄
+        h+='<div class="rl ind"><span class="n">上期結轉</span>'+
+           '<span class="v" style="width:96px"></span><span class="v" style="width:96px"></span>'+
+           '<span class="v" style="width:104px;text-align:right">'+fmt(r.amt)+'</span></div>'; }
       else{
         if(r.side==='dr') dsum+=r.amt; else csum+=r.amt;
         h+='<div class="rl ind"><span class="n">'+esc(r.date)+'　第'+r.no+'題</span>'+
