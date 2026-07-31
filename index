@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  ㄊㄩ的教學工具　根目錄首頁
+  著作人:林亭妤(別名:教會計的林ㄊㄩ)
+  Copyright (c) 2026 林亭妤　授權 CC BY-NC-SA 4.0
+  ============================================================
+-->
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="google-site-verification" content="wnYTW-0Z8z79_JWH9dR83i7qBVAAABxf7XpJYRVaOrk" />
+<title>教會計的林ㄊㄩ｜商科教學工具</title>
+<meta name="description" content="高職商業與管理群的教學工具:會計資訊丙級分錄練習、會計方程式闖關、日常分錄練習、商業概論教材。免費、免註冊、不蒐集個人資料。designed by 教會計的林ㄊㄩ。">
+<meta name="author" content="林亭妤(教會計的林ㄊㄩ)">
+<meta property="og:type" content="website">
+<meta property="og:title" content="教會計的林ㄊㄩ｜商科教學工具">
+<meta property="og:description" content="高職商科的免費教學工具。會計資訊丙級分錄練習、會計方程式闖關、商業概論教材。">
+<meta property="og:locale" content="zh_TW">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<style>
+:root{--paper:#FAF7F0;--ink:#1F1B18;--ink2:#5C534A;--ink3:#9C9188;
+      --line:rgba(60,50,40,.09);--margin:rgba(206,116,116,.55);--amber:#E0A02A}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{font-family:'Huninn','jf-openhuninn','PingFang TC','Noto Sans TC','Microsoft JhengHei',sans-serif;
+ font-size:17px;line-height:1.75;color:var(--ink);background-color:var(--paper);
+ background-image:repeating-linear-gradient(to bottom,transparent 0 27px,var(--line) 27px 28px),
+   linear-gradient(to right,transparent 0 25px,var(--margin) 25px 26.5px,transparent 26.5px);
+ background-attachment:local;touch-action:manipulation;-webkit-text-size-adjust:100%}
+.wrap{max-width:620px;margin:0 auto;padding:30px 16px 44px 42px}
+.hero h1{font-size:31px;font-weight:900;margin:0;letter-spacing:.04em;line-height:1.3}
+.hero .by{margin-top:6px;font-size:15px;color:var(--ink2)}
+.hero p{margin:12px 0 0;color:var(--ink2);font-size:15.5px}
+.tag{display:inline-block;border:2px solid var(--ink3);border-radius:999px;padding:2px 11px;
+ font-size:13px;font-weight:800;color:var(--ink2);background:#fff;margin:10px 6px 0 0}
+.hr{height:0;border-top:2px dashed #D8CFC4;margin:24px 0 18px}
+.sec{font-size:14px;font-weight:900;color:var(--ink2);letter-spacing:.1em;margin-bottom:10px}
+a.card{display:block;text-decoration:none;color:inherit;background:#fff;border:3px solid var(--ink);
+ border-radius:18px;box-shadow:5px 6px 0 rgba(31,27,24,.10);padding:15px 17px;margin-bottom:13px}
+a.card:active{transform:translate(2px,2px);box-shadow:3px 4px 0 rgba(31,27,24,.10)}
+a.card .t{font-size:20px;font-weight:900;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+a.card .badge{font-size:12px;font-weight:800;color:#fff;background:var(--ink);border-radius:999px;padding:2px 9px}
+a.card .d{font-size:14.5px;color:var(--ink2);margin-top:5px;line-height:1.7}
+a.card.soft{border-width:2.5px;box-shadow:3px 4px 0 rgba(31,27,24,.08)}
+a.card.soft .t{font-size:17.5px}
+.foot{margin-top:26px;padding-top:15px;border-top:2px dashed #D8CFC4;line-height:1.75}
+.foot .fby{font-size:18px;font-weight:900;letter-spacing:.04em}
+.foot .fsite{font-size:14px;font-weight:800;color:var(--ink2);margin:3px 0 7px}
+.foot .fsub{font-size:12.5px;color:var(--ink3)}
+.foot a{color:var(--ink2)}
+@media (max-width:400px){.wrap{padding-left:34px}.hero h1{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <h1>教會計的林ㄊㄩ</h1>
+    <div class="by">高職商業與管理群　教學工具</div>
+    <p>自己做給學生用的練習工具。全部免費、免註冊、不蒐集任何個人資料。</p>
+    <div>
+      <span class="tag">免費</span><span class="tag">免安裝</span>
+      <span class="tag">手機可用</span><span class="tag">不蒐集資料</span>
+    </div>
+  </div>
+
+  <div class="hr"></div>
+
+  <div class="sec">會 計 資 訊</div>
+  <a class="card" href="games/ais/">
+    <div class="t">會計資訊系統(手機版)<span class="badge">30 組題組</span></div>
+    <div class="d">勞動部會計資訊丙級的分錄練習。選傳票別、登分錄、<b>隨時查帳看餘額</b>、
+      全部登完自動對帳找錯,附詳解。可選日記簿、三分法或四分法傳票。</div>
+  </a>
+
+  <div class="sec" style="margin-top:22px">其 他 工 具</div>
+  <a class="card soft" href="games/">
+    <div class="t">ㄊㄩ的遊戲大廳</div>
+    <div class="d">會計方程式闖關、日常分錄練習、商業概論教材等,全部從這裡進去。</div>
+  </a>
+  <a class="card soft" href="https://youtube.com/@openfor75">
+    <div class="t">YouTube 頻道</div>
+    <div class="d">教學影片與工具使用說明。</div>
+  </a>
+
+  <div class="foot">
+    <div class="fby">教會計的林ㄊㄩ</div>
+    <div class="fsite">youtube.com/@openfor75</div>
+    <div class="fsub">著作人:林亭妤(教會計的林ㄊㄩ)</div>
+    <div class="fsub">首次發行:2026 年 7 月　·　發行地:臺灣</div>
+    <div class="fsub">© 2026 林亭妤　·　<a href="games/ais/LICENSE.md">CC BY-NC-SA 4.0</a></div>
+    <div class="fsub">歡迎各校教師自由用於教學,禁止商業使用。本站不蒐集任何個人資料。</div>
+  </div>
+
+</div>
+</body>
+</html>
