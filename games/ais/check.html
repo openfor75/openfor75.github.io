@@ -4,7 +4,7 @@
   會計資訊系統(手機版) v1.0
   著作人:林亭妤(別名:教會計的林ㄊㄩ)
   首次發行:2026 年 7 月　發行地:臺灣
-  Copyright (c) 2026 林亭妤(教會計的林ㄊㄩ)
+  Copyright (c) 2026 林亭妤
   授權:CC BY-NC-SA 4.0(姓名標示－非商業性－相同方式分享)
         https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-Hant
   可自由用於教學,禁止商業使用,散布或改作請保留本標示與原始網址。
@@ -18,7 +18,7 @@
 <meta name="google-site-verification" content="wnYTW-0Z8z79_JWH9dR83i7qBVAAABxf7XpJYRVaOrk" />
 <title>會計資訊丙級 分錄練習｜會計資訊系統(手機版)</title>
 <meta name="description" content="勞動部會計資訊丙級術科的分錄練習工具。用手機逐題登入傳票或日記簿分錄,隨時查帳看各會計項目餘額,全部登完自動對帳找錯。收錄 14902 系列題組,免費、免註冊、不蒐集個人資料。designed by 教會計的林ㄊㄩ。">
-<meta name="author" content="林亭妤(教會計的林ㄊㄩ)">
+<meta name="author" content="林亭妤">
 <meta property="og:type" content="website">
 <meta property="og:title" content="會計資訊丙級 分錄練習｜會計資訊系統(手機版)">
 <meta property="og:description" content="用手機練會計資訊丙級分錄:選傳票別、登分錄、隨時查帳、自動對帳找錯。免費免註冊。">
@@ -168,6 +168,8 @@ button{cursor:pointer}
 #pad button.go{background:var(--ink);color:#FFFDF8;font-size:17px}
 #pad button:active{background:var(--amber)}
 .hint{font-size:13px;color:var(--ink2);text-align:center;margin-top:5px}
+.kbhint{display:none;color:var(--ink3);line-height:1.7}
+@media (hover:hover) and (pointer:fine){ .kbhint{display:block} }
 .foot{margin-top:24px;padding-top:15px;border-top:2px dashed #D8CFC4;line-height:1.75}
 .foot .fby{font-size:18px;font-weight:900;color:var(--ink);letter-spacing:.04em;margin-bottom:4px}
 .foot .fsub{font-size:12.5px;color:var(--ink3)}
@@ -253,6 +255,7 @@ button{cursor:pointer}
       <button class="go" data-k="FILL" style="grid-column:span 4">填入金額</button>
     </div>
     <div class="hint" id="calcHint">先點分錄上的金額欄,再按「填入金額」</div>
+    <div class="hint kbhint">💻 電腦可直接用鍵盤:數字／小數點輸入　+ − × ÷ 運算　<b>Enter</b> 填入　<b>↑↓</b> 換金額欄　<b>Backspace</b> 退位　<b>Esc</b> 清除</div>
   </div>
 </div>
 
@@ -312,7 +315,7 @@ button{cursor:pointer}
 <script>
 (function(){
 'use strict';
-/* 會計資訊系統(手機版) — Copyright (c) 2026 林亭妤(教會計的林ㄊㄩ) — CC BY-NC-SA 4.0
+/* 會計資訊系統(手機版) — Copyright (c) 2026 林亭妤 — CC BY-NC-SA 4.0
    非商業教學用途可自由使用,散布或改作請保留署名與原始網址。 */
 /* 著作權法第 13 條:在著作上以通常方法表示「著作人本名或別名」與「發行日期及地點」,
    即推定為著作人、發行日期與地點,舉證責任因此轉換到對方。三個要件缺一不可,
@@ -1489,6 +1492,56 @@ $('#pad').addEventListener('click', function(e){
 $('#btnFold').onclick=function(){ openPad(!$('#padwrap').classList.contains('on')); };
 $('#btnDiff').onclick=fillDiff;
 $('#btnAudit').onclick=openAudit;
+/* ===== 電腦鍵盤支援 =====
+   數字 0-9 與小數點直接輸入;+ - * / 四則運算;Enter 填入金額;
+   Backspace 退位;Esc 清除(抽屜開著時則是關閉抽屜);% 百分比;
+   上下方向鍵在同一張卡的金額欄之間移動。
+   在搜尋框、姓名欄等文字輸入中時完全不攔截。 */
+function amtCells(){ return Array.prototype.slice.call(document.querySelectorAll('.amt[data-f="amt"]')); }
+function moveCell(step){
+  var list=amtCells(); if(!list.length) return;
+  var cur=document.querySelector('.amt.on'), i=list.indexOf(cur);
+  var next = (i<0) ? list[0] : list[(i+step+list.length)%list.length];
+  if(next){ pickCell(next); try{ next.scrollIntoView({block:'nearest'}); }catch(e){} }
+}
+document.addEventListener('keydown', function(e){
+  var t=e.target, tag=t&&t.tagName;
+  var typing = (tag==='INPUT'||tag==='TEXTAREA'||(t&&t.isContentEditable));
+
+  if(e.key==='Escape'){
+    if($('#sheet').classList.contains('on')){ closeSheet(); e.preventDefault(); return; }
+    if(!typing && S.screen==='work'){ calcKey('C'); e.preventDefault(); }
+    return;
+  }
+  if(typing) return;                       // 打字中一律不攔
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if($('#sheet').classList.contains('on')) return;
+  if(S.screen!=='work') return;            // 只在作帳頁生效
+
+  var k=e.key, hit=null;
+  if(/^[0-9]$/.test(k)) hit=k;
+  else if(k==='.') hit='.';
+  else if(k==='+') hit='+';
+  else if(k==='-') hit='−';
+  else if(k==='*'||k==='x'||k==='X') hit='×';
+  else if(k==='/') hit='÷';
+  else if(k==='%') hit='%';
+  else if(k==='=') hit='=';
+  else if(k==='Backspace') hit='B';
+  else if(k==='Delete') hit='C';
+  else if(k==='Enter'){ fillCell(); e.preventDefault(); return; }
+  else if(k==='ArrowDown'){ moveCell(1); e.preventDefault(); return; }
+  else if(k==='ArrowUp'){ moveCell(-1); e.preventDefault(); return; }
+  if(!hit) return;
+
+  if(!S.cell || S.cell.f!=='amt'){         // 還沒選格子就先跳到第一格
+    var first=amtCells()[0];
+    if(first) pickCell(first); else return;
+  }
+  openPad(true);
+  calcKey(hit);
+  e.preventDefault();
+});
 document.addEventListener('dblclick', function(e){ e.preventDefault(); }, {passive:false});
 window.addEventListener('resize', sizeBody);
 
