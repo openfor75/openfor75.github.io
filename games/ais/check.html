@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   ============================================================
-  會計資訊系統(手機版) v1.0
+  會計資訊系統(手機版) v2.0
   著作人:林亭妤
   首次發行:2026 年 7 月　發行地:臺灣
   Copyright (c) 2026 林亭妤
@@ -15,7 +15,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>老師驗證頁 · 會計資訊系統</title>
+<title>老師驗證頁｜會計資訊系統(手機版)</title>
+<meta name="description" content="會計資訊系統(手機版)的教師端:批次驗證學生成績回報碼、比對班級名單、檢查逾期與未交,並可複製成表格貼進 Excel 登記成績。">
+<meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
@@ -216,6 +218,9 @@ function exportCodes() {
   <p class="note">
     <b>這個驗證碼能證明什麼</b><br>
     碼是由姓名、題組、兩個分數、日期一起算出來的。學生把同學的截圖拿來交、或是把分數修圖改掉,驗證碼都會對不上。<br><br>
+    <b>不能證明什麼</b><br>
+    它不能證明這份成績是學生自己做的。演算法寫在網頁裡,程度好的學生看得懂原始碼就能自己算出合法的碼。這是一張封條,不是保險箱。<br><br>
+    題組代號、日期要跟成績卡上一模一樣(日期含斜線)。若您改過 index.html 裡的 SALT,這一頁的 SALT 也要改成一樣。<br><br>
     <b>建議的收成績流程</b><br>
     <b>貼上班級名單,沒交的人也會出現在表格裡</b>(紅底標「未回報」),不必再拿名單一個一個核對;
     名字打錯或不在名單的回報會另外列出來標「不在名單」,方便您回頭確認是誰。
