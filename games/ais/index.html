@@ -352,13 +352,11 @@ var CLSNAME = {A:'資產',L:'負債',C:'權益',R:'收益',E:'費損'};
    PASS_LINE  及格分數
    SALT       驗證碼的密語。改了以前發出的驗證碼就全部失效,
               而且 check.html 裡的 SALT 必須改成一模一樣。
-   TEACHER_EMAIL 留空的話,成績卡會讓學生自己填老師信箱。
    ==================================================== */
 /* 設定改在 config.js,不要改這裡 —— 這幾行只是 config.js 讀不到時的備援值 */
 var CFG = window.AIS_CONFIG || {};
 var PASS_LINE     = (CFG.PASS_LINE !== undefined) ? CFG.PASS_LINE : 60;
 var SALT          = CFG.SALT || 'ais-2026-tingyu';
-var TEACHER_EMAIL = CFG.TEACHER_EMAIL || '';
 /* 選填:老師的 Google 表單網址。填了之後成績總表會多一顆「開表單送出」。
    做法:表單建一題「成績回報碼」→ 取「取得預先填入的連結」→ 把該題填任意字再產生連結,
    然後把連結裡那個值換成 {{DATA}} 貼在這裡。學生按下去表單就已填好,只要送出。 */
@@ -493,10 +491,10 @@ function today(){ var d=new Date(); return d.getFullYear()+'/'+('0'+(d.getMonth(
 /* ==========================================================
    3. 狀態與儲存
    ========================================================== */
-var S={screen:'home', set:null, idx:0, ans:{}, checks:0, name:'', checked:false, cell:null, vs:0, first:null, last:null, sent:false, mail:''};
+var S={screen:'home', set:null, idx:0, ans:{}, checks:0, name:'', checked:false, cell:null, vs:0, first:null, last:null};
 function key(id){ return 'ais_v1_'+id; }
 function load(id){ try{ return JSON.parse(localStorage.getItem(key(id))) || null; }catch(e){ return null; } }
-function save(){ if(!S.set) return; try{ localStorage.setItem(key(S.set.id), JSON.stringify({ans:S.ans,checks:S.checks,name:S.name,vs:S.vs,first:S.first,last:S.last,sent:S.sent,mail:S.mail,date:S.date})); }catch(e){} }
+function save(){ if(!S.set) return; try{ localStorage.setItem(key(S.set.id), JSON.stringify({ans:S.ans,checks:S.checks,name:S.name,vs:S.vs,first:S.first,last:S.last,date:S.date})); }catch(e){} }
 
 function blankCard(){ return {dr:[{acct:'',amt:null}], cr:[{acct:'',amt:null}]}; }
 function ensure(no){
@@ -659,7 +657,7 @@ function openSet(id){
   S.vs=(st.vs!==undefined)? st.vs : null;                       // null = 還沒選過登錄方式
   if(S.vs===null && st.vmode!==undefined) S.vs = st.vmode?4:0;   // 舊版紀錄轉換
   S.first=(st.first===undefined)?null:st.first; S.last=(st.last===undefined)?null:st.last;
-  S.sent=!!st.sent; S.mail=st.mail||''; S.date=st.date||'';
+  S.date=st.date||'';
   if(S.vs===null){                                  // 第一次進來先問登錄方式
     S.vs = (s.voucher===3||s.voucher===4)? s.voucher : (s.voucher?4:0);
     askMode(function(){ startWork(s); });
@@ -1374,8 +1372,6 @@ function openSummary(){
       '<button class="btn" style="flex:1" id="rcopy">複製回報碼</button>'+
       (FORM_URL?'<button class="btn primary" style="flex:1" id="rform">開表單送出</button>':'')+
     '</div>'+
-    (TEACHER_EMAIL||S.mail?'<button class="btn wide" style="margin-top:8px" id="rmail">✉ 用郵件寄給老師</button>':
-      '<input class="srch" id="rtm" style="margin-top:8px" placeholder="老師的信箱(要用郵件寄才需要填)" value="'+esc(S.mail)+'">')+
     '<p class="small muted" style="margin-top:10px">整學期只要交這一行,不必每個題組各寄一次。回報碼綁定姓名、每一組的分數<b>與完成日期</b>,改任何一個數字老師都驗得出來,老師也查得到每一組是哪天完成的。</p>'+
     '</div>';
   sheet('我的成績總表', body, function(root){
@@ -1391,20 +1387,11 @@ function openSummary(){
     paint();
     root.addEventListener('input', function(e){
       if(e.target.id==='rn'){ S.rname=e.target.value; paint(); }
-      if(e.target.id==='rtm'){ S.mail=e.target.value; }
     });
     var c=root.querySelector('#rcopy'); if(c) c.onclick=function(){ copyText(paint()); };
     var f=root.querySelector('#rform');
     if(f) f.onclick=function(){ var l=paint(); if(!l){ toast('請先填姓名'); return; }
       w_open(FORM_URL.indexOf('{{DATA}}')>=0 ? FORM_URL.replace('{{DATA}}', encodeURIComponent(l)) : FORM_URL); };
-    var m=root.querySelector('#rmail');
-    if(m) m.onclick=function(){
-      var l=paint(), to=TEACHER_EMAIL||S.mail;
-      if(!l){ toast('請先填姓名'); return; }
-      if(!to){ toast('請先填老師的信箱'); return; }
-      w_open('mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent('【會計資訊系統】成績回報 - '+(S.rname||''))+
-             '&body='+encodeURIComponent('姓名:'+S.rname+'\n共 '+rows.length+' 組\n\n'+l));
-    };
   });
 }
 function scoreData(){
@@ -1445,34 +1432,18 @@ function openScore(){
    '</div>'+
    '<p class="small muted" style="margin-top:12px">截圖這張卡片傳給老師。驗證碼綁定姓名與分數,改任何一項老師都驗得出來。</p>'+
    '<div id="mailbox"><div class="hr"></div>'+
-     (TEACHER_EMAIL?'':'<input class="srch" id="tm" placeholder="老師的信箱(問老師)" value="'+esc(S.mail)+'">')+
-     (S.sent
-       ? '<div class="rep" style="text-align:center;padding:14px"><b>已經寄出過了</b><div class="small muted" style="margin-top:4px">每個題組只能寄一次。</div></div>'
-       : '<button class="btn primary wide" id="mailbtn">✉ 寄成績給老師(只能寄一次)</button>')+
-     '<div class="strbox"><div class="small muted">驗證串(寄信會自動附上,老師貼進驗證頁一次核對)</div><code id="vstr"></code></div>'+
+     '<div class="rep" style="padding:13px 15px"><b>要交成績給老師?</b>'+
+       '<div class="small muted" style="margin-top:5px">回首頁按「📋 我的成績總表」,那一行回報碼會涵蓋你做過的<b>所有</b>題組,交一次就好。</div></div>'+
+     '<div class="strbox" style="margin-top:10px"><div class="small muted">驗證串(老師若要單筆核對可複製這一行)</div><code id="vstr"></code></div>'+
    '</div>';
   sheet('成績卡', h, function(root){
     refreshScore(root);
     root.addEventListener('input', function(e){
       if(e.target.id==='nm'){ S.name=e.target.value; save(); refreshScore(root); }   // 只更新文字,不動輸入框
-      if(e.target.id==='tm'){ S.mail=e.target.value; save(); }
     });
-    var mb=root.querySelector('#mailbtn');
-    if(mb) mb.onclick=function(){
-      var X=scoreData(), to=TEACHER_EMAIL||S.mail;
-      if(!X.nm){ toast('請先填姓名'); return; }
-      if(!to){ toast('請先填老師的信箱'); return; }
-      if(!confirm('寄出後這個題組就不能再寄了。確定已經訂正完成?')) return;
-      var body=['姓名:'+X.nm,'題組:'+S.set.title+'('+S.set.id+')',
-                '正式成績(第一次對帳):'+S.first+' 分　'+(X.pass?'及格':'不及格'),
-                '訂正後成績:'+X.sc.pct+' 分('+X.sc.right+'/'+X.sc.total+' 題)',
-                '對帳次數:'+S.checks+' 次','完成日期:'+X.date,'驗證碼:'+X.code,'','驗證串:'+X.str].join('\n');
-      w_open('mailto:'+encodeURIComponent(to)+'?subject='+encodeURIComponent('【會計資訊系統】'+S.set.title+' 成績回報 - '+X.nm)+'&body='+encodeURIComponent(body));
-      S.sent=true; save(); openScore();
-    };
   });
 }
-function w_open(u){ try{ window.location.href=u; }catch(e){ toast('這台裝置沒有設定郵件 App'); } }
+function w_open(u){ try{ window.location.href=u; }catch(e){ toast('無法開啟連結'); } }
 
 /* ==========================================================
    13. 抽屜控制
