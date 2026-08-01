@@ -13,7 +13,7 @@ window.AIS_CONFIG = {
 
   /* 驗證碼密語 —— 上線前務必改成自己的字串(中英數皆可,不要外流)。
      改了以後,先前發出去的驗證碼會全部失效。 */
-  SALT: 'ais-2026-tingyu',
+  SALT: 'ais-2026-openfor75',
 
   /* 及格分數 */
   PASS_LINE: 60,
