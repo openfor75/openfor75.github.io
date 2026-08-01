@@ -25,12 +25,16 @@
 
 ```
 index.html        引擎(唯一的程式檔,純前端無框架無後端)
-accounts.js       會計項目庫(57 項)
+config.js         ★ 老師專用設定檔(SALT、及格分數、信箱、表單網址)
+                    更新系統時「不要覆蓋這一個」,設定就不會不見
+accounts.js       會計項目庫
 check.html        老師驗證頁
 sets/set01.js     宇宙商店　14902-109301
 sets/set02.js     世界商店　14902-109302
 sets/_template.js 題組範本(不會被載入)
 verify.js         題組驗證器(node 執行,網頁不需要)
+gmail-collect-reports.gs   選用:Google Apps Script,自動把學生的成績回報碼從 Gmail 收進試算表
+                           (同一份也內嵌在 check.html 的進階區,可直接按鈕複製)
 ```
 
 **新增題組** = 加一個 `sets/setXX.js` + 在 `index.html` 的「新增題組」區塊加一行 `<script>`。
@@ -38,13 +42,16 @@ verify.js         題組驗證器(node 執行,網頁不需要)
 ## 老師自行部署
 
 1. 把整個資料夾放進 GitHub Pages(或任何靜態空間)
-2. 打開 `index.html` 最上方,改三個設定:
+2. 打開 **`config.js`**(只需改這一個檔,`index.html` 與 `check.html` 都會讀它):
 
-| 常數 | 說明 |
+| 設定 | 說明 |
 |---|---|
+| `SALT` | 驗證碼密語,上線前務必改成自己的字串。改了以後舊驗證碼會全部失效 |
 | `PASS_LINE` | 及格分數,預設 60 |
-| `SALT` | 驗證碼密語。**改了 `check.html` 裡的 SALT 要改成一模一樣**,且舊驗證碼會失效 |
 | `TEACHER_EMAIL` | 留空則由學生自行填老師信箱 |
+| `FORM_URL` | 選填,Google 表單預填連結,值的位置寫 `{{DATA}}` |
+
+> 以後更新系統只換 `index.html`、`check.html`,**`config.js` 不要覆蓋**,設定就會一直在。
 
 3. 沒有其他步驟,不需要資料庫或後端
 
