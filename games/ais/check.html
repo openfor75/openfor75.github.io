@@ -49,14 +49,6 @@ textarea{min-height:78px;line-height:1.6;word-break:break-all}
 .res.ok .t{color:var(--green)} .res.ng .t{color:var(--red)}
 .rl{display:flex;justify-content:space-between;gap:10px;padding:3px 0;font-size:16px;text-align:left}
 .rl b{font-variant-numeric:tabular-nums}
-.adv{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:5px 6px 0 rgba(31,27,24,.10);
- padding:0;margin:14px 0;overflow:hidden}
-.adv summary{padding:15px 16px;font-size:16.5px;font-weight:900;cursor:pointer;list-style:none}
-.adv summary::-webkit-details-marker{display:none}
-.adv[open] summary{border-bottom:2.5px dashed #D8CFC4}
-.advbody{padding:0 16px 16px}
-#gscode{background:#1F1B18;color:#F3EDE2;border-radius:12px;padding:12px;font-size:11px;line-height:1.6;
- overflow:auto;max-height:300px;white-space:pre;font-family:ui-monospace,Menlo,Consolas,monospace}
 .note{font-size:14px;color:var(--ink2);line-height:1.75;border-top:2px dashed #D8CFC4;margin-top:20px;padding-top:14px}
 a{color:var(--ink)}
 </style>
@@ -81,157 +73,41 @@ a{color:var(--ink)}
   </div>
   <div id="bout"></div>
 
-  <details class="adv">
-    <summary>📥 進階(選用):用 Gmail 自動把回報碼收進試算表</summary>
-    <div class="advbody">
-      <p class="note" style="border:none;padding-top:0;margin-top:6px">
-        如果您是<b>請學生用郵件回報</b>,可以用這支 Google Apps Script 自動把信件裡的回報碼撈進試算表,
-        一位學生一列,重複寄不會重複列入,還能設定每天自動執行。<br>
-        <b>它只讀取您自己的信箱</b>,不是對外收集資料的伺服器。<br><br>
-        如果您改用 <b>Google 表單</b>讓學生送出,就完全不需要這一段——答案會直接進試算表。
-      </p>
-      <ol style="font-size:14.5px;line-height:1.9;padding-left:22px">
-        <li>開一個新的 Google 試算表</li>
-        <li>上方選單 <b>擴充功能 → Apps Script</b></li>
-        <li>把預設程式碼刪掉,貼上下面整段,存檔</li>
-        <li>選 <b>collectReports</b> 按「執行」,第一次會要求授權,按同意</li>
-        <li>(選用)左側「觸發條件」→ 新增 → collectReports → 時間驅動 → 日計時器</li>
-      </ol>
-      <button class="btn" id="gscopy" style="margin-top:0">複製整段程式碼</button>
-      <pre id="gscode">/**
- * 會計資訊系統 — 從 Gmail 自動收集學生的成績回報碼到試算表
- *
- * 這支腳本只讀「您自己的信箱」,不是對外收集學生資料的伺服器。
- *
- * ── 安裝(一次就好)──────────────────────────────────
- * 1. 開一個新的 Google 試算表
- * 2. 上方選單 擴充功能 → Apps Script
- * 3. 把預設的程式碼全部刪掉,貼上這一整份,存檔
- * 4. 上方選單選 collectReports,按「執行」。第一次會要求授權,按同意
- * 5. (選用)左側「觸發條件」→ 新增觸發條件 → collectReports → 時間驅動 →
- *    日計時器 → 每天跑一次,之後就完全自動
- *
- * ── 用法 ────────────────────────────────────────
- * 執行後,試算表會出現「回報碼」工作表,每位學生一列。
- * 把「回報碼」那一整欄複製,貼進老師驗證頁的「整班批次驗證」即可。
- * 同一個回報碼重複寄不會重複列入。
- * ────────────────────────────────────────────────
- */
-
-/* ===== 可以改的設定 ===== */
-var SEARCH_QUERY = &#x27;subject:(會計資訊系統) newer_than:180d&#x27;;  // 要撈哪些信
-var SHEET_NAME   = &#x27;回報碼&#x27;;                                  // 寫到哪個工作表
-var DONE_LABEL   = &#x27;成績已收&#x27;;                                // 處理過的信貼這個標籤
-/* ======================= */
-
-function collectReports() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sh = ss.getSheetByName(SHEET_NAME);
-  if (!sh) {
-    sh = ss.insertSheet(SHEET_NAME);
-    sh.appendRow([&#x27;收信時間&#x27;, &#x27;寄件者&#x27;, &#x27;信件主旨&#x27;, &#x27;姓名&#x27;, &#x27;組數&#x27;, &#x27;回報碼&#x27;]);
-    sh.setFrozenRows(1);
-  }
-
-  // 已經收過的回報碼,避免重複
-  var seen = {};
-  var last = sh.getLastRow();
-  if (last &gt; 1) {
-    sh.getRange(2, 6, last - 1, 1).getValues().forEach(function (r) {
-      if (r[0]) seen[String(r[0]).trim()] = true;
-    });
-  }
-
-  var label = GmailApp.getUserLabelByName(DONE_LABEL) || GmailApp.createLabel(DONE_LABEL);
-  var threads = GmailApp.search(SEARCH_QUERY + &#x27; -label:&quot;&#x27; + DONE_LABEL + &#x27;&quot;&#x27;, 0, 100);
-  var rows = [], found = 0;
-
-  threads.forEach(function (th) {
-    th.getMessages().forEach(function (msg) {
-      var body = msg.getPlainBody() || &#x27;&#x27;;
-      // 回報碼格式:V1|姓名|setXX:分數:分數:日期,…|日期|XXXX-XXXX
-      var hits = body.match(/V1\|[^|\r\n]+\|[^|\r\n]+\|[^|\r\n]+\|[0-9A-Z]{4}-[0-9A-Z]{4}/g);
-      if (!hits) return;
-      hits.forEach(function (code) {
-        code = code.trim();
-        if (seen[code]) return;
-        seen[code] = true;
-        found++;
-        var p = code.split(&#x27;|&#x27;);
-        var name = p[1];
-        var cnt = p[2].split(&#x27;,&#x27;).filter(String).length;
-        rows.push([msg.getDate(), msg.getFrom(), msg.getSubject(), name, cnt, code]);
-      });
-    });
-    th.addLabel(label);   // 標記處理過,下次不再掃
-  });
-
-  if (rows.length) {
-    sh.getRange(sh.getLastRow() + 1, 1, rows.length, 6).setValues(rows);
-    sh.autoResizeColumns(1, 5);
-  }
-
-  var msg = &#x27;掃描 &#x27; + threads.length + &#x27; 封信,新增 &#x27; + found + &#x27; 筆回報碼。&#x27;;
-  try { ss.toast(msg, &#x27;收集完成&#x27;, 6); } catch (e) {}
-  Logger.log(msg);
-}
-
-/**
- * 選用:把「回報碼」整欄複製到剪貼簿不方便時,用這個產生純文字清單,
- * 執行後在「執行紀錄」裡直接複製,貼進老師驗證頁。
- */
-function exportCodes() {
-  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
-  if (!sh || sh.getLastRow() &lt; 2) { Logger.log(&#x27;目前沒有資料&#x27;); return; }
-  var codes = sh.getRange(2, 6, sh.getLastRow() - 1, 1).getValues()
-                .map(function (r) { return String(r[0]).trim(); })
-                .filter(String);
-  Logger.log(codes.join(&#x27;\n&#x27;));
-}
-</pre>
-      <p class="note" style="border:none;padding-top:6px">
-        執行後試算表會出現「回報碼」工作表。把<b>回報碼那一整欄</b>複製,貼進本頁最上方的批次驗證即可。</p>
-    </div>
-  </details>
-
   <div class="card">
-    <label>方法一:貼上單一題組的驗證串(學生寄成績卡時會附)</label>
-    <textarea id="str" placeholder="王小明|demo|78|100|2026/07/25|AB12-CD34"></textarea>
-    <button class="btn primary" id="go1">驗證這一串</button>
+    <label>還沒有收成績的表單?領取一份現成的</label>
+    <p class="note" style="border:none;padding:0;margin:6px 0 12px">
+      建立副本之後,您會得到一份<b>已經設定好的 Google 表單與試算表</b>——
+      學生填表單送出、您在試算表按選單就能收集並產生成績表,不必自己建。<br>
+      <b>建立副本後請先做一件事:</b>擴充功能 → Apps Script,把最上面的
+      <code>SALT</code> 改成您自己 config.js 裡的同一串,再存檔。</p>
+    <a class="btn primary" id="tplbtn" target="_blank" rel="noopener"
+       href="https://docs.google.com/spreadsheets/d/1g0TkWv9ii_NbVphNcy2SECl7G9wKUdVPwy7R_LY3XGw/copy"
+       style="display:flex;align-items:center;justify-content:center;text-decoration:none">📄 領取表單與試算表範本</a>
   </div>
 
+
   <div class="card">
-    <label>方法二:照著截圖打(只有截圖時用)</label>
-    <label>姓名</label><input id="nm" autocomplete="off">
-    <label>題組代號</label><input id="sid" placeholder="例如 demo、set01" autocomplete="off">
-    <div class="two">
-      <div><label>正式成績</label><input id="f" inputmode="numeric"></div>
-      <div><label>訂正後成績</label><input id="l" inputmode="numeric"></div>
-    </div>
-    <label>完成日期</label><input id="dt" placeholder="2026/07/25">
-    <label>驗證碼</label><input id="cd" placeholder="AB12-CD34" autocomplete="off">
-    <button class="btn" id="go2">驗證</button>
+    <label>單筆驗證:貼上成績卡的驗證串</label>
+    <textarea id="str" placeholder="王小明|demo|78|100|2026/07/25|AB12-CD34"></textarea>
+    <button class="btn primary" id="go1">驗證這一串</button>
   </div>
 
   <div id="out"></div>
 
   <p class="note">
-    <b>這個驗證碼能證明什麼</b><br>
-    碼是由姓名、題組、兩個分數、日期一起算出來的。學生把同學的截圖拿來交、或是把分數修圖改掉,驗證碼都會對不上。<br><br>
-    <b>不能證明什麼</b><br>
-    它不能證明這份成績是學生自己做的。演算法寫在網頁裡,程度好的學生看得懂原始碼就能自己算出合法的碼。這是一張封條,不是保險箱。<br><br>
-    題組代號、日期要跟成績卡上一模一樣(日期含斜線)。SALT 統一寫在 <b>config.js</b>,兩邊會自動一致,不必分別修改。<br><br>
     <b>建議的收成績流程</b><br>
+    請學生用系統首頁的「我的成績總表」產生一行回報碼交給您。那一行涵蓋他所有做過的題組,
+    而且帶有<b>每一組的完成日期</b>(第一次對帳的當天),所以學生什麼時候交都沒關係。<br><br>
+    收到之後整批貼進上面的批次驗證,一按就得到含各組分數與平均的表格,可複製貼進 Excel。
+    100 位學生 30 組的情況下,這樣是 100 筆回報碼,而不是 3000 封信。<br><br>
     <b>貼上班級名單,沒交的人也會出現在表格裡</b>(紅底標「未回報」),不必再拿名單一個一個核對;
-    名字打錯或不在名單的回報會另外列出來標「不在名單」,方便您回頭確認是誰。
-    指派題組可以寫範圍,例如 <b>set01-set30</b>。<br><br>
-    請學生用系統首頁的「我的成績總表」產生一行回報碼。回報碼裡帶有<b>每一組的完成日期</b>(第一次對帳的當天),
-    所以<b>學生什麼時候交都沒關係</b>——只要在上面填「本次指派題組」與「截止日」,表格就會標出誰逾期、誰未交,
-    不必要求學生在期限內回報。<br><br>
-    請學生用系統首頁的「我的成績總表」產生一行回報碼,整學期只交一次(不必每個題組各交一次)。
-    收集方式可以是 Google 表單一題、班級 Line 群、或郵件;收到之後整欄複製貼進上面的批次驗證,
-    就會得到一張含各組分數與平均的表格,可一鍵複製到 Excel 登記成績。100 位學生 30 組的情況下,
-    這樣是 100 筆回報碼,而不是 3000 封信。
+    名字打錯或不在名單的回報會另外列出來標「不在名單」。指派題組可以寫範圍,例如 <b>set01-set30</b>;
+    填了截止日,表格就會標出誰逾期、誰未交。<br><br>
+    <b>關於驗證碼</b><br>
+    碼是由姓名、題組、分數與完成日期一起算出來的,學生改分數或拿同學的回報碼來交,都會顯示「對不上」。
+    但它不能證明成績是學生自己做的——演算法寫在網頁裡,看得懂原始碼的學生能自己算。這是一張封條,不是保險箱。<br><br>
+    SALT 統一寫在 <b>config.js</b>,系統與本頁會自動一致,不必分別修改;
+    若您領取了上方的試算表範本,記得把範本裡的 SALT 也改成同一串。
   </p>
   <p class="note"><b>會計資訊系統(手機版) v1.0</b><br>
     著作人:林亭妤(教會計的林ㄊㄩ)<br>
@@ -413,20 +289,7 @@ document.getElementById('gob').onclick=function(){
 document.getElementById('go1').onclick=function(){
   var p=document.getElementById('str').value.trim().split('|');
   if(p.length<6){ show(false,'驗證串格式不對,應該有 6 段',null); return; }
-  document.getElementById('nm').value=p[0]; document.getElementById('sid').value=p[1];
-  document.getElementById('f').value=p[2];  document.getElementById('l').value=p[3];
-  document.getElementById('dt').value=p[4]; document.getElementById('cd').value=p[5];
   check(p[0],p[1],p[2],p[3],p[4],p[5]);
-};
-var gsb=document.getElementById('gscopy');
-if(gsb) gsb.onclick=function(){
-  var t=document.getElementById('gscode').textContent;
-  try{ navigator.clipboard.writeText(t); this.textContent='已複製,去 Apps Script 貼上'; }
-  catch(e){ this.textContent='請長按下方程式碼自行複製'; }
-};
-document.getElementById('go2').onclick=function(){
-  var g=function(i){ return document.getElementById(i).value; };
-  check(g('nm'),g('sid'),g('f'),g('l'),g('dt'),g('cd'));
 };
 </script>
 </body>
