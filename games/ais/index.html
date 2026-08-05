@@ -175,6 +175,7 @@ button{cursor:pointer}
 .foot .fsub{font-size:12.5px;color:var(--ink3)}
 .foot .fsite{font-size:14px;font-weight:800;color:var(--ink2);margin-bottom:6px}
 .foot a{color:var(--ink3)}
+.sec2{font-size:14px;font-weight:900;color:var(--ink2);letter-spacing:.1em;margin:0 0 9px 2px}
 .scby{margin-top:13px;padding-top:10px;border-top:2px dashed #D8CFC4;font-size:12px;color:var(--ink2);line-height:1.7}
 .scby b{font-size:14px;color:var(--ink)}
 
@@ -491,10 +492,10 @@ function today(){ var d=new Date(); return d.getFullYear()+'/'+('0'+(d.getMonth(
 /* ==========================================================
    3. 狀態與儲存
    ========================================================== */
-var S={screen:'home', set:null, idx:0, ans:{}, checks:0, name:'', checked:false, cell:null, vs:0, first:null, last:null};
+var S={screen:'home', set:null, idx:0, ans:{}, checks:0, name:'', checked:false, cell:null, vs:0, first:null, last:null, rname:''};
 function key(id){ return 'ais_v1_'+id; }
 function load(id){ try{ return JSON.parse(localStorage.getItem(key(id))) || null; }catch(e){ return null; } }
-function save(){ if(!S.set) return; try{ localStorage.setItem(key(S.set.id), JSON.stringify({ans:S.ans,checks:S.checks,name:S.name,vs:S.vs,first:S.first,last:S.last,date:S.date})); }catch(e){} }
+function save(){ if(!S.set) return; try{ localStorage.setItem(key(S.set.id), JSON.stringify({ans:S.ans,checks:S.checks,name:S.rname,vs:S.vs,first:S.first,last:S.last,date:S.date})); }catch(e){} }
 
 function blankCard(){ return {dr:[{acct:'',amt:null}], cr:[{acct:'',amt:null}]}; }
 function ensure(no){
@@ -653,7 +654,8 @@ function openSet(id){
   S.set=s; buildChart(s);
   try{ localStorage.setItem('ais_last', id); }catch(e){}
   var st=load(id)||{};
-  S.ans=st.ans||{}; S.checks=st.checks||0; S.name=st.name||''; S.checked=false; S.idx=0;
+  S.ans=st.ans||{}; S.checks=st.checks||0; S.checked=false; S.idx=0;
+  if(S.rname===undefined||S.rname==='') { try{ S.rname=localStorage.getItem('ais_name')||st.name||''; }catch(e){ S.rname=st.name||''; } }
   S.vs=(st.vs!==undefined)? st.vs : null;                       // null = 還沒選過登錄方式
   if(S.vs===null && st.vmode!==undefined) S.vs = st.vmode?4:0;   // 舊版紀錄轉換
   S.first=(st.first===undefined)?null:st.first; S.last=(st.last===undefined)?null:st.last;
@@ -1344,10 +1346,11 @@ function openSummary(){
       '<div class="small muted" style="margin-top:6px">完成一個題組並按過「對帳」之後,成績才會出現在這裡。</div></div>', null);
     return;
   }
-  var nm=(S.rname||rows.filter(function(r){return r.name;}).map(function(r){return r.name;}).pop()||'').replace(/[|｜\s]/g,'');
+  var nm=idName();
   var date=today();
   var line = nm ? reportOf(nm, rows, date) : '';
-  var body='<input class="srch" id="rn" placeholder="輸入你的姓名(回報碼會綁定姓名)" value="'+esc(S.rname||nm)+'">'+
+  var body='<input class="srch" id="rn" placeholder="輸入學號(老師若要求姓名再填姓名)" value="'+esc(S.rname||nm)+'">'+
+    '<p class="small muted" style="margin:-4px 0 10px 2px">請照老師規定填,<b>每次都要填一樣的</b>,老師才對得起來。</p>'+
     '<div class="rep"><h3>我的成績總表</h3><div class="sub" id="rnm">'+(nm?esc(nm):'請先填姓名')+'　·　'+esc(date)+'</div>'+
     '<div class="rl" style="font-weight:900"><span class="n">題組</span>'+
       '<span class="v" style="width:78px;text-align:right">完成日</span>'+
@@ -1367,7 +1370,7 @@ function openSummary(){
     '<span class="v" style="width:52px;text-align:right">'+Math.round(sum/rows.length)+'</span>'+
     '<span class="v" style="width:52px"></span></div></div>';
   body+='<div id="rbox">'+
-    '<div class="strbox"><div class="small muted">成績回報碼(一次涵蓋全部題組,交這一行就好)</div><code id="rline"></code></div>'+
+    '<div class="strbox"><div class="small muted"><b>成績回報碼</b> —— 交給老師的就是這一行(V1 開頭)</div><code id="rline"></code></div>'+
     '<div style="display:flex;gap:8px;margin-top:10px">'+
       '<button class="btn" style="flex:1" id="rcopy">複製回報碼</button>'+
       (FORM_URL?'<button class="btn primary" style="flex:1" id="rform">開表單送出</button>':'')+
@@ -1376,17 +1379,16 @@ function openSummary(){
     '</div>';
   sheet('我的成績總表', body, function(root){
     var paint=function(){
-      var v=(S.rname||'').replace(/[|｜\s]/g,''), dt=today();
+      var v=idName(), dt=today();
       var l=v?reportOf(v,rows,dt):'';
       root.querySelector('#rnm').textContent=(v||'請先填姓名')+'　·　'+dt;
       root.querySelector('#rline').textContent=l;
       root.querySelector('#rbox').style.display=v?'':'none';
       return l;
     };
-    if(S.rname===undefined) S.rname=nm;
     paint();
     root.addEventListener('input', function(e){
-      if(e.target.id==='rn'){ S.rname=e.target.value; paint(); }
+      if(e.target.id==='rn'){ setIdName(e.target.value); paint(); }
     });
     var c=root.querySelector('#rcopy'); if(c) c.onclick=function(){ copyText(paint()); };
     var f=root.querySelector('#rform');
@@ -1395,27 +1397,36 @@ function openSummary(){
   });
 }
 function scoreData(){
-  var sc=scoreNow(), nm=(S.name||'').replace(/[|｜\s]/g,''), date=S.date||today();
-  var code = nm ? sig(nm,S.set.id,S.first,sc.pct,date) : '';
-  return { sc:sc, nm:nm, date:date, code:code, pass:(S.first>=PASS_LINE),
-           str: nm ? [nm,S.set.id,S.first,sc.pct,date,code].join('|') : '' };
+  var sc=scoreNow(), nm=idName(), date=S.date||today();
+  return { sc:sc, nm:nm, date:date, pass:(S.first>=PASS_LINE) };
 }
+/* 全系統共用同一個身分欄:成績卡與成績總表填的是同一個 */
+function idName(){ return (S.rname||'').replace(/[|｜\s]/g,''); }
+function setIdName(v){ S.rname=v; try{ localStorage.setItem('ais_name', v); }catch(e){} save(); }
+
 function refreshScore(root){
-  var D=scoreData();
-  root.querySelector('#scn').textContent = D.nm || '請先填姓名';
-  root.querySelector('#vcode').textContent = D.code || '—';
-  root.querySelector('#vcbox').style.display = D.code ? '' : 'none';
-  root.querySelector('#vstr').textContent = D.str;
-  root.querySelector('#mailbox').style.display = D.nm ? '' : 'none';
+  var D=scoreData(), nm=D.nm;
+  root.querySelector('#scn').textContent = nm || '請先填學號';
+  var rows=allResults();
+  var line = nm && rows.length ? reportOf(nm, rows, today()) : '';
+  root.querySelector('#rline2').textContent = line;
+  root.querySelector('#turnin').style.display = line ? '' : 'none';
+  root.querySelector('#nsets').textContent = rows.length;
+  var msg=root.querySelector('#needname');
+  msg.style.display = line ? 'none' : '';
+  msg.innerHTML = !rows.length
+    ? '<span class="muted">這是示範題組,不列入成績回報。<br>做正式題組並對帳之後,這裡就會出現要交給老師的回報碼。</span>'
+    : '<span class="muted">填上學號,下面就會出現要交給老師的成績回報碼。</span>';
 }
 function openScore(){
   if(S.first===null){
     sheet('成績卡','<div class="rep" style="text-align:center;padding:22px"><b>還沒有成績</b>'+
-      '<div class="small muted" style="margin-top:6px">先在報表頁按一次「對帳」,系統才會鎖定正式成績並發驗證碼。</div></div>', null);
+      '<div class="small muted" style="margin-top:6px">先在報表頁按一次「對帳」,系統才會鎖定正式成績。</div></div>', null);
     return;
   }
   var D=scoreData();
-  var h='<input class="srch" id="nm" placeholder="輸入你的姓名(驗證碼會綁定姓名)" value="'+esc(S.name)+'">'+
+  var h='<input class="srch" id="nm" placeholder="輸入學號(老師若要求姓名再填姓名)" value="'+esc(S.rname||'')+'">'+
+   '<p class="small muted" style="margin:-4px 0 10px 2px">請照老師規定填,<b>每次都要填一樣的</b>,老師才對得起來。</p>'+
    '<div class="card-score" id="sc">'+
      '<div class="small muted">'+esc(S.set.title)+'　'+esc(S.set.examNo||'')+'</div>'+
      '<div class="big" id="scn"></div>'+
@@ -1425,22 +1436,31 @@ function openScore(){
      '<div class="rl" style="justify-content:center;gap:16px;font-size:15px">'+
        '<span>訂正後 <b>'+D.sc.pct+' 分</b></span><span class="muted">對帳 '+S.checks+' 次</span></div>'+
      '<div class="small muted" style="margin-top:2px">'+D.sc.right+' / '+D.sc.total+' 題正確　·　'+esc(D.date)+'</div>'+
-     '<div class="vcode" id="vcbox"><div class="small">驗證碼</div><div class="cd" id="vcode"></div></div>'+
      '<div class="scby">'+esc(APP.name)+'(手機版)　·　<b>'+esc(APP.author)+'</b>'+
        '<br>著作人 '+esc(APP.owner)+'　·　'+esc(APP.pubDate)+'　'+esc(APP.pubPlace)+
        (APP.site?'<br>'+esc(APP.site):'')+'</div>'+
    '</div>'+
-   '<p class="small muted" style="margin-top:12px">截圖這張卡片傳給老師。驗證碼綁定姓名與分數,改任何一項老師都驗得出來。</p>'+
-   '<div id="mailbox"><div class="hr"></div>'+
-     '<div class="rep" style="padding:13px 15px"><b>要交成績給老師?</b>'+
-       '<div class="small muted" style="margin-top:5px">回首頁按「📋 我的成績總表」,那一行回報碼會涵蓋你做過的<b>所有</b>題組,交一次就好。</div></div>'+
-     '<div class="strbox" style="margin-top:10px"><div class="small muted">驗證串(老師若要單筆核對可複製這一行)</div><code id="vstr"></code></div>'+
+   '<div id="needname" class="rep" style="padding:14px 15px;text-align:center;margin-top:12px">'+
+     '<span class="muted">填上學號,下面就會出現要交給老師的成績回報碼。</span></div>'+
+   '<div id="turnin"><div class="hr"></div>'+
+     '<div class="sec2">交給老師</div>'+
+     '<div class="strbox"><div class="small muted">成績回報碼 —— 已包含你做過的 <b id="nsets">0</b> 個題組</div>'+
+       '<code id="rline2"></code></div>'+
+     '<button class="btn primary wide" id="copy2" style="margin-top:10px">📋 複製成績回報碼</button>'+
+     '<p class="small muted" style="margin-top:9px">複製後貼到老師給的表單送出就好。'+
+     '每做完一組回來複製一次,交最新的那一次即可,不必保留舊的。</p>'+
    '</div>';
   sheet('成績卡', h, function(root){
     refreshScore(root);
     root.addEventListener('input', function(e){
-      if(e.target.id==='nm'){ S.name=e.target.value; save(); refreshScore(root); }   // 只更新文字,不動輸入框
+      if(e.target.id==='nm'){ setIdName(e.target.value); refreshScore(root); }
     });
+    var c=root.querySelector('#copy2');
+    if(c) c.onclick=function(){
+      var nm=idName();
+      if(!nm){ toast('請先填學號'); return; }
+      copyText(reportOf(nm, allResults(), today()));
+    };
   });
 }
 function w_open(u){ try{ window.location.href=u; }catch(e){ toast('無法開啟連結'); } }
