@@ -1375,7 +1375,8 @@ function openSummary(){
       '<button class="btn" style="flex:1" id="rcopy">複製回報碼</button>'+
       (FORM_URL?'<button class="btn primary" style="flex:1" id="rform">開表單送出</button>':'')+
     '</div>'+
-    '<p class="small muted" style="margin-top:10px">整學期只要交這一行,不必每個題組各寄一次。回報碼綁定姓名、每一組的分數<b>與完成日期</b>,改任何一個數字老師都驗得出來,老師也查得到每一組是哪天完成的。</p>'+
+    '<p class="small muted" style="margin-top:10px">交這一行給老師就好。回報碼綁定姓名、每一組的分數與完成日期,改任何一個數字老師都驗得出來。'+
+    '<br><b>換裝置也沒關係</b>——老師那邊會把你每一次交的成績合併起來。</p>'+
     '</div>';
   sheet('我的成績總表', body, function(root){
     var paint=function(){
@@ -1448,7 +1449,7 @@ function openScore(){
        '<code id="rline2"></code></div>'+
      '<button class="btn primary wide" id="copy2" style="margin-top:10px">📋 複製成績回報碼</button>'+
      '<p class="small muted" style="margin-top:9px">複製後貼到老師給的表單送出就好。'+
-     '每做完一組回來複製一次,交最新的那一次即可,不必保留舊的。</p>'+
+     '每做完一組回來複製一次交出去,老師那邊會自動合併,<b>換手機或換電腦交也不會漏</b>。</p>'+
    '</div>';
   sheet('成績卡', h, function(root){
     refreshScore(root);
