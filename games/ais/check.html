@@ -86,14 +86,6 @@ a{color:var(--ink)}
   </div>
 
 
-  <div class="card">
-    <label>單筆驗證:貼上成績卡的驗證串</label>
-    <textarea id="str" placeholder="王小明|demo|78|100|2026/07/25|AB12-CD34"></textarea>
-    <button class="btn primary" id="go1">驗證這一串</button>
-  </div>
-
-  <div id="out"></div>
-
   <p class="note">
     <b>建議的收成績流程</b><br>
     請學生用系統首頁的「我的成績總表」產生一行回報碼交給您。那一行涵蓋他所有做過的題組,
@@ -122,38 +114,6 @@ var SALT      = CFG.SALT || 'ais-2026-tingyu';
 var PASS_LINE = (CFG.PASS_LINE !== undefined) ? CFG.PASS_LINE : 60;
 
 function h32(str,seed){ var h=seed>>>0; for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h>>>0; }
-function sig(name,setId,first,last,date){
-  var raw=[name,setId,first,last,date,SALT].join('|');
-  var A='0123456789ABCDEFGHJKMNPQRSTVWXYZ', out='', n;
-  n=h32(raw,2166136261); for(var i=0;i<4;i++){ out+=A.charAt(n%32); n=Math.floor(n/32); }
-  out+='-';
-  n=h32(SALT+'#'+raw,987654321); for(var j=0;j<4;j++){ out+=A.charAt(n%32); n=Math.floor(n/32); }
-  return out;
-}
-function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
-
-function show(ok,msg,d){
-  var h='<div class="res '+(ok?'ok':'ng')+'"><div class="t">'+msg+'</div>';
-  if(d){
-    h+='<div style="margin-top:12px">'+
-       '<div class="rl"><span>姓名</span><b>'+esc(d.name)+'</b></div>'+
-       '<div class="rl"><span>題組</span><b>'+esc(d.sid)+'</b></div>'+
-       '<div class="rl"><span>正式成績</span><b>'+esc(d.first)+' 分　'+(Number(d.first)>=PASS_LINE?'及格':'不及格')+'</b></div>'+
-       '<div class="rl"><span>訂正後</span><b>'+esc(d.last)+' 分</b></div>'+
-       '<div class="rl"><span>完成日期</span><b>'+esc(d.date)+'</b></div></div>';
-  }
-  document.getElementById('out').innerHTML=h+'</div>';
-  try{ document.getElementById('out').scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){}
-}
-function check(name,sid,first,last,date,code){
-  name=(name||'').replace(/[|｜\s]/g,''); sid=(sid||'').trim(); date=(date||'').trim();
-  code=(code||'').trim().toUpperCase();
-  if(!name||!sid||first===''||last===''||!date||!code){ show(false,'欄位沒填齊',null); return; }
-  var want=sig(name,sid,String(first).trim(),String(last).trim(),date);
-  var d={name:name,sid:sid,first:String(first).trim(),last:String(last).trim(),date:date};
-  if(want===code) show(true,'✅ 驗證通過',d);
-  else show(false,'❌ 對不上,這張卡被改過或不是這個人的',d);
-}
 function sigBatch(name, field, date){
   var raw=['V1',name,field,date,SALT].join('|');
   var A='0123456789ABCDEFGHJKMNPQRSTVWXYZ', out='', k;
@@ -162,6 +122,8 @@ function sigBatch(name, field, date){
   k=h32(SALT+'#B#'+raw,987654321); for(var j=0;j<4;j++){ out+=A.charAt(k%32); k=Math.floor(k/32); }
   return out;
 }
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+
 var BT=null;
 document.getElementById('gob').onclick=function(){
   var raw=document.getElementById('batch').value.split(/\r?\n/);
@@ -283,11 +245,6 @@ document.getElementById('gob').onclick=function(){
     catch(e){ this.textContent='請改用電腦操作複製'; }
   };
   try{ document.getElementById('bout').scrollIntoView({behavior:'smooth',block:'nearest'}); }catch(e){}
-};
-document.getElementById('go1').onclick=function(){
-  var p=document.getElementById('str').value.trim().split('|');
-  if(p.length<6){ show(false,'驗證串格式不對,應該有 6 段',null); return; }
-  check(p[0],p[1],p[2],p[3],p[4],p[5]);
 };
 </script>
 </body>
