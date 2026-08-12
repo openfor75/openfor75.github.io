@@ -60,6 +60,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 .small{font-size:.88rem;color:var(--sub);line-height:1.9}
 .miss{background:#FBE8EC}
 .extra{background:#FBEFDC}
+.halfmark{color:var(--warn)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -69,7 +70,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 
   <div class="card">
     <h2>① 批次驗證回報碼、產生成績表</h2>
-    <p class="small" style="margin-top:0">學生每評完一個題組就會產一行回報碼。把收到的每一行都貼進來（一行一筆，同一位學生會自動合併成一列）。</p>
+    <p class="small" style="margin-top:0">標「<b style="color:var(--warn)">半</b>」表示學生只做完題組中的一題（分數已由 50 分制換算為 100 分制）。學生每評完一個題組就會產一行回報碼。把收到的每一行都貼進來（一行一筆，同一位學生會自動合併成一列）。</p>
     <label>學生回報碼（一行一筆，同一人可以有多行）</label>
     <textarea id="batch" placeholder="G1|商二乙|15|王小明|g01:88:20260811|20260811|ABCD-1234&#10;G1|商二乙|15|王小明|g03:95:20260918|20260918|EFGH-5678"></textarea>
     <div class="row" style="margin-top:12px">
@@ -159,7 +160,9 @@ function parseLine(ln){
   const sets={};
   field.split(',').forEach(x=>{
     const q=x.split(':');
-    if(q.length>=3)sets[q[0]]={s:+q[1],d:q[2]||'',t:+(q[3]||1)};
+    if(q.length<3)return;
+    const half=/^h/.test(q[0]);
+    sets['g'+q[0].slice(1)]={s:+q[1],d:q[2]||'',t:+(q[3]||1),half};
   });
   return{cls,no,name,date,sets,ok,cnt:Object.keys(sets).length};
 }
@@ -193,8 +196,8 @@ $('go').onclick=()=>{
     for(const g of Object.keys(r.sets)){
       ids[g]=1;
       const v=r.sets[g],cur=P.sets[g];
-      if(!cur){P.sets[g]={s:v.s,d:v.d,t:1};}
-      else{cur.t++;if(v.s>cur.s){cur.s=v.s;cur.d=v.d;}}
+      if(!cur){P.sets[g]={s:v.s,d:v.d,t:1,half:v.half};}
+      else{cur.t++;if(v.s>cur.s){cur.s=v.s;cur.d=v.d;cur.half=v.half;}}
     }
   }
   const cols=asg.length?asg:Object.keys(ids).sort();
@@ -240,8 +243,8 @@ $('go').onclick=()=>{
       if(!v){cells.push('<td style="color:var(--bad)">未交</td>');tc.push('未交');missing++;continue;}
       const isLate=due&&v.d&&v.d>due;if(isLate)late++;
       cells.push(`<td class="n"${isLate?' style="color:var(--bad);font-weight:bold"':''}>${v.s}`+
-        `<br><span class="small">${v.d?v.d.slice(4,6)+'/'+v.d.slice(6,8):''}${isLate?' 逾期':''}${v.t>1?'　交'+v.t+'次':''}</span></td>`);
-      tc.push(v.s+(isLate?'(逾期)':''));
+        `<br><span class="small">${v.d?v.d.slice(4,6)+'/'+v.d.slice(6,8):''}${v.half?' <b class="halfmark">半</b>':''}${isLate?' 逾期':''}${v.t>1?'　交'+v.t+'次':''}</span></td>`);
+      tc.push(v.s+(v.half?'(半)':'')+(isLate?'(逾期)':''));
     }
     const got=cols.map(c=>p.sets[c]?p.sets[c].s:null).filter(v=>v!==null);
     const avg=got.length?Math.round(got.reduce((a,b)=>a+b,0)/got.length):'';
