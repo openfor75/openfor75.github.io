@@ -1150,23 +1150,47 @@ window.AIS_ANSWERS = {"meta":{"version":"2026-08-11","source":"官方PDF(文中�
     }
     return s;
   }
+  /* 分錄／傳票配對
+     舊版把「日期相同」也算進相似度，導致答案中某一筆在學生端根本沒寫時，
+     仍會靠同一天硬配上不相干的分錄，之後整串錯位、對的也被判錯。
+     現改為：①內容相似度必須達門檻才算同一筆（日期只當加分、不足以成立配對）
+             ②全域最佳優先配對，不依答案順序貪心
+             ③剩下的同日期分錄才依序配成「錯誤」（維持每筆 3 分，不會變成少列+多列雙重扣分） */
+  function contentSim(M, a, b) { return entrySim(M, a, b) - (a.date === b.date ? 2 : 0); }
+  function pairEntries(stuEntries, ansEntries, M) {
+    const pair = new Array(ansEntries.length).fill(-1);
+    const usedStu = new Set();
+    const MIN_CONTENT = 2;   // 至少要有一個會計項目對得上（名稱＋金額 或 名稱＋借貸方）
+    const cands = [];
+    ansEntries.forEach((ae, ai) => stuEntries.forEach((se, si) => {
+      const cs = contentSim(M, ae, se);
+      if (cs >= MIN_CONTENT) cands.push({ ai, si, score: cs * 10 + (ae.date === se.date ? 2 : 0) });
+    }));
+    cands.sort((x, y) => y.score - x.score || x.ai - y.ai || x.si - y.si);
+    for (const c of cands) {
+      if (pair[c.ai] < 0 && !usedStu.has(c.si)) { pair[c.ai] = c.si; usedStu.add(c.si); }
+    }
+    // 同日期的殘餘：學生確實寫了一筆但整筆內容都不對，仍算「錯誤」而非少列
+    ansEntries.forEach((ae, ai) => {
+      if (pair[ai] >= 0) return;
+      for (let si = 0; si < stuEntries.length; si++) {
+        if (usedStu.has(si)) continue;
+        if (stuEntries[si].date === ae.date) { pair[ai] = si; usedStu.add(si); break; }
+      }
+    });
+    return { pair, usedStu };
+  }
+
   function gradeEntries(stuEntries, ansEntries, M, ded, part, period, unitLabel) {
     const marks = [];
-    const usedStu = new Set();
+    const { pair, usedStu } = pairEntries(stuEntries, ansEntries, M);
     ansEntries.forEach((ae, ai) => {
-      let best = -1, bestScore = -1;
-      stuEntries.forEach((se, si) => {
-        if (usedStu.has(si)) return;
-        const sc = entrySim(M, ae, se);
-        if (sc > bestScore) { bestScore = sc; best = si; }
-      });
-      const minScore = 2; // 至少要有一點相似度才視為同一筆
-      if (best < 0 || bestScore < minScore) {
+      const best = pair[ai];
+      if (best < 0) {
         ded.push({ part, rule: unitLabel + '少列', pts: 3, detail: `${ae.date} 第${ai + 1}筆` });
         marks.push({ status: 'missing', ans: ae });
         return;
       }
-      usedStu.add(best);
       const se = stuEntries[best];
       const problems = [];
       if (se.date !== ae.date) problems.push(`日期 ${se.date} 應為 ${ae.date}`);
@@ -1197,7 +1221,7 @@ window.AIS_ANSWERS = {"meta":{"version":"2026-08-11","source":"官方PDF(文中�
       ded.push({ part, rule: unitLabel + '多列', pts: inside ? 3 : 5, detail: `${se.date || ''}（${inside ? '日期範圍內' : '日期範圍外'}）` });
       marks.push({ status: 'extra', stu: se, stuIdx: si });
     });
-    // 日期順序
+    // 日期順序（僅就配對成功者判斷，缺漏不影響其餘分錄的順序認定）
     const matched = marks.filter(m => m.stuIdx != null && m.status !== 'extra');
     const seq = matched.map(m => m.stuIdx);
     const lis = new Set(longestIncreasing(seq));
@@ -1433,7 +1457,7 @@ window.AIS_ANSWERS = {"meta":{"version":"2026-08-11","source":"官方PDF(文中�
     return code.slice(0, 8).padStart(8, '0');
   }
 
-  window.AISCore = { parseFile, gradeGroup, verifyCode, normName, parseAmount, fmtN, PART_LABEL, CAPS, SALT };
+  window.AISCore = { parseFile, gradeGroup, verifyCode, normName, parseAmount, fmtN, PART_LABEL, CAPS, SALT, __gradeEntries: gradeEntries, __entryEqual: entryEqual };
 })();
 
 </script>
