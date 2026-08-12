@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  會計資訊丙級術科 自動評分系統 — 老師工具頁 v1.1
+  著作人：林亭妤（別名：教會計的林ㄊㄩ）
+  Copyright (c) 2026 林亭妤（教會計的林ㄊㄩ）
+  授權：CC BY-NC-SA 4.0
+  ★ 此頁請勿與評分系統一起公開上架，留在自己電腦或私人資料夾使用。
+  ============================================================
+-->
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>老師工具｜會計資訊丙級術科 自動評分系統</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#FCF1E4; --card:#FFFBF5; --line:#E7D2B8; --line2:#F0E2CF;
+  --ink:#3E2B20; --sub:#8E7360;
+  --accent:#A9714B; --accent2:#6E4530; --accent-soft:#F4E3D0;
+  --ok:#5C8C46; --bad:#C4566B; --warn:#C4802E;
+  --font:"Huninn","jf openhuninn","Yuanti TC","圓體-繁","Microsoft JhengHei","微軟正黑體","PingFang TC","Noto Sans TC",sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:16.5px;line-height:1.7}
+header{background:linear-gradient(135deg,#B07C55,#8A5A3A);color:#FFF6EA;padding:16px 22px 20px;position:relative}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:18px;
+  background-image:radial-gradient(circle at 9px 9px,#4A3226 6.5px,transparent 7px);
+  background-size:26px 18px;background-repeat:repeat-x}
+header h1{margin:0;font-size:1.3rem}
+.wrap{max-width:1080px;margin:0 auto;padding:26px 16px 16px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:20px 22px;margin-bottom:16px;
+  box-shadow:0 2px 0 var(--line2)}
+.card h2{margin:0 0 12px;font-size:1.18rem;color:var(--accent2)}
+label{font-size:.95rem;color:var(--sub);display:block;margin-bottom:5px}
+input,textarea,select{font:inherit;font-size:1rem;padding:11px 13px;border:2px solid var(--line);
+  border-radius:12px;background:#fff;width:100%;color:var(--ink)}
+input:focus,textarea:focus,select:focus{outline:3px solid var(--accent-soft);border-color:var(--accent)}
+textarea{min-height:100px;font-family:Consolas,"Courier New",monospace;font-size:.92rem;word-break:break-all}
+button{font:inherit;font-size:1.08rem;font-weight:bold;padding:12px 26px;min-height:48px;border:none;
+  border-radius:26px;background:var(--accent);color:#FFF8F0;cursor:pointer;white-space:nowrap;box-shadow:0 3px 0 var(--accent2);transition:.12s}
+button:hover{filter:brightness(1.06)}
+button:active{transform:translateY(3px);box-shadow:0 0 0 var(--accent2)}
+button.sec{background:var(--accent-soft);color:var(--accent2);box-shadow:0 3px 0 var(--line)}
+button:focus-visible{outline:3px solid var(--accent2);outline-offset:2px}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.row>div{flex:1;min-width:160px}
+.row>div:has(>button){flex:0 0 auto;min-width:0}
+table{border-collapse:collapse;width:100%;font-size:.93rem;margin-top:10px}
+th,td{border:1px solid var(--line);padding:7px 10px;text-align:left}
+th{background:var(--accent-soft);color:var(--accent2)}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.res{padding:16px;border-radius:16px;font-weight:bold;text-align:center;margin-top:14px;font-size:1.05rem}
+.res.ok{background:#E9F2E2;color:var(--ok)}
+.res.bad{background:#FBE8EC;color:var(--bad)}
+.small{font-size:.88rem;color:var(--sub);line-height:1.9}
+.miss{background:#FBE8EC}
+.extra{background:#FBEFDC}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header><h1>老師工具｜會計資訊丙級術科　自動評分系統</h1></header>
+<div class="wrap">
+
+  <div class="card">
+    <h2>① 批次驗證回報碼、產生成績表</h2>
+    <p class="small" style="margin-top:0">學生每評完一個題組就會產一行回報碼。把收到的每一行都貼進來（一行一筆，同一位學生會自動合併成一列）。</p>
+    <label>學生回報碼（一行一筆，同一人可以有多行）</label>
+    <textarea id="batch" placeholder="G1|商二乙|15|王小明|g01:88:20260811|20260811|ABCD-1234&#10;G1|商二乙|15|王小明|g03:95:20260918|20260918|EFGH-5678"></textarea>
+    <div class="row" style="margin-top:12px">
+      <div><label>班級名單（一行一位姓名，留空＝只列有回報的人）</label>
+        <textarea id="roster" style="min-height:70px;font-family:inherit;font-size:.9rem" placeholder="王小明&#10;李小華"></textarea></div>
+      <div><label>本次指派題組（可寫 1-15 或 1,3,5）</label><input id="asg" placeholder="1-5">
+        <label style="margin-top:10px">截止日（西元 20260920，留空＝不檢查）</label><input id="due" placeholder="20260920"></div>
+    </div>
+    <div class="row" style="margin-top:12px"><div><button id="go">驗證並整理成表格</button></div></div>
+    <div id="bout"></div>
+  </div>
+
+  <div class="card">
+    <h2>② 單張成績卡查核</h2>
+    <p class="small" style="margin-top:0">學生繳交截圖或列印成績單時，用這裡核對成績卡上的 8 碼驗證碼。</p>
+    <div class="row">
+      <div><label>姓名（須與成績卡完全相同）</label><input id="cName"></div>
+      <div><label>題組</label><select id="cGrp"></select></div>
+      <div><label>分數</label><input id="cScore" type="number" min="0" max="100"></div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <div><label>評分日期（民國，例 115-08-11）</label><input id="cDate" placeholder="115-08-11"></div>
+      <div><label>驗證碼</label><input id="cCode" style="font-family:Consolas,monospace;letter-spacing:2px"></div>
+      <div style="flex:0"><button id="cGo">查核</button></div>
+    </div>
+    <div id="cOut"></div>
+  </div>
+
+  <div class="card">
+    <h2>關於驗證碼的效力</h2>
+    <p class="small" style="margin-top:0">
+      驗證碼是由「姓名＋題組＋分數＋日期」一起算出來的，學生自己改分數、或拿同學的碼來交，都會顯示對不上。
+      但它<b>不能證明成績是學生自己做出來的</b>——演算法就寫在網頁原始碼裡，看得懂的學生可以自己算。
+      它是一張封條，不是保險箱；真正要把關，還是得看平時上機的過程。
+    </p>
+    <p class="small">© 2026 林亭妤（教會計的林ㄊㄩ）· CC BY-NC-SA 4.0 · 此頁請勿公開上架。</p>
+  </div>
+</div>
+
+<script>
+/* ★ 設定：兩組金鑰必須與 grader.html 上方「老師設定區」的 SALT／RSALT 完全一致。
+   三處（grader.html、本頁、collect-grades.gs 的試算表「設定」工作表）要一起改，
+   改完所有已發出的舊驗證碼與回報碼都會失效。 */
+const SALT ='AISG-2026-tingyu';       // 成績卡 8 碼驗證碼
+const RSALT='AISG-RPT-2026-tingyu';   // 成績總表回報碼
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---- 成績卡驗證碼 ---- */
+function normName(s){return String(s||'').trim().replace(/[\s　]+/g,'');}
+function verifyCode(name,groupNo,score,dateStr){
+  const s=`${SALT}|${normName(name)}|${groupNo}|${score}|${dateStr}`;
+  let h1=0x811c9dc5,h2=0x1000193;
+  for(let i=0;i<s.length;i++){
+    h1=(h1^s.charCodeAt(i))>>>0;h1=Math.imul(h1,0x01000193)>>>0;
+    h2=(Math.imul(h2,31)+s.charCodeAt(i))>>>0;
+  }
+  return (h1.toString(36)+h2.toString(36)).toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8).padStart(8,'0');
+}
+for(let i=1;i<=15;i++){const o=document.createElement('option');o.value=i;o.textContent='題組'+i;$('cGrp').appendChild(o);}
+$('cGo').onclick=()=>{
+  const exp=verifyCode($('cName').value,+$('cGrp').value,+$('cScore').value,$('cDate').value.trim());
+  const got=$('cCode').value.trim().toUpperCase();
+  $('cOut').innerHTML=exp===got
+    ?'<div class="res ok">✔ 驗證通過，成績為系統核發</div>'
+    :'<div class="res bad">✘ 驗證失敗——姓名／題組／分數／日期／驗證碼至少有一項不符</div>';
+};
+
+/* ---- 回報碼 ---- */
+function h32(str,seed){let h=seed>>>0;for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}return h>>>0;}
+function sigBatch(cls,no,name,field,date){
+  const raw=['G1',cls,no,name,field,date,RSALT].join('|');
+  const AL='0123456789ABCDEFGHJKMNPQRSTVWXYZ';let out='',k;
+  k=h32(raw,2166136261);for(let i=0;i<4;i++){out+=AL.charAt(k%32);k=Math.floor(k/32);}
+  out+='-';
+  k=h32(RSALT+'#B#'+raw,987654321);for(let j=0;j<4;j++){out+=AL.charAt(k%32);k=Math.floor(k/32);}
+  return out;
+}
+function parseLine(ln){
+  const i=ln.indexOf('G1|');
+  if(i<0)return{err:'格式不符',raw:ln};
+  const p=ln.slice(i).split('|');
+  if(p.length<7)return{err:'欄位不足',raw:ln};
+  const [,cls,no,name,field,date,code]=p;
+  const ok=sigBatch(cls,no,name,field,date)===code.trim().toUpperCase();
+  const sets={};
+  field.split(',').forEach(x=>{
+    const q=x.split(':');
+    if(q.length>=3)sets[q[0]]={s:+q[1],d:q[2]||'',t:+(q[3]||1)};
+  });
+  return{cls,no,name,date,sets,ok,cnt:Object.keys(sets).length};
+}
+let TSV='';
+$('go').onclick=()=>{
+  const lines=(($('batch').value||'').split(/\r?\n/)).map(x=>x.trim()).filter(Boolean).map(parseLine);
+  const roster=($('roster').value||'').split(/\r?\n/).map(x=>x.trim().replace(/\s+/g,'')).filter(Boolean);
+  if(!lines.length&&!roster.length){$('bout').innerHTML='';return;}
+
+  // 指派題組：1-5 或 1,3,5
+  const asg=[];
+  ($('asg').value||'').split(/[,，\s]+/).filter(Boolean).forEach(t=>{
+    const m=t.match(/^(\d+)\s*[-~至]\s*(\d+)$/);
+    if(m){const a=+m[1],b=+m[2];for(let i=Math.min(a,b);i<=Math.max(a,b);i++)asg.push('g'+String(i).padStart(2,'0'));}
+    else if(/^\d+$/.test(t))asg.push('g'+String(+t).padStart(2,'0'));
+  });
+  const due=($('due').value||'').replace(/[^0-9]/g,'');
+
+  /* 合併：同一位學生（班級＋座號＋姓名）交的每一行都是一個題組，
+     全部併成一列；同一題組交多次取最高分並記次數。
+     驗證沒過的那一行不併入分數，只計入「對不上」筆數。 */
+  const people={},order=[],ids={};
+  let badLines=0;
+  for(const r of lines){
+    if(r.err)continue;
+    const key=r.cls+'\u0001'+r.no+'\u0001'+r.name;
+    if(!people[key]){people[key]={cls:r.cls,no:r.no,name:r.name,sets:{},bad:0,ok:0};order.push(key);}
+    const P=people[key];
+    if(!r.ok){P.bad++;badLines++;continue;}
+    P.ok++;
+    for(const g of Object.keys(r.sets)){
+      ids[g]=1;
+      const v=r.sets[g],cur=P.sets[g];
+      if(!cur){P.sets[g]={s:v.s,d:v.d,t:1};}
+      else{cur.t++;if(v.s>cur.s){cur.s=v.s;cur.d=v.d;}}
+    }
+  }
+  const cols=asg.length?asg:Object.keys(ids).sort();
+
+  const byName={};order.forEach(k=>(byName[people[k].name]=byName[people[k].name]||[]).push(people[k]));
+  const display=[];
+  if(roster.length){
+    roster.forEach(nm=>display.push({name:nm,rec:(byName[nm]||[]).shift()||null}));
+    Object.keys(byName).forEach(nm=>byName[nm].forEach(p=>display.push({name:nm,rec:p,extra:true})));
+  }else{
+    order.map(k=>people[k]).sort((a,b)=>(a.name||'').localeCompare(b.name||'','zh-Hant'))
+         .forEach(p=>display.push({name:p.name,rec:p}));
+  }
+
+  const noRep=display.filter(x=>!x.rec).length;
+  const errLines=lines.filter(r=>r.err).length;
+  const head=[];
+  if(roster.length){
+    head.push('名單 '+roster.length+' 人','已回報 '+(roster.length-noRep)+' 人');
+    if(noRep)head.push('未回報 '+noRep+' 人');
+    const ex=display.filter(x=>x.extra).length;if(ex)head.push('不在名單 '+ex+' 人');
+  }else head.push(lines.length+' 筆回報 → '+display.length+' 人');
+  if(badLines)head.push('驗證未過 '+badLines+' 筆');
+  if(errLines)head.push('格式錯誤 '+errLines+' 筆');
+
+  let h=`<div class="res ${(badLines||noRep||errLines)?'bad':'ok'}">${(badLines||noRep||errLines)?'⚠ ':'✅ '}${head.join('　·　')}</div>`;
+  h+='<table><tr><th>班級</th><th>座號</th><th>姓名</th><th>組數</th><th>平均</th>'+
+     cols.map(c=>`<th>題組${+c.slice(1)}</th>`).join('')+'<th>驗證</th></tr>';
+  const tsv=[['班級','座號','姓名','組數','平均',...cols.map(c=>'題組'+ +c.slice(1)),'驗證'].join('\t')];
+  let late=0,missing=0;
+
+  for(const x of display){
+    const p=x.rec;
+    if(!p){
+      h+=`<tr class="miss"><td></td><td></td><td><b>${esc(x.name)}</b></td><td class="n">0</td><td>—</td>`+
+         cols.map(()=>'<td>—</td>').join('')+'<td style="color:var(--bad);font-weight:bold">未回報</td></tr>';
+      tsv.push(['','',x.name,0,'',...cols.map(()=>'未回報'),'未回報'].join('\t'));
+      missing+=cols.length;continue;
+    }
+    const cells=[],tc=[];
+    for(const c of cols){
+      const v=p.sets[c];
+      if(!v){cells.push('<td style="color:var(--bad)">未交</td>');tc.push('未交');missing++;continue;}
+      const isLate=due&&v.d&&v.d>due;if(isLate)late++;
+      cells.push(`<td class="n"${isLate?' style="color:var(--bad);font-weight:bold"':''}>${v.s}`+
+        `<br><span class="small">${v.d?v.d.slice(4,6)+'/'+v.d.slice(6,8):''}${isLate?' 逾期':''}${v.t>1?'　交'+v.t+'次':''}</span></td>`);
+      tc.push(v.s+(isLate?'(逾期)':''));
+    }
+    const got=cols.map(c=>p.sets[c]?p.sets[c].s:null).filter(v=>v!==null);
+    const avg=got.length?Math.round(got.reduce((a,b)=>a+b,0)/got.length):'';
+    const vtxt=(p.bad?'有'+p.bad+'筆對不上':'通過')+(x.extra?'（不在名單）':'');
+    h+=`<tr${x.extra?' class="extra"':''}><td>${esc(p.cls)}</td><td class="n">${esc(p.no)}</td><td><b>${esc(p.name)}</b></td>`+
+       `<td class="n">${got.length}</td><td class="n"><b>${avg}</b></td>${cells.join('')}`+
+       `<td style="color:${p.bad?'var(--bad)':'var(--ok)'};font-weight:bold">${vtxt}</td></tr>`;
+    tsv.push([p.cls,p.no,p.name,got.length,avg,...tc,vtxt].join('\t'));
+  }
+  lines.filter(r=>r.err).forEach(r=>{
+    h+=`<tr class="miss"><td colspan="${cols.length+6}">${esc(r.err)}：${esc(r.raw.slice(0,50))}</td></tr>`;
+  });
+  h+='</table>';
+  if(due)h+=`<p class="small">截止 ${esc($('due').value)}　·　逾期 ${late} 人次，未交／未回報 ${missing} 人次</p>`;
+  h+='<div style="margin-top:10px"><button class="sec" id="cp">複製成表格（可直接貼進 Excel）</button></div>';
+  $('bout').innerHTML=h;
+  TSV=tsv.join('\n');
+  $('cp').onclick=function(){
+    try{navigator.clipboard.writeText(TSV);this.textContent='已複製，去 Excel 貼上';}
+    catch(e){this.textContent='複製失敗，請手動選取';}
+  };
+};
+</script>
+</body>
+</html>
