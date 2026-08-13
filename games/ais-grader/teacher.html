@@ -61,6 +61,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums}
 .miss{background:#FBE8EC}
 .extra{background:#FBEFDC}
 .halfmark{color:var(--warn)}
+.dupmark{color:var(--bad);font-weight:bold;font-size:.85rem}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -151,12 +152,23 @@ function sigBatch(cls,no,name,field,date){
   return out;
 }
 function parseLine(ln){
-  const i=ln.indexOf('G1|');
-  if(i<0)return{err:'格式不符',raw:ln};
-  const p=ln.slice(i).split('|');
-  if(p.length<7)return{err:'欄位不足',raw:ln};
-  const [,cls,no,name,field,date,code]=p;
-  const ok=sigBatch(cls,no,name,field,date)===code.trim().toUpperCase();
+  const i=Math.max(ln.indexOf('G2|'),ln.indexOf('G1|'));
+  const j=[ln.indexOf('G2|'),ln.indexOf('G1|')].filter(x=>x>=0);
+  if(!j.length)return{err:'格式不符',raw:ln};
+  const at=Math.min(...j);
+  const p=ln.slice(at).split('|');
+  const v=p[0];
+  // G2 多一個「檔案指紋」欄位；G1 為舊版，仍可辨識
+  let cls,no,name,field,fp='',date,code;
+  if(v==='G2'){
+    if(p.length<8)return{err:'欄位不足',raw:ln};
+    [,cls,no,name,field,fp,date,code]=p;
+  }else{
+    if(p.length<7)return{err:'欄位不足',raw:ln};
+    [,cls,no,name,field,date,code]=p;
+  }
+  const signed=(v==='G2')?(field+'|'+fp):field;
+  const ok=sigBatch(cls,no,name,signed,date)===code.trim().toUpperCase();
   const sets={};
   field.split(',').forEach(x=>{
     const q=x.split(':');
@@ -164,7 +176,7 @@ function parseLine(ln){
     const half=/^h/.test(q[0]);
     sets['g'+q[0].slice(1)]={s:+q[1],d:q[2]||'',t:+(q[3]||1),half};
   });
-  return{cls,no,name,date,sets,ok,cnt:Object.keys(sets).length};
+  return{cls,no,name,date,sets,ok,fp,ver:v,cnt:Object.keys(sets).length};
 }
 let TSV='';
 $('go').onclick=()=>{
@@ -189,10 +201,11 @@ $('go').onclick=()=>{
   for(const r of lines){
     if(r.err)continue;
     const key=r.cls+'\u0001'+r.no+'\u0001'+r.name;
-    if(!people[key]){people[key]={cls:r.cls,no:r.no,name:r.name,sets:{},bad:0,ok:0};order.push(key);}
+    if(!people[key]){people[key]={cls:r.cls,no:r.no,name:r.name,sets:{},bad:0,ok:0,fps:[]};order.push(key);}
     const P=people[key];
     if(!r.ok){P.bad++;badLines++;continue;}
     P.ok++;
+    if(r.fp&&r.fp!=='D------R------')P.fps.push(r.fp);
     for(const g of Object.keys(r.sets)){
       ids[g]=1;
       const v=r.sets[g],cur=P.sets[g];
@@ -224,17 +237,47 @@ $('go').onclick=()=>{
   if(errLines)head.push('格式錯誤 '+errLines+' 筆');
 
   let h=`<div class="res ${(badLines||noRep||errLines)?'bad':'ok'}">${(badLines||noRep||errLines)?'⚠ ':'✅ '}${head.join('　·　')}</div>`;
+  /* 檔案指紋比對：同一段指紋出現在不同人身上，代表他們交的是同一份檔案。
+     D 段＝資料檔（主檔），R 段＝報表檔。只是提示，需人工確認。 */
+  const splitFp=fp=>{
+    const i=fp.lastIndexOf('R');
+    const dPart=fp.slice(1,i), rPart=fp.slice(i+1);
+    return {
+      d:dPart==='------'?[]:dPart.split('.').filter(Boolean),
+      r:rPart==='------'?[]:[rPart]
+    };
+  };
+  const dMap={},rMap={};
+  for(const k of order){
+    const p=people[k];
+    for(const fp of p.fps||[]){
+      const {d,r}=splitFp(fp);
+      d.forEach(x=>(dMap[x]=dMap[x]||new Set()).add(p.name));
+      r.forEach(x=>(rMap[x]=rMap[x]||new Set()).add(p.name));
+    }
+  }
+  const dupOf=p=>{
+    const who=new Map();   // 姓名 → 種類
+    for(const fp of p.fps||[]){
+      const {d,r}=splitFp(fp);
+      d.forEach(x=>{const m=dMap[x];if(m&&m.size>1)m.forEach(n=>{if(n!==p.name)who.set(n,'主檔');});});
+      r.forEach(x=>{const m=rMap[x];if(m&&m.size>1)m.forEach(n=>{if(n!==p.name)who.set(n,who.get(n)==='主檔'?'主檔＋報表':'報表');});});
+    }
+    return [...who].map(([n,t])=>`${n}（${t}）`);
+  };
+  const anyDup=order.some(k=>dupOf(people[k]).length);
+
   h+='<table><tr><th>班級</th><th>座號</th><th>姓名</th><th>組數</th><th>平均</th>'+
-     cols.map(c=>`<th>題組${+c.slice(1)}</th>`).join('')+'<th>驗證</th></tr>';
-  const tsv=[['班級','座號','姓名','組數','平均',...cols.map(c=>'題組'+ +c.slice(1)),'驗證'].join('\t')];
+     cols.map(c=>`<th>題組${+c.slice(1)}</th>`).join('')+'<th>驗證</th>'+(anyDup?'<th>檔案</th>':'')+'</tr>';
+  const tsv=[['班級','座號','姓名','組數','平均',...cols.map(c=>'題組'+ +c.slice(1)),'驗證',...(anyDup?['檔案']:[])].join('\t')];
   let late=0,missing=0;
 
   for(const x of display){
     const p=x.rec;
     if(!p){
       h+=`<tr class="miss"><td></td><td></td><td><b>${esc(x.name)}</b></td><td class="n">0</td><td>—</td>`+
-         cols.map(()=>'<td>—</td>').join('')+'<td style="color:var(--bad);font-weight:bold">未回報</td></tr>';
-      tsv.push(['','',x.name,0,'',...cols.map(()=>'未回報'),'未回報'].join('\t'));
+         cols.map(()=>'<td>—</td>').join('')+'<td style="color:var(--bad);font-weight:bold">未回報</td>'+(anyDup?'<td></td>':'')+'</tr>';
+      tsv.push(['','',x.name,0,'',...cols.map(()=>'未回報'),'未回報',...(anyDup?['']:[])].join('\t'));
       missing+=cols.length;continue;
     }
     const cells=[],tc=[];
@@ -251,13 +294,15 @@ $('go').onclick=()=>{
     const vtxt=(p.bad?'有'+p.bad+'筆對不上':'通過')+(x.extra?'（不在名單）':'');
     h+=`<tr${x.extra?' class="extra"':''}><td>${esc(p.cls)}</td><td class="n">${esc(p.no)}</td><td><b>${esc(p.name)}</b></td>`+
        `<td class="n">${got.length}</td><td class="n"><b>${avg}</b></td>${cells.join('')}`+
-       `<td style="color:${p.bad?'var(--bad)':'var(--ok)'};font-weight:bold">${vtxt}</td></tr>`;
-    tsv.push([p.cls,p.no,p.name,got.length,avg,...tc,vtxt].join('\t'));
+       `<td style="color:${p.bad?'var(--bad)':'var(--ok)'};font-weight:bold">${vtxt}</td>`+
+       (anyDup?`<td>${dupOf(p).length?`<span class="dupmark">⚑ 與 ${esc(dupOf(p).join('、'))} 相同</span>`:''}</td>`:'')+'</tr>';
+    tsv.push([p.cls,p.no,p.name,got.length,avg,...tc,vtxt,...(anyDup?[dupOf(p).length?'與 '+dupOf(p).join('、')+' 檔案相同':'']:[])].join('\t'));
   }
   lines.filter(r=>r.err).forEach(r=>{
     h+=`<tr class="miss"><td colspan="${cols.length+6}">${esc(r.err)}：${esc(r.raw.slice(0,50))}</td></tr>`;
   });
   h+='</table>';
+  if(anyDup)h+=`<p class="small" style="color:var(--bad)">⚑ 有學生交的檔案與別人完全相同（資料檔或報表檔的位元組一致），可能是互相傳檔後直接輸出報表。<b>這只是提示不是證據</b>——請自行找當事人確認。</p>`;
   if(due)h+=`<p class="small">截止 ${esc($('due').value)}　·　逾期 ${late} 人次，未交／未回報 ${missing} 人次</p>`;
   h+='<div style="margin-top:10px"><button class="sec" id="cp">複製成表格（可直接貼進 Excel）</button></div>';
   $('bout').innerHTML=h;
