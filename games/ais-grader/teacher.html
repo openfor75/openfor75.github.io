@@ -205,12 +205,17 @@ $('go').onclick=()=>{
     const P=people[key];
     if(!r.ok){P.bad++;badLines++;continue;}
     P.ok++;
-    if(r.fp&&r.fp!=='D------R------')P.fps.push(r.fp);
+    if(r.fp&&r.fp!=='-------------'&&r.fp.indexOf('-')>=0)P.fps.push(r.fp);
+    /* 整組與半題組分開累計。同一題組重交取最高分；
+       但只要交過「整組」，就以整組為準——半題組是課堂時間不夠的權宜措施，
+       整組才是真正的檢定情境，不該讓半題組的高分蓋過整組的成績。 */
     for(const g of Object.keys(r.sets)){
       ids[g]=1;
-      const v=r.sets[g],cur=P.sets[g];
-      if(!cur){P.sets[g]={s:v.s,d:v.d,t:1,half:v.half};}
-      else{cur.t++;if(v.s>cur.s){cur.s=v.s;cur.d=v.d;cur.half=v.half;}}
+      const v=r.sets[g];
+      const cur=P.sets[g]||(P.sets[g]={full:null,half:null,t:0});
+      cur.t++;
+      const k=v.half?'half':'full';
+      if(!cur[k]||v.s>cur[k].s)cur[k]={s:v.s,d:v.d};
     }
   }
   const cols=asg.length?asg:Object.keys(ids).sort();
@@ -239,9 +244,11 @@ $('go').onclick=()=>{
   let h=`<div class="res ${(badLines||noRep||errLines)?'bad':'ok'}">${(badLines||noRep||errLines)?'⚠ ':'✅ '}${head.join('　·　')}</div>`;
   /* 檔案指紋比對：同一段指紋出現在不同人身上，代表他們交的是同一份檔案。
      D 段＝資料檔（主檔），R 段＝報表檔。只是提示，需人工確認。 */
+  // 指紋格式 <主檔碼>.<主檔碼>-<報表碼>；沒有「-」的是更早的格式，直接忽略
   const splitFp=fp=>{
-    const i=fp.lastIndexOf('R');
-    const dPart=fp.slice(1,i), rPart=fp.slice(i+1);
+    const i=fp.indexOf('-');
+    if(i<0)return{d:[],r:[]};
+    const dPart=fp.slice(0,i), rPart=fp.slice(i+1);
     return {
       d:dPart==='------'?[]:dPart.split('.').filter(Boolean),
       r:rPart==='------'?[]:[rPart]
@@ -280,16 +287,20 @@ $('go').onclick=()=>{
       tsv.push(['','',x.name,0,'',...cols.map(()=>'未回報'),'未回報',...(anyDup?['']:[])].join('\t'));
       missing+=cols.length;continue;
     }
+    const pick=v=>v?(v.full||v.half):null;          // 整組優先
     const cells=[],tc=[];
     for(const c of cols){
-      const v=p.sets[c];
+      const rec=p.sets[c],v=pick(rec);
       if(!v){cells.push('<td style="color:var(--bad)">未交</td>');tc.push('未交');missing++;continue;}
+      const isHalf=!rec.full;
       const isLate=due&&v.d&&v.d>due;if(isLate)late++;
+      // 已交整組但也交過半題組時，把半題組的分數放在小字裡供參考
+      const alsoHalf=rec.full&&rec.half?`　<span class="halfmark">半${rec.half.s}</span>`:'';
       cells.push(`<td class="n"${isLate?' style="color:var(--bad);font-weight:bold"':''}>${v.s}`+
-        `<br><span class="small">${v.d?v.d.slice(4,6)+'/'+v.d.slice(6,8):''}${v.half?' <b class="halfmark">半</b>':''}${isLate?' 逾期':''}${v.t>1?'　交'+v.t+'次':''}</span></td>`);
-      tc.push(v.s+(v.half?'(半)':'')+(isLate?'(逾期)':''));
+        `<br><span class="small">${v.d?v.d.slice(4,6)+'/'+v.d.slice(6,8):''}${isHalf?' <b class="halfmark">半</b>':''}${isLate?' 逾期':''}${rec.t>1?'　交'+rec.t+'次':''}${alsoHalf}</span></td>`);
+      tc.push(v.s+(isHalf?'(半)':'')+(isLate?'(逾期)':'')+(alsoHalf?'(曾半'+rec.half.s+')':''));
     }
-    const got=cols.map(c=>p.sets[c]?p.sets[c].s:null).filter(v=>v!==null);
+    const got=cols.map(c=>{const v=pick(p.sets[c]);return v?v.s:null;}).filter(v=>v!==null);
     const avg=got.length?Math.round(got.reduce((a,b)=>a+b,0)/got.length):'';
     const vtxt=(p.bad?'有'+p.bad+'筆對不上':'通過')+(x.extra?'（不在名單）':'');
     h+=`<tr${x.extra?' class="extra"':''}><td>${esc(p.cls)}</td><td class="n">${esc(p.no)}</td><td><b>${esc(p.name)}</b></td>`+
