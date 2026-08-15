@@ -5,14 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>教學簡報索引</title>
 <style>
-  /* ===== 只要改這一區的文字就好 ===== */
   :root{
     --paper:#FBFCF8;
-    --bar:#E4EFE2;          /* 會計格線紙的淺綠條 */
+    --bar:#E4EFE2;
     --ink:#17251D;
     --ink-soft:#5C6E62;
     --rule:#B9CDBE;
-    --stamp:#B3352B;        /* 紅字/印章紅 */
+    --stamp:#B3352B;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
@@ -24,186 +23,69 @@
     padding:24px 16px 64px;
   }
   .sheet{max-width:860px;margin:0 auto}
-
   header{padding-bottom:10px;border-bottom:3px double var(--stamp)}
-  h1{
-    margin:0;
-    font-size:clamp(22px,5vw,30px);
-    letter-spacing:.14em;
-    font-weight:700;
-  }
-  .sub{
-    margin:6px 0 0;
-    font-size:14px;
-    color:var(--ink-soft);
-    letter-spacing:.05em;
-  }
-
-  .search{
-    width:100%;
-    margin:18px 0 4px;
-    padding:12px 14px;
-    font-size:16px;
-    font-family:inherit;
-    color:var(--ink);
-    background:#fff;
-    border:1px solid var(--rule);
-    border-radius:2px;
-  }
-  .search:focus{outline:2px solid var(--stamp);outline-offset:1px}
-
+  h1{margin:0;font-size:clamp(22px,5vw,30px);letter-spacing:.14em;font-weight:700}
+  .sub{margin:6px 0 0;font-size:14px;color:var(--ink-soft);letter-spacing:.05em}
   .month{
-    margin:28px 0 0;
-    padding:6px 4px;
-    font-size:13px;
-    letter-spacing:.2em;
-    color:var(--ink-soft);
-    border-bottom:1px solid var(--rule);
+    margin:28px 0 0;padding:6px 4px;font-size:13px;letter-spacing:.2em;
+    color:var(--ink-soft);border-bottom:1px solid var(--rule);
     font-variant-numeric:tabular-nums;
   }
-
   ul{list-style:none;margin:0;padding:0}
   li a{
-    display:flex;
-    align-items:baseline;
-    gap:14px;
-    padding:13px 12px;
-    text-decoration:none;
-    color:inherit;
-    border-bottom:1px solid var(--rule);
-    border-left:3px solid transparent;
+    display:flex;align-items:baseline;gap:14px;padding:13px 12px;
+    text-decoration:none;color:inherit;
+    border-bottom:1px solid var(--rule);border-left:3px solid transparent;
   }
   li:nth-child(odd) a{background:var(--bar)}
-  li a:hover,li a:focus-visible{
-    border-left-color:var(--stamp);
-    outline:none;
-    background:#fff;
-  }
+  li a:hover,li a:focus-visible{border-left-color:var(--stamp);outline:none;background:#fff}
   .date{
-    flex:0 0 auto;
-    font-family:ui-monospace,"SF Mono",Menlo,monospace;
-    font-size:15px;
-    color:var(--stamp);
-    font-variant-numeric:tabular-nums;
+    flex:0 0 auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    font-size:15px;color:var(--stamp);font-variant-numeric:tabular-nums;
   }
   .body{flex:1 1 auto;min-width:0}
   .title{display:block;font-size:16px;font-weight:600}
-  .tag{
-    display:inline-block;
-    margin-top:3px;
-    font-size:12px;
-    letter-spacing:.08em;
-    color:var(--ink-soft);
-  }
-  .note{margin:24px 4px;color:var(--ink-soft);font-size:15px}
-  .note code{background:var(--bar);padding:2px 5px;border-radius:2px;font-size:13px}
-  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+  .tag{display:inline-block;margin-top:3px;font-size:12px;letter-spacing:.08em;color:var(--ink-soft)}
 </style>
 </head>
 <body>
 <div class="sheet">
+
   <header>
     <h1>教學簡報索引</h1>
-    <p class="sub" id="count">載入中…</p>
+    <p class="sub">會計資訊科</p>
   </header>
 
-  <input class="search" id="q" type="search" placeholder="搜尋主題、科目或日期" autocomplete="off">
 
-  <div id="list"></div>
+<!-- ═══════════════════════════════════════════════════════
+     新增一份簡報:複製下面五行,貼進最上面那組 <ul> 的第一筆,
+     改三個地方 —— 檔名、日期、主題。不需要科目就把 tag 那行刪掉。
+
+     <li><a href="檔名.html">
+       <span class="date">月/日</span>
+       <span class="body"><span class="title">主題</span>
+       <span class="tag">科目</span></span></a></li>
+
+     換月份:再複製一行 <p class="month">2026 年 09 月</p>
+     和一組 <ul></ul>,整組放在最上面。
+     ═══════════════════════════════════════════════════════ -->
+
+
+  <p class="month">2026 年 08 月</p>
+  <ul>
+
+    <li><a href="20260815_計算機企劃.html">
+      <span class="date">08/15</span>
+      <span class="body"><span class="title">計算機企劃</span>
+      <span class="tag">會計學</span></span></a></li>
+
+    <li><a href="20260808-商業概論-企業組織型態.html">
+      <span class="date">08/08</span>
+      <span class="body"><span class="title">企業組織型態</span>
+      <span class="tag">商業概論</span></span></a></li>
+
+  </ul>
+
 </div>
-
-<script>
-/* ========= 設定:只要改這三行 ========= */
-const OWNER  = "openfor75";   // 你的 GitHub 帳號
-const REPO   = "教學簡報放的那個 repo 名稱";
-const FOLDER = "slides";      // 放簡報的資料夾名稱
-/* ==================================== */
-
-const listEl = document.getElementById("list");
-const countEl = document.getElementById("count");
-let items = [];
-
-// 檔名格式:20260815-會計學-複利計算.html
-function parse(name){
-  const base = name.replace(/\.html?$/i, "");
-  const m = base.match(/^(\d{4})(\d{2})(\d{2})-(.+)$/);
-  if(!m) return { ym:"其他", date:"", tag:"", title:base, sort:"0" };
-  const [ ,y,mo,d,rest ] = m;
-  const parts = rest.split("-");
-  const tag = parts.length > 1 ? parts.shift() : "";
-  return {
-    ym: `${y} 年 ${mo} 月`,
-    date: `${mo}/${d}`,
-    tag,
-    title: parts.join("-"),
-    sort: y+mo+d
-  };
-}
-
-function render(keyword){
-  const k = (keyword||"").trim();
-  const shown = k ? items.filter(i =>
-    (i.title+i.tag+i.date+i.sort).includes(k)) : items;
-
-  countEl.textContent = `共 ${shown.length} 份簡報`;
-
-  if(!shown.length){
-    listEl.innerHTML = `<p class="note">找不到符合的簡報。把 HTML 檔上傳到
-      <code>${FOLDER}/</code> 資料夾後重新整理就會出現。</p>`;
-    return;
-  }
-
-  let html = "", cur = "";
-  for(const i of shown){
-    if(i.ym !== cur){ 
-      if(cur) html += "</ul>";
-      html += `<p class="month">${i.ym}</p><ul>`; 
-      cur = i.ym; 
-    }
-    html += `<li><a href="${FOLDER}/${encodeURIComponent(i.file)}">
-      <span class="date">${i.date}</span>
-      <span class="body">
-        <span class="title">${i.title}</span>
-        ${i.tag ? `<span class="tag">${i.tag}</span>` : ""}
-      </span></a></li>`;
-  }
-  listEl.innerHTML = html + "</ul>";
-}
-
-async function load(){
-  let files = null;
-
-  // 優先讀 files.json(由 GitHub Actions 產生,沒有次數限制)
-  try{
-    const r = await fetch(`${FOLDER}/files.json?t=` + Date.now());
-    if(r.ok) files = await r.json();
-  }catch(e){}
-
-  // 沒有 files.json 就直接問 GitHub
-  if(!files){
-    try{
-      const r = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${FOLDER}`);
-      if(!r.ok) throw new Error(r.status);
-      files = (await r.json()).map(f => f.name);
-    }catch(e){
-      countEl.textContent = "讀取失敗";
-      listEl.innerHTML = `<p class="note">抓不到檔案清單。請確認頁面最上方的
-        <code>OWNER</code>、<code>REPO</code>、<code>FOLDER</code> 三個設定是否正確,
-        而且 repo 是公開的。</p>`;
-      return;
-    }
-  }
-
-  items = files
-    .filter(n => /\.html?$/i.test(n) && n.toLowerCase() !== "index.html")
-    .map(n => Object.assign(parse(n), { file:n }))
-    .sort((a,b) => b.sort.localeCompare(a.sort));
-
-  render("");
-}
-
-document.getElementById("q").addEventListener("input", e => render(e.target.value));
-load();
-</script>
 </body>
 </html>
