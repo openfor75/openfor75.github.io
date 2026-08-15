@@ -188,11 +188,11 @@ ul.clean li b{font-weight:700}
 <section class="slide">
   <div class="eyebrow">今天要回答的三個問題</div>
   <h2>先猜,再看數據。</h2>
-  <p class="sub">猜錯沒關係。連專業廣告公司都會猜錯，而且他們都花錢了，還是猜錯。</p>
+  <p class="sub">猜錯沒關係。等一下你會知道,連專業廣告公司都會猜錯——而且他們是花錢猜錯的。</p>
   <div class="grid g3">
-    <div class="card"><div class="num vio">Q1</div><h3>誰是第一名?</h3><p>六支影片裡,哪一支最受歡迎?你是根據什麼資料來判斷?</p></div>
-    <div class="card"><div class="num vio">Q2</div><h3>抽到 1 號比較有利嗎?</h3><p>排在前面,真的有比較多人看嗎?差多少?</p></div>
-    <div class="card"><div class="num vio">Q3</div><h3>花錢買流量，看得出來嗎?</h3><p>如果有人找朋友來按讚,老師抓不抓得到?</p></div>
+    <div class="card"><div class="num vio">Q1</div><h3>誰是第一名?</h3><p>六支影片裡,哪一支最受歡迎?你憑什麼判斷?</p></div>
+    <div class="card"><div class="num vio">Q2</div><h3>抽到 1 號比較賺嗎?</h3><p>排在前面,真的有比較多人看嗎?差多少?</p></div>
+    <div class="card"><div class="num vio">Q3</div><h3>作弊看得出來嗎?</h3><p>如果有人找朋友來按讚,老師抓不抓得到?</p></div>
   </div>
   <div class="pills" id="votes"></div>
   <p class="sub" style="margin-top:14px">先舉手投票,把票數記在黑板上。等一下我們回來對答案。</p>
@@ -212,7 +212,7 @@ ul.clean li b{font-weight:700}
 <!-- 3 ─────────────────────────────────────────── -->
 <section class="slide">
   <div class="eyebrow">發現一 ｜ 位置紅利</div>
-  <h2>排越後面，看的人越少，而且掉得很規律。</h2>
+  <h2>排越後面,看的人越少——而且掉得很規律。</h2>
   <div id="decay"></div>
   <div class="pills">
     <span class="btn" onclick="decayStep()">下一步 ▸</span>
@@ -251,7 +251,7 @@ ul.clean li b{font-weight:700}
 <!-- 6 ─────────────────────────────────────────── -->
 <section class="slide">
   <div class="eyebrow">發現三 ｜ 排名翻盤</div>
-  <h2>換不同的數據當作標準，冠軍就換人。</h2>
+  <h2>換一把尺,冠軍就換人。</h2>
   <div id="chart2"></div>
   <div class="pills">
     <span class="pill sel" id="tabA" onclick="setMode('raw')">看得到的愛心率</span>
@@ -263,7 +263,7 @@ ul.clean li b{font-weight:700}
 <!-- 7 ─────────────────────────────────────────── -->
 <section class="slide">
   <div class="eyebrow">三個名詞 ｜ 你們剛剛全部親身經歷過</div>
-  <h2>這是你們的數據。</h2>
+  <h2>這不是課本,這是你們的數據。</h2>
   <div class="grid g3">
     <div class="card"><div class="eyebrow" style="margin-bottom:8px">01</div><h3>虛榮指標</h3>
       <p>好看,但不能拿來做決定的數字。<br><br><b class="flare">你們的例子:</b>6 號的 105 個愛心。數字最大,卻不代表最受歡迎。</p></div>
@@ -409,6 +409,261 @@ D.forEach(d=>{
   d.sr = d.sh/d.v*1000;        // 每千次瀏覽分享數
   d.cr = (d.ia*d.fi/100)/(d.v*d.fv/100)*100;  // 乾淨:追蹤者互動率
 });
+
+/* ═══ 教師講稿 ═══════════════════════════════ */
+const SCRIPT=[
+ "開場就說這句:<b>「昨天晚上,有 1,463 個人看過你們昨天拍的東西。今天我們不看影片,我們看數字。」</b>停兩秒讓他們消化。這個數字比任何課程目標都有說服力。",
+ "先投票再看數據,順序不能反。<b>讓他們公開押注,等一下翻盤才有戲劇效果。</b>把票數寫在黑板角落,最後一頁回來對。",
+ "一列一列開,每開一列問一個人:「念出來,你看到什麼?」<b>先不要分析,只要念。</b>等第六列打開的時候,通常會有人自己「欸?」出聲——那就是今天最好的時機點。",
+ "重點在<b>規律</b>兩個字。掉得很平均,才叫自然。等他們接受「後面一定比較少」這件事,下一頁的斷點才會刺眼。<br>問一句:「所以抽到 1 號的人,是不是賺到了?」答案是賺到 22.4% 的曝光。",
+ "四張證據一張一張翻,每翻一張問:「這個數字奇怪嗎?」<b>單獨看每一個都可以解釋,四個加起來就不行了。</b>這就是查帳的邏輯——不看單一異常,看異常的組合。",
+ "把滑桿交給灌票那組的同學自己拉。<b>讓他們親手把自己的 10.2% 拉到 1.9%。</b>拉完不要罵人,說這句:「你們沒有做錯事,你們做了一件業界每天在做的事——買流量。錯的是我們一開始只看愛心數。」",
+ "切換兩個標籤來回按幾次,讓翻盤的畫面重複出現。<b>「同一批數據,換一把尺,冠軍就換人。」</b>這句話請寫在黑板上,今天只要他們記得這一句就夠了。",
+ "三個名詞不要用背的。指著螢幕上他們自己的數字說:「這個就是虛榮指標,它現在就在你手機裡。」",
+ "Arii 這個案例學生最有感,因為 36 這個數字太小了。<b>問他們:「你們班有 32 個人。她連你們班都賣不完。」</b>",
+ "這頁講的是「大人的世界怎麼處理這件事」。重點是:買流量不是抓不到,是<b>買方不玩了</b>。廣告主才是最後的裁判。",
+ "台灣這頁請放慢。5 萬元罰鍰對高職生是很具體的數字。<b>問一句:「如果你以後開團賣東西,這條法規管不管你?」</b>答案是管。",
+ "這頁是給那些覺得「數據好複雜」的學生的安慰:<b>連 Instagram 自己都搞不定這件事,測了兩年最後放棄。</b>你今天看得懂洞察報告,已經超過很多大人。",
+ "這是今天的驗收。<b>讓他們組隊互相辯論要選哪幾個指標。</b>正解不只一個,但只要有人選了「回看率+追蹤者互動率」,就給他掌聲——那是最難灌的組合。",
+ "最後一句留給全班:「下一次專題,評審不是演算法,是人。但道理一樣。」<br><b>然後回到第 2 頁,把黑板上的投票結果對一次。</b>猜對的人給獎勵。"
+];
+
+/* ═══ 導覽 ═══════════════════════════════════ */
+const slides=[...document.querySelectorAll('.slide')];
+const bars=document.getElementById('bars');
+slides.forEach((_,i)=>{
+  const b=document.createElement('i');b.tabIndex=0;
+  b.onclick=()=>go(i);
+  b.onkeydown=e=>{if(e.key==='Enter')go(i)};
+  bars.appendChild(b);
+});
+let cur=0;
+function go(i){
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('on');
+  cur=i;
+  slides[cur].classList.add('on');
+  [...bars.children].forEach((b,k)=>{
+    b.className = k<cur?'done':k===cur?'now':'';
+  });
+  document.getElementById('pageno').textContent=
+    String(cur+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');
+  document.getElementById('script').innerHTML='<span class="tag">教師講稿</span>'+SCRIPT[cur];
+  if(cur===3)drawDecay();
+  if(cur===6)drawRank();
+  if(cur===12)renderRanks();
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown')go(cur+1);
+  else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);
+  else if(e.key===' '){e.preventDefault();step();}
+  else if(e.key.toLowerCase()==='n')document.getElementById('script').classList.toggle('on');
+  else if(/^[1-9]$/.test(e.key))go(+e.key-1);
+});
+function step(){
+  if(cur===2)rawStep();
+  else if(cur===3)decayStep();
+  else if(cur===4)fingerStep();
+  else go(cur+1);
+}
+
+/* ═══ 頁 1:投票 ═════════════════════════════ */
+const vb=document.getElementById('votes');
+D.forEach((d,i)=>{
+  const s=document.createElement('span');
+  s.className='pill';s.innerHTML=d.n+'<span class="c">0</span>';
+  s.onclick=()=>{const c=s.querySelector('.c');c.textContent=+c.textContent+1;s.classList.add('sel')};
+  vb.appendChild(s);
+});
+
+/* ═══ 頁 2:原始表 ═══════════════════════════ */
+const tb=document.querySelector('#raw tbody');
+D.forEach((d,i)=>{
+  const tr=document.createElement('tr');
+  if(i===5)tr.classList.add('mark');
+  tr.innerHTML=`<td>${d.n}</td><td>${d.v.toLocaleString()}</td><td>${d.l}</td><td>${d.sh}</td>
+  <td>${d.rp}</td><td>${d.ex}</td><td>${d.bk}</td><td>${d.nf.toFixed(1)}%</td>`;
+  tb.appendChild(tr);
+});
+let rawI=0;
+function rawStep(){
+  const rows=tb.querySelectorAll('tr');
+  if(rawI<rows.length){rows[rawI].classList.add('show');rawI++;}
+  else go(cur+1);
+}
+
+/* ═══ 頁 3:衰減曲線 ═════════════════════════ */
+let decayI=0;
+function drawDecay(){
+  const W=1000,H=330,pl=64,pr=24,pt=22,pb=42;
+  const max=1550,min=1000;
+  const x=i=>pl+i*((W-pl-pr)/5);
+  const y=v=>pt+(max-v)/(max-min)*(H-pt-pb);
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="六則限動的瀏覽數變化">`;
+  for(let v=1000;v<=1500;v+=100){
+    g+=`<line class="gl" x1="${pl}" y1="${y(v)}" x2="${W-pr}" y2="${y(v)}"/>
+        <text class="lbl" x="${pl-10}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+  }
+  // 趨勢線(1→5 延伸)
+  const slope=(D[4].v-D[0].v)/4;
+  g+=`<line id="trend" x1="${x(0)}" y1="${y(D[0].v)}" x2="${x(5)}" y2="${y(D[0].v+slope*5)}"
+      stroke="#FFC24B" stroke-width="2" stroke-dasharray="7 6" opacity="0"/>`;
+  g+=`<text id="trendT" class="lbl" x="${x(5)-6}" y="${y(D[0].v+slope*5)+22}" text-anchor="end" fill="#FFC24B" opacity="0">照趨勢,6 號應該只有 ${Math.round(D[0].v+slope*5)}</text>`;
+  let path=D.slice(0,5).map((d,i)=>`${i?'L':'M'}${x(i)},${y(d.v)}`).join(' ');
+  g+=`<path d="${path}" fill="none" stroke="#7C5CFF" stroke-width="3.5" stroke-linecap="round"/>`;
+  g+=`<path id="jump" d="M${x(4)},${y(D[4].v)} L${x(5)},${y(D[5].v)}" fill="none" stroke="#FF5C39" stroke-width="3.5" stroke-dasharray="400" stroke-dashoffset="400"/>`;
+  D.forEach((d,i)=>{
+    const c=i===5?'#FF5C39':'#7C5CFF';
+    g+=`<circle id="pt${i}" cx="${x(i)}" cy="${y(d.v)}" r="7" fill="${c}" opacity="${i===5?0:1}"/>
+        <text id="tx${i}" class="vlbl" x="${x(i)}" y="${y(d.v)-16}" text-anchor="middle" fill="${c}" opacity="${i===5?0:1}">${d.v.toLocaleString()}</text>
+        <text class="lbl" x="${x(i)}" y="${H-14}" text-anchor="middle">${d.n}</text>`;
+  });
+  g+=`</svg>`;
+  document.getElementById('decay').innerHTML=g;
+}
+function decayStep(){
+  decayI++;
+  const t=document.getElementById('trend'),tt=document.getElementById('trendT'),
+        j=document.getElementById('jump'),p=document.getElementById('pt5'),x=document.getElementById('tx5'),
+        note=document.getElementById('decayNote');
+  if(decayI===1){
+    t.style.transition='opacity .5s';t.style.opacity=.95;
+    tt.style.transition='opacity .5s';tt.style.opacity=.95;
+    note.innerHTML='黃色虛線是趨勢線。<b>如果一切正常,6 號應該落在這條線上。</b>問學生:你猜 6 號會是多少?';
+  }else if(decayI===2){
+    j.style.transition='stroke-dashoffset .8s ease';j.style.strokeDashoffset=0;
+    p.style.transition='opacity .5s .5s';p.style.opacity=1;
+    x.style.transition='opacity .5s .5s';x.style.opacity=1;
+    note.innerHTML='<b class="flare">實際上是 1,313——不減反增,比第五則多了 178 次。</b>這條曲線在最後一則斷掉了。';
+  }else{go(cur+1)}
+}
+function decayReset(){decayI=0;drawDecay();
+  document.getElementById('decayNote').textContent='1 號到 5 號,瀏覽數從 1,463 掉到 1,135。每往後一則,大約蒸發 5%。';}
+
+/* ═══ 頁 4:四張指紋 ═════════════════════════ */
+const FING=[
+ {t:'瀏覽不減反增',v:'+178',s:'排最後卻比前一則多,唯一一個違反衰減曲線的。'},
+ {t:'互動來自非追蹤者',v:'88.9%',s:'其他組是 20%–48%。這些人不追蹤你,卻剛好只互動了這一則。'},
+ {t:'分享次數',v:'29',s:'其他五組加起來只有 6 次。有人把連結轉出去了。'},
+ {t:'跳出率',v:'13.1%',s:'其他組 3%–5%。他們按完就離開,沒有繼續看下去。'}
+];
+const fg=document.getElementById('finger');
+FING.forEach((f,i)=>{
+  const d=document.createElement('div');
+  d.className='card alert reveal';
+  d.innerHTML=`<div class="num flare">${f.v}</div><h3>${f.t}</h3><p>${f.s}</p>`;
+  fg.appendChild(d);
+});
+let fingI=0;
+function fingerStep(){
+  const c=fg.children;
+  if(fingI<c.length){c[fingI].classList.add('show');fingI++;}
+  else go(cur+1);
+}
+
+/* ═══ 頁 5:滑桿 ═════════════════════════════ */
+const sl=document.getElementById('sl');
+sl.addEventListener('input',()=>{
+  const p=+sl.value/100, d=D[5];
+  const ia=d.ia*(1-p*(d.nf/100));
+  const vw=d.v*(1-p*(1-d.fv/100));
+  const r=ia/vw*100;
+  document.getElementById('pct').textContent=sl.value+'%';
+  const el=document.getElementById('rate');
+  el.innerHTML=r.toFixed(2)+'<span style="font-size:.4em">%</span>';
+  el.style.color = r>5?'#FF5C39' : r>2.62?'#FFC24B' : '#35E0A1';
+  const v=document.getElementById('verdict');
+  if(p<.15)      v.innerHTML='這是 6 號現在看起來的樣子:全班第一,遙遙領先。';
+  else if(p<.5)  v.innerHTML='拿掉一部分外部流量,領先幅度開始融化。';
+  else if(p<.85) v.innerHTML='已經追不上 1 號了。<b>差距原本是兩倍半。</b>';
+  else           v.innerHTML='<b class="mint">全部剔除後:1.93%。</b>低於 1 號的 2.62%,掉到全班第三。';
+});
+
+/* ═══ 頁 6:排名長條 ═════════════════════════ */
+let mode='raw';
+function setMode(m){
+  mode=m;
+  document.getElementById('tabA').classList.toggle('sel',m==='raw');
+  document.getElementById('tabB').classList.toggle('sel',m==='clean');
+  document.getElementById('rankNote').innerHTML = m==='raw'
+    ? '用愛心數除以瀏覽數。6 號 8.00%,是第二名的兩倍半。'
+    : '只算追蹤者自己的互動。<b class="mint">冠軍變成 1 號計算機(2.62%)</b>,6 號掉到 1.93%,全班第三。';
+  drawRank();
+}
+function drawRank(){
+  const W=1000,H=300,pl=96,pr=30,pt=16,pb=40;
+  const vals=D.map(d=>mode==='raw'?d.lr:d.cr);
+  const max=mode==='raw'?8.6:3.0;
+  const bw=(W-pl-pr)/6*0.56, gap=(W-pl-pr)/6;
+  const y=v=>pt+(1-v/max)*(H-pt-pb);
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="各則互動率長條圖">`;
+  const ticks = mode==='raw'?[0,2,4,6,8]:[0,1,2,3];
+  ticks.forEach(t=>{
+    g+=`<line class="gl" x1="${pl}" y1="${y(t)}" x2="${W-pr}" y2="${y(t)}"/>
+        <text class="lbl" x="${pl-10}" y="${y(t)+4}" text-anchor="end">${t}%</text>`;
+  });
+  // 1 號基準線
+  const base=mode==='raw'?D[0].lr:D[0].cr;
+  g+=`<line x1="${pl}" y1="${y(base)}" x2="${W-pr}" y2="${y(base)}" stroke="#35E0A1" stroke-width="1.5" stroke-dasharray="6 5" opacity=".8"/>`;
+  vals.forEach((v,i)=>{
+    const cx=pl+gap*i+gap/2, h=(H-pt-pb)-(y(v)-pt);
+    const best=v===Math.max(...vals);
+    const col = (i===5&&mode==='raw')?'#FF5C39' : best?'#35E0A1':'#7C5CFF';
+    g+=`<rect x="${cx-bw/2}" y="${y(v)}" width="${bw}" height="${h}" rx="6" fill="${col}">
+          <animate attributeName="height" from="0" to="${h}" dur=".55s" fill="freeze"/>
+          <animate attributeName="y" from="${H-pb}" to="${y(v)}" dur=".55s" fill="freeze"/>
+        </rect>
+        <text class="vlbl" x="${cx}" y="${y(v)-10}" text-anchor="middle" fill="${col}">${v.toFixed(2)}%</text>
+        <text class="lbl" x="${cx}" y="${H-14}" text-anchor="middle">${D[i].n}</text>`;
+  });
+  g+=`</svg>`;
+  document.getElementById('chart2').innerHTML=g;
+}
+
+/* ═══ 頁 12:自訂 KPI ════════════════════════ */
+const KPI=[
+ {k:'lr', n:'表面愛心率',    dir:1, tip:'最容易被灌的指標。'},
+ {k:'cr', n:'追蹤者互動率',  dir:1, tip:'外部帳號灌不進來,最難作弊。'},
+ {k:'br', n:'回看率',        dir:1, tip:'有人特地滑回去再看一次,騙不了。'},
+ {k:'er', n:'跳出率(越低越好)',dir:-1,tip:'看完就離開的人越多,內容越留不住人。'},
+ {k:'sr', n:'每千次分享數',  dir:1, tip:'含金量高,但也可能被朋友團衝高。'}
+];
+let sel={cr:true,br:true};
+const kb=document.getElementById('kpis');
+KPI.forEach(k=>{
+  const s=document.createElement('span');
+  s.className='pill'+(sel[k.k]?' sel':'');
+  s.textContent=k.n;
+  s.onclick=()=>{sel[k.k]=!sel[k.k];s.classList.toggle('sel');renderRanks();};
+  kb.appendChild(s);
+});
+function renderRanks(){
+  const keys=KPI.filter(k=>sel[k.k]);
+  const box=document.getElementById('ranks');
+  const hint=document.getElementById('kpiHint');
+  if(!keys.length){
+    box.innerHTML='<div class="card"><p>一個指標都不選,就沒有排名。<br>廣告主如果不定義成功,錢就會白花。</p></div>';
+    hint.textContent='';return;
+  }
+  const scored=D.map((d,i)=>{
+    let s=0;
+    keys.forEach(k=>{
+      const arr=D.map(x=>x[k.k]);
+      const lo=Math.min(...arr),hi=Math.max(...arr);
+      let z=(d[k.k]-lo)/((hi-lo)||1);
+      if(k.dir<0)z=1-z;
+      s+=z;
+    });
+    return {i,n:d.n,s:s/keys.length*100};
+  }).sort((a,b)=>b.s-a.s);
+  box.innerHTML=scored.map((r,p)=>
+    `<div class="rank ${p===0?'top':''} ${r.i===5?'sus':''}">
+      <span class="p">${p+1}</span><span class="n">${r.n}</span><span class="s">${r.s.toFixed(1)} 分</span>
+    </div>`).join('');
+  const sixth=scored.findIndex(r=>r.i===5)+1;
+  hint.innerHTML=keys.map(k=>'<b>'+k.n+'</b>:'+k.tip).join('<br>')+
+    `<br><br>目前這組指標下,<b class="${sixth>=4?'mint':'flare'}">灌票的 6 號排第 ${sixth} 名</b>。`;
+}
 
 /* ═══ 手機操作:按鈕、滑動、點畫面 ═══════════ */
 document.getElementById('fabNext').onclick=e=>{e.stopPropagation();step()};
