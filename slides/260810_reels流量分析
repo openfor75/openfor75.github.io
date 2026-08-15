@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1,463 個人看過你們的作品｜商經科二乙 專題製作</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Noto+Serif+TC:wght@700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#08080C;
+  --panel:#191922;
+  --panel-2:#1D1D26;
+  --line:#3D3D4E;
+  --paper:#F3F1EC;
+  --mute:#C6C4D4;
+  --violet:#7C5CFF;
+  --violet-dim:#3B2F80;
+  --mint:#35E0A1;
+  --flare:#FF5C39;
+  --amber:#FFC24B;
+  --serif:"Noto Serif TC",serif;
+  --sans:"Noto Sans TC",sans-serif;
+  --mono:"Space Grotesk","Noto Sans TC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--ink);color:var(--paper);font-family:var(--sans);
+  overflow:hidden;-webkit-font-smoothing:antialiased;
+}
+/* ── 限動進度條(signature)────────────────────── */
+#bars{position:fixed;top:0;left:0;right:0;display:flex;gap:3px;padding:10px 14px;z-index:60}
+#bars i{flex:1;height:3px;background:#2A2A36;border-radius:2px;overflow:hidden;cursor:pointer;transition:height .15s}
+#bars i:hover{height:6px}
+#bars i b{display:block;height:100%;width:0;background:var(--paper);border-radius:2px;transition:width .45s cubic-bezier(.4,0,.2,1)}
+#bars i.done b{width:100%}
+#bars i.now b{width:100%;background:var(--violet)}
+
+/* ── 版面 ─────────────────────────────────── */
+#deck{height:100%;width:100%;position:relative}
+.slide{
+  position:absolute;inset:0;padding:74px 5.5vw 76px;
+  display:none;flex-direction:column;justify-content:center;
+  animation:in .4s cubic-bezier(.2,.7,.3,1) both;
+}
+.slide.on{display:flex}
+@keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.slide{animation:none}*{transition-duration:.01ms!important}}
+
+.eyebrow{font-family:var(--mono);font-size:.88rem;letter-spacing:.2em;text-transform:uppercase;color:#A992FF;margin-bottom:14px;font-weight:700}
+h1{font-family:var(--serif);font-weight:900;font-size:clamp(2.2rem,5.4vw,4.6rem);line-height:1.08;letter-spacing:-.01em}
+h2{font-family:var(--serif);font-weight:900;font-size:clamp(1.6rem,3.1vw,2.7rem);line-height:1.2;margin-bottom:6px}
+.sub{color:#E4E2EE;font-size:clamp(1.05rem,1.45vw,1.32rem);line-height:1.8;margin-top:14px;max-width:74ch;font-weight:400}
+.big{font-family:var(--mono);font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ── 元件 ─────────────────────────────────── */
+.grid{display:grid;gap:14px;margin-top:22px}
+.g2{grid-template-columns:repeat(2,1fr)}
+.g3{grid-template-columns:repeat(3,1fr)}
+.g4{grid-template-columns:repeat(4,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.card h3{font-size:1.22rem;font-weight:700;margin-bottom:10px;color:#FFFFFF}
+.card p{font-size:1.02rem;color:#DBD9E6;line-height:1.75;font-weight:400}
+.card .num{font-family:var(--mono);font-size:2.4rem;font-weight:700;letter-spacing:-.02em;color:#FFFFFF}
+.flare{color:var(--flare)} .mint{color:var(--mint)} .vio{color:var(--violet)} .amb{color:var(--amber)}
+.card.alert{border-color:#5A2418;background:linear-gradient(180deg,#1E1211,#14141B)}
+.card.good{border-color:#164733;background:linear-gradient(180deg,#0E1D18,#14141B)}
+.reveal{opacity:.18;filter:blur(1px);transition:opacity .35s,filter .35s}
+.reveal.show{opacity:1;filter:none}
+
+table{width:100%;border-collapse:collapse;font-size:clamp(.86rem,1.18vw,1.12rem)}
+th,td{padding:9px 8px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font-family:var(--mono);font-size:.82rem;letter-spacing:.08em;text-transform:uppercase;color:#B3B1C4;font-weight:700}
+td{font-family:var(--mono);font-variant-numeric:tabular-nums;color:#F5F3FA;font-weight:500}
+td:first-child{font-family:var(--sans);font-weight:500}
+tbody tr{opacity:.16;transition:opacity .3s,background .3s}
+tbody tr.show{opacity:1}
+tbody tr.mark{background:rgba(255,92,57,.09)}
+tbody tr.mark td{color:var(--flare)}
+
+.pills{display:flex;gap:9px;flex-wrap:wrap;margin-top:20px}
+.pill{border:1px solid #4A4A5E;background:var(--panel);border-radius:999px;padding:11px 20px;font-size:1rem;cursor:pointer;transition:.18s;font-weight:500;color:#EFEDF6}
+.pill:hover{border-color:var(--violet);transform:translateY(-1px)}
+.pill.sel{background:var(--violet);border-color:var(--violet);color:#fff}
+.pill .c{font-family:var(--mono);opacity:.65;margin-left:8px;font-size:.78rem}
+
+.btn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--violet);color:#fff;background:rgba(124,92,255,.28);border-radius:10px;padding:13px 24px;font-size:1.05rem;font-weight:700;cursor:pointer;transition:.18s;font-family:var(--sans)}
+.btn:hover{background:var(--violet)}
+.btn:focus-visible,.pill:focus-visible,#bars i:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+
+.quote{border-left:4px solid var(--violet);padding:6px 0 6px 20px;margin-top:22px;font-family:var(--serif);font-size:clamp(1.15rem,1.95vw,1.6rem);line-height:1.6;font-weight:700;color:#FFFFFF}
+.src{font-family:var(--mono);font-size:.82rem;color:#A6A4B6;margin-top:16px;letter-spacing:.04em}
+.src a{color:var(--mute)}
+
+/* 教師講稿 */
+#script{position:fixed;left:0;right:0;bottom:0;background:#101018;border-top:1px solid var(--violet);
+  padding:18px 5.5vw 20px;font-size:1.08rem;line-height:1.8;color:#E8E6F2;transform:translateY(101%);transition:transform .3s;z-index:70;max-height:42vh;overflow:auto}
+#script.on{transform:none}
+#script b{color:var(--amber)}
+#script .tag{font-family:var(--mono);font-size:.65rem;letter-spacing:.18em;color:var(--violet);display:block;margin-bottom:7px}
+
+#hud{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;
+  padding:12px 5.5vw;font-family:var(--mono);font-size:.8rem;letter-spacing:.08em;color:#8C8A9C;z-index:50}
+#hud kbd{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:2px 6px;color:var(--mute)}
+
+/* 圖表 */
+svg{width:100%;height:auto;display:block}
+.axis{stroke:var(--line);stroke-width:1}
+.gl{stroke:#1E1E28;stroke-width:1}
+.lbl{font-family:var(--mono);font-size:15px;fill:#C6C4D4;font-weight:500}
+.vlbl{font-family:var(--mono);font-size:18px;font-weight:700}
+
+/* 滑桿 */
+.slider-wrap{margin-top:24px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px 26px}
+input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:99px;background:linear-gradient(90deg,var(--flare),var(--violet));outline:none;margin:16px 0 6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--paper);border:4px solid var(--violet);cursor:grab}
+input[type=range]::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--paper);border:4px solid var(--violet);cursor:grab}
+.readout{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-top:10px}
+.readout .v{font-family:var(--mono);font-size:clamp(2.4rem,6vw,4.4rem);font-weight:700;letter-spacing:-.03em;line-height:1}
+.verdict{font-size:1rem;font-weight:500;line-height:1.6}
+
+ul.clean{list-style:none;margin-top:16px}
+ul.clean li{padding:12px 0 12px 28px;position:relative;font-size:clamp(1rem,1.32vw,1.22rem);line-height:1.7;border-bottom:1px solid var(--line);font-weight:400;color:#EAE8F2}
+ul.clean li:before{content:"";position:absolute;left:0;top:19px;width:9px;height:9px;border:2px solid var(--violet);border-radius:2px}
+ul.clean li b{font-weight:700}
+
+.kpi-row{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 6px}
+.rank-list{display:grid;gap:7px;margin-top:12px}
+.rank{display:grid;grid-template-columns:38px 1fr auto;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 15px;transition:.3s}
+.rank .p{font-family:var(--mono);font-size:1.25rem;font-weight:700;color:#A992FF}
+.rank .n{font-size:1.08rem;font-weight:500;color:#F0EEF8}
+.rank .s{font-family:var(--mono);font-size:1rem;color:#C6C4D4;font-weight:500}
+.rank.top{border-color:var(--mint)} .rank.top .p{color:var(--mint)}
+.rank.sus{border-color:#5A2418}
+
+/* 手機控制項 */
+.fab{position:fixed;z-index:80;border-radius:999px;border:1px solid var(--line);
+  background:rgba(20,20,27,.92);backdrop-filter:blur(8px);color:var(--paper);
+  font-family:var(--sans);font-size:.9rem;font-weight:500;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;padding:13px 20px;
+  -webkit-tap-highlight-color:transparent}
+.fab:active{transform:scale(.96)}
+#fabNext{right:16px;bottom:52px;border-color:var(--violet);background:var(--violet);color:#fff;
+  box-shadow:0 6px 24px rgba(124,92,255,.35)}
+#fabPrev{left:16px;bottom:52px;opacity:.6;padding:13px 16px}
+#fabNote{right:16px;top:34px;padding:10px 15px;font-size:.82rem}
+#script.on ~ #fabNext,#script.on ~ #fabPrev{bottom:calc(42vh + 14px)}
+
+@media (max-width:860px){
+  .g3,.g4{grid-template-columns:repeat(2,1fr)}
+  .slide{padding:74px 6vw 118px}
+  h1{font-size:2.05rem} h2{font-size:1.55rem}
+  table{font-size:.78rem} th,td{padding:8px 4px}
+  .grid{gap:10px} .card{padding:15px 16px} .card .num{font-size:1.75rem}
+  .card p{font-size:.95rem} .card h3{font-size:1.08rem}
+  .sub{font-size:1rem;line-height:1.75} .eyebrow{font-size:.78rem}
+  ul.clean li{font-size:.98rem} .pill{font-size:.92rem;padding:10px 16px}
+  .quote{font-size:1rem;margin-top:14px}
+  .g2{grid-template-columns:1fr}
+  #hud{font-size:.6rem;padding:10px 6vw}
+  .slider-wrap{padding:18px}
+}
+@media (max-width:620px){
+  .g3,.g4{grid-template-columns:1fr}
+  .rank-list{margin-top:16px}
+}
+</style>
+</head>
+<body>
+
+<div id="bars"></div>
+<div id="deck">
+
+<!-- 0 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">商經科二乙 ｜ 專題製作 ｜ 數據判讀課</div>
+  <h1>1,463 個人<br>看過你們的作品。</h1>
+  <p class="sub">上週五,我們花了一百分鐘,用手機拍了六支廣告。<br>
+  昨天晚上八點,它們被放上一個有 5,900 人追蹤的帳號。<br>
+  今天,我們要做一件真正的商業行為:<span class="vio">把數字讀懂。</span></p>
+  <div class="pills"><span class="btn" onclick="go(1)">開始 →</span></div>
+</section>
+
+<!-- 1 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">今天要回答的三個問題</div>
+  <h2>先猜,再看數據。</h2>
+  <p class="sub">猜錯沒關係。等一下你會知道,連專業廣告公司都會猜錯——而且他們是花錢猜錯的。</p>
+  <div class="grid g3">
+    <div class="card"><div class="num vio">Q1</div><h3>誰是第一名?</h3><p>六支影片裡,哪一支最受歡迎?你憑什麼判斷?</p></div>
+    <div class="card"><div class="num vio">Q2</div><h3>抽到 1 號比較賺嗎?</h3><p>排在前面,真的有比較多人看嗎?差多少?</p></div>
+    <div class="card"><div class="num vio">Q3</div><h3>作弊看得出來嗎?</h3><p>如果有人找朋友來按讚,老師抓不抓得到?</p></div>
+  </div>
+  <div class="pills" id="votes"></div>
+  <p class="sub" style="margin-top:14px">先舉手投票,把票數記在黑板上。等一下我們回來對答案。</p>
+</section>
+
+<!-- 2 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">原始數據 ｜ Instagram 限時動態洞察</div>
+  <h2>這是六則的全部數字。</h2>
+  <table id="raw">
+    <thead><tr><th>順序 ｜ 物品</th><th>瀏覽</th><th>愛心</th><th>分享</th><th>回覆</th><th>跳出</th><th>回看</th><th>互動來自非追蹤者</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <p class="sub">按 <b>空白鍵</b> 一列一列打開。先不要下結論,只要念出數字。</p>
+</section>
+
+<!-- 3 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">發現一 ｜ 位置紅利</div>
+  <h2>排越後面,看的人越少——而且掉得很規律。</h2>
+  <div id="decay"></div>
+  <div class="pills">
+    <span class="btn" onclick="decayStep()">下一步 ▸</span>
+    <span class="pill" onclick="decayReset()">重來</span>
+  </div>
+  <p class="sub" id="decayNote">1 號到 5 號,瀏覽數從 1,463 掉到 1,135。每往後一則,大約蒸發 5%。</p>
+</section>
+
+<!-- 4 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">發現二 ｜ 曲線斷掉了</div>
+  <h2>6 號違反了物理定律。</h2>
+  <p class="sub">它排在最後,瀏覽數卻比前一則多了 178 次。當一個數字違反趨勢,不要先高興,先問為什麼。</p>
+  <div class="grid g4" id="finger"></div>
+  <div class="pills"><span class="btn" onclick="fingerStep()">翻下一張證據 ▸</span></div>
+</section>
+
+<!-- 5 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">灌票偵測器 ｜ 動手玩</div>
+  <h2>把外面來的人,一個一個拿掉。</h2>
+  <p class="sub">6 號的互動有 88.9% 來自「不是追蹤者」的人。如果我們把這些外部流量剔除,只留下真正的觀眾,它的互動率會變成多少?</p>
+  <div class="slider-wrap">
+    <label for="sl" style="font-size:.9rem;color:var(--mute)">剔除外部流量的比例 ｜ <span class="big" id="pct">0%</span></label>
+    <input id="sl" type="range" min="0" max="100" value="0" step="1" aria-label="剔除外部流量的比例">
+    <div class="readout">
+      <span class="v" id="rate">10.2<span style="font-size:.4em">%</span></span>
+      <span class="verdict" id="verdict">這是 6 號現在看起來的樣子:全班第一,遙遙領先。</span>
+    </div>
+    <div style="margin-top:16px;border-top:1px solid var(--line);padding-top:14px;font-size:.86rem;color:var(--mute)">
+      對照組 ｜ 1 號計算機的追蹤者互動率 <span class="big mint">2.62%</span>　·　全班平均 <span class="big">2.03%</span>
+    </div>
+  </div>
+</section>
+
+<!-- 6 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">發現三 ｜ 排名翻盤</div>
+  <h2>換一把尺,冠軍就換人。</h2>
+  <div id="chart2"></div>
+  <div class="pills">
+    <span class="pill sel" id="tabA" onclick="setMode('raw')">看得到的愛心率</span>
+    <span class="pill" id="tabB" onclick="setMode('clean')">扣掉外部流量後</span>
+  </div>
+  <p class="sub" id="rankNote">用愛心數除以瀏覽數。6 號 8.00%,是第二名的兩倍半。</p>
+</section>
+
+<!-- 7 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">三個名詞 ｜ 你們剛剛全部親身經歷過</div>
+  <h2>這不是課本,這是你們的數據。</h2>
+  <div class="grid g3">
+    <div class="card"><div class="eyebrow" style="margin-bottom:8px">01</div><h3>虛榮指標</h3>
+      <p>好看,但不能拿來做決定的數字。<br><br><b class="flare">你們的例子:</b>6 號的 105 個愛心。數字最大,卻不代表最受歡迎。</p></div>
+    <div class="card"><div class="eyebrow" style="margin-bottom:8px">02</div><h3>無效流量</h3>
+      <p>來了、按了、走了,不會變成顧客的人。<br><br><b class="flare">你們的例子:</b>6 號跳出 172 人,跳出率 13.1%,是別組的三倍。</p></div>
+    <div class="card"><div class="eyebrow" style="margin-bottom:8px">03</div><h3>轉換率</h3>
+      <p>有反應的人 ÷ 看到的人。廣告主真正付錢買的東西。<br><br><b class="mint">你們的例子:</b>1 號 2.62%,乾淨的第一名。</p></div>
+  </div>
+  <div class="quote">數據能指出「異常」,但不能證明「動機」。<br>所以正確的做法不是抓兇手,是換一個不會被灌的指標。</div>
+</section>
+
+<!-- 8 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">真實案例 01 ｜ 美國 · 2019</div>
+  <h2>260 萬粉絲,賣不掉 36 件 T 恤。</h2>
+  <p class="sub">
+  一位 18 歲的 Instagram 網紅 Arii,擁有 260 萬追蹤者,決定推出自己的服飾品牌。她租了攝影棚、請了攝影師和化妝師,把該做的都做了。<br><br>
+  代工廠的條件是:首波至少要賣出 <b class="flare">36 件</b>,才願意投產。<br><br>
+  她沒有達標。品牌胎死腹中。她發文說沒有人守信用,貼文後來被刪除,整件事在網路上炸開,變成行銷圈至今還在講的教材。
+  </p>
+  <div class="grid g3" style="margin-top:8px">
+    <div class="card"><div class="num vio">2,600,000</div><p>追蹤者</p></div>
+    <div class="card alert"><div class="num flare">36</div><p>賣不到的件數</p></div>
+    <div class="card"><div class="num">0.0014%</div><p>如果 36 件全賣掉,也只有這麼多人買</p></div>
+  </div>
+  <p class="sub"><b>課堂提問:</b>她的粉絲是假的嗎?不一定。但可以確定的是——<span class="vio">追蹤者不等於顧客。</span></p>
+  <p class="src">來源:BuzzFeed News、Fox News、nss magazine(2019 年 5 月)</p>
+</section>
+
+<!-- 9 ─────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">真實案例 02 ｜ 全球第二大廣告主</div>
+  <h2>聯合利華:買粉絲的網紅,我們不合作。</h2>
+  <p class="sub">
+  2018 年坎城創意節,聯合利華(旗下有多芬、立頓等品牌)的行銷長 Keith Weed 公開宣布三件事:<br>
+  不與買追蹤者的網紅合作、自家品牌永遠不買追蹤者、優先合作願意提高透明度的夥伴。<br><br>
+  導火線是《紐約時報》當年初的一篇調查報導,揭露一整條販賣假追蹤者的產業鏈,連演員、企業家、影評人的帳號裡都混著機器人。<br><br>
+  他當時的說法大意是:信任建立得很慢、崩塌得很快,少數人作弊,整個產業會一起陪葬。
+  </p>
+  <div class="quote">當一個產業的數字不能信,買廣告的人第一個跑掉。</div>
+  <p class="src">來源:The Drum、Adweek、Newsweek、Marketing Week(2018)</p>
+</section>
+
+<!-- 10 ────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">真實案例 03 ｜ 台灣 · 這條法規管到你</div>
+  <h2>在台灣,數據造假不只是道德問題。</h2>
+  <div class="grid g2">
+    <div class="card">
+      <h3>公平交易委員會怎麼看網紅</h3>
+      <p>依《公平交易委員會對於網路廣告案件之處理原則》,部落客、網紅、直播主如果經常提供商品或服務從事交易,身分就會被認定為<b>「廣告主」</b>,不是單純分享心得的人。<br><br>
+      身分一變,責任就完全不一樣了。</p>
+    </div>
+    <div class="card alert">
+      <h3>真的有人被罰</h3>
+      <p>某創作者開團時,在限時動態強調「開團期間保證最低價」,結果民眾比價發現其他通路更便宜。公平會認定價格表示虛偽不實、引人錯誤,違反《公平交易法》第 21 條第 1 項,<b class="flare">處新臺幣 5 萬元罰鍰</b>。</p>
+    </div>
+  </div>
+  <div class="grid g2" style="margin-top:14px">
+    <div class="card">
+      <h3>薦證廣告的揭露義務</h3>
+      <p>如果薦證者跟廣告主之間有「一般人無法合理預期的利益關係」,卻沒有在廣告中充分揭露,可能違反《公平交易法》第 25 條。<br><br>白話:<b>收了錢,就要講。</b></p>
+    </div>
+    <div class="card">
+      <h3>罰起來有多重</h3>
+      <p>依《公平交易法》第 42 條,主管機關得限期令其停止或改正,並得處新臺幣 <b class="amb">5 萬元以上、2,500 萬元以下</b>罰鍰;屆期不改,得按次連續處罰。</p>
+    </div>
+  </div>
+  <p class="src">來源:公平交易委員會官網(網路廣告案件處理原則、薦證廣告規範說明)、律師事務所案例整理</p>
+</section>
+
+<!-- 11 ────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">真實案例 04 ｜ 平台自己也知道</div>
+  <h2>Instagram 曾經想把愛心數藏起來。</h2>
+  <p class="sub">
+  2019 年 4 月,Instagram 開始在加拿大、澳洲、日本、巴西等地測試:貼文照樣按愛心,但<b>其他人看不到總數</b>,只有發文者自己看得到。<br><br>
+  官方說法是想降低壓力,特別是對年輕使用者——因為有人會因為愛心太少而把貼文刪掉。另一個效果是減少「因為大家都按所以我也按」的從眾心理。<br><br>
+  測試了兩年多。2021 年結論出爐:藏起來並沒有明顯降低壓力,於是改成<b class="vio">讓每個人自己選要不要顯示</b>。
+  </p>
+  <div class="grid g2">
+    <div class="card"><h3>對我們的意義</h3><p>連平台自己都承認,公開的愛心數會扭曲人的行為。它同時是壓力來源,也是最容易被操作的數字。</p></div>
+    <div class="card good"><h3>所以專業的人看什麼</h3><p>後台的洞察報告——瀏覽、跳出、回看、分享、追蹤者比例。也就是我們今天在看的這些。</p></div>
+  </div>
+  <p class="src">來源:TechCrunch、Platformer、Social Media Today(2019–2021)</p>
+</section>
+
+<!-- 12 ────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">動手做 ｜ 設計一個不會被灌的指標</div>
+  <h2>換你當廣告主。你要用什麼評分?</h2>
+  <p class="sub">點選你想採用的指標,右邊的排名會立刻重算。試試看:要選哪幾個,才能讓灌票的組別掉下去,又不會冤枉別人?</p>
+  <div class="grid g2" style="grid-template-columns:1fr 1.05fr;align-items:start">
+    <div>
+      <div class="kpi-row" id="kpis"></div>
+      <p class="sub" id="kpiHint" style="margin-top:6px"></p>
+    </div>
+    <div class="rank-list" id="ranks"></div>
+  </div>
+</section>
+
+<!-- 13 ────────────────────────────────────────── -->
+<section class="slide">
+  <div class="eyebrow">收尾</div>
+  <h2>今天你們沒有學拍片。</h2>
+  <p class="sub">你們學的是:<b>怎麼看穿一個數字。</b></p>
+  <ul class="clean">
+    <li><b>位置會給紅利。</b>排第一則多了 22.4% 的瀏覽。貨架上與眼睛齊高的位置最貴,搜尋結果第一名要花錢買,都是同一件事。</li>
+    <li><b>大的數字不一定是好的數字。</b>105 個愛心輸給 46 個愛心,因為分母不一樣、來源不一樣。</li>
+    <li><b>異常會留下指紋。</b>瀏覽不減反增、非追蹤者佔 88.9%、分享 29 次、跳出率三倍——四個線索指向同一件事。</li>
+    <li><b>抓兇手沒有用,換指標才有用。</b>這是廣告主、平台、政府現在都在做的事。</li>
+    <li><b>還有一件事:</b>六支影片的乾淨互動率落在 1.55%~2.62% 之間,差距不到一倍。你們每一組都及格了。</li>
+  </ul>
+  <div class="quote">下一次專題,你們要面對的評審不是演算法,是人。<br>但道理一樣:看起來熱鬧,跟真的有人買單,是兩件事。</div>
+</section>
+
+</div>
+
+<div id="script" aria-live="polite"></div>
+<button class="fab" id="fabPrev" aria-label="上一步">◂</button>
+<button class="fab" id="fabNext" aria-label="下一步">下一步 ▸</button>
+<button class="fab" id="fabNote" aria-label="教師講稿">☰ 講稿</button>
+
+<div id="hud">
+  <span id="hint">← → 切換　·　<kbd>空白</kbd> 逐項展開　·　<kbd>N</kbd> 教師講稿</span>
+  <span id="pageno">01 / 14</span>
+</div>
+
+<script>
+/* ═══ 資料 ═══════════════════════════════════ */
+const D=[
+ {n:"1 計算機",  v:1463,l:46, sh:5, rp:0, ex:75, bk:220, nf:48.1, ia:51,  fi:51.9, fv:69.2},
+ {n:"2 零錢包",  v:1330,l:32, sh:0, rp:0, ex:58, bk:205, nf:30.3, ia:32,  fi:69.7, fv:68.6},
+ {n:"3 泰迪熊",  v:1211,l:18, sh:0, rp:1, ex:45, bk:143, nf:20.0, ia:19,  fi:80.0, fv:69.4},
+ {n:"4 貓罐頭",  v:1166,l:23, sh:0, rp:1, ex:38, bk:137, nf:48.0, ia:24,  fi:52.0, fv:69.0},
+ {n:"5 梳子",    v:1135,l:25, sh:1, rp:1, ex:46, bk:131, nf:48.3, ia:27,  fi:51.7, fv:68.0},
+ {n:"6 講桌",    v:1313,l:105,sh:29,rp:0, ex:172,bk:135, nf:88.9, ia:134, fi:11.1, fv:58.6}
+];
+D.forEach(d=>{
+  d.lr = d.l/d.v*100;          // 表面愛心率
+  d.er = d.ex/d.v*100;         // 跳出率
+  d.br = d.bk/d.v*100;         // 回看率
+  d.sr = d.sh/d.v*1000;        // 每千次瀏覽分享數
+  d.cr = (d.ia*d.fi/100)/(d.v*d.fv/100)*100;  // 乾淨:追蹤者互動率
+});
+
+/* ═══ 教師講稿 ═══════════════════════════════ */
+const SCRIPT=[
+ "開場就說這句:<b>「昨天晚上,有 1,463 個人看過你們昨天拍的東西。今天我們不看影片,我們看數字。」</b>停兩秒讓他們消化。這個數字比任何課程目標都有說服力。",
+ "先投票再看數據,順序不能反。<b>讓他們公開押注,等一下翻盤才有戲劇效果。</b>把票數寫在黑板角落,最後一頁回來對。",
+ "一列一列開,每開一列問一個人:「念出來,你看到什麼?」<b>先不要分析,只要念。</b>等第六列打開的時候,通常會有人自己「欸?」出聲——那就是今天最好的時機點。",
+ "重點在<b>規律</b>兩個字。掉得很平均,才叫自然。等他們接受「後面一定比較少」這件事,下一頁的斷點才會刺眼。<br>問一句:「所以抽到 1 號的人,是不是賺到了?」答案是賺到 22.4% 的曝光。",
+ "四張證據一張一張翻,每翻一張問:「這個數字奇怪嗎?」<b>單獨看每一個都可以解釋,四個加起來就不行了。</b>這就是查帳的邏輯——不看單一異常,看異常的組合。",
+ "把滑桿交給灌票那組的同學自己拉。<b>讓他們親手把自己的 10.2% 拉到 1.9%。</b>拉完不要罵人,說這句:「你們沒有做錯事,你們做了一件業界每天在做的事——買流量。錯的是我們一開始只看愛心數。」",
+ "切換兩個標籤來回按幾次,讓翻盤的畫面重複出現。<b>「同一批數據,換一把尺,冠軍就換人。」</b>這句話請寫在黑板上,今天只要他們記得這一句就夠了。",
+ "三個名詞不要用背的。指著螢幕上他們自己的數字說:「這個就是虛榮指標,它現在就在你手機裡。」",
+ "Arii 這個案例學生最有感,因為 36 這個數字太小了。<b>問他們:「你們班有 32 個人。她連你們班都賣不完。」</b>",
+ "這頁講的是「大人的世界怎麼處理這件事」。重點是:買流量不是抓不到,是<b>買方不玩了</b>。廣告主才是最後的裁判。",
+ "台灣這頁請放慢。5 萬元罰鍰對高職生是很具體的數字。<b>問一句:「如果你以後開團賣東西,這條法規管不管你?」</b>答案是管。",
+ "這頁是給那些覺得「數據好複雜」的學生的安慰:<b>連 Instagram 自己都搞不定這件事,測了兩年最後放棄。</b>你今天看得懂洞察報告,已經超過很多大人。",
+ "這是今天的驗收。<b>讓他們組隊互相辯論要選哪幾個指標。</b>正解不只一個,但只要有人選了「回看率+追蹤者互動率」,就給他掌聲——那是最難灌的組合。",
+ "最後一句留給全班:「下一次專題,評審不是演算法,是人。但道理一樣。」<br><b>然後回到第 2 頁,把黑板上的投票結果對一次。</b>猜對的人給獎勵。"
+];
+
+/* ═══ 導覽 ═══════════════════════════════════ */
+const slides=[...document.querySelectorAll('.slide')];
+const bars=document.getElementById('bars');
+slides.forEach((_,i)=>{
+  const b=document.createElement('i');b.tabIndex=0;
+  b.onclick=()=>go(i);
+  b.onkeydown=e=>{if(e.key==='Enter')go(i)};
+  bars.appendChild(b);
+});
+let cur=0;
+function go(i){
+  if(i<0||i>=slides.length)return;
+  slides[cur].classList.remove('on');
+  cur=i;
+  slides[cur].classList.add('on');
+  [...bars.children].forEach((b,k)=>{
+    b.className = k<cur?'done':k===cur?'now':'';
+  });
+  document.getElementById('pageno').textContent=
+    String(cur+1).padStart(2,'0')+' / '+String(slides.length).padStart(2,'0');
+  document.getElementById('script').innerHTML='<span class="tag">教師講稿</span>'+SCRIPT[cur];
+  if(cur===3)drawDecay();
+  if(cur===6)drawRank();
+  if(cur===12)renderRanks();
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key==='PageDown')go(cur+1);
+  else if(e.key==='ArrowLeft'||e.key==='PageUp')go(cur-1);
+  else if(e.key===' '){e.preventDefault();step();}
+  else if(e.key.toLowerCase()==='n')document.getElementById('script').classList.toggle('on');
+  else if(/^[1-9]$/.test(e.key))go(+e.key-1);
+});
+function step(){
+  if(cur===2)rawStep();
+  else if(cur===3)decayStep();
+  else if(cur===4)fingerStep();
+  else go(cur+1);
+}
+
+/* ═══ 頁 1:投票 ═════════════════════════════ */
+const vb=document.getElementById('votes');
+D.forEach((d,i)=>{
+  const s=document.createElement('span');
+  s.className='pill';s.innerHTML=d.n+'<span class="c">0</span>';
+  s.onclick=()=>{const c=s.querySelector('.c');c.textContent=+c.textContent+1;s.classList.add('sel')};
+  vb.appendChild(s);
+});
+
+/* ═══ 頁 2:原始表 ═══════════════════════════ */
+const tb=document.querySelector('#raw tbody');
+D.forEach((d,i)=>{
+  const tr=document.createElement('tr');
+  if(i===5)tr.classList.add('mark');
+  tr.innerHTML=`<td>${d.n}</td><td>${d.v.toLocaleString()}</td><td>${d.l}</td><td>${d.sh}</td>
+  <td>${d.rp}</td><td>${d.ex}</td><td>${d.bk}</td><td>${d.nf.toFixed(1)}%</td>`;
+  tb.appendChild(tr);
+});
+let rawI=0;
+function rawStep(){
+  const rows=tb.querySelectorAll('tr');
+  if(rawI<rows.length){rows[rawI].classList.add('show');rawI++;}
+  else go(cur+1);
+}
+
+/* ═══ 頁 3:衰減曲線 ═════════════════════════ */
+let decayI=0;
+function drawDecay(){
+  const W=1000,H=330,pl=64,pr=24,pt=22,pb=42;
+  const max=1550,min=1000;
+  const x=i=>pl+i*((W-pl-pr)/5);
+  const y=v=>pt+(max-v)/(max-min)*(H-pt-pb);
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="六則限動的瀏覽數變化">`;
+  for(let v=1000;v<=1500;v+=100){
+    g+=`<line class="gl" x1="${pl}" y1="${y(v)}" x2="${W-pr}" y2="${y(v)}"/>
+        <text class="lbl" x="${pl-10}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+  }
+  // 趨勢線(1→5 延伸)
+  const slope=(D[4].v-D[0].v)/4;
+  g+=`<line id="trend" x1="${x(0)}" y1="${y(D[0].v)}" x2="${x(5)}" y2="${y(D[0].v+slope*5)}"
+      stroke="#FFC24B" stroke-width="2" stroke-dasharray="7 6" opacity="0"/>`;
+  g+=`<text id="trendT" class="lbl" x="${x(5)-6}" y="${y(D[0].v+slope*5)+22}" text-anchor="end" fill="#FFC24B" opacity="0">照趨勢,6 號應該只有 ${Math.round(D[0].v+slope*5)}</text>`;
+  let path=D.slice(0,5).map((d,i)=>`${i?'L':'M'}${x(i)},${y(d.v)}`).join(' ');
+  g+=`<path d="${path}" fill="none" stroke="#7C5CFF" stroke-width="3.5" stroke-linecap="round"/>`;
+  g+=`<path id="jump" d="M${x(4)},${y(D[4].v)} L${x(5)},${y(D[5].v)}" fill="none" stroke="#FF5C39" stroke-width="3.5" stroke-dasharray="400" stroke-dashoffset="400"/>`;
+  D.forEach((d,i)=>{
+    const c=i===5?'#FF5C39':'#7C5CFF';
+    g+=`<circle id="pt${i}" cx="${x(i)}" cy="${y(d.v)}" r="7" fill="${c}" opacity="${i===5?0:1}"/>
+        <text id="tx${i}" class="vlbl" x="${x(i)}" y="${y(d.v)-16}" text-anchor="middle" fill="${c}" opacity="${i===5?0:1}">${d.v.toLocaleString()}</text>
+        <text class="lbl" x="${x(i)}" y="${H-14}" text-anchor="middle">${d.n}</text>`;
+  });
+  g+=`</svg>`;
+  document.getElementById('decay').innerHTML=g;
+}
+function decayStep(){
+  decayI++;
+  const t=document.getElementById('trend'),tt=document.getElementById('trendT'),
+        j=document.getElementById('jump'),p=document.getElementById('pt5'),x=document.getElementById('tx5'),
+        note=document.getElementById('decayNote');
+  if(decayI===1){
+    t.style.transition='opacity .5s';t.style.opacity=.95;
+    tt.style.transition='opacity .5s';tt.style.opacity=.95;
+    note.innerHTML='黃色虛線是趨勢線。<b>如果一切正常,6 號應該落在這條線上。</b>問學生:你猜 6 號會是多少?';
+  }else if(decayI===2){
+    j.style.transition='stroke-dashoffset .8s ease';j.style.strokeDashoffset=0;
+    p.style.transition='opacity .5s .5s';p.style.opacity=1;
+    x.style.transition='opacity .5s .5s';x.style.opacity=1;
+    note.innerHTML='<b class="flare">實際上是 1,313——不減反增,比第五則多了 178 次。</b>這條曲線在最後一則斷掉了。';
+  }else{go(cur+1)}
+}
+function decayReset(){decayI=0;drawDecay();
+  document.getElementById('decayNote').textContent='1 號到 5 號,瀏覽數從 1,463 掉到 1,135。每往後一則,大約蒸發 5%。';}
+
+/* ═══ 頁 4:四張指紋 ═════════════════════════ */
+const FING=[
+ {t:'瀏覽不減反增',v:'+178',s:'排最後卻比前一則多,唯一一個違反衰減曲線的。'},
+ {t:'互動來自非追蹤者',v:'88.9%',s:'其他組是 20%–48%。這些人不追蹤你,卻剛好只互動了這一則。'},
+ {t:'分享次數',v:'29',s:'其他五組加起來只有 6 次。有人把連結轉出去了。'},
+ {t:'跳出率',v:'13.1%',s:'其他組 3%–5%。他們按完就離開,沒有繼續看下去。'}
+];
+const fg=document.getElementById('finger');
+FING.forEach((f,i)=>{
+  const d=document.createElement('div');
+  d.className='card alert reveal';
+  d.innerHTML=`<div class="num flare">${f.v}</div><h3>${f.t}</h3><p>${f.s}</p>`;
+  fg.appendChild(d);
+});
+let fingI=0;
+function fingerStep(){
+  const c=fg.children;
+  if(fingI<c.length){c[fingI].classList.add('show');fingI++;}
+  else go(cur+1);
+}
+
+/* ═══ 頁 5:滑桿 ═════════════════════════════ */
+const sl=document.getElementById('sl');
+sl.addEventListener('input',()=>{
+  const p=+sl.value/100, d=D[5];
+  const ia=d.ia*(1-p*(d.nf/100));
+  const vw=d.v*(1-p*(1-d.fv/100));
+  const r=ia/vw*100;
+  document.getElementById('pct').textContent=sl.value+'%';
+  const el=document.getElementById('rate');
+  el.innerHTML=r.toFixed(2)+'<span style="font-size:.4em">%</span>';
+  el.style.color = r>5?'#FF5C39' : r>2.62?'#FFC24B' : '#35E0A1';
+  const v=document.getElementById('verdict');
+  if(p<.15)      v.innerHTML='這是 6 號現在看起來的樣子:全班第一,遙遙領先。';
+  else if(p<.5)  v.innerHTML='拿掉一部分外部流量,領先幅度開始融化。';
+  else if(p<.85) v.innerHTML='已經追不上 1 號了。<b>差距原本是兩倍半。</b>';
+  else           v.innerHTML='<b class="mint">全部剔除後:1.93%。</b>低於 1 號的 2.62%,掉到全班第三。';
+});
+
+/* ═══ 頁 6:排名長條 ═════════════════════════ */
+let mode='raw';
+function setMode(m){
+  mode=m;
+  document.getElementById('tabA').classList.toggle('sel',m==='raw');
+  document.getElementById('tabB').classList.toggle('sel',m==='clean');
+  document.getElementById('rankNote').innerHTML = m==='raw'
+    ? '用愛心數除以瀏覽數。6 號 8.00%,是第二名的兩倍半。'
+    : '只算追蹤者自己的互動。<b class="mint">冠軍變成 1 號計算機(2.62%)</b>,6 號掉到 1.93%,全班第三。';
+  drawRank();
+}
+function drawRank(){
+  const W=1000,H=300,pl=96,pr=30,pt=16,pb=40;
+  const vals=D.map(d=>mode==='raw'?d.lr:d.cr);
+  const max=mode==='raw'?8.6:3.0;
+  const bw=(W-pl-pr)/6*0.56, gap=(W-pl-pr)/6;
+  const y=v=>pt+(1-v/max)*(H-pt-pb);
+  let g=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="各則互動率長條圖">`;
+  const ticks = mode==='raw'?[0,2,4,6,8]:[0,1,2,3];
+  ticks.forEach(t=>{
+    g+=`<line class="gl" x1="${pl}" y1="${y(t)}" x2="${W-pr}" y2="${y(t)}"/>
+        <text class="lbl" x="${pl-10}" y="${y(t)+4}" text-anchor="end">${t}%</text>`;
+  });
+  // 1 號基準線
+  const base=mode==='raw'?D[0].lr:D[0].cr;
+  g+=`<line x1="${pl}" y1="${y(base)}" x2="${W-pr}" y2="${y(base)}" stroke="#35E0A1" stroke-width="1.5" stroke-dasharray="6 5" opacity=".8"/>`;
+  vals.forEach((v,i)=>{
+    const cx=pl+gap*i+gap/2, h=(H-pt-pb)-(y(v)-pt);
+    const best=v===Math.max(...vals);
+    const col = (i===5&&mode==='raw')?'#FF5C39' : best?'#35E0A1':'#7C5CFF';
+    g+=`<rect x="${cx-bw/2}" y="${y(v)}" width="${bw}" height="${h}" rx="6" fill="${col}">
+          <animate attributeName="height" from="0" to="${h}" dur=".55s" fill="freeze"/>
+          <animate attributeName="y" from="${H-pb}" to="${y(v)}" dur=".55s" fill="freeze"/>
+        </rect>
+        <text class="vlbl" x="${cx}" y="${y(v)-10}" text-anchor="middle" fill="${col}">${v.toFixed(2)}%</text>
+        <text class="lbl" x="${cx}" y="${H-14}" text-anchor="middle">${D[i].n}</text>`;
+  });
+  g+=`</svg>`;
+  document.getElementById('chart2').innerHTML=g;
+}
+
+/* ═══ 頁 12:自訂 KPI ════════════════════════ */
+const KPI=[
+ {k:'lr', n:'表面愛心率',    dir:1, tip:'最容易被灌的指標。'},
+ {k:'cr', n:'追蹤者互動率',  dir:1, tip:'外部帳號灌不進來,最難作弊。'},
+ {k:'br', n:'回看率',        dir:1, tip:'有人特地滑回去再看一次,騙不了。'},
+ {k:'er', n:'跳出率(越低越好)',dir:-1,tip:'看完就離開的人越多,內容越留不住人。'},
+ {k:'sr', n:'每千次分享數',  dir:1, tip:'含金量高,但也可能被朋友團衝高。'}
+];
+let sel={cr:true,br:true};
+const kb=document.getElementById('kpis');
+KPI.forEach(k=>{
+  const s=document.createElement('span');
+  s.className='pill'+(sel[k.k]?' sel':'');
+  s.textContent=k.n;
+  s.onclick=()=>{sel[k.k]=!sel[k.k];s.classList.toggle('sel');renderRanks();};
+  kb.appendChild(s);
+});
+function renderRanks(){
+  const keys=KPI.filter(k=>sel[k.k]);
+  const box=document.getElementById('ranks');
+  const hint=document.getElementById('kpiHint');
+  if(!keys.length){
+    box.innerHTML='<div class="card"><p>一個指標都不選,就沒有排名。<br>廣告主如果不定義成功,錢就會白花。</p></div>';
+    hint.textContent='';return;
+  }
+  const scored=D.map((d,i)=>{
+    let s=0;
+    keys.forEach(k=>{
+      const arr=D.map(x=>x[k.k]);
+      const lo=Math.min(...arr),hi=Math.max(...arr);
+      let z=(d[k.k]-lo)/((hi-lo)||1);
+      if(k.dir<0)z=1-z;
+      s+=z;
+    });
+    return {i,n:d.n,s:s/keys.length*100};
+  }).sort((a,b)=>b.s-a.s);
+  box.innerHTML=scored.map((r,p)=>
+    `<div class="rank ${p===0?'top':''} ${r.i===5?'sus':''}">
+      <span class="p">${p+1}</span><span class="n">${r.n}</span><span class="s">${r.s.toFixed(1)} 分</span>
+    </div>`).join('');
+  const sixth=scored.findIndex(r=>r.i===5)+1;
+  hint.innerHTML=keys.map(k=>'<b>'+k.n+'</b>:'+k.tip).join('<br>')+
+    `<br><br>目前這組指標下,<b class="${sixth>=4?'mint':'flare'}">灌票的 6 號排第 ${sixth} 名</b>。`;
+}
+
+/* ═══ 手機操作:按鈕、滑動、點畫面 ═══════════ */
+document.getElementById('fabNext').onclick=e=>{e.stopPropagation();step()};
+document.getElementById('fabPrev').onclick=e=>{e.stopPropagation();go(cur-1)};
+document.getElementById('fabNote').onclick=e=>{
+  e.stopPropagation();
+  document.getElementById('script').classList.toggle('on');
+};
+
+/* 點畫面左右兩側翻頁,但避開所有可互動元件 */
+const SAFE='button,input,a,.pill,.btn,#bars,#script,table,svg,label,.slider-wrap';
+document.addEventListener('click',e=>{
+  if(e.target.closest(SAFE))return;
+  if(e.clientX > window.innerWidth*0.42) step(); else go(cur-1);
+});
+
+/* 左右滑動換頁 */
+let tx=0,ty=0,tt=0;
+document.addEventListener('touchstart',e=>{
+  tx=e.changedTouches[0].clientX;ty=e.changedTouches[0].clientY;tt=Date.now();
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(e.target.closest('input,#script,.slider-wrap'))return;
+  const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+  if(Date.now()-tt<600 && Math.abs(dx)>55 && Math.abs(dx)>Math.abs(dy)*1.6){
+    dx<0?go(cur+1):go(cur-1);
+  }
+},{passive:true});
+
+/* 觸控裝置改寫提示文字 */
+if(window.matchMedia('(hover:none)').matches){
+  document.getElementById('hint').innerHTML='左右滑動換頁　·　點「下一步」逐項展開';
+}
+
+/* 啟動 */
+go(0);
+</script>
+</body>
+</html>
