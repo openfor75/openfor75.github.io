@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>門市行銷研習學習紀錄單</title>
+<style>
+:root{
+  --paper:#F7F5F1; --surface:#FFFFFF; --surface2:#FBFAF8;
+  --ink:#20303B; --ink2:#465966; --muted:#7B8B96;
+  --line:#E2DDD5; --line2:#EFEBE5;
+  --clay:#A44F39; --clay-soft:#F6E9E4;
+  --sage:#3F7358; --sage-soft:#E4F0E9;
+  --amber:#8B6B1C; --amber-soft:#F6EFDC;
+  --radius:10px;
+  --shadow:0 1px 2px rgba(32,48,59,.05),0 6px 20px rgba(32,48,59,.06);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#141B21; --surface:#1C242B; --surface2:#222B33;
+    --ink:#E8EEF2; --ink2:#C3CFD7; --muted:#8B9BA6;
+    --line:#2F3A43; --line2:#27313A;
+    --clay:#E08A6E; --clay-soft:#33221D;
+    --sage:#79BE9A; --sage-soft:#1B2A22;
+    --amber:#D9B95F; --amber-soft:#2A2418;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+html,body{margin:0;padding:0}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",sans-serif;
+  font-size:16px; line-height:1.7; -webkit-text-size-adjust:100%;
+}
+.wrap{max-width:840px;margin:0 auto;padding:0 16px 140px}
+
+/* ---------- 選梯次 ---------- */
+#gate{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+.gate-card{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);padding:32px 26px;max-width:520px;width:100%;
+}
+.gate-card h1{font-size:22px;margin:0 0 6px;letter-spacing:.02em}
+.gate-card p{color:var(--muted);font-size:14px;margin:0 0 22px}
+.batch-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.batch-btn{
+  display:flex;flex-direction:column;gap:2px;align-items:flex-start;
+  background:var(--surface2);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;cursor:pointer;text-align:left;font-family:inherit;color:var(--ink);
+  transition:border-color .15s,background .15s;
+}
+.batch-btn:hover,.batch-btn:focus-visible{border-color:var(--clay);background:var(--clay-soft);outline:none}
+.batch-btn b{font-size:15px}
+.batch-btn span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.batch-btn em{font-style:normal;font-size:11.5px;color:var(--clay);font-weight:700;letter-spacing:.05em}
+.gate-note{margin-top:18px;font-size:12.5px;color:var(--muted);line-height:1.6}
+
+/* ---------- 頁首 ---------- */
+header.top{padding:26px 0 14px;border-bottom:2px solid var(--ink);margin-bottom:8px}
+.kicker{font-size:12px;letter-spacing:.14em;color:var(--clay);font-weight:700;margin:0 0 6px}
+h1.title{font-size:clamp(20px,4.5vw,27px);margin:0 0 4px;letter-spacing:.02em;line-height:1.3}
+.meta{font-size:13.5px;color:var(--muted);margin:0}
+.focusbar{
+  margin-top:14px;background:var(--clay-soft);border-left:3px solid var(--clay);
+  padding:11px 14px;border-radius:0 6px 6px 0;font-size:13.5px;color:var(--ink2);
+}
+.focusbar b{color:var(--clay)}
+
+/* ---------- 身分列 ---------- */
+.idrow{
+  display:grid;grid-template-columns:auto 1fr 1fr auto;gap:10px;align-items:end;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:14px 16px;margin-top:14px;box-shadow:var(--shadow);
+}
+.idrow .fixed{font-size:14px;font-weight:700;padding-bottom:9px;white-space:nowrap}
+label.fl{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:4px;letter-spacing:.04em}
+input.f,textarea.f,select.f{
+  width:100%;font-family:inherit;font-size:15px;color:var(--ink);
+  background:var(--surface2);border:1px solid var(--line);border-radius:7px;
+  padding:9px 11px;line-height:1.6;
+}
+input.f:focus,textarea.f:focus,select.f:focus{outline:2px solid var(--clay);outline-offset:1px;border-color:transparent}
+textarea.f{resize:vertical;min-height:64px}
+input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
+.btn-switch{
+  background:none;border:1px solid var(--line);border-radius:7px;color:var(--muted);
+  font-family:inherit;font-size:12.5px;padding:9px 11px;cursor:pointer;white-space:nowrap;
+}
+.btn-switch:hover{border-color:var(--clay);color:var(--clay)}
+
+/* ---------- 區塊 ---------- */
+.card{
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:20px;margin-top:18px;
+}
+.card > h2{
+  display:flex;align-items:baseline;gap:10px;font-size:17px;margin:0 0 4px;letter-spacing:.02em;
+}
+.badge{
+  flex:none;width:26px;height:26px;border-radius:50%;background:var(--clay-soft);color:var(--clay);
+  font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;
+  align-self:center;
+}
+.hint{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.6}
+.prompt{font-size:13px;color:var(--ink2);margin:0 0 14px;line-height:1.6}
+.hint code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1.1fr 1fr 1.2fr;gap:12px}
+
+/* 觀察列 */
+.obs{display:grid;grid-template-columns:26px 1fr 120px;gap:10px;align-items:start}
+.obs .n{
+  font-size:13px;font-weight:700;color:var(--muted);text-align:center;
+  padding-top:11px;font-variant-numeric:tabular-nums;
+}
+.legend{
+  display:flex;flex-wrap:wrap;gap:6px 10px;font-size:12px;color:var(--ink2);
+  background:var(--surface2);border:1px solid var(--line2);border-radius:7px;
+  padding:9px 12px;margin-bottom:14px;
+}
+.legend b{color:var(--clay);font-weight:700}
+
+/* 照片 */
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.pcell{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface2)}
+.pdrop{
+  position:relative;aspect-ratio:8.38/5;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;background:var(--surface2);
+}
+.pdrop img{width:100%;height:100%;object-fit:cover;display:block}
+.pdrop .ph{font-size:12.5px;color:var(--muted);text-align:center;padding:0 12px;line-height:1.6}
+.pdrop input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.pcap{padding:10px 11px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:7px}
+.pcap .lab{font-size:11.5px;color:var(--muted);font-weight:700}
+.pdel{
+  align-self:flex-start;background:none;border:none;color:var(--clay);font-family:inherit;
+  font-size:12px;cursor:pointer;padding:0;text-decoration:underline;
+}
+
+/* 心得 */
+.counter{font-size:12.5px;color:var(--muted);text-align:right;margin-top:6px;font-variant-numeric:tabular-nums}
+.counter.ok{color:var(--sage);font-weight:700}
+.starters{
+  background:var(--surface2);border:1px solid var(--line2);border-radius:7px;
+  padding:11px 14px;margin-bottom:12px;font-size:12.5px;color:var(--ink2);
+}
+.starters b{display:block;color:var(--muted);font-size:11.5px;letter-spacing:.04em;margin-bottom:5px}
+.starters div{margin:3px 0}
+
+/* ---------- 底部工具列 ---------- */
+.dock{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:color-mix(in srgb,var(--surface) 92%,transparent);
+  backdrop-filter:blur(10px);border-top:1px solid var(--line);
+  padding:10px 16px calc(10px + env(safe-area-inset-bottom));
+}
+.dockin{
+  max-width:840px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.prog{flex:1;min-width:150px}
+.prog .bar{height:6px;background:var(--line2);border-radius:99px;overflow:hidden}
+.prog .fill{height:100%;width:0;background:var(--sage);border-radius:99px;transition:width .25s}
+.prog .txt{font-size:11.5px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between;gap:8px}
+.saved{color:var(--sage)}
+.btn{
+  font-family:inherit;font-size:14.5px;font-weight:700;border-radius:8px;
+  padding:11px 20px;cursor:pointer;border:1px solid transparent;white-space:nowrap;
+}
+.btn-main{background:var(--clay);color:#fff}
+.btn-main:hover{filter:brightness(1.07)}
+.btn-main:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn-ghost{background:none;border-color:var(--line);color:var(--ink2);font-weight:400;font-size:13px;padding:10px 13px}
+.btn-ghost:hover{border-color:var(--clay);color:var(--clay)}
+
+.alert{
+  margin-top:14px;background:var(--amber-soft);border-left:3px solid var(--amber);
+  padding:11px 14px;border-radius:0 6px 6px 0;font-size:12.5px;color:var(--ink2);line-height:1.65;
+}
+.alert b{color:var(--amber)}
+.missing{border-color:var(--clay) !important;background:var(--clay-soft) !important}
+
+.print-val{display:none;white-space:pre-wrap;word-break:break-word}
+.pt-head{display:none}
+
+/* ---------- 列印 ---------- */
+@media print{
+  @page{size:A4;margin:12mm 11mm}
+  html,body{background:#fff !important;color:#000 !important;font-size:10.5pt}
+  .wrap{max-width:none;padding:0}
+  .prompt{display:block !important;font-size:9.5pt;color:#000;margin:0 0 2mm;font-weight:700}
+  .no-print,.dock,.idrow,.focusbar,.hint,.starters,.counter,.legend,
+  .pdrop input[type=file],.pdel,.alert,.btn-switch,label.fl{display:none !important}
+  input.f,textarea.f,select.f{display:none !important}
+  .print-val{display:block !important;font-size:10.5pt;color:#000;min-height:1.2em}
+  .pt-head{display:table !important;width:100%;border-collapse:collapse;margin-bottom:4mm}
+  .pt-head td{border:1px solid #000;padding:3px 6px;font-size:9.5pt}
+  .pt-head td.k{background:#EEE;font-weight:700;white-space:nowrap;width:1%}
+  .pt-head td.ttl{text-align:center;font-size:13pt;font-weight:700;background:#DDE5E9}
+  header.top{display:none}
+  .card{
+    border:1px solid #000;border-radius:0;box-shadow:none;margin:0 0 3.5mm;padding:2.5mm 3mm;
+    break-inside:avoid;background:#fff;
+  }
+  .card.allow-break{break-inside:auto}
+  .card > h2{font-size:11pt;border-bottom:1px solid #000;padding-bottom:1.2mm;margin-bottom:2mm}
+  .badge{background:#EEE;color:#000;width:18px;height:18px;font-size:9pt}
+  .stack{gap:1.5mm}
+  .obs{grid-template-columns:16px 1fr 60px;gap:4px}
+  .obs .n{padding-top:0;font-size:9.5pt}
+  .obs .print-val{border-bottom:1px solid #999;min-height:1.5em}
+  .grid2,.grid3{gap:3mm}
+  .photos{gap:3mm;break-inside:avoid}
+  .pcell{border:1px solid #000;border-radius:0;background:#fff}
+  .pdrop{aspect-ratio:auto;height:50mm;background:#fff}
+  .pdrop .ph{color:#888;font-size:8pt}
+  .pcap{border-top:1px solid #000;padding:1.5mm 2mm;gap:1mm}
+  .pcap .lab{font-size:8.5pt;color:#000;font-weight:700}
+  .lab-inline{font-weight:700}
+  .pfoot{display:block !important;margin-top:3mm;font-size:8.5pt;color:#444;text-align:right}
+}
+.pfoot{display:none}
+
+@media (max-width:620px){
+  .idrow{grid-template-columns:1fr 1fr;gap:10px}
+  .idrow .fixed{grid-column:1/-1;padding-bottom:0}
+  .idrow .btn-switch{grid-column:1/-1}
+  .grid2,.grid3,.photos{grid-template-columns:1fr}
+  .obs{grid-template-columns:22px 1fr;gap:8px}
+  .obs .facet{grid-column:2}
+  .card{padding:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ 選梯次 ============ -->
+<div id="gate">
+  <div class="gate-card">
+    <h1>門市行銷研習　學習紀錄單</h1>
+    <p>115 學年度第 1 學期・商經科二年乙班</p>
+    <div class="batch-grid" id="batchGrid"></div>
+    <div class="gate-note">
+      填寫的內容會自動存在這台裝置的瀏覽器裡，關掉網頁再打開還在。<br>
+      <b>但換一台裝置、或清除瀏覽紀錄就會不見</b>，所以填完請馬上匯出 PDF 交給老師。
+    </div>
+  </div>
+</div>
+
+<!-- ============ 表單 ============ -->
+<div class="wrap" id="app" hidden>
+
+  <table class="pt-head" id="ptHead"></table>
+
+  <header class="top">
+    <p class="kicker">115 學年度第 1 學期・商經科二年乙班</p>
+    <h1 class="title">門市行銷研習　學習紀錄單</h1>
+    <p class="meta" id="metaLine"></p>
+    <div class="focusbar" id="focusBar"></div>
+  </header>
+
+  <div class="idrow no-print">
+    <div class="fixed">班級　商二乙</div>
+    <div>
+      <label class="fl" for="seat">座號</label>
+      <input class="f" id="seat" inputmode="numeric" maxlength="2" placeholder="16">
+    </div>
+    <div>
+      <label class="fl" for="sname">姓名</label>
+      <input class="f" id="sname" placeholder="王小明">
+    </div>
+    <button class="btn-switch" id="switchBatch">換梯次</button>
+  </div>
+
+  <div id="sections"></div>
+
+  <div class="alert no-print">
+    <b>提醒</b>　這份紀錄只存在你自己的瀏覽器，老師那邊看不到。填完一定要按下面的
+    「匯出 PDF」，把檔案傳給老師才算繳交。
+  </div>
+
+  <div class="pfoot" id="pfoot"></div>
+</div>
+
+<!-- ============ 底部工具列 ============ -->
+<div class="dock no-print" id="dock" hidden>
+  <div class="dockin">
+    <div class="prog">
+      <div class="bar"><div class="fill" id="fill"></div></div>
+      <div class="txt"><span id="progTxt">尚未開始</span><span id="saveTxt"></span></div>
+    </div>
+    <button class="btn btn-ghost" id="btnBackup">備份</button>
+    <button class="btn btn-ghost" id="btnRestore">還原</button>
+    <button class="btn btn-ghost" id="btnClear">清除</button>
+    <button class="btn btn-main" id="btnPdf">匯出 PDF</button>
+  </div>
+</div>
+
+<input type="file" id="restoreInput" accept="application/json" hidden>
+
+<script>
+"use strict";
+
+/* ================= 設定 ================= */
+const CLASS_NAME = "商二乙";
+const FACETS = [
+  ["A","商品陳列"],["B","顧客服務"],["C","動線與空間"],["D","清潔衛生"],
+  ["E","法規遵循"],["F","庫存訂貨"],["G","設備操作"],["H","人員管理"]
+];
+
+const COMMON = {
+  obs:4, link:2, words:300,
+  extra:{ title:"出發前的猜想　vs　回來後的發現", kind:"predict",
+          prompt:"左欄請在出發前（集合或車上）先寫，右欄研習結束後再寫。猜錯的地方，就是你這次真正學到的東西" },
+  starters:["出發前我以為……，實際看到之後我發現……",
+            "這次最讓我意外的一件事是……",
+            "如果沒有親自到現場，我不會知道……"]
+};
+const BATCHES = {
+1:Object.assign({date:"115年10月07日（三）", short:"10/07"}, COMMON),
+2:Object.assign({date:"115年10月21日（三）", short:"10/21"}, COMMON),
+3:Object.assign({date:"115年12月09日（三）", short:"12/09"}, COMMON),
+4:Object.assign({date:"115年12月30日（三）", short:"12/30"}, COMMON)
+};
+
+/* ================= 狀態 ================= */
+let batch = null;
+let state = null;
+let saveTimer = null;
+
+const keyFor = b => "mms115_1_b" + b;
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? "" : s);
+
+function blankState(){
+  return { seat:"", name:"", fields:{}, photos:[null,null,null,null], ts:0 };
+}
+
+function load(b){
+  try{
+    const raw = localStorage.getItem(keyFor(b));
+    if(!raw) return blankState();
+    const o = JSON.parse(raw);
+    return {
+      seat: esc(o.seat), name: esc(o.name),
+      fields: o.fields && typeof o.fields === "object" ? o.fields : {},
+      photos: Array.isArray(o.photos) && o.photos.length === 4 ? o.photos : [null,null,null,null],
+      ts: o.ts || 0
+    };
+  }catch(e){ return blankState(); }
+}
+
+function save(){
+  state.ts = Date.now();
+  try{
+    localStorage.setItem(keyFor(batch), JSON.stringify(state));
+    const d = new Date(state.ts);
+    $("saveTxt").textContent = "已儲存 " +
+      String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+    $("saveTxt").className = "saved";
+  }catch(e){
+    $("saveTxt").textContent = "儲存失敗：照片太大，請刪掉一張再試";
+    $("saveTxt").className = "";
+  }
+}
+function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); }
+
+/* ================= 建立畫面 ================= */
+function batchPicker(){
+  const g = $("batchGrid");
+  g.innerHTML = "";
+  Object.keys(BATCHES).forEach(k=>{
+    const b = BATCHES[k];
+    const has = !!localStorage.getItem(keyFor(k));
+    const btn = document.createElement("button");
+    btn.className = "batch-btn";
+    btn.type = "button";
+    btn.innerHTML = '<em>第 ' + k + ' 梯次</em>' +
+                    '<b>' + b.short + '</b>' +
+                    '<span>' + (has ? "已有草稿，繼續填" : "星期三 13:55") + '</span>';
+    btn.addEventListener("click", ()=>start(Number(k)));
+    g.appendChild(btn);
+  });
+}
+
+function field(id, opts){
+  opts = opts || {};
+  const wrap = document.createElement("div");
+  if(opts.label){
+    const l = document.createElement("label");
+    l.className = "fl"; l.setAttribute("for", id); l.textContent = opts.label;
+    wrap.appendChild(l);
+  }
+  const el = document.createElement(opts.multiline ? "textarea" : "input");
+  el.className = "f"; el.id = id;
+  if(opts.placeholder) el.placeholder = opts.placeholder;
+  if(opts.rows) el.rows = opts.rows;
+  if(opts.required) el.dataset.req = "1";
+  el.value = esc(state.fields[id]);
+  el.addEventListener("input", ()=>{
+    state.fields[id] = el.value;
+    mirror(id);
+    queueSave(); progress();
+    if(opts.counter) count(id, opts.counter);
+  });
+  wrap.appendChild(el);
+
+  const pv = document.createElement("div");
+  pv.className = "print-val"; pv.id = "pv_" + id;
+  if(opts.printLabel) pv.dataset.plabel = opts.printLabel;
+  wrap.appendChild(pv);
+
+  if(opts.counter){
+    const c = document.createElement("div");
+    c.className = "counter"; c.id = "cnt_" + id;
+    wrap.appendChild(c);
+  }
+  return wrap;
+}
+
+function facetSelect(id){
+  const wrap = document.createElement("div");
+  wrap.className = "facet";
+  const s = document.createElement("select");
+  s.className = "f"; s.id = id;
+  s.innerHTML = '<option value="">面向</option>' +
+    FACETS.map(f=>'<option value="'+f[0]+'">'+f[0]+" "+f[1]+'</option>').join("");
+  s.value = esc(state.fields[id]);
+  s.addEventListener("change", ()=>{
+    state.fields[id] = s.value; mirror(id); queueSave(); progress();
+  });
+  wrap.appendChild(s);
+  const pv = document.createElement("div");
+  pv.className = "print-val"; pv.id = "pv_" + id;
+  wrap.appendChild(pv);
+  return wrap;
+}
+
+function mirror(id){
+  const pv = $("pv_" + id);
+  if(!pv) return;
+  const v = esc(state.fields[id]);
+  pv.textContent = pv.dataset.plabel && v ? pv.dataset.plabel + v : v;
+}
+
+function count(id, need){
+  const n = esc(state.fields[id]).replace(/\s/g, "").length;
+  const c = $("cnt_" + id);
+  if(!c) return;
+  c.textContent = n + " / " + need + " 字";
+  c.className = "counter" + (n >= need ? " ok" : "");
+}
+
+function card(letter, title, hintText, allowBreak){
+  const c = document.createElement("section");
+  c.className = "card" + (allowBreak ? " allow-break" : "");
+  const h = document.createElement("h2");
+  h.innerHTML = '<span class="badge">' + letter + "</span>" + title;
+  c.appendChild(h);
+  if(hintText){
+    const p = document.createElement("p");
+    p.className = "hint"; p.innerHTML = hintText;
+    c.appendChild(p);
+  }
+  return c;
+}
+
+function build(){
+  const b = BATCHES[batch];
+  const box = $("sections");
+  box.innerHTML = "";
+
+  /* --- A 梯次特色 --- */
+  const A = card("A", b.extra.title);
+  const aStack = document.createElement("div");
+  aStack.className = "stack";
+  if(b.extra.kind === "predict"){
+    const p = document.createElement("p");
+    p.className = "prompt"; p.textContent = b.extra.prompt + "。";
+    A.insertBefore(p, A.children[1] || null);
+    for(let i=1;i<=3;i++){
+      const g = document.createElement("div");
+      g.className = "grid2";
+      g.appendChild(field("pre"+i, {label:i+"　出發前我猜，門市是……", multiline:true, rows:2,
+        required:i<=2, printLabel:i+". 出發前我猜："}));
+      g.appendChild(field("post"+i, {label:i+"　回來後我發現，實際上……", multiline:true, rows:2,
+        required:i<=2, printLabel:"　　回來後我發現："}));
+      aStack.appendChild(g);
+    }
+  }
+  A.appendChild(aStack);
+  box.appendChild(A);
+
+  /* --- B 現場觀察 --- */
+  const B = card("B", "現場觀察紀錄",
+    '寫「<b>事實</b>」，不寫「感想」。例：<code>店長示範把即期品移到前排</code> → 面向 A');
+  const leg = document.createElement("div");
+  leg.className = "legend";
+  leg.innerHTML = FACETS.map(f=>"<span><b>"+f[0]+"</b> "+f[1]+"</span>").join("");
+  B.appendChild(leg);
+  const bStack = document.createElement("div");
+  bStack.className = "stack";
+  for(let i=1;i<=b.obs;i++){
+    const row = document.createElement("div");
+    row.className = "obs";
+    const n = document.createElement("div");
+    n.className = "n"; n.textContent = i;
+    row.appendChild(n);
+    row.appendChild(field("obs"+i, {
+      multiline:true, rows:2, required:i<=2,
+      placeholder:i===1 ? "我實際看到／聽到的事" : ""
+    }));
+    row.appendChild(facetSelect("fac"+i));
+    bStack.appendChild(row);
+  }
+  B.appendChild(bStack);
+  box.appendChild(B);
+
+  /* --- C 課本連結 --- */
+  const C = card("C", "把現場接回課本",
+    "想想門市行銷、商業概論、會計學裡學過的概念");
+  const cStack = document.createElement("div");
+  cStack.className = "stack";
+  for(let i=1;i<=b.link;i++){
+    const g = document.createElement("div");
+    g.className = "grid3";
+    g.appendChild(field("lk"+i+"a", {label:"我在現場看到的", multiline:true, rows:2, required:i===1, printLabel:"看到："}));
+    g.appendChild(field("lk"+i+"b", {label:"對應到的課本概念", multiline:true, rows:2, required:i===1, printLabel:"概念："}));
+    g.appendChild(field("lk"+i+"c", {label:"為什麼我認為有關", multiline:true, rows:2, required:i===1, printLabel:"理由："}));
+    cStack.appendChild(g);
+  }
+  C.appendChild(cStack);
+  box.appendChild(C);
+
+  /* --- D 疑問 --- */
+  const D = card("D", "我還想問的一個問題",
+    "今天沒問到、或想再深入的。下次研習可以帶去問");
+  D.appendChild(field("question", {multiline:true, rows:2, required:true}));
+  box.appendChild(D);
+
+  /* --- E 如果我是店長 --- */
+  const E = card("E", "如果我是這家店的店長",
+    "根據今天看到的，寫一件你會做的具體改變，以及理由");
+  const eg = document.createElement("div");
+  eg.className = "grid2";
+  eg.appendChild(field("actWhat", {label:"我會做的一件事", multiline:true, rows:2, required:true, printLabel:"我會做的一件事：\n"}));
+  eg.appendChild(field("actWhy", {label:"我這樣做的理由", multiline:true, rows:2, required:true, printLabel:"我這樣做的理由：\n"}));
+  E.appendChild(eg);
+  box.appendChild(E);
+
+  /* --- F 照片 --- */
+  const F = card("F", "研習照片與說明", "四張。圖說要寫，這是紀錄單的一部分");
+  const ph = document.createElement("div");
+  ph.className = "photos";
+  for(let i=0;i<4;i++) ph.appendChild(photoCell(i));
+  F.appendChild(ph);
+  box.appendChild(F);
+
+  /* --- G 心得 --- */
+  const G = card("G", "學習心得（至少 " + b.words + " 字）", null, true);
+  const st = document.createElement("div");
+  st.className = "starters";
+  st.innerHTML = "<b>不知道怎麼開頭的話，這三句可以挑一句接下去寫</b>" +
+    b.starters.map(s=>"<div>・"+s+"</div>").join("");
+  G.appendChild(st);
+  G.appendChild(field("reflect", {multiline:true, rows:12, required:true, counter:b.words}));
+  box.appendChild(G);
+
+  /* 頁首資訊 */
+  $("metaLine").textContent =
+    "第 " + batch + " 梯次　" + b.date + "　13:55－15:45　全家便利商店－正新店";
+  $("focusBar").innerHTML = "<b>先填 A 區左欄再出發</b>　" +
+    "A 區左邊那欄請在集合或車上就先寫好，右邊那欄研習結束後再回來填。" +
+    "兩欄對照起來，你才看得出自己這一趟真正學到什麼。";
+
+  $("seat").value = state.seat;
+  $("sname").value = state.name;
+
+  Object.keys(state.fields).forEach(mirror);
+  count("reflect", b.words);
+  buildPrintHead();
+  progress();
+}
+
+function photoCell(i){
+  const cell = document.createElement("div");
+  cell.className = "pcell";
+
+  const drop = document.createElement("label");
+  drop.className = "pdrop";
+  const img = document.createElement("img");
+  img.id = "img" + i; img.alt = "";
+  const ph = document.createElement("span");
+  ph.className = "ph"; ph.id = "ph" + i;
+  ph.textContent = "點一下上傳照片";
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "image/*";
+  inp.addEventListener("change", async ev=>{
+    const f = ev.target.files && ev.target.files[0];
+    if(!f) return;
+    ph.textContent = "處理中…";
+    try{
+      state.photos[i] = await shrink(f);
+      paintPhoto(i); save(); progress();
+    }catch(e){ ph.textContent = "這張讀不出來，換一張試試"; }
+    ev.target.value = "";
+  });
+  drop.appendChild(img); drop.appendChild(ph); drop.appendChild(inp);
+  cell.appendChild(drop);
+
+  const cap = document.createElement("div");
+  cap.className = "pcap";
+  const lab = document.createElement("div");
+  lab.className = "lab"; lab.textContent = "圖 " + (i+1);
+  cap.appendChild(lab);
+  cap.appendChild(field("cap"+i+"a", {label:"這張在拍", required:i<2, printLabel:"這張在拍："}));
+  cap.appendChild(field("cap"+i+"b", {label:"值得注意的是", required:i<2, printLabel:"值得注意的是："}));
+  const del = document.createElement("button");
+  del.type = "button"; del.className = "pdel"; del.textContent = "移除這張照片";
+  del.addEventListener("click", ()=>{ state.photos[i] = null; paintPhoto(i); save(); progress(); });
+  cap.appendChild(del);
+  cell.appendChild(cap);
+
+  setTimeout(()=>paintPhoto(i), 0);
+  return cell;
+}
+
+function paintPhoto(i){
+  const img = $("img" + i), ph = $("ph" + i);
+  if(!img) return;
+  if(state.photos[i]){
+    img.src = state.photos[i]; img.style.display = "block"; ph.style.display = "none";
+  }else{
+    img.removeAttribute("src"); img.style.display = "none";
+    ph.style.display = "block"; ph.textContent = "點一下上傳照片";
+  }
+}
+
+/* 壓縮：長邊 1400px、JPEG 0.78，避免塞爆 localStorage */
+function shrink(file){
+  return new Promise((resolve, reject)=>{
+    const done = src=>{
+      const im = new Image();
+      im.onload = ()=>{
+        const max = 1400;
+        const s = Math.min(1, max / Math.max(im.width, im.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(im.width * s);
+        c.height = Math.round(im.height * s);
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+        try{ resolve(c.toDataURL("image/jpeg", 0.78)); }catch(e){ reject(e); }
+      };
+      im.onerror = reject;
+      im.src = src;
+    };
+    if(window.createImageBitmap){
+      createImageBitmap(file, {imageOrientation:"from-image"}).then(bm=>{
+        const max = 1400;
+        const s = Math.min(1, max / Math.max(bm.width, bm.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(bm.width * s);
+        c.height = Math.round(bm.height * s);
+        c.getContext("2d").drawImage(bm, 0, 0, c.width, c.height);
+        bm.close && bm.close();
+        try{ resolve(c.toDataURL("image/jpeg", 0.78)); }catch(e){ reject(e); }
+      }).catch(()=>{
+        const fr = new FileReader();
+        fr.onload = e=>done(e.target.result);
+        fr.onerror = reject;
+        fr.readAsDataURL(file);
+      });
+    }else{
+      const fr = new FileReader();
+      fr.onload = e=>done(e.target.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    }
+  });
+}
+
+/* ================= 完成度 ================= */
+function requiredList(){
+  const els = Array.prototype.slice.call(document.querySelectorAll("[data-req]"));
+  return els.map(e=>e.id);
+}
+function progress(){
+  const req = requiredList();
+  const b = BATCHES[batch];
+  let done = 0, total = req.length + 3;   // ＋座號、姓名、至少兩張照片
+  req.forEach(id=>{
+    const v = esc(state.fields[id]).trim();
+    if(id === "reflect"){
+      if(v.replace(/\s/g,"").length >= b.words) done++;
+    }else if(v) done++;
+  });
+  if(state.seat.trim()) done++;
+  if(state.name.trim()) done++;
+  if(state.photos.filter(Boolean).length >= 2) done++;
+  const pct = total ? Math.round(done / total * 100) : 0;
+  $("fill").style.width = pct + "%";
+  $("progTxt").textContent = done >= total ? "全部完成，可以匯出了" : "完成 " + done + " / " + total + " 項";
+  $("btnPdf").disabled = false;
+  return {done, total};
+}
+
+function firstMissing(){
+  if(!state.seat.trim()) return $("seat");
+  if(!state.name.trim()) return $("sname");
+  const b = BATCHES[batch];
+  const req = requiredList();
+  for(const id of req){
+    const v = esc(state.fields[id]).trim();
+    if(id === "reflect"){
+      if(v.replace(/\s/g,"").length < b.words) return $(id);
+    }else if(!v) return $(id);
+  }
+  if(state.photos.filter(Boolean).length < 2) return null;
+  return null;
+}
+
+/* ================= 列印 ================= */
+function fileName(){
+  const seat = state.seat.trim().padStart(2, "0");
+  const nm = state.name.trim().replace(/[\\\/:*?"<>|]/g, "");
+  return "門市行銷研習心得-" + CLASS_NAME + seat + nm + "-第" + batch + "梯次";
+}
+
+function buildPrintHead(){
+  const b = BATCHES[batch];
+  const seat = state.seat.trim(), nm = state.name.trim();
+  $("ptHead").innerHTML =
+   '<tr><td class="ttl" colspan="6">115學年度第1學期　商經科　門市行銷研習　學習紀錄單</td></tr>' +
+   '<tr><td class="k">梯次</td><td>第 ' + batch + ' 梯次</td>' +
+       '<td class="k">日期</td><td>' + b.date + '</td>' +
+       '<td class="k">時間</td><td>13:55－15:45</td></tr>' +
+   '<tr><td class="k">地點</td><td>全家便利商店－正新店</td>' +
+       '<td class="k">講師</td><td colspan="3">魏呈翔 先生（正新店高階管理員）</td></tr>' +
+   '<tr><td class="k">班級</td><td>' + CLASS_NAME + '</td>' +
+       '<td class="k">座號</td><td>' + seat + '</td>' +
+       '<td class="k">姓名</td><td>' + nm + '</td></tr>';
+  $("pfoot").textContent = fileName();
+}
+
+function exportPDF(){
+  const miss = firstMissing();
+  if(miss){
+    miss.classList.add("missing");
+    miss.scrollIntoView({behavior:"smooth", block:"center"});
+    miss.focus({preventScroll:true});
+    setTimeout(()=>miss.classList.remove("missing"), 2500);
+    if(!confirm("還有欄位沒填完。仍要現在匯出嗎？")) return;
+  }
+  if(!state.seat.trim() || !state.name.trim()){
+    alert("請先填座號和姓名，檔名要用到。");
+    return;
+  }
+  buildPrintHead();
+  const prev = document.title;
+  document.title = fileName();
+  const restore = ()=>{ document.title = prev; window.removeEventListener("afterprint", restore); };
+  window.addEventListener("afterprint", restore);
+  setTimeout(()=>{ window.print(); setTimeout(restore, 1500); }, 60);
+}
+
+/* ================= 備份 ================= */
+function backup(){
+  const blob = new Blob([JSON.stringify({v:1, batch:batch, data:state}, null, 1)],
+                        {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = fileName() + ".json";
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+$("restoreInput").addEventListener("change", ev=>{
+  const f = ev.target.files && ev.target.files[0];
+  if(!f) return;
+  const fr = new FileReader();
+  fr.onload = e=>{
+    try{
+      const o = JSON.parse(e.target.result);
+      if(!o.data || !o.batch) throw 0;
+      batch = Number(o.batch); state = o.data;
+      save(); build();
+      alert("已還原第 " + batch + " 梯次的資料。");
+    }catch(err){ alert("這個檔案讀不出來，請確認是本頁匯出的備份檔。"); }
+  };
+  fr.readAsText(f);
+  ev.target.value = "";
+});
+
+/* ================= 啟動 ================= */
+function start(b){
+  batch = b;
+  state = load(b);
+  $("gate").hidden = true;
+  $("app").hidden = false;
+  $("dock").hidden = false;
+  build();
+  window.scrollTo(0,0);
+}
+
+$("seat").addEventListener("input", e=>{
+  state.seat = e.target.value.replace(/\D/g,"").slice(0,2);
+  e.target.value = state.seat;
+  buildPrintHead(); queueSave(); progress();
+});
+$("sname").addEventListener("input", e=>{
+  state.name = e.target.value;
+  buildPrintHead(); queueSave(); progress();
+});
+$("switchBatch").addEventListener("click", ()=>{
+  save();
+  $("app").hidden = true; $("dock").hidden = true; $("gate").hidden = false;
+  batchPicker();
+});
+$("btnPdf").addEventListener("click", exportPDF);
+$("btnBackup").addEventListener("click", backup);
+$("btnRestore").addEventListener("click", ()=>$("restoreInput").click());
+$("btnClear").addEventListener("click", ()=>{
+  if(!confirm("確定要清除第 " + batch + " 梯次的全部內容嗎？這個動作無法復原。")) return;
+  localStorage.removeItem(keyFor(batch));
+  state = blankState();
+  build();
+  $("saveTxt").textContent = "已清除"; $("saveTxt").className = "";
+});
+window.addEventListener("beforeunload", ()=>{ if(state) save(); });
+
+batchPicker();
+</script>
+</body>
+</html>
