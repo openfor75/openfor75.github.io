@@ -264,7 +264,7 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
   <div class="idrow no-print">
     <div class="fixed">班級　商二乙</div>
     <div>
-      <label class="fl" for="seat">座號</label>
+      <label class="fl" for="seat">學號</label>
       <input class="f" id="seat" inputmode="numeric" maxlength="2" placeholder="16">
     </div>
     <div>
@@ -520,7 +520,7 @@ function build(){
 
   /* --- C 課本連結 --- */
   const C = card("C", "把現場接回課本",
-    "想想門市行銷、商業概論、會計學裡學過的概念");
+    "想想門市行銷、商業概論、會計學、經濟學任何課本裡面學過的概念都可以寫喔");
   const cStack = document.createElement("div");
   cStack.className = "stack";
   for(let i=1;i<=b.link;i++){
@@ -536,7 +536,7 @@ function build(){
 
   /* --- D 疑問 --- */
   const D = card("D", "我還想問的一個問題",
-    "今天沒問到、或想再深入的。下次研習可以帶去問");
+    "今天沒問到、或想再深入了解的部分。");
   D.appendChild(field("question", {multiline:true, rows:2, required:true}));
   box.appendChild(D);
 
@@ -688,7 +688,7 @@ function requiredList(){
 function progress(){
   const req = requiredList();
   const b = BATCHES[batch];
-  let done = 0, total = req.length + 3;   // ＋座號、姓名、至少兩張照片
+  let done = 0, total = req.length + 3;   // ＋學號、姓名、至少兩張照片
   req.forEach(id=>{
     const v = esc(state.fields[id]).trim();
     if(id === "reflect"){
@@ -736,9 +736,9 @@ function buildPrintHead(){
        '<td class="k">日期</td><td>' + b.date + '</td>' +
        '<td class="k">時間</td><td>13:55－15:45</td></tr>' +
    '<tr><td class="k">地點</td><td>全家便利商店－正新店</td>' +
-       '<td class="k">講師</td><td colspan="3">魏呈翔 先生（正新店高階管理員）</td></tr>' +
+       '<td class="k">講師</td><td colspan="3">魏呈翔 先生（正新店店長）</td></tr>' +
    '<tr><td class="k">班級</td><td>' + CLASS_NAME + '</td>' +
-       '<td class="k">座號</td><td>' + seat + '</td>' +
+       '<td class="k">學號</td><td>' + seat + '</td>' +
        '<td class="k">姓名</td><td>' + nm + '</td></tr>';
   $("pfoot").textContent = fileName();
 }
@@ -753,7 +753,7 @@ function exportPDF(){
     if(!confirm("還有欄位沒填完。仍要現在匯出嗎？")) return;
   }
   if(!state.seat.trim() || !state.name.trim()){
-    alert("請先填座號和姓名，檔名要用到。");
+    alert("請先填學號和姓名，檔名要用到。");
     return;
   }
   buildPrintHead();
