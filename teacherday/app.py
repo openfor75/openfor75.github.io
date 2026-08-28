@@ -67,8 +67,8 @@ h1,h2,h3 { color:#4A3B22 !important; letter-spacing:1px; }
          color:#4E6B3B;font-weight:700;font-size:15px;margin-right:6px }
 .badge.pink { background:#EFDDE6;color:#8E5872 }
 .badge.gold { background:#F3E5C4;color:#8A6A1E }
-.card { background:#FFFCF5;border:4px solid #DCE7C9;border-radius:24px;padding:14px 16px 6px;
-        margin-bottom:14px }
+.card { background:#FFFCF5;border:4px solid #DCE7C9;border-radius:24px 24px 8px 8px;
+        padding:14px 16px 8px;margin-bottom:2px }
 .card h4 { margin:6px 0 2px;color:#4A3B22;font-size:20px }
 .card .cls { color:#8A6A1E;font-size:14px;font-weight:700 }
 .card .desc { color:#6E5A3A;font-size:15px;line-height:1.5;min-height:66px }
@@ -77,8 +77,10 @@ h1,h2,h3 { color:#4A3B22 !important; letter-spacing:1px; }
 .wallet .n { font-size:40px;font-weight:800;color:#4A3B22;line-height:1.2 }
 .wallet .t { font-size:14px;color:#6E5A3A }
 div[data-testid="stButton"] { width:100% }
-div[data-testid="stButton"] > button { border-radius:99px;border:0;background:#7E9B60;color:#fff;
-    font-weight:700;padding:10px 18px;min-height:46px;width:100% !important; }
+div[data-testid="stButton"] > button { border-radius:8px 8px 22px 22px;border:0;background:#7E9B60;
+    color:#fff;font-weight:700;padding:11px 14px;min-height:48px;width:100% !important;
+    font-size:15px;line-height:1.35;white-space:normal;margin-bottom:16px; }
+div[data-testid="stButton"] > button p{ color:#fff !important; }
 div[data-testid="stButton"] > button:hover { background:#4E6B3B;color:#fff }
 div[data-testid="stButton"] > button:disabled { background:#E3E0D5;color:#9A9284 }
 section[data-testid="stSidebar"] { background:#FBF7EC }
@@ -415,15 +417,18 @@ def shop_tab(products, my_orders, left, opened):
                 f"<div class='desc'>{p.get('商品介紹','')}</div>"
                 f"<div class='price'>{COIN}{price}</div></div>", unsafe_allow_html=True)
             if pid in bought:
-                if st.button("已下訂・點此取消", key=f"c{pid}", use_container_width=True):
+                if st.button(f"已下訂「{p['商品名稱']}」・點此取消",
+                             key=f"c{pid}", use_container_width=True):
                     cancel_order(st.session_state.user, pid)
                     st.rerun()
             elif not opened:
-                st.button("尚未開賣", key=f"x{pid}", disabled=True, use_container_width=True)
+                st.button(f"「{p['商品名稱']}」尚未開賣", key=f"x{pid}", disabled=True, use_container_width=True)
             elif price > left:
-                st.button(f"餘額不足（差 {COIN}{price-left}）", key=f"n{pid}", disabled=True, use_container_width=True)
+                st.button(f"「{p['商品名稱']}」餘額不足，差 {COIN}{price-left}",
+                          key=f"n{pid}", disabled=True, use_container_width=True)
             else:
-                if st.button(f"用 {COIN}{price} 帶走", key=f"b{pid}", type="primary", use_container_width=True):
+                if st.button(f"用 {COIN}{price} 把「{p['商品名稱']}」帶走",
+                             key=f"b{pid}", type="primary", use_container_width=True):
                     add_order(st.session_state.user, pid, price)
                     st.toast(f"已下訂：{p['商品名稱']}", icon="🎁")
                     st.rerun()
