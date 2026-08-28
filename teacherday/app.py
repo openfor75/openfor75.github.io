@@ -29,6 +29,7 @@ SHEETS = {"products": "商品", "teachers": "老師", "orders": "訂單", "setti
 ORDER_COLS = ["時間", "老師", "商品ID", "售價"]
 TEACHER_COLS = ["姓名", "通行碼", "任教參賽班數", "自訂額度", "備註"]
 REVIEW_COLS = ["審查", "退件原因"]
+PRODUCT_COLS = ["商品ID", "班級", "商品名稱", "售價", "單位成本", "商品介紹", "示意圖"]
 
 st.set_page_config(page_title=TITLE, page_icon=COIN, layout="wide")
 
@@ -107,21 +108,29 @@ def _read(name: str) -> pd.DataFrame:
 
 @st.cache_data(ttl=120, show_spinner=False)
 def read_products() -> pd.DataFrame:
-    df = _read("products")
-    if df.empty:
-        return df
-    df["售價"] = pd.to_numeric(df["售價"], errors="coerce").fillna(0).astype(int)
-    if "單位成本" in df:
-        df["單位成本"] = pd.to_numeric(df["單位成本"], errors="coerce").fillna(0.0)
-    df["商品ID"] = df["商品ID"].astype(str)
-    if "上架" in df:
-        df = df[df["上架"].astype(str).str.strip().isin(["是", "Y", "y", "TRUE", "True", "1"])]
-    df = df.reset_index(drop=True)
+    """型錄 = 審查通過的報名 + 「商品」分頁手動加的（兩邊都可能是空的）。"""
+    try:
+        df = _read("products")
+    except Exception:
+        df = pd.DataFrame()          # 沒有「商品」分頁也沒關係
+    if df.empty or "商品ID" not in df:
+        df = pd.DataFrame(columns=PRODUCT_COLS)
+    else:
+        df["售價"] = pd.to_numeric(df["售價"], errors="coerce").fillna(0).astype(int)
+        if "單位成本" in df:
+            df["單位成本"] = pd.to_numeric(df["單位成本"], errors="coerce").fillna(0.0)
+        df["商品ID"] = df["商品ID"].astype(str)
+        if "上架" in df:
+            df = df[df["上架"].astype(str).str.strip()
+                    .isin(["是", "Y", "y", "TRUE", "True", "1"])]
+        df = df.reset_index(drop=True)
+
     auto = signups_to_products(read_signups())
     if not auto.empty:
         df = pd.concat([auto, df], ignore_index=True)
-        df = df.drop_duplicates(subset=["商品ID"], keep="first").reset_index(drop=True)
-    return df
+    if df.empty:
+        return df
+    return df.drop_duplicates(subset=["商品ID"], keep="first").reset_index(drop=True)
 
 
 @st.cache_data(ttl=90, show_spinner=False)
@@ -436,6 +445,11 @@ def review_tab():
                 f"<span class='badge pink'>待審 {(~sg['審查'].isin(['通過', '退件'])).sum()}</span>",
                 unsafe_allow_html=True)
 
+    live = len(read_products())
+    st.markdown(f"<span class='badge gold'>目前型錄上架 {live} 件</span>", unsafe_allow_html=True)
+    if done and live == 0:
+        st.error("審查通過但型錄沒有商品，請確認「報名」分頁的審查欄是「通過」兩個字。")
+
     view = sg[["班級", "商品名稱", "售價", "單位總成本", "審查", "退件原因"]].copy()
     view["毛利"] = (view["售價"] - view["單位總成本"]).round(2)
     view["低於成本"] = view["毛利"] < 0
@@ -550,7 +564,7 @@ def main():
                    + (["📋 報名審查", "🔐 後台結算", "✨ 額度設定"] if is_admin else []))
     with tabs[0]:
         if products.empty:
-            st.info("商品尚未上架。")
+            st.info("商品尚未上架——各班報名經主辦單位審查通過後，就會出現在這裡。")
         else:
             shop_tab(products, my_orders, total - used, is_open(cfg))
     with tabs[1]:
