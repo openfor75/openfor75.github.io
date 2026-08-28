@@ -36,6 +36,30 @@ st.set_page_config(page_title=TITLE, page_icon=COIN, layout="wide")
 # ─────────────── 樣式 ───────────────
 st.markdown("""
 <style>
+/* ── 深色模式防護：手機或瀏覽器開深色時，Streamlit 會把文字變白，
+      蓋在我們的淺色底上就整片消失，所以這裡把文字色鎖回來 ── */
+:root{ color-scheme: only light; }
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
+section[data-testid="stSidebar"]{ color:#3B2F18; }
+[data-testid="stMarkdownContainer"] > p,
+[data-testid="stMarkdownContainer"] > ul li,
+[data-testid="stMarkdownContainer"] > ol li,
+[data-testid="stMarkdownContainer"] > h1, [data-testid="stMarkdownContainer"] > h2,
+[data-testid="stMarkdownContainer"] > h3, [data-testid="stMarkdownContainer"] > h4,
+[data-testid="stWidgetLabel"] p, label p, label,
+[data-baseweb="tab"] p, [data-testid="stExpander"] summary p,
+[data-testid="stMetricLabel"] p{ color:#3B2F18 !important; }
+[data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p,
+[data-testid="stCaptionContainer"] div{ color:#6E5A3A !important; }
+[data-baseweb="select"] *{ color:#3B2F18 !important; }
+[data-baseweb="popover"] li, [data-baseweb="menu"] li{ color:#3B2F18 !important; background:#FFFCF5 !important; }
+[data-testid="stHeader"]{ background:transparent !important; }
+[data-testid="stExpander"] details{ background:#FFFCF5; border-radius:16px; }
+input, textarea, select{ background:#fff !important; color:#3B2F18 !important;
+  -webkit-text-fill-color:#3B2F18 !important; }
+::placeholder{ color:#A9A08B !important; -webkit-text-fill-color:#A9A08B !important; }
+hr{ border-color:#E3DCC9 !important; }
+
 html, body, [class*="css"], .stApp { font-family:'jf-openhuninn','Microsoft JhengHei','PingFang TC',sans-serif; }
 .stApp { background: linear-gradient(180deg,#FFFCF5 0%,#FAF5E9 45%,#F1E9D6 100%); }
 h1,h2,h3 { color:#4A3B22 !important; letter-spacing:1px; }
