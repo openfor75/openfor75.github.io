@@ -153,6 +153,23 @@ def read_signups() -> pd.DataFrame:
     return df.reset_index(drop=True)
 
 
+def drive_img(url: str) -> str:
+    """把各種 Google 雲端硬碟連結轉成瀏覽器一定顯示得出來的圖片網址。"""
+    u = str(url or "").strip()
+    if not u:
+        return ""
+    fid = ""
+    if "id=" in u:
+        fid = u.split("id=")[1].split("&")[0]
+    elif "/file/d/" in u:
+        fid = u.split("/file/d/")[1].split("/")[0]
+    elif "/d/" in u and "drive.google" in u:
+        fid = u.split("/d/")[1].split("/")[0]
+    if fid:
+        return f"https://drive.google.com/thumbnail?id={fid}&sz=w1000"
+    return u
+
+
 def signups_to_products(sg: pd.DataFrame) -> pd.DataFrame:
     """審查通過的報名，轉成型錄用的商品。"""
     if sg.empty:
@@ -167,7 +184,7 @@ def signups_to_products(sg: pd.DataFrame) -> pd.DataFrame:
         "售價": ok["售價"],
         "單位成本": ok["單位總成本"],
         "商品介紹": ok.get("商品介紹", ""),
-        "示意圖": ok.get("示意圖連結", ""),
+        "示意圖": ok.get("示意圖連結", "").map(drive_img) if "示意圖連結" in ok else "",
     }).reset_index(drop=True)
 
 
@@ -334,6 +351,14 @@ def login_box(teachers: pd.DataFrame):
             st.session_state.user = name
             st.rerun()
     st.divider()
+    with st.expander("主辦單位登入（老師不用點）"):
+        pw = st.text_input("管理密碼", type="password", key="adminpw_login")
+        if st.button("進入後台"):
+            if pw and pw == str(secret("admin_password", "bae2026")):
+                st.session_state.admin = True
+                st.rerun()
+            else:
+                st.error("管理密碼不正確。")
     st.caption(f"商貿幣（{COIN}）為本競賽之虛擬購買額度，不具現金價值，不得轉讓或兌現。")
 
 
@@ -356,7 +381,10 @@ def shop_tab(products, my_orders, left, opened):
         pid, price = str(p["商品ID"]), int(p["售價"])
         with cols[i % 3]:
             if str(p.get("示意圖", "")).startswith("http"):
-                st.image(p["示意圖"], use_container_width=True)
+                try:
+                    st.image(p["示意圖"], use_container_width=True)
+                except Exception:
+                    st.caption("（示意圖載入失敗，請確認雲端硬碟共用權限）")
             st.markdown(
                 f"<div class='card'><div class='cls'>{p.get('班級','')}</div>"
                 f"<h4>{p['商品名稱']}</h4>"
@@ -481,7 +509,8 @@ def review_tab():
     c1, c2 = st.columns([1, 2])
     with c1:
         if str(row.get("示意圖連結", "")).startswith("http"):
-            st.image(row["示意圖連結"], use_container_width=True)
+            st.image(drive_img(row["示意圖連結"]), use_container_width=True)
+            st.caption(f"[原始檔連結]({row['示意圖連結']})")
         else:
             st.caption("（沒有示意圖）")
     with c2:
@@ -523,6 +552,34 @@ def credit_tab(teachers: pd.DataFrame, orders: pd.DataFrame):
                        "老師名單與額度.csv", "text/csv")
 
 
+def admin_console(teachers: pd.DataFrame):
+    """主辦單位專用畫面，不需要用老師身分登入。"""
+    with st.sidebar:
+        st.markdown("### 主辦單位")
+        st.caption("目前是後台模式，看不到老師的購買介面。")
+        if st.button("登出", use_container_width=True):
+            st.session_state.pop("admin", None)
+            st.rerun()
+        st.divider()
+        st.caption("要看老師看到的畫面，請登出後以老師身分登入。")
+    header()
+    products, orders, cfg = read_products(), read_orders(), read_settings()
+    c1, c2, c3 = st.columns(3)
+    for col, n, t in [(c1, len(read_signups()), "已收件班級"),
+                      (c2, len(products), "型錄上架件數"),
+                      (c3, len(orders), "累計購買筆數")]:
+        col.markdown(f"<div class='wallet'><div class='n'>{n}</div><div class='t'>{t}</div></div>",
+                     unsafe_allow_html=True)
+    st.write("")
+    t1, t2, t3 = st.tabs(["📋 報名審查", "🔐 後台結算", "✨ 額度設定"])
+    with t1:
+        review_tab()
+    with t2:
+        admin_tab(products, teachers, orders, cfg)
+    with t3:
+        credit_tab(teachers, orders)
+
+
 # ═══════════════ 主流程 ═══════════════
 def main():
     teachers = read_teachers()
@@ -530,6 +587,10 @@ def main():
         st.error("找不到「老師」資料，請確認試算表或 data/老師.csv。")
         st.stop()
     cfg = read_settings()
+
+    if st.session_state.get("admin") and "user" not in st.session_state:
+        admin_console(teachers)
+        st.stop()
 
     if "user" not in st.session_state:
         login_box(teachers)
@@ -550,7 +611,9 @@ def main():
         st.divider()
         st.caption(f"・同一項商品至多購買一件\n\n・售價區間 {COIN}{PRICE_MIN}～{COIN}{PRICE_MAX}\n\n"
                    "・各組成本與毛利於投票截止後才公開")
-        admin_pw = st.text_input("主辦單位登入", type="password", placeholder="管理密碼（老師不需輸入）")
+        admin_pw = st.text_input("主辦單位登入", type="password",
+                                 placeholder="管理密碼（老師不需輸入）",
+                                 help="輸入後會在下方多出後台分頁；也可以登出後在登入頁直接進後台")
         if st.button("登出", use_container_width=True):
             del st.session_state.user
             st.rerun()
