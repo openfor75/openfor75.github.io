@@ -9,6 +9,7 @@
 """
 import datetime as dt
 import random
+import re
 import time
 from pathlib import Path
 
@@ -29,7 +30,8 @@ SHEETS = {"products": "商品", "teachers": "老師", "orders": "訂單", "setti
 ORDER_COLS = ["時間", "老師", "商品ID", "售價"]
 TEACHER_COLS = ["姓名", "通行碼", "任教參賽班數", "自訂額度", "備註"]
 REVIEW_COLS = ["審查", "退件原因"]
-PRODUCT_COLS = ["商品ID", "班級", "商品名稱", "售價", "單位成本", "商品介紹", "示意圖"]
+PRODUCT_COLS = ["商品ID", "班級", "商品名稱", "售價", "單位成本", "商品介紹", "商品內容",
+                "需求洞察", "示意圖"]
 
 st.set_page_config(page_title=TITLE, page_icon=COIN, layout="wide")
 
@@ -71,7 +73,14 @@ h1,h2,h3 { color:#4A3B22 !important; letter-spacing:1px; }
         padding:14px 16px 8px;margin-bottom:2px }
 .card h4 { margin:6px 0 2px;color:#4A3B22;font-size:20px }
 .card .cls { color:#8A6A1E;font-size:14px;font-weight:700 }
-.card .desc { color:#6E5A3A;font-size:15px;line-height:1.5;min-height:66px }
+.card .desc { color:#6E5A3A;font-size:15px;line-height:1.5;min-height:48px }
+.card .why { background:#F7ECF1;border-radius:14px;padding:9px 12px;margin:8px 0 0;
+  font-size:14px;color:#6E5A3A;line-height:1.55 }
+.card .why b { display:block;font-size:12.5px;color:#8E5872;letter-spacing:1px;margin-bottom:3px }
+.card .items { background:#F6F1E2;border-radius:14px;padding:9px 12px;margin:8px 0 2px }
+.card .items b { display:block;font-size:12.5px;color:#8A6A1E;letter-spacing:1px;margin-bottom:3px }
+.card .items ul { margin:0;padding-left:17px }
+.card .items li { font-size:14px;color:#4A3B22;line-height:1.55 }
 .card .price { color:#4E6B3B;font-size:26px;font-weight:800;margin:4px 0 8px }
 .wallet { background:#FFFCF5;border:4px solid #EFDDE6;border-radius:24px;padding:16px 18px;text-align:center }
 .wallet .n { font-size:40px;font-weight:800;color:#4A3B22;line-height:1.2 }
@@ -210,6 +219,8 @@ def signups_to_products(sg: pd.DataFrame) -> pd.DataFrame:
         "售價": ok["售價"],
         "單位成本": ok["單位總成本"],
         "商品介紹": ok.get("商品介紹", ""),
+        "商品內容": ok.get("商品內容", ""),
+        "需求洞察": ok.get("需求洞察", ""),
         "示意圖": ok.get("示意圖連結", "").map(drive_img) if "示意圖連結" in ok else "",
     }).reset_index(drop=True)
 
@@ -411,10 +422,17 @@ def shop_tab(products, my_orders, left, opened):
                     st.image(p["示意圖"], use_container_width=True)
                 except Exception:
                     st.caption("（示意圖載入失敗，請確認雲端硬碟共用權限）")
+            raw = str(p.get("商品內容", "")).strip()
+            items = [x.strip() for x in re.split(r"[；;\n]+", raw) if x.strip()]
+            box = ("<div class='items'><b>內容物</b><ul>"
+                   + "".join(f"<li>{x}</li>" for x in items) + "</ul></div>") if items else ""
+            why = str(p.get("需求洞察", "")).strip()
+            whybox = (f"<div class='why'><b>為什麼想做給老師</b>{why}</div>") if why else ""
             st.markdown(
                 f"<div class='card'><div class='cls'>{p.get('班級','')}</div>"
                 f"<h4>{p['商品名稱']}</h4>"
                 f"<div class='desc'>{p.get('商品介紹','')}</div>"
+                f"{whybox}{box}"
                 f"<div class='price'>{COIN}{price}</div></div>", unsafe_allow_html=True)
             if pid in bought:
                 if st.button(f"已下訂「{p['商品名稱']}」・點此取消",
