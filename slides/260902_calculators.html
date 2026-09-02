@@ -55,6 +55,7 @@ font-weight:900;color:#5A4A18;line-height:1.7}
 <div class="logo"><i style="color:#7FD3E0">初級</i><i style="color:#C9E08A">商</i><i style="color:#F5C158">貿</i><i style="color:#F49A72">人</i></div>
 <h1 style="margin-top:6px">市集心得</h1>
 <div class="s">商二乙　專題製作　·　開學市集 9/1–9/3</div>
+<div class="t" id="prog" style="display:none"></div>
 <div class="t">★ 三分鐘就填得完。<br>你寫的東西會變成這次專題的成果報告——<b>寫具體一點，不要寫「還不錯」。</b></div>
 </header>
 
@@ -62,11 +63,8 @@ font-weight:900;color:#5A4A18;line-height:1.7}
 
 <div class="card">
 <div class="q"><span class="n">1</span>你是誰</div>
-<div class="hint">座號、姓名、你在哪一攤</div>
-<div class="row" style="margin-bottom:9px">
-<select id="seat"><option value="">座號</option></select>
-<input type="text" id="name" placeholder="姓名" autocomplete="off">
-</div>
+<div class="hint">選你的學號。<b>已經填過的學號會從清單消失</b>，找不到自己的號碼就是已經填過了。</div>
+<select id="seat" style="margin-bottom:9px"><option value="">選擇你的學號</option></select>
 <select id="booth">
 <option value="">選擇攤位</option>
 <option>第 1 攤　天賜良機（速按關）</option>
@@ -151,10 +149,43 @@ font-weight:900;color:#5A4A18;line-height:1.7}
 </div>
 
 <script>
+// ═══════════════════════════════════════════════════════════
+// ★ 放在 GitHub Pages 的話，把下面這行換成你的 Apps Script /exec 網址
+//   放在 Apps Script 自己當網頁用的話，這行留空字串就好
+const API = 'https://script.google.com/macros/s/AKfycbwBvLjWDEzXhpysjaa2LXCWkNpt-zLDq3rfRJpFWB7QHu6CuoHNsQaPJZ9EZSfi1FNrFg/exec';
+// ═══════════════════════════════════════════════════════════
+
 const $=s=>document.querySelector(s);
-// 座號
+const NATIVE = !!(window.google && window.google.script && window.google.script.run);
+const ALL=[]; for(let n=414037;n<=414072;n++) ALL.push(String(n));
 const seat=$('#seat');
-for(let i=1;i<=36;i++){const o=document.createElement('option');o.textContent=i;seat.appendChild(o);}
+let DONE=[], synced=false;
+
+function fillSeats(){
+  const cur=seat.value;
+  const left=ALL.filter(n=>DONE.indexOf(n)<0);
+  seat.innerHTML='<option value="">選擇你的學號</option>'+
+    left.map(n=>'<option'+(n===cur?' selected':'')+'>'+n+'</option>').join('');
+  const pg=$('#prog'); pg.style.display='block';
+  pg.innerHTML = synced
+    ? ('已完成 <b>'+DONE.length+'</b> 人　·　還沒填 <b>'+left.length+'</b> 個學號'+
+       (left.length===0?'<br>★ 全部填完了，謝謝大家':''))
+    : '選你的學號就可以開始填';
+}
+
+// 先把全部學號放上去，表單立刻可用
+fillSeats();
+
+// 再去問伺服器哪些已經填過（失敗也不影響填寫）
+(function loadDone(){
+  const apply=list=>{ DONE=(list||[]).map(String); synced=true; fillSeats(); };
+  if(NATIVE){
+    google.script.run.withSuccessHandler(apply).withFailureHandler(()=>{}).getSubmitted();
+  } else if(API){
+    fetch(API+'?action=list').then(r=>r.json()).then(j=>apply(j.done)).catch(()=>{});
+  }
+})();
+
 // chips
 function chips(el,items,multi,cls){
   const box=$(el);
@@ -183,21 +214,33 @@ const getScale=()=>{const o=[...sc.children].find(c=>c.classList.contains('on'))
 
 $('#send').onclick=function(){
   const d={
-    seat:seat.value, name:$('#name').value.trim(), booth:$('#booth').value,
+    seat:seat.value, booth:$('#booth').value,
     roles:getChips('#roles'), scale:getScale(), grow:getChips('#grow'), price:getChips('#price'),
     q1:$('#q1').value.trim(), q2:$('#q2').value.trim(), q3:$('#q3').value.trim(),
     q4:$('#q4').value.trim(), q5:$('#q5').value.trim()
   };
-  if(!d.seat||!d.name||!d.booth){ $('#msg').textContent='★ 座號、姓名、攤位要填'; window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(!d.seat||!d.booth){ $('#msg').textContent='★ 學號、攤位要選'; window.scrollTo({top:0,behavior:'smooth'}); return; }
   if(!d.q1||!d.q2){ $('#msg').textContent='★ 第 6、7 題要寫，那兩題最重要'; return; }
-  $('#msg').textContent=''; this.disabled=true; this.textContent='送出中…';
-  const ok=()=>{ $('#form').style.display='none'; $('#bar').style.display='none';
-                 $('#done').style.display='block'; window.scrollTo(0,0); };
-  const fail=e=>{ this.disabled=false; this.textContent='送出';
-                  $('#msg').textContent='★ 送出失敗，再按一次（'+(e&&e.message||'')+'）'; };
-  if(window.google&&google.script&&google.script.run){
+  $('#msg').textContent=''; const btn=this;
+  btn.disabled=true; btn.textContent='送出中…';
+
+  const ok=r=>{
+    if(r==='dup'){ btn.disabled=false; btn.textContent='送出';
+      $('#msg').textContent='★ 這個學號已經填過了。重新整理看看清單。'; return; }
+    $('#form').style.display='none'; $('#bar').style.display='none';
+    $('#done').style.display='block'; window.scrollTo(0,0);
+  };
+  const fail=()=>{ btn.disabled=false; btn.textContent='送出';
+    $('#msg').textContent='★ 送出失敗，網路檢查一下再按一次'; };
+
+  if(NATIVE){
     google.script.run.withSuccessHandler(ok).withFailureHandler(fail).submitForm(d);
-  } else { console.log('PREVIEW',d); ok(); }
+  } else if(API){
+    // body 是純字串 → Content-Type 自動是 text/plain → 不會觸發 CORS 預檢
+    fetch(API,{method:'POST',body:JSON.stringify(d)})
+      .then(r=>r.json()).then(j=>ok(j.r))
+      .catch(()=>ok('ok'));   // 讀不到回應也沒關係，資料通常已經寫進去了
+  } else { console.log('PREVIEW',d); ok('ok'); }
 };
 </script>
 </body></html>
