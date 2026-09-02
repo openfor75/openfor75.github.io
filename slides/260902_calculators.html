@@ -1,0 +1,203 @@
+<!DOCTYPE html><html lang="zh-Hant"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>初級商貿人｜市集心得</title>
+<style>
+:root{--teal:#4298A7;--tealD:#2E7B8F;--lime:#A1B65A;--gold:#EDA125;--goldD:#C48412;
+--orange:#DD602E;--orangeD:#BC4620;--green:#68893A;--forest:#3E6133;--red:#C23021;
+--navy:#124D64;--cream:#F4D9AE;--sand:#F3EEE2;--paper:#FFFDF7;--ink:#2B2A24;--mut:#8C8577;--line:#DCD5C4;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:"微軟正黑體","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+background:var(--sand);color:var(--ink);line-height:1.6;padding:0 0 90px}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px}
+header{background:var(--navy);color:#fff;padding:22px 20px 20px;border-radius:0 0 18px 18px;margin-bottom:16px}
+h1{font-size:23px;letter-spacing:.04em}
+header .s{font-size:13px;opacity:.85;font-weight:700;margin-top:4px}
+header .t{margin-top:12px;background:rgba(255,255,255,.14);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700}
+.card{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:16px 16px 18px;margin-bottom:12px}
+.q{font-size:16px;font-weight:900;color:var(--navy);margin-bottom:3px}
+.q .n{display:inline-block;background:var(--teal);color:#fff;min-width:22px;height:22px;line-height:22px;
+border-radius:11px;text-align:center;font-size:12px;margin-right:7px;vertical-align:1px}
+.hint{font-size:12.5px;color:var(--mut);font-weight:700;margin-bottom:9px}
+input[type=text],select,textarea{width:100%;font-family:inherit;font-size:16px;font-weight:700;
+border:2px solid var(--line);border-radius:9px;padding:11px 12px;background:#fff;color:var(--ink);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--teal)}
+textarea{resize:vertical;min-height:74px;line-height:1.55}
+.row{display:flex;gap:9px}.row>*{flex:1}
+.chips{display:flex;gap:7px;flex-wrap:wrap}
+.chip{border:2px solid var(--line);background:#fff;border-radius:20px;padding:8px 14px;
+font-size:14px;font-weight:900;color:#5A5449;cursor:pointer;user-select:none}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.chip.on.g{background:var(--green);border-color:var(--green)}
+.chip.on.o{background:var(--orange);border-color:var(--orange)}
+.scale{display:flex;gap:6px}
+.scale div{flex:1;border:2px solid var(--line);background:#fff;border-radius:9px;padding:11px 0;
+text-align:center;font-size:17px;font-weight:900;color:#5A5449;cursor:pointer}
+.scale div.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.slab{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut);font-weight:700;margin-top:5px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(243,238,226,.96);
+border-top:2px solid var(--line);padding:11px 14px;backdrop-filter:blur(6px)}
+.bar .in{max-width:640px;margin:0 auto;display:flex;gap:10px;align-items:center}
+button{flex:1;font-family:inherit;font-size:17px;font-weight:900;letter-spacing:.06em;
+background:var(--orange);color:#fff;border:none;border-radius:11px;padding:14px;cursor:pointer}
+button:disabled{background:#C3BCAA}
+#msg{font-size:12.5px;font-weight:800;color:var(--red);min-height:16px;margin-bottom:4px;text-align:center}
+.done{display:none;text-align:center;padding:60px 24px}
+.done h2{font-size:26px;color:var(--green);margin-bottom:10px}
+.done p{font-size:15px;font-weight:700;color:#4A463C}
+.done .k{margin-top:22px;background:var(--cream);border-radius:12px;padding:16px;font-size:14px;
+font-weight:900;color:#5A4A18;line-height:1.7}
+.logo{font-size:20px;font-weight:900;letter-spacing:.04em}
+.logo i{font-style:normal}
+</style></head><body>
+
+<div id="form">
+<header>
+<div class="logo"><i style="color:#7FD3E0">初級</i><i style="color:#C9E08A">商</i><i style="color:#F5C158">貿</i><i style="color:#F49A72">人</i></div>
+<h1 style="margin-top:6px">市集心得</h1>
+<div class="s">商二乙　專題製作　·　開學市集 9/1–9/3</div>
+<div class="t">★ 三分鐘就填得完。<br>你寫的東西會變成這次專題的成果報告——<b>寫具體一點，不要寫「還不錯」。</b></div>
+</header>
+
+<div class="wrap">
+
+<div class="card">
+<div class="q"><span class="n">1</span>你是誰</div>
+<div class="hint">座號、姓名、你在哪一攤</div>
+<div class="row" style="margin-bottom:9px">
+<select id="seat"><option value="">座號</option></select>
+<input type="text" id="name" placeholder="姓名" autocomplete="off">
+</div>
+<select id="booth">
+<option value="">選擇攤位</option>
+<option>第 1 攤　天賜良機（速按關）</option>
+<option>第 2 攤　算你便宜（記憶關）</option>
+<option>第 3 攤　按爆計算機（總計關）</option>
+<option>第 4 攤　算你買的對（打折關）</option>
+<option>第 5 攤　機不可失（借錢關）</option>
+<option>第 6 攤　凱威小賣部（毛利關）</option>
+<option>第 7 攤　煞氣a計算機（比價關）</option>
+</select>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">2</span>這兩天你做過哪些工作</div>
+<div class="hint">可以複選</div>
+<div class="chips" id="roles"></div>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">3</span>主動跟陌生人開口，對你來說難不難？</div>
+<div class="hint">1 ＝ 完全不會緊張　5 ＝ 超級難</div>
+<div class="scale" id="scale"></div>
+<div class="slab"><span>不難</span><span>很難</span></div>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">4</span>這兩天你覺得自己進步最多的是</div>
+<div class="hint">選一個</div>
+<div class="chips" id="grow"></div>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">5</span>回頭看，你們這攤的定價</div>
+<div class="hint">誠實選，這一題沒有標準答案</div>
+<div class="chips" id="price"></div>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">6</span>今天最有成就感的一個瞬間</div>
+<div class="hint">寫一個「畫面」，不要寫感想。例如：「有一個學妹按出 GT 的時候說『哇這什麼』」</div>
+<textarea id="q1" placeholder="那個瞬間是……"></textarea>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">7</span>最尷尬、最卡住的一個瞬間</div>
+<div class="hint">越具體越好。這一題是整份問卷最有價值的一題。</div>
+<textarea id="q2" placeholder="卡住的是……"></textarea>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">8</span>學弟妹說過哪一句話讓你記到現在</div>
+<div class="hint">原話寫下來就好，不用修飾。沒有的話寫「沒有」。</div>
+<textarea id="q3" placeholder="他說：「……」"></textarea>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">9</span>明天擺攤，可以再修正什麼？</div>
+<div class="hint">具體到「明天就做得到」的那種。例如「先把計算機裝好袋」「換人站前面」</div>
+<textarea id="q4" placeholder="明天我們可以……"></textarea>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">10</span>做完這兩天，你覺得「做生意」跟你本來想的有什麼不一樣？</div>
+<div class="hint">★ 沒有標準答案。這一題問的是<b>你自己的發現</b>——是你真的站在那裡兩天才知道的事。</div>
+<textarea id="q5" placeholder="我本來以為……，結果……"></textarea>
+</div>
+
+</div>
+</div>
+
+<div class="done" id="done">
+<h2>收到了 ✓</h2>
+<p>謝謝你，這兩天辛苦了。</p>
+<div class="k">你剛剛寫的每一句，<br>都會變成這次專題的成果報告。<br><br>你不是來擺攤的，<br>你是來把一件事<b>做完</b>的。</div>
+</div>
+
+<div class="bar" id="bar">
+<div class="in" style="display:block">
+<div id="msg"></div>
+<div style="display:flex"><button id="send">送出</button></div>
+</div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+// 座號
+const seat=$('#seat');
+for(let i=1;i<=36;i++){const o=document.createElement('option');o.textContent=i;seat.appendChild(o);}
+// chips
+function chips(el,items,multi,cls){
+  const box=$(el);
+  items.forEach(t=>{
+    const d=document.createElement('div');
+    d.className='chip'+(cls?' '+cls:'');d.textContent=t;
+    d.onclick=()=>{
+      if(multi){d.classList.toggle('on');}
+      else{[...box.children].forEach(c=>c.classList.remove('on'));d.classList.add('on');}
+    };
+    box.appendChild(d);
+  });
+}
+chips('#roles',['關主','收錢','開收據','驗機','錄影','拉客介紹','包裝','記帳'],true);
+chips('#grow',['敢開口跟陌生人講話','介紹產品的口條','計算機按得更快','跟組員配合','處理錢不出錯','看懂客人在想什麼'],false,'g');
+chips('#price',['剛剛好','有點太高','太高了','其實可以再高一點'],false,'o');
+// scale
+const sc=$('#scale');
+for(let i=1;i<=5;i++){
+  const d=document.createElement('div');d.textContent=i;
+  d.onclick=()=>{[...sc.children].forEach(c=>c.classList.remove('on'));d.classList.add('on');};
+  sc.appendChild(d);
+}
+const getChips=el=>[...$(el).children].filter(c=>c.classList.contains('on')).map(c=>c.textContent).join('、');
+const getScale=()=>{const o=[...sc.children].find(c=>c.classList.contains('on'));return o?o.textContent:'';};
+
+$('#send').onclick=function(){
+  const d={
+    seat:seat.value, name:$('#name').value.trim(), booth:$('#booth').value,
+    roles:getChips('#roles'), scale:getScale(), grow:getChips('#grow'), price:getChips('#price'),
+    q1:$('#q1').value.trim(), q2:$('#q2').value.trim(), q3:$('#q3').value.trim(),
+    q4:$('#q4').value.trim(), q5:$('#q5').value.trim()
+  };
+  if(!d.seat||!d.name||!d.booth){ $('#msg').textContent='★ 座號、姓名、攤位要填'; window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(!d.q1||!d.q2){ $('#msg').textContent='★ 第 6、7 題要寫，那兩題最重要'; return; }
+  $('#msg').textContent=''; this.disabled=true; this.textContent='送出中…';
+  const ok=()=>{ $('#form').style.display='none'; $('#bar').style.display='none';
+                 $('#done').style.display='block'; window.scrollTo(0,0); };
+  const fail=e=>{ this.disabled=false; this.textContent='送出';
+                  $('#msg').textContent='★ 送出失敗，再按一次（'+(e&&e.message||'')+'）'; };
+  if(window.google&&google.script&&google.script.run){
+    google.script.run.withSuccessHandler(ok).withFailureHandler(fail).submitForm(d);
+  } else { console.log('PREVIEW',d); ok(); }
+};
+</script>
+</body></html>
