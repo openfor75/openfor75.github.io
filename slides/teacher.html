@@ -1,0 +1,373 @@
+<!DOCTYPE html><html lang="zh-Hant"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>初級商貿人｜教師評分台</title>
+<style>
+:root{--teal:#4298A7;--tealD:#2E7B8F;--lime:#A1B65A;--gold:#EDA125;--goldD:#C48412;
+--orange:#DD602E;--orangeD:#BC4620;--green:#68893A;--forest:#3E6133;--red:#C23021;
+--navy:#124D64;--cream:#F4D9AE;--sand:#F3EEE2;--paper:#FFFDF7;--ink:#2B2A24;--mut:#8C8577;--line:#DCD5C4;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"微軟正黑體","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+background:var(--sand);color:var(--ink);line-height:1.6;padding-bottom:70px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header{background:var(--navy);color:#fff;padding:18px 0}
+header .in{max-width:1180px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.logo{font-size:19px;font-weight:900}.logo i{font-style:normal}
+h1{font-size:20px;letter-spacing:.04em}
+header .sp{margin-left:auto;font-size:13px;font-weight:700;opacity:.85}
+.tabs{display:flex;gap:6px;background:#fff;border-bottom:2px solid var(--line);padding:0 16px;
+position:sticky;top:0;z-index:20;overflow-x:auto}
+.tabs .in{max-width:1180px;margin:0 auto;display:flex;gap:6px}
+.tab{padding:12px 16px;font-size:14.5px;font-weight:900;color:var(--mut);cursor:pointer;
+border-bottom:3px solid transparent;white-space:nowrap}
+.tab.on{color:var(--navy);border-bottom-color:var(--orange)}
+.pane{display:none;padding-top:18px}.pane.on{display:block}
+.card{background:var(--paper);border:2px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:14px}
+h2{font-size:17px;color:var(--navy);margin-bottom:4px}
+.sub{font-size:12.5px;color:var(--mut);font-weight:700;margin-bottom:10px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{background:var(--navy);color:#fff;padding:8px 8px;text-align:left;font-size:12.5px;font-weight:900;white-space:nowrap}
+td{padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr:nth-child(even){background:#FAF7EF}
+.scroll{overflow-x:auto}
+input[type=number],input[type=text]{width:100%;font-family:inherit;font-size:14px;font-weight:800;
+border:2px solid var(--line);border-radius:7px;padding:6px 8px;background:#fff;outline:none;text-align:right}
+input[type=text]{text-align:left;font-weight:700}
+input:focus{border-color:var(--teal)}
+input.mini{max-width:74px}
+.gtag{display:inline-block;color:#fff;font-weight:900;font-size:12px;padding:3px 10px;border-radius:12px;white-space:nowrap}
+.num{font-variant-numeric:tabular-nums;font-weight:900;text-align:right}
+.big{font-size:17px;color:var(--orangeD)}
+.ok{color:var(--green)}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(243,238,226,.97);
+border-top:2px solid var(--line);padding:10px 16px}
+.bar .in{max-width:1180px;margin:0 auto;display:flex;gap:10px;align-items:center}
+button{font-family:inherit;font-size:14.5px;font-weight:900;letter-spacing:.04em;
+background:var(--orange);color:#fff;border:none;border-radius:9px;padding:11px 20px;cursor:pointer}
+button.ghost{background:#fff;color:var(--navy);border:2px solid var(--line)}
+button:disabled{background:#C3BCAA}
+#stat{font-size:13px;font-weight:800;color:var(--mut)}
+.gate{max-width:380px;margin:80px auto;background:var(--paper);border:2px solid var(--line);
+border-radius:14px;padding:26px}
+.gate h2{margin-bottom:10px}
+.gate input{text-align:left;margin:10px 0}
+.tip{background:#FDF3EE;border-left:5px solid var(--orange);border-radius:0 7px 7px 0;
+padding:10px 14px;margin:10px 0;font-size:13px;font-weight:700;color:var(--orangeD)}
+.warn{background:#FDECEA;border-left:5px solid var(--red);border-radius:0 7px 7px 0;
+padding:10px 14px;margin:10px 0;font-size:13px;font-weight:800;color:#8E2415}
+.kpi{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.kpi div{flex:1;min-width:120px;background:#fff;border:2px solid var(--line);border-radius:10px;
+padding:11px 14px;text-align:center}
+.kpi b{display:block;font-size:24px;color:var(--navy);line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi span{font-size:11.5px;color:var(--mut);font-weight:800}
+</style></head><body>
+
+<div id="gate" class="gate">
+<h2>教師評分台</h2>
+<div class="sub">輸入通行碼</div>
+<input type="password" id="key" placeholder="通行碼">
+<button style="width:100%" id="enter">進入</button>
+<div id="gmsg" style="font-size:12.5px;font-weight:800;color:var(--red);margin-top:8px"></div>
+</div>
+
+<div id="main" style="display:none">
+<header><div class="in">
+<div class="logo"><i style="color:#7FD3E0">初級</i><i style="color:#C9E08A">商</i><i style="color:#F5C158">貿</i><i style="color:#F49A72">人</i></div>
+<h1>教師評分台</h1>
+<div class="sp" id="hstat">載入中…</div>
+</div></header>
+
+<div class="tabs"><div class="in">
+<div class="tab on" data-p="p1">① 攤位結算</div>
+<div class="tab" data-p="p2">② 團體評分　55</div>
+<div class="tab" data-p="p3">③ 個人評分　25</div>
+<div class="tab" data-p="p4">④ 總分彙整</div>
+</div></div>
+
+<div class="wrap">
+
+<!-- ══════ ① 攤位結算 ══════ -->
+<div class="pane on" id="p1">
+<div class="card">
+<h2>成本與售出</h2>
+<div class="sub">填「認購台數、售出台數、總收入、成本單價」，右邊自動算</div>
+<div class="warn">★ 成本單價只有你看得到。成果簡報有「公開模式」，會把成本與毛利藏起來，只留台數與達成率。</div>
+<div class="scroll"><table id="tSettle"><thead><tr>
+<th>攤</th><th>組名</th><th>認購</th><th>售出</th><th>總收入</th><th>成本單價</th>
+<th>成本合計</th><th>毛利</th><th>毛利率</th><th>達成率</th></tr></thead><tbody></tbody>
+<tfoot><tr style="background:#FFF9E6;font-weight:900">
+<td colspan="2">全班合計</td><td class="num" id="f1"></td><td class="num" id="f2"></td>
+<td class="num" id="f3"></td><td></td><td class="num" id="f4"></td>
+<td class="num big" id="f5"></td><td class="num" id="f6"></td><td class="num" id="f7"></td>
+</tr></tfoot></table></div>
+</div>
+</div>
+
+<!-- ══════ ② 團體評分 ══════ -->
+<div class="pane" id="p2">
+<div class="card">
+<h2>Ａ　四樣交件　30 分</h2>
+<div class="sub">宣傳單 8　招牌 7　關卡任務卡 8　通關貼紙 7　·　只有三檔：滿分／小修／沒交</div>
+<div class="scroll"><table id="tA"><thead><tr>
+<th>攤</th><th>組名</th><th>宣傳單 8</th><th>招牌 7</th><th>任務卡 8</th><th>貼紙 7</th><th>小計</th>
+</tr></thead><tbody></tbody></table></div>
+</div>
+<div class="card">
+<h2>Ｂ　定價與策略　25 分</h2>
+<div class="sub">售價3　定價法4　為什麼是這個數字6　我們送什麼4　一台賺多少3　賣幾台回本3　Ｂ計畫2</div>
+<div class="tip">★ 這一項評的是「為什麼這樣定」，不是「定得高不高」。第 3 題（6 分）是最重要的一題。</div>
+<div class="scroll"><table id="tB"><thead><tr>
+<th>攤</th><th>組名</th><th>售價3</th><th>定價法4</th><th>理由6</th><th>送什麼4</th>
+<th>賺多少3</th><th>回本3</th><th>B計畫2</th><th>小計</th></tr></thead><tbody></tbody></table></div>
+</div>
+</div>
+
+<!-- ══════ ③ 個人評分 ══════ -->
+<div class="pane" id="p3">
+<div class="card">
+<h2>Ｃ　分工與現場執行　25 分</h2>
+<div class="sub">輪班出席 10（四場各 2.5）　角色履行 8（對帳單簽名）　紀錄完整 7（交易紀錄表）</div>
+<div class="tip">Ｄ 組內互評 20 分是<b>自動算的</b>，不用填——右邊會直接顯示每個人收到的點數與換算分數。</div>
+<div class="scroll"><table id="tC"><thead><tr>
+<th>攤</th><th>學號</th><th>輪班 10</th><th>角色 8</th><th>紀錄 7</th><th>Ｃ 小計</th>
+<th>收到點數</th><th>Ｄ 互評 20</th><th>個人分 45</th></tr></thead><tbody></tbody></table></div>
+</div>
+</div>
+
+<!-- ══════ ④ 總分 ══════ -->
+<div class="pane" id="p4">
+<div class="card">
+<h2>總分彙整</h2>
+<div class="sub">團體分（Ａ＋Ｂ）55　＋　個人分（Ｃ＋Ｄ）45　＝　100</div>
+<div class="kpi" id="kpi"></div>
+<div class="scroll"><table id="tSum"><thead><tr>
+<th>攤</th><th>學號</th><th>Ａ 30</th><th>Ｂ 25</th><th>團體 55</th>
+<th>Ｃ 25</th><th>Ｄ 20</th><th>個人 45</th><th>總分</th></tr></thead><tbody></tbody></table></div>
+</div>
+<div class="card">
+<h2>低分警示</h2>
+<div class="sub">互評收到 70 點以下的人，★ 先找他談，再決定分數。有可能是被排擠，不是不做事。</div>
+<div id="low"></div>
+</div>
+</div>
+
+</div>
+
+<div class="bar"><div class="in">
+<button id="save">儲存所有評分</button>
+<button class="ghost" id="reload">重新載入</button>
+<button class="ghost" id="csv">下載 CSV</button>
+<div id="stat"></div>
+</div></div>
+</div>
+
+<script>
+// ★ 換成你的 Apps Script /exec 網址
+const API = 'https://script.google.com/macros/s/AKfycbwBvLjWDEzXhpysjaa2LXCWkNpt-zLDq3rfRJpFWB7QHu6CuoHNsQaPJZ9EZSfi1FNrFg/exec';
+
+const GROUPS=[
+{n:1,nm:'天賜良機',c:'#4298A7',ids:['414042','414046','414048','414050','414055']},
+{n:2,nm:'算你便宜',c:'#124D64',ids:['414060','414063','414064','414070','414071']},
+{n:3,nm:'按爆計算機',c:'#7A5CA8',ids:['414037','414040','414043','414044','414053']},
+{n:4,nm:'算你買的對',c:'#EDA125',ids:['414052','414058','414061','414062','414067']},
+{n:5,nm:'機不可失',c:'#DD602E',ids:['414054','414059','414068','414069','414072']},
+{n:6,nm:'凱威小賣部',c:'#BC4620',ids:['414038','414041','414045','414066']},
+{n:7,nm:'煞氣a計算機',c:'#3E6133',ids:['414047','414049','414051','414056','414057']}];
+
+const $=s=>document.querySelector(s);
+const $$=s=>[...document.querySelectorAll(s)];
+let KEY='', D={settle:{},A:{},B:{},C:{}}, PEER=[];
+
+const nf=n=>isFinite(n)?Math.round(n).toLocaleString():'—';
+const pf=n=>isFinite(n)?n.toFixed(1)+'%':'—';
+function peerScore(p){ if(p==null)return null;
+  if(p>=130)return 20; if(p>=110)return 18; if(p>=90)return 16; if(p>=70)return 13; return 10; }
+
+/* ── 進入 ── */
+$('#enter').onclick=()=>{
+  KEY=$('#key').value.trim();
+  if(!KEY){ $('#gmsg').textContent='要輸入通行碼'; return; }
+  $('#gmsg').textContent='驗證中…';
+  load(true);
+};
+$('#key').onkeydown=e=>{ if(e.key==='Enter') $('#enter').click(); };
+
+$$('.tab').forEach(t=>t.onclick=()=>{
+  $$('.tab').forEach(x=>x.classList.remove('on')); t.classList.add('on');
+  $$('.pane').forEach(x=>x.classList.remove('on')); $('#'+t.dataset.p).classList.add('on');
+  if(t.dataset.p==='p4') renderSum();
+});
+
+/* ── 載入 ── */
+function load(first){
+  fetch(API+'?action=teacher&key='+encodeURIComponent(KEY))
+    .then(r=>r.json()).then(j=>{
+      if(j.err){ $('#gmsg').textContent='★ 通行碼不對'; return; }
+      D = Object.assign({settle:{},A:{},B:{},C:{}}, j.data||{});
+      PEER = j.peer||[];
+      if(first){ $('#gate').style.display='none'; $('#main').style.display='block'; }
+      buildAll();
+      $('#hstat').textContent='互評已交 '+PEER.length+' ／ 34 人';
+      $('#stat').textContent='已載入 '+new Date().toLocaleTimeString('zh-TW');
+    }).catch(e=>{ $('#gmsg').textContent='★ 連線失敗，檢查網址'; $('#stat').textContent='連線失敗'; });
+}
+$('#reload').onclick=()=>load(false);
+
+/* ── 互評彙總 ── */
+function peerTotals(){
+  const t={};
+  PEER.forEach(r=>{ (r.scores||[]).forEach(s=>{ t[s.to]=(t[s.to]||0)+ (+s.p||0); }); });
+  return t;
+}
+
+/* ── 建表 ── */
+function inp(v,max,cls){ return '<input type="number" min="0" max="'+max+'" step="0.5" class="'+(cls||'mini')+'" value="'+(v==null?'':v)+'">'; }
+function tag(g){ return '<span class="gtag" style="background:'+g.c+'">'+g.nm+'</span>'; }
+
+function buildAll(){ buildSettle(); buildA(); buildB(); buildC(); renderSum(); }
+
+function buildSettle(){
+  const tb=$('#tSettle tbody'); tb.innerHTML='';
+  GROUPS.forEach(g=>{
+    const s=D.settle[g.n]||{};
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+g.n+'</b></td><td>'+tag(g)+'</td>'+
+      '<td>'+inp(s.plan,60)+'</td><td>'+inp(s.sold,60)+'</td>'+
+      '<td>'+inp(s.rev,99999)+'</td><td>'+inp(s.cost,9999)+'</td>'+
+      '<td class="num c1">—</td><td class="num c2 big">—</td><td class="num c3">—</td><td class="num c4">—</td>';
+    tb.appendChild(tr);
+    tr.querySelectorAll('input').forEach((el,i)=>{
+      el.oninput=()=>{ const o=D.settle[g.n]=D.settle[g.n]||{};
+        o[['plan','sold','rev','cost'][i]]=el.value===''?null:+el.value; calcSettle(); };
+    });
+  });
+  calcSettle();
+}
+function calcSettle(){
+  let P=0,S=0,R=0,C=0;
+  $$('#tSettle tbody tr').forEach((tr,i)=>{
+    const g=GROUPS[i], s=D.settle[g.n]||{};
+    const cost=(s.cost||0)*(s.sold||0), gross=(s.rev||0)-cost;
+    tr.querySelector('.c1').textContent=s.cost!=null&&s.sold!=null?nf(cost):'—';
+    tr.querySelector('.c2').textContent=s.rev!=null&&s.cost!=null?nf(gross):'—';
+    tr.querySelector('.c3').textContent=s.rev?pf(gross/s.rev*100):'—';
+    tr.querySelector('.c4').textContent=s.plan?pf((s.sold||0)/s.plan*100):'—';
+    P+=s.plan||0;S+=s.sold||0;R+=s.rev||0;C+=cost;
+  });
+  $('#f1').textContent=nf(P);$('#f2').textContent=nf(S);$('#f3').textContent=nf(R);
+  $('#f4').textContent=nf(C);$('#f5').textContent=nf(R-C);
+  $('#f6').textContent=R?pf((R-C)/R*100):'—';
+  $('#f7').textContent=P?pf(S/P*100):'—';
+}
+
+const Amax=[8,7,8,7], Bmax=[3,4,6,4,3,3,2];
+function buildScore(sel,key,maxs){
+  const tb=$(sel+' tbody'); tb.innerHTML='';
+  GROUPS.forEach(g=>{
+    const v=D[key][g.n]||[];
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+g.n+'</b></td><td>'+tag(g)+'</td>'+
+      maxs.map((m,i)=>'<td>'+inp(v[i],m)+'</td>').join('')+'<td class="num big sum">—</td>';
+    tb.appendChild(tr);
+    tr.querySelectorAll('input').forEach((el,i)=>{
+      el.oninput=()=>{ const a=D[key][g.n]=D[key][g.n]||[];
+        a[i]=el.value===''?null:+el.value; sumRow(tr); if(key==='A'||key==='B') renderSum(); };
+    });
+    sumRow(tr);
+  });
+  function sumRow(tr){
+    const vals=[...tr.querySelectorAll('input')].map(e=>+e.value||0);
+    tr.querySelector('.sum').textContent=vals.reduce((a,b)=>a+b,0);
+  }
+}
+const buildA=()=>buildScore('#tA','A',Amax);
+const buildB=()=>buildScore('#tB','B',Bmax);
+
+function buildC(){
+  const tb=$('#tC tbody'); tb.innerHTML='';
+  const pt=peerTotals();
+  GROUPS.forEach(g=>g.ids.forEach(id=>{
+    const v=D.C[id]||[];
+    const p=pt[id], ps=peerScore(p);
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td><b>'+g.n+'</b></td><td><b>'+id+'</b></td>'+
+      [10,8,7].map((m,i)=>'<td>'+inp(v[i],m)+'</td>').join('')+
+      '<td class="num csum">—</td>'+
+      '<td class="num">'+(p==null?'<span style="color:#C9C2B2">未交</span>':p)+'</td>'+
+      '<td class="num">'+(ps==null?'—':ps)+'</td>'+
+      '<td class="num big psum">—</td>';
+    tb.appendChild(tr);
+    tr.querySelectorAll('input').forEach((el,i)=>{
+      el.oninput=()=>{ const a=D.C[id]=D.C[id]||[];
+        a[i]=el.value===''?null:+el.value; sumC(tr,ps); renderSum(); };
+    });
+    sumC(tr,ps);
+  }));
+  function sumC(tr,ps){
+    const vals=[...tr.querySelectorAll('input')].map(e=>+e.value||0);
+    const c=vals.reduce((a,b)=>a+b,0);
+    tr.querySelector('.csum').textContent=c;
+    tr.querySelector('.psum').textContent=c+(ps||0);
+  }
+}
+
+function renderSum(){
+  const pt=peerTotals(), tb=$('#tSum tbody'); if(!tb)return; tb.innerHTML='';
+  let tot=[],low=[];
+  GROUPS.forEach(g=>{
+    const A=(D.A[g.n]||[]).reduce((a,b)=>a+(+b||0),0);
+    const B=(D.B[g.n]||[]).reduce((a,b)=>a+(+b||0),0);
+    g.ids.forEach(id=>{
+      const C=(D.C[id]||[]).reduce((a,b)=>a+(+b||0),0);
+      const p=pt[id], Dm=peerScore(p)||0;
+      const t=A+B+C+Dm; tot.push(t);
+      if(p!=null&&p<70) low.push({id:id,g:g,p:p});
+      const tr=document.createElement('tr');
+      tr.innerHTML='<td><b>'+g.n+'</b></td><td><b>'+id+'</b></td>'+
+        '<td class="num">'+A+'</td><td class="num">'+B+'</td><td class="num">'+(A+B)+'</td>'+
+        '<td class="num">'+C+'</td><td class="num">'+Dm+'</td><td class="num">'+(C+Dm)+'</td>'+
+        '<td class="num big">'+t+'</td>';
+      tb.appendChild(tr);
+    });
+  });
+  const avg=tot.length?tot.reduce((a,b)=>a+b,0)/tot.length:0;
+  $('#kpi').innerHTML=
+    '<div><b>'+tot.length+'</b><span>人數</span></div>'+
+    '<div><b>'+avg.toFixed(1)+'</b><span>平均總分</span></div>'+
+    '<div><b>'+(tot.length?Math.max(...tot):0)+'</b><span>最高</span></div>'+
+    '<div><b>'+(tot.length?Math.min(...tot):0)+'</b><span>最低</span></div>'+
+    '<div><b>'+PEER.length+'</b><span>互評已交</span></div>';
+  $('#low').innerHTML = low.length
+    ? low.map(x=>'<div class="warn">'+tag(x.g)+' <b>'+x.id+'</b>　只收到 '+x.p+' 點　→ 先找他談</div>').join('')
+    : '<div class="sub" style="color:var(--green);font-weight:900">目前沒有人低於 70 點</div>';
+}
+
+/* ── 儲存 ── */
+$('#save').onclick=function(){
+  this.disabled=true; $('#stat').textContent='儲存中…';
+  fetch(API,{method:'POST',body:JSON.stringify({type:'teacher',key:KEY,data:D})})
+    .then(r=>r.json()).then(j=>{
+      $('#stat').textContent = j.r==='ok' ? '已儲存 '+new Date().toLocaleTimeString('zh-TW') : '★ '+(j.msg||'失敗');
+      this.disabled=false;
+    }).catch(()=>{ $('#stat').textContent='已送出（讀不到回應）'; this.disabled=false; });
+};
+
+/* ── CSV ── */
+$('#csv').onclick=()=>{
+  const rows=[['攤','組名','學號','A30','B25','團體55','C25','D20','個人45','總分']];
+  const pt=peerTotals();
+  GROUPS.forEach(g=>{
+    const A=(D.A[g.n]||[]).reduce((a,b)=>a+(+b||0),0);
+    const B=(D.B[g.n]||[]).reduce((a,b)=>a+(+b||0),0);
+    g.ids.forEach(id=>{
+      const C=(D.C[id]||[]).reduce((a,b)=>a+(+b||0),0);
+      const Dm=peerScore(pt[id])||0;
+      rows.push([g.n,g.nm,id,A,B,A+B,C,Dm,C+Dm,A+B+C+Dm]);
+    });
+  });
+  const csv='﻿'+rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='初級商貿人_成績.csv'; a.click();
+};
+</script>
+</body></html>
