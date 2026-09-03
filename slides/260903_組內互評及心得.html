@@ -1,0 +1,232 @@
+<!DOCTYPE html><html lang="zh-Hant"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>初級商貿人｜組內互評與自評</title>
+<style>
+:root{--teal:#4298A7;--tealD:#2E7B8F;--lime:#A1B65A;--gold:#EDA125;--goldD:#C48412;
+--orange:#DD602E;--orangeD:#BC4620;--green:#68893A;--forest:#3E6133;--red:#C23021;
+--navy:#124D64;--cream:#F4D9AE;--sand:#F3EEE2;--paper:#FFFDF7;--ink:#2B2A24;--mut:#8C8577;--line:#DCD5C4;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:"微軟正黑體","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+background:var(--sand);color:var(--ink);line-height:1.6;padding:0 0 96px}
+.wrap{max-width:640px;margin:0 auto;padding:0 14px}
+header{background:var(--navy);color:#fff;padding:22px 20px 20px;border-radius:0 0 18px 18px;margin-bottom:16px}
+h1{font-size:23px;letter-spacing:.04em;margin-top:6px}
+header .s{font-size:13px;opacity:.85;font-weight:700;margin-top:4px}
+header .t{margin-top:12px;background:rgba(255,255,255,.14);border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700}
+.logo{font-size:20px;font-weight:900;letter-spacing:.04em}.logo i{font-style:normal}
+.card{background:var(--paper);border:2px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.q{font-size:16px;font-weight:900;color:var(--navy);margin-bottom:3px}
+.q .n{display:inline-block;background:var(--teal);color:#fff;min-width:22px;height:22px;line-height:22px;
+border-radius:11px;text-align:center;font-size:12px;margin-right:7px;vertical-align:1px}
+.hint{font-size:12.5px;color:var(--mut);font-weight:700;margin-bottom:9px}
+select,textarea,input[type=text]{width:100%;font-family:inherit;font-size:16px;font-weight:700;
+border:2px solid var(--line);border-radius:9px;padding:11px 12px;background:#fff;color:var(--ink);outline:none}
+select:focus,textarea:focus,input:focus{border-color:var(--teal)}
+textarea{resize:vertical;min-height:62px;line-height:1.55}
+.gbadge{display:inline-block;color:#fff;font-weight:900;font-size:13px;padding:5px 13px;border-radius:16px}
+/* 點數分配 */
+.mate{border:2px solid var(--line);border-radius:12px;padding:12px;margin-bottom:10px;background:#fff}
+.mate.self{background:#F2F6EA;border-color:var(--green)}
+.mrow{display:flex;align-items:center;gap:10px}
+.mid{font-size:19px;font-weight:900;color:var(--navy);flex:1;letter-spacing:.02em}
+.pt{font-size:26px;font-weight:900;color:var(--orange);min-width:52px;text-align:right;font-variant-numeric:tabular-nums}
+.pm{display:flex;gap:7px}
+.pm button{width:42px;height:42px;border:none;border-radius:10px;background:var(--cream);
+color:var(--goldD);font-size:22px;font-weight:900;line-height:1;cursor:pointer}
+.pm button:active{background:var(--gold);color:#fff}
+.mate textarea{margin-top:9px;min-height:44px;font-size:14px}
+.pool{position:sticky;top:0;z-index:5;background:var(--navy);color:#fff;border-radius:12px;
+padding:12px 14px;margin-bottom:12px;text-align:center;font-weight:900}
+.pool b{font-size:30px;color:var(--cream);font-variant-numeric:tabular-nums}
+.pool.ok{background:var(--green)}
+.pool.ok b{color:#fff}
+.pool .sub{font-size:12px;font-weight:700;opacity:.85;margin-top:2px}
+.three{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.three span{width:22px;height:22px;line-height:22px;text-align:center;border-radius:11px;
+background:var(--cream);color:var(--goldD);font-size:12px;font-weight:900;flex:none}
+.scale{display:flex;gap:5px}
+.scale div{flex:1;border:2px solid var(--line);background:#fff;border-radius:9px;padding:10px 0;
+text-align:center;font-size:16px;font-weight:900;color:#5A5449;cursor:pointer}
+.scale div.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.slab{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mut);font-weight:700;margin-top:5px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:rgba(243,238,226,.96);
+border-top:2px solid var(--line);padding:11px 14px;backdrop-filter:blur(6px)}
+.bar .in{max-width:640px;margin:0 auto}
+button.go{width:100%;font-family:inherit;font-size:17px;font-weight:900;letter-spacing:.06em;
+background:var(--orange);color:#fff;border:none;border-radius:11px;padding:14px;cursor:pointer}
+button.go:disabled{background:#C3BCAA}
+#msg{font-size:12.5px;font-weight:800;color:var(--red);min-height:16px;margin-bottom:4px;text-align:center}
+.hide{display:none}
+.done{text-align:center;padding:64px 24px}
+.done h2{font-size:26px;color:var(--green);margin-bottom:10px}
+.done p{font-size:15px;font-weight:700;color:#4A463C}
+.done .k{margin-top:22px;background:var(--cream);border-radius:12px;padding:16px;font-size:14px;
+font-weight:900;color:#5A4A18;line-height:1.75}
+</style></head><body>
+
+<div id="app">
+<header>
+<div class="logo"><i style="color:#7FD3E0">初級</i><i style="color:#C9E08A">商</i><i style="color:#F5C158">貿</i><i style="color:#F49A72">人</i></div>
+<h1>組內互評與自評</h1>
+<div class="s">商二乙　專題製作　·　開學市集結算</div>
+<div class="t" id="prog"></div>
+<div class="t">★ 互評佔個人成績 <b>20 分</b>，自評不計分但會放進成果報告。<br>
+對組員匿名，<b>老師看得到是誰寫的</b>——請誠實，這不是投票，是紀錄。</div>
+</header>
+
+<div class="wrap">
+
+<div class="card">
+<div class="q"><span class="n">1</span>你是誰</div>
+<div class="hint">選學號，系統會自動帶出你的組員</div>
+<select id="seat"><option value="">選擇你的學號</option></select>
+<div id="ginfo" style="margin-top:10px"></div>
+</div>
+
+<div id="rest" class="hide">
+
+<div class="card">
+<div class="q"><span class="n">2</span>把 100 點分給其他組員</div>
+<div class="hint">不能給自己。可以平均分，也可以不平均。<b>一定要剛好 100 點。</b></div>
+<div class="pool" id="pool"></div>
+<div id="mates"></div>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">3</span>這三天，你自己做了哪三件事</div>
+<div class="hint">★ 這一題是寫給自己看的。寫不出三件的人，自己就會知道。</div>
+<div class="three"><span>1</span><input type="text" id="s1" placeholder="我做的第一件事"></div>
+<div class="three"><span>2</span><input type="text" id="s2" placeholder="第二件"></div>
+<div class="three"><span>3</span><input type="text" id="s3" placeholder="第三件"></div>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">4</span>你覺得自己這次的投入程度</div>
+<div class="hint">1 ＝ 我幾乎沒出到力　10 ＝ 我把能做的都做了</div>
+<div class="scale" id="scale"></div>
+<div class="slab"><span>沒出到力</span><span>全力以赴</span></div>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">5</span>如果要你替自己講一句話</div>
+<div class="hint">你最想被記住的是哪一件事？（會放進成果報告）</div>
+<textarea id="proud" placeholder="我最想被記住的是……"></textarea>
+</div>
+
+<div class="card">
+<div class="q"><span class="n">6</span>你們這攤，最後賣了幾台？</div>
+<div class="hint">憑印象填就好，老師會用對帳單核對。不知道就留 0。</div>
+<select id="sold"><option value="">選擇台數</option></select>
+</div>
+
+</div>
+</div>
+</div>
+
+<div class="done hide" id="done">
+<h2>收到了 ✓</h2>
+<p>三天的市集，到這裡正式結束。</p>
+<div class="k">你寫的每一個字，<br>都會變成這次專題的成果報告。<br><br>
+你不是來擺攤的，<br>你是來把一件事<b>做完</b>的。</div>
+</div>
+
+<div class="bar" id="bar">
+<div class="in"><div id="msg"></div><button class="go" id="send">送出</button></div>
+</div>
+
+<script>
+// ★ 換成你的 Apps Script /exec 網址
+const API = 'https://script.google.com/macros/s/AKfycbwBvLjWDEzXhpysjaa2LXCWkNpt-zLDq3rfRJpFWB7QHu6CuoHNsQaPJZ9EZSfi1FNrFg/exec';
+
+const GROUPS=[
+{n:1,nm:'天賜良機',q:'速按關',c:'#4298A7',ids:['414042','414046','414048','414050','414055']},
+{n:2,nm:'算你便宜',q:'記憶關',c:'#124D64',ids:['414060','414063','414064','414070','414071']},
+{n:3,nm:'按爆計算機',q:'總計關',c:'#7A5CA8',ids:['414037','414040','414043','414044','414053']},
+{n:4,nm:'算你買的對',q:'打折關',c:'#EDA125',ids:['414052','414058','414061','414062','414067']},
+{n:5,nm:'機不可失',q:'借錢關',c:'#DD602E',ids:['414054','414059','414068','414069','414072']},
+{n:6,nm:'凱威小賣部',q:'毛利關',c:'#BC4620',ids:['414038','414041','414045','414066']},
+{n:7,nm:'煞氣a計算機',q:'比價關',c:'#3E6133',ids:['414047','414049','414051','414056','414057']}];
+const ALL=[];GROUPS.forEach(g=>g.ids.forEach(i=>ALL.push(i)));ALL.sort();
+
+const $=s=>document.querySelector(s);
+let DONE=[], pts={}, myGroup=null;
+
+function fillSeats(){
+  const cur=$('#seat').value;
+  const left=ALL.filter(n=>DONE.indexOf(n)<0);
+  $('#seat').innerHTML='<option value="">選擇你的學號</option>'+
+    left.map(n=>'<option'+(n===cur?' selected':'')+'>'+n+'</option>').join('');
+  $('#prog').innerHTML='已完成 <b>'+DONE.length+'</b> ／ 34 人'+
+    (left.length===0?'　★ 全班都交了':'　·　還沒填 '+left.length+' 人');
+}
+fillSeats();
+fetch(API+'?action=list&t=peer').then(r=>r.json()).then(j=>{DONE=(j.done||[]).map(String);fillSeats();}).catch(()=>{});
+
+// 台數
+const sold=$('#sold');
+for(let i=0;i<=20;i++){const o=document.createElement('option');o.textContent=i;sold.appendChild(o);}
+
+// 投入程度
+const sc=$('#scale');
+for(let i=1;i<=10;i++){const d=document.createElement('div');d.textContent=i;
+  d.onclick=()=>{[...sc.children].forEach(c=>c.classList.remove('on'));d.classList.add('on');};sc.appendChild(d);}
+const getScale=()=>{const o=[...sc.children].find(c=>c.classList.contains('on'));return o?o.textContent:'';};
+
+function renderPool(){
+  const used=Object.values(pts).reduce((a,b)=>a+b,0);
+  const left=100-used;
+  const p=$('#pool');
+  p.className='pool'+(left===0?' ok':'');
+  p.innerHTML=(left===0?'剛好 100 點 ✓':'還剩 <b>'+left+'</b> 點要分完')+
+    '<div class="sub">已分配 '+used+' 點</div>';
+}
+$('#seat').onchange=function(){
+  const id=this.value;
+  myGroup=GROUPS.find(g=>g.ids.indexOf(id)>=0);
+  if(!myGroup){ $('#rest').classList.add('hide'); $('#ginfo').innerHTML=''; return; }
+  $('#ginfo').innerHTML='<span class="gbadge" style="background:'+myGroup.c+'">第 '+
+    myGroup.n+' 攤　'+myGroup.nm+'</span>';
+  const mates=myGroup.ids.filter(x=>x!==id);
+  const each=Math.floor(100/mates.length);
+  pts={}; mates.forEach((m,i)=>pts[m]=each+(i<100-each*mates.length?1:0));
+  $('#mates').innerHTML=mates.map(m=>
+    '<div class="mate" data-id="'+m+'"><div class="mrow">'+
+    '<div class="mid">'+m+'</div>'+
+    '<div class="pt" id="pt-'+m+'">'+pts[m]+'</div>'+
+    '<div class="pm"><button data-d="-5">−</button><button data-d="5">＋</button></div>'+
+    '</div><textarea id="c-'+m+'" placeholder="為什麼給這個點數？一句話就好（選填）"></textarea></div>').join('');
+  $('#mates').querySelectorAll('button').forEach(b=>{
+    b.onclick=()=>{
+      const id2=b.closest('.mate').dataset.id, d=+b.dataset.d;
+      pts[id2]=Math.max(0,pts[id2]+d);
+      $('#pt-'+id2).textContent=pts[id2]; renderPool();
+    };
+  });
+  renderPool();
+  $('#rest').classList.remove('hide');
+};
+
+$('#send').onclick=function(){
+  const id=$('#seat').value;
+  if(!id){ $('#msg').textContent='★ 先選你的學號'; window.scrollTo({top:0,behavior:'smooth'}); return; }
+  const used=Object.values(pts).reduce((a,b)=>a+b,0);
+  if(used!==100){ $('#msg').textContent='★ 點數要剛好 100，現在是 '+used; return; }
+  const s1=$('#s1').value.trim(), s2=$('#s2').value.trim(), s3=$('#s3').value.trim();
+  if(!s1||!s2||!s3){ $('#msg').textContent='★ 第 3 題三件事都要寫'; return; }
+  if(!getScale()){ $('#msg').textContent='★ 第 4 題要選'; return; }
+  const d={
+    type:'peer', seat:id, booth:'第 '+myGroup.n+' 攤 '+myGroup.nm,
+    scores:Object.keys(pts).map(k=>({to:k,p:pts[k],c:$('#c-'+k).value.trim()})),
+    self:[s1,s2,s3], effort:getScale(), proud:$('#proud').value.trim(), sold:$('#sold').value||'0'
+  };
+  $('#msg').textContent=''; this.disabled=true; this.textContent='送出中…';
+  const ok=r=>{
+    if(r==='dup'){ this.disabled=false; this.textContent='送出';
+      $('#msg').textContent='★ 這個學號已經交過了'; return; }
+    $('#app').classList.add('hide'); $('#bar').classList.add('hide');
+    $('#done').classList.remove('hide'); window.scrollTo(0,0);
+  };
+  fetch(API,{method:'POST',body:JSON.stringify(d)}).then(r=>r.json()).then(j=>ok(j.r)).catch(()=>ok('ok'));
+};
+</script>
+</body></html>
