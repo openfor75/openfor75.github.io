@@ -119,6 +119,27 @@ font-weight:900;color:#5A4A18;line-height:1.75}
 <select id="sold"><option value="">選擇台數</option></select>
 </div>
 
+<div class="card" style="border-color:var(--orange);border-width:2.5px">
+<div class="q"><span class="n" style="background:var(--orange)">7</span>如果重來一次，你的定價會定多少？</div>
+<div class="hint">★ 這一題<b>計分（8 分）</b>，是團體分 Ｂ「定價複盤」的一部分。</div>
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+  <span style="font-size:16px;font-weight:900;color:var(--navy);white-space:nowrap">我會定</span>
+  <input type="number" id="np" placeholder="0" min="0" max="999"
+    style="width:120px;font-size:20px;font-weight:900;text-align:center;padding:9px 8px">
+  <span style="font-size:16px;font-weight:900;color:var(--navy)">元</span>
+</div>
+<div class="hint" style="margin-bottom:6px"><b>為什麼？</b>　★ 要用數字講。可以用的數字：<br>
+你們的售價、賣了幾台、達成率、隔壁哪一攤賣得比較好、他們賣多少錢。</div>
+<textarea id="why" placeholder="因為……" style="min-height:96px"></textarea>
+<div style="background:#FDF3EE;border-left:5px solid var(--orange);border-radius:0 7px 7px 0;
+padding:10px 13px;margin-top:10px;font-size:12.5px;font-weight:800;color:var(--orangeD);line-height:1.65">
+★ <b>8 分</b>　有引用真實數字<br>
+　例：「我會降到 190，因為第 5 攤賣 190 賣了 7 台，我們 250 只賣 3 台」<br>
+★ <b>5 分</b>　有理由但沒有數字<br>
+★ <b>3 分</b>　只寫「可以再便宜一點」
+</div>
+</div>
+
 </div>
 </div>
 </div>
@@ -214,10 +235,13 @@ $('#send').onclick=function(){
   const s1=$('#s1').value.trim(), s2=$('#s2').value.trim(), s3=$('#s3').value.trim();
   if(!s1||!s2||!s3){ $('#msg').textContent='★ 第 3 題三件事都要寫'; return; }
   if(!getScale()){ $('#msg').textContent='★ 第 4 題要選'; return; }
+  if(!$('#np').value||!$('#why').value.trim()){
+    $('#msg').textContent='★ 第 7 題要填 —— 這一題有 8 分'; return; }
   const d={
     type:'peer', seat:id, booth:'第 '+myGroup.n+' 攤 '+myGroup.nm,
     scores:Object.keys(pts).map(k=>({to:k,p:pts[k],c:$('#c-'+k).value.trim()})),
-    self:[s1,s2,s3], effort:getScale(), proud:$('#proud').value.trim(), sold:$('#sold').value||'0'
+    self:[s1,s2,s3], effort:getScale(), proud:$('#proud').value.trim(), sold:$('#sold').value||'0',
+    newPrice:$('#np').value||'', why:$('#why').value.trim()
   };
   $('#msg').textContent=''; this.disabled=true; this.textContent='送出中…';
   const ok=r=>{
