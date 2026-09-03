@@ -1,0 +1,242 @@
+<!DOCTYPE html><html lang="zh-Hant"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>初級商貿人｜三天市集　成果</title>
+<style>
+:root{--teal:#4298A7;--tealD:#2E7B8F;--lime:#A1B65A;--gold:#EDA125;--goldD:#C48412;
+--orange:#DD602E;--orangeD:#BC4620;--green:#68893A;--forest:#3E6133;--red:#C23021;
+--navy:#124D64;--cream:#F4D9AE;--sand:#F3EEE2;--paper:#FFFDF7;--ink:#2B2A24;--mut:#8C8577;--line:#DCD5C4;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"微軟正黑體","Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif;
+background:var(--sand);color:var(--ink);overflow:hidden;height:100vh}
+.deck{height:100vh;display:flex;align-items:center;justify-content:center;padding:34px 44px 74px}
+.slide{display:none;width:100%;max-width:1120px;animation:in .5s ease both}
+.slide.on{display:block}
+@keyframes in{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.eyebrow{font-size:15px;font-weight:900;color:var(--orangeD);letter-spacing:.14em;margin-bottom:10px}
+h1{font-size:76px;line-height:1.08;letter-spacing:.02em}
+h2{font-size:44px;line-height:1.18;letter-spacing:.02em;margin-bottom:16px}
+h3{font-size:24px;color:var(--navy);margin-bottom:10px}
+p.lead{font-size:22px;font-weight:700;color:#4A463C;line-height:1.7;max-width:900px}
+.logo{font-size:56px;font-weight:900;letter-spacing:.06em}.logo i{font-style:normal}
+.big{font-size:132px;font-weight:900;line-height:1;color:var(--orange);font-variant-numeric:tabular-nums}
+.mid{font-size:64px;font-weight:900;color:var(--navy);font-variant-numeric:tabular-nums}
+.unit{font-size:26px;font-weight:900;color:var(--mut);margin-left:8px}
+.row{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px}
+.stat{flex:1;min-width:170px;background:var(--paper);border:2px solid var(--line);
+border-radius:14px;padding:18px 20px}
+.stat b{display:block;font-size:42px;color:var(--navy);line-height:1.1;font-variant-numeric:tabular-nums}
+.stat span{font-size:13.5px;color:var(--mut);font-weight:800}
+/* 52 格 */
+.grid52{display:grid;grid-template-columns:repeat(13,1fr);gap:7px;margin-top:22px;max-width:760px}
+.cell{aspect-ratio:1;border-radius:5px;background:#E4DDCB;transition:background .35s}
+.cell.on{background:var(--orange)}
+/* 長條 */
+.bars{margin-top:16px}
+.bar{display:flex;align-items:center;gap:12px;margin-bottom:9px}
+.bar .lb{width:180px;font-size:15px;font-weight:900;text-align:right;color:#4A463C;flex:none}
+.bar .tr{flex:1;background:#E9E4D6;border-radius:7px;height:34px;overflow:hidden}
+.bar .fl{height:100%;border-radius:7px;width:0;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.bar .vl{width:120px;font-size:17px;font-weight:900;color:var(--navy);font-variant-numeric:tabular-nums}
+/* 七攤 */
+.g7{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}
+.g7 div{border-radius:12px;padding:14px 16px;color:#fff}
+.g7 b{display:block;font-size:21px;line-height:1.25}
+.g7 span{font-size:12.5px;opacity:.9;font-weight:800}
+/* 金句 */
+.quote{background:var(--paper);border:2px solid var(--line);border-left:8px solid var(--gold);
+border-radius:0 14px 14px 0;padding:20px 26px;margin-bottom:12px;font-size:22px;font-weight:900;color:#3B382F;line-height:1.6}
+.quote.sm{font-size:17px;padding:14px 20px;border-left-color:var(--teal)}
+.qwrap{max-height:60vh;overflow:hidden}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.chip{background:var(--cream);color:#5A4A18;font-size:16px;font-weight:900;padding:9px 16px;border-radius:20px}
+/* 導覽 */
+.nav{position:fixed;left:0;right:0;bottom:0;height:56px;display:flex;align-items:center;
+gap:14px;padding:0 22px;background:rgba(243,238,226,.94);border-top:2px solid var(--line)}
+.dots{display:flex;gap:6px;flex:1;flex-wrap:wrap}
+.dot{width:9px;height:9px;border-radius:5px;background:#CFC8B8;cursor:pointer}
+.dot.on{background:var(--orange);width:24px}
+.nav button{font-family:inherit;font-size:14px;font-weight:900;background:#fff;color:var(--navy);
+border:2px solid var(--line);border-radius:8px;padding:8px 16px;cursor:pointer}
+.nav .pg{font-size:13px;font-weight:900;color:var(--mut);font-variant-numeric:tabular-nums}
+.hint{position:fixed;top:16px;right:20px;font-size:12px;font-weight:800;color:var(--mut)}
+.secret{background:#FDECEA;border:2px solid var(--red);border-radius:10px;padding:8px 14px;
+display:inline-block;font-size:13px;font-weight:900;color:#8E2415;margin-bottom:14px}
+</style></head><body>
+
+<div class="hint">← → 換頁　·　空白鍵下一頁</div>
+<div class="deck"><div id="stage"></div></div>
+<div class="nav">
+<button id="prev">←</button><button id="next">→</button>
+<div class="dots" id="dots"></div>
+<div class="pg" id="pg"></div>
+</div>
+
+<script>
+// ★ 換成你的 Apps Script /exec 網址
+const API='https://script.google.com/macros/s/AKfycbwBvLjWDEzXhpysjaa2LXCWkNpt-zLDq3rfRJpFWB7QHu6CuoHNsQaPJZ9EZSfi1FNrFg/exec';
+// 網址加 ?key=你的通行碼 → 顯示成本與毛利；不加 → 公開模式（自動隱藏）
+const KEY=new URLSearchParams(location.search).get('key')||'';
+
+const G=[{n:1,nm:'天賜良機',q:'速按關',c:'#4298A7'},{n:2,nm:'算你便宜',q:'記憶關',c:'#124D64'},
+{n:3,nm:'按爆計算機',q:'總計關',c:'#7A5CA8'},{n:4,nm:'算你買的對',q:'打折關',c:'#EDA125'},
+{n:5,nm:'機不可失',q:'借錢關',c:'#DD602E'},{n:6,nm:'凱威小賣部',q:'毛利關',c:'#BC4620'},
+{n:7,nm:'煞氣a計算機',q:'比價關',c:'#3E6133'}];
+const CH=[['蝦皮',230],['九成九網路書店',199],['光南／墊腳石',269],['OB 文具倉庫',273],
+['高靖文具',280],['ETshop 誼特',380],['PChome',499]];
+
+let D={booths:[],peerTop:[],quotes:[],stuck:[],diff:[],proud:[],priceView:[],grow:[],effort:[],scale:[],
+       peerCount:0,refCount:0,withCost:false};
+const esc=s=>String(s).replace(/</g,'&lt;');
+const sum=a=>a.reduce((x,y)=>x+(+y||0),0);
+const avg=a=>a.length?sum(a)/a.length:0;
+const nf=n=>isFinite(n)?Math.round(n).toLocaleString():'—';
+const pick=(a,n)=>a.slice(0,n);
+
+function bars(items,max,fmt){
+  return '<div class="bars">'+items.map((it,i)=>
+   '<div class="bar"><div class="lb">'+esc(it.k)+'</div>'+
+   '<div class="tr"><div class="fl" data-w="'+(max?it.v/max*100:0)+'" style="background:'+
+   (it.c||'var(--teal)')+'"></div></div>'+
+   '<div class="vl">'+(fmt?fmt(it.v):it.v)+'</div></div>').join('')+'</div>';
+}
+
+const SLIDES=[
+()=>`<div style="text-align:center">
+ <div class="logo"><i style="color:#4298A7">初級</i><i style="color:#A1B65A">商</i><i style="color:#EDA125">貿</i><i style="color:#DD602E">人</i></div>
+ <h1 style="margin-top:18px">三天，七家店</h1>
+ <p class="lead" style="margin:20px auto 0;text-align:center">
+ 員林家商　商業經營科　商二乙　專題製作<br>開學市集　9/1 – 9/3</p></div>`,
+
+()=>`<div class="eyebrow">起　點</div>
+ <h2>一切是從一個問題開始的</h2>
+ <p class="lead">會計課上，我發現每個人桌上的計算機都不一樣。<br>
+ 我問他們：「怎麼沒有一起買？MS-20GT 明明最好用。」<br>
+ 再問：「你們各自花了多少錢？」<br><br>
+ <b style="color:var(--orangeD)">答案五花八門。有人買貴，有人買到便宜的。</b><br><br>
+ 於是我們做了一個決定 ——<br>
+ <b style="font-size:28px">一起來幫學弟妹買計算機。</b></p>`,
+
+()=>`<div class="eyebrow">第一件事</div>
+ <h2>全班一起比價，七個通路</h2>
+ ${bars(CH.map((c,i)=>({k:c[0],v:c[1],c:i===1?'var(--green)':'var(--teal)'})),520,v=>'$'+v)}
+ <p class="lead" style="margin-top:18px">他們撞到課本沒寫的事：折價券每個帳號不一樣、
+ 有的免運有的要湊金額、<b>有的顏色只有一家店有</b>。</p>`,
+
+()=>`<div class="eyebrow">認　購</div>
+ <h2>上限 60 台，他們認了 <span style="color:var(--orange)">52 台</span></h2>
+ <div class="grid52" id="g52"></div>
+ <p class="lead" style="margin-top:20px">錢是老師代墊的。<br>
+ <b>每一組自己決定要負責賣幾台、要什麼顏色</b>，再算出全班的加權平均單價。</p>`,
+
+()=>`<div class="eyebrow">七攤 × 七關</div>
+ <h2>每一攤都是一個會計知識點</h2>
+ <div class="g7">${G.map(g=>`<div style="background:${g.c}"><b>${g.nm}</b>
+  <span>第 ${g.n} 攤　${g.q}</span></div>`).join('')}
+  <div style="background:var(--lime)"><b>集滿七格</b><span>抽神祕獎品</span></div></div>
+ <p class="lead" style="margin-top:18px">GT 鍵、M＋、％ 與現金折扣、流動比率、毛利率、折扣換算 ——
+ <b>全部都是新生親手按過機器才過關。</b></p>`,
+
+()=>{const s=sum(D.booths.map(b=>b.sold));const p=sum(D.booths.map(b=>b.plan))||52;
+ return `<div class="eyebrow">結　果</div>
+ <h2>三天，我們賣掉了</h2>
+ <div><span class="big" id="cnt">0</span><span class="unit">台</span></div>
+ <div class="row">
+  <div class="stat"><b>${p}</b><span>認購台數</span></div>
+  <div class="stat"><b>${p?Math.round(s/p*100):0}%</b><span>達成率</span></div>
+  <div class="stat"><b>${D.refCount}</b><span>寫下心得的人</span></div>
+  <div class="stat"><b>${D.peerCount}</b><span>完成互評的人</span></div>
+ </div>`;},
+
+()=>{const mx=Math.max(1,...D.booths.map(b=>b.sold));
+ return `<div class="eyebrow">各　攤</div><h2>每一攤賣了幾台</h2>
+ ${bars(D.booths.map(b=>({k:'第 '+b.n+' 攤 '+G[b.n-1].nm,v:b.sold,c:G[b.n-1].c})),mx,v=>v+' 台')}`;},
+
+()=>{ if(!D.withCost) return `<div class="eyebrow">毛　利</div>
+   <h2>這一頁是保密的</h2>
+   <div class="secret">公開模式：成本與毛利已隱藏</div>
+   <p class="lead">成本是我們自己談出來的，那是這一組的商業機密。<br>
+   <b>網址後面加上通行碼，才會顯示。</b></p>`;
+  const rev=sum(D.booths.map(b=>b.rev)),cost=sum(D.booths.map(b=>b.cost)),gr=rev-cost;
+  return `<div class="eyebrow">毛　利　結　算</div><h2>算給你們看</h2>
+  <div class="row">
+   <div class="stat"><b>$${nf(rev)}</b><span>總收入</span></div>
+   <div class="stat"><b>$${nf(cost)}</b><span>銷貨成本</span></div>
+   <div class="stat" style="border-color:var(--orange)"><b style="color:var(--orange)">$${nf(gr)}</b><span>毛利</span></div>
+   <div class="stat"><b>${rev?(gr/rev*100).toFixed(1):0}%</b><span>毛利率</span></div>
+  </div>
+  <p class="lead" style="margin-top:22px"><b>毛利 ÷ 售價 ＝ 毛利率。</b>
+  這就是第 6 攤那一關在教的東西 —— 只是這次的數字，是你們自己賺的。</p>`;},
+
+()=>`<div class="eyebrow">回　看</div>
+ <h2>賣過之後，你覺得我們的定價？</h2>
+ ${bars(D.priceView.map(x=>({k:x.k,v:x.v,c:'var(--gold)'})),Math.max(1,...D.priceView.map(x=>x.v)),v=>v+' 人')}
+ <p class="lead" style="margin-top:18px">市集第一天，有三個人寫「價格好像很盤」。<br>
+ <b>賣完之後再問一次，答案就不一樣了 —— 這叫市場回饋。</b></p>`,
+
+()=>`<div class="eyebrow">學弟妹說</div>
+ <h2>他們講過的話，我們記到現在</h2>
+ <div class="qwrap">${pick(D.quotes,4).map(q=>`<div class="quote">「${esc(q)}」</div>`).join('')||
+ '<div class="quote" style="color:var(--mut)">（等大家填完心得就會出現）</div>'}</div>`,
+
+()=>`<div class="eyebrow">最　難　的</div>
+ <h2>卡住的那些瞬間</h2>
+ <div class="qwrap">${pick(D.stuck,5).map(q=>`<div class="quote sm">${esc(q)}</div>`).join('')||
+ '<div class="quote sm" style="color:var(--mut)">（等大家填完心得就會出現）</div>'}</div>
+ <p class="lead" style="margin-top:14px"><b>這一頁才是這次專題最值錢的一頁。</b></p>`,
+
+()=>`<div class="eyebrow">最　大　的　發　現</div>
+ <h2>「做生意」跟我本來想的不一樣</h2>
+ <div class="qwrap">${pick(D.diff,4).map(q=>`<div class="quote">${esc(q)}</div>`).join('')||
+ '<div class="quote" style="color:var(--mut)">（等大家填完心得就會出現）</div>'}</div>`,
+
+()=>`<div class="eyebrow">彼　此</div>
+ <h2>組員眼中，做最多的人</h2>
+ ${bars(pick(D.peerTop,6).map(x=>({k:x.id,v:x.p,c:'var(--green)'})),
+   Math.max(1,...(D.peerTop[0]?[D.peerTop[0].p]:[1])),v=>v+' 點')}
+ <p class="lead" style="margin-top:18px">每個人有 100 點，分給其他組員。<br>
+ <b>這些點數不是老師給的，是你們自己給彼此的。</b></p>`,
+
+()=>`<div style="text-align:center">
+ <div class="eyebrow">最　後</div>
+ <h1 style="font-size:56px;line-height:1.3">你不是來擺攤的<br>
+ <span style="color:var(--orange)">你是來把一件事做完的</span></h1>
+ <p class="lead" style="margin:26px auto 0;text-align:center">
+ 比價、認購、定價、寫文案、開店、收錢、對帳、寫心得。<br>
+ <b>從頭到尾，沒有一件是別人幫你做的。</b></p>
+ <div class="chips" style="justify-content:center">
+  <div class="chip">52 台</div><div class="chip">7 攤</div>
+  <div class="chip">7 關</div><div class="chip">3 天</div><div class="chip">34 個人</div></div></div>`
+];
+
+let i=0;
+function render(){
+  const st=document.getElementById('stage');
+  st.innerHTML='<div class="slide on">'+SLIDES[i]()+'</div>';
+  document.getElementById('pg').textContent=(i+1)+' / '+SLIDES.length;
+  [...document.querySelectorAll('.dot')].forEach((d,k)=>d.classList.toggle('on',k===i));
+  setTimeout(()=>{
+    st.querySelectorAll('.fl').forEach(f=>f.style.width=f.dataset.w+'%');
+    const g=st.querySelector('#g52');
+    if(g){ g.innerHTML=Array.from({length:52},()=>'<div class="cell"></div>').join('');
+      [...g.children].forEach((c,k)=>setTimeout(()=>c.classList.add('on'),k*18)); }
+    const c=st.querySelector('#cnt');
+    if(c){ const t=sum(D.booths.map(b=>b.sold)); let v=0;
+      const step=Math.max(1,Math.round(t/28));
+      const iv=setInterval(()=>{ v=Math.min(t,v+step); c.textContent=v; if(v>=t)clearInterval(iv); },34); }
+  },60);
+}
+function go(n){ i=Math.max(0,Math.min(SLIDES.length-1,n)); render(); }
+document.getElementById('dots').innerHTML=SLIDES.map((_,k)=>'<div class="dot" data-i="'+k+'"></div>').join('');
+document.querySelectorAll('.dot').forEach(d=>d.onclick=()=>go(+d.dataset.i));
+document.getElementById('prev').onclick=()=>go(i-1);
+document.getElementById('next').onclick=()=>go(i+1);
+document.onkeydown=e=>{
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(i+1);}
+  if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1);}
+  if(e.key==='Home')go(0); if(e.key==='End')go(SLIDES.length-1);
+};
+render();
+fetch(API+'?action=show'+(KEY?'&key='+encodeURIComponent(KEY):''))
+  .then(r=>r.json()).then(j=>{ D=Object.assign(D,j); render(); }).catch(()=>{});
+</script>
+</body></html>
