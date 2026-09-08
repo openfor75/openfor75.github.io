@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>你是哪一種朋友？</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brick:#A8342A; --cream:#F7E9D8; --caramel:#A9764F; --cocoa:#452A1D; --mustard:#E39B23;
+  --paper:#FBF3E8;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--cream);color:var(--cocoa);font-family:"Noto Sans TC",-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;font-size:17px;line-height:1.55;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible,input:focus-visible{outline:3px solid var(--mustard);outline-offset:2px}
+.app{max-width:480px;margin:0 auto;min-height:100vh;padding:20px 20px calc(24px + env(safe-area-inset-bottom));display:flex;flex-direction:column}
+.screen{display:none;flex:1;flex-direction:column}
+.screen.on{display:flex}
+
+/* ---------- start ---------- */
+.seal{width:112px;height:112px;border-radius:50%;background:var(--brick);color:var(--cream);display:flex;align-items:center;justify-content:center;font-size:58px;font-weight:900;line-height:1;box-shadow:inset 0 0 0 6px var(--brick),inset 0 0 0 9px var(--cream);transform:rotate(-6deg)}
+.start h1{font-size:34px;line-height:1.2;font-weight:900;margin:28px 0 10px;letter-spacing:.01em}
+.start p{margin:0 0 8px;color:var(--caramel)}
+.start .meta{font-size:15px}
+label{display:block;margin:28px 0 6px;font-size:15px;color:var(--caramel)}
+input{width:100%;border:0;border-bottom:2px solid var(--cocoa);background:transparent;padding:10px 0;font-size:20px;font-weight:700;color:var(--cocoa);border-radius:0}
+.row{display:flex;gap:16px}.row>div{flex:1}.row>div:first-child{flex:0 0 120px}
+select{width:100%;border:0;border-bottom:2px solid var(--cocoa);background:transparent;padding:10px 0;font-size:20px;font-weight:700;color:var(--cocoa);border-radius:0;appearance:none;-webkit-appearance:none}
+.err{color:var(--brick);font-size:15px;min-height:1.4em;margin:8px 0 0}
+.sending{opacity:.6;pointer-events:none}
+input::placeholder{color:#C8A98A;font-weight:400}
+.btn{width:100%;border:0;border-radius:16px;padding:18px;font-size:19px;font-weight:700;background:var(--cocoa);color:var(--cream);margin-top:auto}
+.btn.brick{background:var(--brick)}
+.btn.ghost{background:transparent;border:2px solid var(--cocoa);color:var(--cocoa);margin-top:12px}
+
+/* ---------- quiz ---------- */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.back{border:0;background:transparent;padding:8px 4px;font-size:15px;color:var(--caramel)}
+.beads{display:flex;gap:5px;flex:1;justify-content:flex-end}
+.bead{width:9px;height:9px;border-radius:50%;background:#E5CDB2}
+.bead.done{background:var(--brick)}
+.bead.now{background:var(--mustard);transform:scale(1.35)}
+.qnum{margin:34px 0 6px;font-size:15px;color:var(--caramel);font-weight:700}
+.q{font-size:25px;line-height:1.35;font-weight:900;margin:0 0 26px;min-height:2.7em}
+.opts{display:flex;flex-direction:column;gap:12px}
+.opt{text-align:left;border:2px solid #D9BFA3;background:var(--paper);border-radius:16px;padding:16px 18px;font-size:17px;line-height:1.45;transition:transform .08s}
+.opt:active{transform:scale(.985);border-color:var(--cocoa)}
+.opt.pick{border-color:var(--brick);background:#FFF7EE}
+
+/* ---------- result ---------- */
+.card{background:var(--paper);border-radius:22px;padding:26px 22px 22px;border:2px solid var(--cocoa);position:relative;overflow:hidden}
+.card .who{font-size:15px;color:var(--caramel);margin:0}
+.card h2{font-size:38px;line-height:1.15;font-weight:900;margin:6px 0 2px}
+.card .sub{margin:0 0 18px;font-size:16px;color:var(--caramel)}
+.card .seal{position:absolute;right:16px;top:14px;width:84px;height:84px;font-size:44px;box-shadow:inset 0 0 0 5px var(--brick),inset 0 0 0 7px var(--paper);transform:rotate(8deg)}
+.tag{font-size:22px;font-weight:900;margin:0 0 6px;line-height:1.35}
+.skills{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 4px}
+.skills span{background:var(--cream);border:1.5px solid var(--caramel);color:var(--cocoa);border-radius:999px;padding:5px 12px;font-size:15px;font-weight:700}
+.need{margin:20px -22px -22px;padding:18px 22px 20px;background:var(--brick);color:var(--cream)}
+.need .k{font-size:15px;opacity:.85;margin:0 0 4px}
+.need .v{font-size:24px;font-weight:900;margin:0 0 6px}
+.need p{margin:0;font-size:15.5px;line-height:1.5}
+.bars{margin:22px 0 4px}
+.bar{display:grid;grid-template-columns:64px 1fr 36px;align-items:center;gap:10px;margin:8px 0;font-size:15px}
+.bar i{display:block;height:12px;background:#E5CDB2;border-radius:6px;overflow:hidden}
+.bar i b{display:block;height:100%;background:var(--cocoa);border-radius:6px;width:0;transition:width .6s ease}
+.bar.top i b{background:var(--brick)}
+.bar.low i b{background:var(--mustard)}
+.bar em{font-style:normal;text-align:right;color:var(--caramel)}
+.hint{font-size:15px;color:var(--caramel);margin:18px 0 0;text-align:center}
+.foot{font-size:13px;color:#B08D6E;text-align:center;margin-top:18px}
+@media (prefers-reduced-motion:reduce){.bar i b{transition:none}.opt{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- 開始 -->
+<section class="screen start on" id="s-start">
+  <div class="seal" aria-hidden="true">？</div>
+  <h1>你是哪一種<br>朋友？</h1>
+  <p>15 題日常情境，沒有對錯，選你真的會做的那一個。</p>
+  <p class="meta">約 3 分鐘。每個人只能做一次，送出後結果會存起來，改不了。</p>
+  <div class="row">
+    <div><label for="seat">座號</label><select id="seat"><option value="">選座號</option></select></div>
+    <div><label for="name">名字</label><input id="name" placeholder="怎麼叫你" maxlength="8" autocomplete="off"></div>
+  </div>
+  <p class="err" id="err"></p>
+  <button class="btn brick" id="go">開始測驗</button>
+  <p class="foot">送出後如果再打開這一頁，會直接看到你原本的結果。</p>
+</section>
+
+<!-- 題目 -->
+<section class="screen" id="s-quiz">
+  <div class="top">
+    <button class="back" id="back">← 上一題</button>
+    <div class="beads" id="beads" aria-hidden="true"></div>
+  </div>
+  <div class="qnum" id="qnum"></div>
+  <h2 class="q" id="qtext"></h2>
+  <div class="opts" id="opts"></div>
+</section>
+
+<!-- 結果 -->
+<section class="screen" id="s-result">
+  <div class="card">
+    <div class="seal" id="rSeal" aria-hidden="true"></div>
+    <p class="who" id="rWho"></p>
+    <h2 id="rMain"></h2>
+    <p class="sub" id="rSub"></p>
+    <p class="tag" id="rLine"></p>
+    <div class="skills" id="rSkills"></div>
+    <div class="bars" id="rBars"></div>
+    <div class="need">
+      <p class="k">跟你最互補的朋友</p>
+      <p class="v" id="rNeed"></p>
+      <p id="rNeedWhy"></p>
+    </div>
+  </div>
+  <p class="hint" id="rHint">結果已送出。截圖存起來，之後會用到。</p>
+  <p class="foot">商二乙 115-1</p>
+</section>
+
+</div>
+
+<script>
+// 五型：對外叫「朋友人格」，對內對應能力：偵探=找資料 說書=文字 美感=簡報圖片影片 精算=Excel數據 揪團=催進度/上台/點子
+const TYPES = {
+  d:{name:'偵探型',ch:'偵',line:'別人 Google 第一頁，你翻到第五頁。',
+     skills:['什麼都要查清楚','很會找東西','不輕易相信'],
+     need:'你需要一個會把事情查清楚的人，幫你把「聽說」變成「確定」。'},
+  s:{name:'說書型',ch:'說',line:'同一件事，你講出來大家就聽懂了。',
+     skills:['很會講','文字有畫面','把複雜講簡單'],
+     need:'你需要一個會講、會寫的人，幫你把想法變成別人聽得懂的話。'},
+  v:{name:'美感型',ch:'美',line:'東西到你手上，會變好看。',
+     skills:['對好看很敏感','會拍會修','會排會做'],
+     need:'你需要一個有美感的人，讓你做的東西看起來像回事。'},
+  n:{name:'精算型',ch:'算',line:'你不相信「感覺」，你相信數字。',
+     skills:['算得快又準','會比 CP 值','看得懂數字'],
+     need:'你需要一個會算的人，幫你把感覺變成數字。'},
+  l:{name:'揪團型',ch:'揪',line:'沒有你，這一群人永遠約不出來。',
+     skills:['敢開口','會喊人','點子多'],
+     need:'你需要一個會揪、會催的人，不然事情永遠停在「再看看」。'}
+};
+const ORDER = ['d','s','v','n','l'];
+
+// 每題五個選項，順序 d s v n l；neg:true 表示反向題（選到扣分）
+const Q = [
+ {t:'跟朋友約出去玩，你通常自然會負責什麼？',o:['查地點、交通、天氣','在群組寫一段話把大家講到很想去','負責拍照、拍影片','算車錢門票、最後分帳','訂時間地點，喊人出門']},
+ {t:'想買一支新手機，你會：',o:['看評測、比規格看到半夜','看網友寫的使用心得','看外型跟顏色順不順眼','算哪個方案最省','問懂的朋友「買哪支？」然後就買']},
+ {t:'看完一部很神的劇，你會：',o:['查幕後花絮、原著設定','寫一篇長長的心得','存劇照當桌布','看評分跟票房數字','拉朋友一起看第二遍']},
+ {t:'好朋友生日，你會怎麼準備？',o:['偷偷打聽他到底想要什麼','寫一張很長的卡片','親手做東西，或包得很漂亮','算大家各要出多少','發起集資，安排驚喜']},
+ {t:'手搖飲店前，你會怎麼點？',o:['翻菜單研究新品到底加了什麼','店員推薦講得很好聽的那杯','看起來最好拍的那杯','最划算、加料 CP 值最高的那杯','幫全桌的人一起點好']},
+ {t:'新聞說「某某食物會致癌」，你的反應是？',o:['查來源，是哪個研究說的','改成家人聽得懂的版本轉述給他們','注意到那張配圖很嚇人','想知道要吃多少才會','馬上在家群組叫大家別吃']},
+ {t:'跟朋友吵架之後，你會：',o:['回想事情到底是怎麼開始的','把要說的話打成一段訊息，想清楚再傳','先傳一張貼圖緩和一下','想「這樣吵值不值得」','直接約出來把話講開']},
+ {t:'你的 IG 或 Threads 最常發什麼？',o:['查證過的冷知識','長文心情','修過圖的照片','紀錄類：跑步公里數、存錢進度','揪團、投票、問大家意見']},
+ {t:'打電動或玩桌遊時，你是那個：',o:['看攻略研究機制的人','把規則講給新手聽的人','挑角色外觀、弄造型的人','算機率、找最佳解的人','指揮全隊的人']},
+ {t:'家庭出遊，長輩問你「這樣走順嗎？」你會：',o:['把每個景點的資訊查清楚','講成「今天的故事」讓大家期待','畫一張路線圖給大家看','算時間跟花費夠不夠','直接說「跟我走就對了」']},
+ {t:'去打工，老闆最會誇你什麼？',o:['很細心，不會漏東西','很會講，客人聽得懂','東西擺得很好看','收銀從來沒錯過','很主動，會帶新人']},
+ {t:'最讓你有成就感的一刻是？',o:['找到一個別人都找不到的答案','有人說「你講得真好」','做的東西被說好看','算的結果剛好全對','揪的活動大成功']},
+ {t:'朋友最常抱怨你什麼？',o:['太龜毛，什麼都要查','話太多、太愛長篇大論','太在意好不好看','太計較數字','太愛管人']},
+ {t:'生活裡你最懶得做的一件事？',neg:true,o:['查資料、比較來比較去','打很長的訊息','拍照修圖','算錢、記帳','當召集人']},
+ {t:'如果一定要放棄一種能力，你最捨得放掉？',neg:true,o:['查資料的耐心','講故事的口才','美感','算數的準度','揪人的膽子']}
+];
+
+// ===== 後端設定：貼上 Apps Script 網頁應用程式的網址 =====
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzBdnfx9ug0EvIGZ6ZEaauTeuXl5Tt6sszDhaCIs7JwkwBYgHx7PStSuGgovSJNVV7g/exec';
+const CLASS_SIZE = 34;
+const LOCK_KEY = 'friendquiz-done';
+
+const $ = id => document.getElementById(id);
+let idx = 0, ans = [], name = '', seat = '';
+const screens = ['s-start','s-quiz','s-result'];
+function show(id){ screens.forEach(s => $(s).classList.toggle('on', s===id)); window.scrollTo(0,0); }
+
+// 座號選單
+for(let i=1;i<=CLASS_SIZE;i++){ const o=document.createElement('option'); o.value=i; o.textContent=i+' 號'; $('seat').appendChild(o); }
+
+// 這支手機已經做過 → 直接顯示存起來的結果
+try{ const saved=JSON.parse(localStorage.getItem(LOCK_KEY)); if(saved&&saved.score){ paint(saved); $('rHint').textContent='你已經做過了，這是你原本的結果。'; show('s-result'); } }catch(e){}
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+// 每題選項順序打亂一次，之後固定（回上一題不會變）
+const layout = Q.map(() => shuffle([0,1,2,3,4]));
+
+function render(){
+  const q = Q[idx];
+  $('qnum').textContent = `第 ${idx+1} 題 / ${Q.length}`;
+  $('qtext').textContent = q.t;
+  $('back').style.visibility = idx===0 ? 'hidden' : 'visible';
+  const beads = $('beads'); beads.innerHTML='';
+  Q.forEach((_,i)=>{const b=document.createElement('span');b.className='bead'+(i<idx?' done':i===idx?' now':'');beads.appendChild(b);});
+  const box = $('opts'); box.innerHTML='';
+  layout[idx].forEach(k=>{
+    const b=document.createElement('button');
+    b.className='opt'+(ans[idx]===k?' pick':'');
+    b.textContent=q.o[k];
+    b.onclick=()=>{ ans[idx]=k; b.classList.add('pick'); setTimeout(()=>{ idx+1<Q.length ? (idx++,render()) : result(); },140); };
+    box.appendChild(b);
+  });
+}
+
+function result(){
+  const score={d:0,s:0,v:0,n:0,l:0};
+  Q.forEach((q,i)=>{ const k=ORDER[ans[i]]; score[k]+= q.neg? -2 : 2; });
+  const ranked=[...ORDER].sort((a,b)=>score[b]-score[a]);
+  const data={seat,name,score,main:ranked[0],sub:ranked[1],weak:ranked[4],answers:ans.join('')};
+  $('s-quiz').classList.add('sending');
+  $('qtext').textContent='送出中…';
+  submit(data).then(res=>{
+    // 伺服器說這個座號已經有紀錄 → 用伺服器的那一份，不用新的
+    const final = (res && res.locked && res.record) ? res.record : data;
+    try{ localStorage.setItem(LOCK_KEY, JSON.stringify(final)); }catch(e){}
+    paint(final);
+    $('rHint').textContent = (res && res.locked) ? '這個座號已經做過了，顯示的是原本的結果。' : '結果已送出。截圖存起來，之後會用到。';
+    show('s-result');
+  }).catch(()=>{
+    paint(data);
+    $('rHint').textContent='網路沒送出去，先截圖這一頁，再跟老師說一下。';
+    show('s-result');
+  }).finally(()=>$('s-quiz').classList.remove('sending'));
+}
+
+async function submit(data){
+  if(!ENDPOINT || ENDPOINT.startsWith('PASTE')) return {locked:false};
+  const r = await fetch(ENDPOINT,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(data)});
+  return r.json();
+}
+
+function paint(d){
+  const score=d.score, ranked=[...ORDER].sort((a,b)=>score[b]-score[a]);
+  const main=TYPES[d.main||ranked[0]], sub=TYPES[d.sub||ranked[1]], weak=TYPES[d.weak||ranked[4]];
+  $('rSeal').textContent=main.ch;
+  $('rWho').textContent=(d.seat?d.seat+' 號 ':'')+(d.name||'你')+' 的朋友人格';
+  $('rMain').textContent=main.name;
+  $('rSub').textContent='帶一點'+sub.name;
+  $('rLine').textContent=main.line;
+  $('rSkills').innerHTML=main.skills.map(s=>`<span>${s}</span>`).join('');
+  $('rNeed').textContent=weak.name+'的人';
+  $('rNeedWhy').textContent=weak.need;
+  const min=-4, max=Q.filter(q=>!q.neg).length*2;
+  $('rBars').innerHTML=ORDER.map(k=>{
+    const pct=Math.round((score[k]-min)/(max-min)*100);
+    const cls=k===(d.main||ranked[0])?' top':k===(d.weak||ranked[4])?' low':'';
+    return `<div class="bar${cls}"><span>${TYPES[k].name}</span><i><b data-w="${pct}"></b></i><em>${Math.max(0,score[k])}</em></div>`;
+  }).join('');
+  requestAnimationFrame(()=>document.querySelectorAll('.bar b').forEach(b=>b.style.width=b.dataset.w+'%'));
+}
+
+$('go').onclick=()=>{
+  seat=$('seat').value; name=$('name').value.trim();
+  if(!seat){ $('err').textContent='先選座號。'; return; }
+  if(!name){ $('err').textContent='寫一下你的名字。'; return; }
+  $('err').textContent=''; idx=0; ans=[]; render(); show('s-quiz');
+};
+$('back').onclick=()=>{ if(idx>0){idx--;render();} };
+</script>
+</body>
+</html>
