@@ -82,8 +82,8 @@ input::placeholder{color:#C8A98A;font-weight:400}
   <h1>你是哪一種<br>朋友？</h1>
   <p>15 題日常情境，沒有對錯，選你真的會做的那一個。</p>
   <p class="meta">約 3 分鐘。每個人只能做一次，送出後結果會存起來，改不了。</p>
-  <label for="seat">你是誰</label>
-  <select id="seat"><option value="">選你的座號和名字</option></select>
+  <label for="seat">座號</label>
+  <select id="seat"><option value="">選你的座號</option></select>
   <p class="err" id="err"></p>
   <button class="btn brick" id="go">開始測驗</button>
   <p class="foot">送出後如果再打開這一頁，會直接看到你原本的結果。</p>
@@ -163,52 +163,17 @@ const Q = [
 ];
 
 // ===== 後端設定：貼上 Apps Script 網頁應用程式的網址 =====
-const ENDPOINT = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
-const ROSTER = [
-  [1,'414037','李利明'],
-  [2,'414038','林尚勳'],
-  [4,'414040','張鼎'],
-  [5,'414041','陳科菉'],
-  [6,'414042','陳駿璿'],
-  [7,'414043','游凱崴'],
-  [8,'414044','黃新儒'],
-  [9,'414045','楊垠枰'],
-  [10,'414046','蕭禾佳'],
-  [11,'414047','蕭嘉成'],
-  [12,'414048','賴宥玗'],
-  [13,'414049','尤鈺文'],
-  [14,'414050','吳亞萱'],
-  [15,'414051','吳承臻'],
-  [16,'414052','林睿湘'],
-  [17,'414053','邱以蓁'],
-  [18,'414054','范湘甯'],
-  [19,'414055','唐嘉婕'],
-  [20,'414056','康鈺欣'],
-  [21,'414057','張心瑜'],
-  [22,'414058','許巧潔'],
-  [23,'414059','郭采璇'],
-  [24,'414060','陳芊妤'],
-  [25,'414061','游忻璇'],
-  [26,'414062','黃纁慧'],
-  [27,'414063','劉佳昕'],
-  [28,'414064','蔡依恬'],
-  [30,'414066','鄭晴曼'],
-  [31,'414067','蕭予晴'],
-  [32,'414068','賴允菡'],
-  [33,'414069','謝恣菱'],
-  [34,'414070','蘇苡妮'],
-  [35,'414071','張宜軒'],
-  [36,'414072','林庭伃']
-];
+const ENDPOINT = 'https://script.google.com/macros/s/AKfycbzBdnfx9ug0EvIGZ6ZEaauTeuXl5Tt6sszDhaCIs7JwkwBYgHx7PStSuGgovSJNVV7g/exec';
+const SEATS = [1,2,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,30,31,32,33,34,35,36];
 const LOCK_KEY = 'friendquiz-done';
 
 const $ = id => document.getElementById(id);
-let idx = 0, ans = [], name = '', seat = '', sid = '';
+let idx = 0, ans = [], name = '', seat = '';
 const screens = ['s-start','s-quiz','s-result'];
 function show(id){ screens.forEach(s => $(s).classList.toggle('on', s===id)); window.scrollTo(0,0); }
 
 // 座號選單
-ROSTER.forEach(r=>{ const o=document.createElement('option'); o.value=r[0]; o.textContent=r[0]+' 號　'+r[2]; $('seat').appendChild(o); });
+SEATS.forEach(n=>{ const o=document.createElement('option'); o.value=n; o.textContent=n+' 號'; $('seat').appendChild(o); });
 
 // 這支手機已經做過 → 直接顯示存起來的結果
 try{ const saved=JSON.parse(localStorage.getItem(LOCK_KEY)); if(saved&&saved.score){ paint(saved); $('rHint').textContent='你已經做過了，這是你原本的結果。'; show('s-result'); } }catch(e){}
@@ -238,7 +203,7 @@ function result(){
   const score={d:0,s:0,v:0,n:0,l:0};
   Q.forEach((q,i)=>{ const k=ORDER[ans[i]]; score[k]+= q.neg? -2 : 2; });
   const ranked=[...ORDER].sort((a,b)=>score[b]-score[a]);
-  const data={seat,sid,name,score,main:ranked[0],sub:ranked[1],weak:ranked[4],answers:ans.join('')};
+  const data={seat,score,main:ranked[0],sub:ranked[1],weak:ranked[4],answers:ans.join('')};
   $('s-quiz').classList.add('sending');
   $('qtext').textContent='送出中…';
   submit(data).then(res=>{
@@ -265,7 +230,7 @@ function paint(d){
   const score=d.score, ranked=[...ORDER].sort((a,b)=>score[b]-score[a]);
   const main=TYPES[d.main||ranked[0]], sub=TYPES[d.sub||ranked[1]], weak=TYPES[d.weak||ranked[4]];
   $('rSeal').textContent=main.ch;
-  $('rWho').textContent=(d.seat?d.seat+' 號 ':'')+(d.name||'你')+' 的朋友人格';
+  $('rWho').textContent=(d.seat?d.seat+' 號':'你')+' 的朋友人格';
   $('rMain').textContent=main.name;
   $('rSub').textContent='帶一點'+sub.name;
   $('rLine').textContent=main.line;
@@ -283,8 +248,7 @@ function paint(d){
 
 $('go').onclick=()=>{
   seat=$('seat').value;
-  if(!seat){ $('err').textContent='先選你自己。'; return; }
-  const r=ROSTER.find(x=>String(x[0])===seat); sid=r[1]; name=r[2];
+  if(!seat){ $('err').textContent='先選座號。'; return; }
   $('err').textContent=''; idx=0; ans=[]; render(); show('s-quiz');
 };
 $('back').onclick=()=>{ if(idx>0){idx--;render();} };
