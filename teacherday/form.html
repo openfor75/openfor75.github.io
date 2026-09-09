@@ -638,16 +638,18 @@ function applyParams(){
   const set=(id,v)=>{ if(v) $(id).value=v; };
   set('cls',q.get('cls')); set('name',q.get('name'));
   set('insight',q.get('insight')); set('desc',q.get('desc')); set('price',q.get('price'));
-  const rows=[...$('costs').children];
-  if(rows.length){
-    const a=rows[0], b=rows[1];
-    const cn=q.get('cname')||q.get('items');
-    if(cn && !a.querySelector('.cn').value) a.querySelector('.cn').value=cn;
-    if(q.get('cprice')) a.querySelector('.cp2').value=q.get('cprice');
-    if(q.get('cpack'))  a.querySelector('.cq').value=q.get('cpack');
-    if(q.get('cuse'))   a.querySelector('.cused').value=q.get('cuse');
-    if(b && q.get('curl')){ b.querySelector('.url').value=q.get('curl');
-      if(!b.querySelector('.date').value) b.querySelector('.date').value=new Date().toISOString().slice(0,10); }
+  // 成本可能有多筆（討論牆勾了幾樣就帶幾樣）
+  let list=[];
+  try{ list=JSON.parse(q.get('costs')||'[]'); }catch(e){ list=[]; }
+  if(!list.length && (q.get('cname')||q.get('cprice'))){
+    list=[{n:q.get('cname')||q.get('items')||'',p:q.get('cprice')||'',k:q.get('cpack')||'',
+           u:q.get('cuse')||'',url:q.get('curl')||''}];
+  }
+  if(list.length){
+    const today=new Date().toISOString().slice(0,10);
+    $('costs').innerHTML='';           // 清掉預設空列，改用帶進來的
+    list.forEach(c=>addCost({name:c.n,price:c.p,pack:c.k,used:c.u,url:c.url,date:c.url?today:''}));
+    syncAdd();
   }
   const iu=q.get('imageUrl');
   if(iu){
@@ -658,7 +660,7 @@ function applyParams(){
   b2.className='fromwall';
   b2.innerHTML='<b>已經從討論牆帶入全班票選的結果</b>'+
     '<span>商品名稱、需求洞察、成本、售價、介紹'+(iu?'、示意圖':'')+'都帶好了。'+
-    '請確認一次，尤其是成本的網址與查詢日期，然後按最下面的送出。這些欄位都能直接改。</span>';
+    '請確認一次，尤其是成本有沒有把該放的東西都帶進來、網址與查詢日期是否正確，然後按最下面的送出。這些欄位都能直接改。</span>';
   document.querySelector('.wrap').insertBefore(b2, document.querySelector('.wrap').children[1]);
   buildPicks(); calc();
 }
