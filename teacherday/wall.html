@@ -65,14 +65,17 @@ button.go:disabled{background:#E0D4C1;color:#9E9080}
 button.sub{background:var(--tan);font-size:15px;padding:10px}
 .btns{display:flex;gap:9px}
 .hint{font-size:13px;color:var(--latte-soft);margin-top:8px;line-height:1.6}
+#lightbox{display:none;position:fixed;inset:0;background:rgba(40,25,18,.88);z-index:99;
+ align-items:center;justify-content:center;padding:16px;cursor:zoom-out}
+#lightbox img{max-width:100%;max-height:92vh;border-radius:10px;display:block}
 #refShots{background:var(--main-pale);border-radius:14px;padding:12px 14px;margin-bottom:12px}
 .rs-h{font-size:15.5px;font-weight:800;color:var(--main-deep)}
 .rs-t{font-size:13.5px;color:var(--latte-soft);line-height:1.6;margin-top:4px}
 .rs-t b{color:var(--main)}
-.rs-box{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.rs-box .cell{flex:1 1 44%;min-width:120px;background:#fff;border-radius:10px;padding:6px;text-align:center}
-.rs-box img{width:100%;border-radius:7px;display:block}
-.rs-box .cap{font-size:12.5px;font-weight:700;color:var(--main-deep);margin-top:5px;line-height:1.3}
+.rs-box{display:block;margin-top:10px}
+.rs-box .cell{background:#fff;border-radius:12px;padding:8px;text-align:center;margin-bottom:10px}
+.rs-box img{width:100%;border-radius:9px;display:block;cursor:zoom-in}
+.rs-box .cap{font-size:14px;font-weight:700;color:var(--main-deep);margin-top:5px;line-height:1.3}
 .rs-box .nopic{font-size:12.5px;color:var(--latte-soft);padding:14px 4px}
 .picklist{background:#fff;border:2px solid #E9DCC6;border-radius:14px;padding:6px 10px;max-height:260px;overflow:auto}
 .picklist .none{font-size:14px;color:var(--latte-soft);padding:8px 2px}
@@ -89,7 +92,7 @@ button.sub{background:var(--tan);font-size:15px;padding:10px}
 .cbox .sub{font-size:13.5px;font-weight:700;color:#A56A12;margin-top:7px}
 .cbox .shot{display:block;font-size:13px;font-weight:700;color:var(--latte-soft);margin-top:9px}
 .cbox .shot input{margin-top:5px;font-size:13px}
-.cbox .cprev{width:100%;border-radius:10px;margin-top:8px;border:2px solid #E9DCC6}
+.cbox .cprev{width:100%;border-radius:10px;margin-top:8px;border:2px solid #E9DCC6;cursor:zoom-in}
 .go.sub2{background:var(--tan);font-size:15px;padding:9px;margin-top:9px}
 .calc{background:#F8F0DF;border:1px dashed var(--gold);border-radius:14px;padding:10px 12px;
  font-size:15px;font-weight:700;color:#A56A12;margin-top:10px}
@@ -106,7 +109,7 @@ button.sub{background:var(--tan);font-size:15px;padding:10px}
 .idea .body{flex:1;min-width:0}
 .idea .who{font-size:12.5px;color:var(--latte-soft)}
 .idea .txt{font-size:16.5px;line-height:1.55;margin-top:2px;word-break:break-word;white-space:pre-wrap}
-.idea .thumb{width:100%;max-width:230px;border-radius:12px;margin-top:8px;display:block;border:2px solid var(--main-pale)}
+.idea .thumb{width:100%;max-width:none;border-radius:12px;margin-top:10px;display:block;border:2px solid var(--main-pale);cursor:zoom-in}
 .vote{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:2px;
  background:#fff;border:2px solid var(--main-pale);border-radius:14px;padding:6px 10px;cursor:pointer}
 .vote b{font-size:18px;color:var(--main-deep)}
@@ -305,6 +308,7 @@ footer{text-align:center;font-size:12px;color:var(--latte-soft);opacity:.75;marg
   <div id="cmsg"></div>
 </div>
 
+<div id="lightbox" onclick="this.style.display='none'"><img id="lbimg"></div>
 <footer>
   國立員林家商　商貿科（商業經營科・國際貿易科）<br>
   字型 LINE Seed TW © LY Corp.（SIL OFL 1.1）
@@ -332,7 +336,7 @@ const TOPICS = [
  {k:'4 找商品連結', map:'對應報名表：成本明細', mode:'cost',
   q:'',
   tip:['成本要有憑據，不能用猜的',
-       '每一樣都可以附一張截圖，大家才知道你講的東西長什麼樣（同樣叫「鞋子」，每個人想的品牌、樣式都不一樣）。上網找真的買得到的商品，把網址和價格填進來。整包買才便宜，所以要換算成「一個多少錢」——250元買到20包，一個就是12.50元，你放2包成本就是25.00元。注意：要用一般人點得進去就看得到的價格，會員價、折價券、秒殺價都不算。包裝材料和運費這次都不用算。']},
+       '每一樣都可以附一張截圖，大家才知道你講的東西長什麼樣（比如說：同樣是「鞋子」，每個人想的品牌、樣式都不一樣）。上網找真的買得到的商品，把網址和價格填進來。整包買才便宜，所以要換算成「一個多少錢」——250元買到20包，一個就是12.50元，你放2包成本就是25.00元。注意：要用一般人點得進去就看得到的價格，會員價、折價券、秒殺價都不算。包裝材料和運費這次都不用算。']},
  {k:'5 賣多少錢', map:'對應報名表：售價', mode:'price',
   q:'你覺得要賣多少？為什麼？',
   tip:['賣太便宜你虧，賣太貴他不買',
@@ -529,6 +533,12 @@ function topText(k){
   const x=LAST.all&&LAST.all.filter(i=>i.topic===k).sort((a,b)=>b.votes-a.votes)[0];
   return x?x.text:'';
 }
+document.addEventListener('click',e=>{
+  const t=e.target;
+  if(t.tagName==='IMG' && (t.classList.contains('thumb')||t.classList.contains('cprev')||t.closest('.rs-box'))){
+    $('lbimg').src=t.src; $('lightbox').style.display='flex';
+  }
+});
 function buildRefShots(){
   const sell=sellPick(); const box=$('refShots');
   if(!sell){ box.style.display='none'; return; }
@@ -550,7 +560,7 @@ function buildPrompt(force){
   const p='請畫一張商品情境照：一份要送給老師的教師節禮物，裡面只有這'+
     (sell?sell.list.length:1)+'樣東西：'+thing+
     (name?('，這份禮物叫「'+name+'」'):'')+
-    '。放在木桌上，用牛皮紙盒或提袋裝著，柔和自然光，乾淨背景，真實照片風格，不要多畫其他東西，不要出現任何文字。';
+    '。放在木桌上，柔和自然光，乾淨背景，真實照片風格，不要多畫其他東西，不要出現任何文字。';
   $('promptBox').value=p;
   return p;
 }
