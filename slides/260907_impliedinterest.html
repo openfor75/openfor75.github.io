@@ -120,24 +120,42 @@
 
   <main class="max-w-4xl mx-auto px-3 sm:px-4 mt-4 space-y-5">
 
-    <section class="bg-white rounded-3xl p-4 sm:p-5 border-2 border-amber-200 custom-shadow">
-      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+    <section class="bg-white rounded-3xl p-4 sm:p-5 border-2 border-amber-200 custom-shadow space-y-3">
+      <div class="flex items-center justify-between flex-wrap gap-2">
         <div class="flex items-center gap-1.5">
           <span class="text-lg">📚</span>
-          <h2 class="text-sm sm:text-base font-black text-slate-800">精選題型庫（含三段階梯式、經典期末付與中間日付）：</h2>
+          <h2 class="text-sm sm:text-base font-black text-slate-800">自己出題：先選付款條件，再選第幾天付款</h2>
         </div>
-        <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-          點擊按鈕切換題目
-        </span>
       </div>
 
-      <!-- Scenarios Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="presetsContainer">
-        <!-- Injected by JavaScript -->
+      <!-- A. Term type toggle -->
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-slate-600 w-14 flex-shrink-0">① 條件</span>
+        <div class="flex gap-2 flex-1" id="termTypeBtns">
+          <button onclick="setTermType('two')" id="termBtn_two" class="flex-1 py-2 rounded-xl border-2 text-xs font-black transition">兩段式（如 2/10, n/30）</button>
+          <button onclick="setTermType('three')" id="termBtn_three" class="flex-1 py-2 rounded-xl border-2 text-xs font-black transition">三段式（如 2/10, 1/20, n/30）</button>
+        </div>
+      </div>
+
+      <!-- B. Condition chips -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="condContainer"></div>
+
+      <!-- C. Pay day picker -->
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-700">② 你打算第幾天付款？</span>
+          <span class="text-sm font-black text-amber-900 bg-white px-2.5 py-0.5 rounded-lg border border-amber-300">第 <span id="payDayVal">20</span> 天</span>
+        </div>
+        <input id="payDaySlider" type="range" min="11" max="30" step="1" value="20" oninput="setPayDay(this.value)" class="w-full accent-amber-500" />
+        <div class="flex justify-between text-[10px] text-slate-500 font-bold">
+          <span id="payDayMinLabel">第 11 天</span>
+          <span id="payDayMaxLabel">第 30 天（信用期末）</span>
+        </div>
+        <div class="flex flex-wrap gap-1.5" id="payDayChips"></div>
       </div>
 
       <!-- Current Question Detail Box -->
-      <div class="mt-3.5 bg-gradient-to-r from-amber-50 via-orange-50/50 to-amber-50 p-3.5 rounded-2xl border border-amber-200 flex items-start gap-2.5">
+      <div class="bg-gradient-to-r from-amber-50 via-orange-50/50 to-amber-50 p-3.5 rounded-2xl border border-amber-200 flex items-start gap-2.5">
         <span class="text-xl mt-0.5">🛒</span>
         <div class="text-xs sm:text-sm text-slate-700 leading-relaxed">
           <span class="font-black text-slate-900" id="scenarioTitle">題目載入中...</span>
@@ -159,6 +177,7 @@
 
       <!-- Compact Timeline Graphic Container -->
       <div class="bg-amber-50/60 p-3.5 sm:p-5 rounded-2xl border border-amber-200">
+        <div id="step1QuestionBar" class="mb-3 text-xs font-black text-amber-900 bg-white border border-amber-300 rounded-xl px-3 py-1.5 text-center">📌 題目載入中</div>
         <div class="relative w-full pb-3 pt-2">
           
           <!-- Base Gray Line -->
@@ -189,7 +208,7 @@
                 <div class="text-[10px] font-bold text-sky-800">原本付多少？</div>
                 <div class="flex items-center justify-center gap-1 mt-0.5">
                   <span class="font-bold text-slate-500 text-xs">$</span>
-                  <input id="inputOriginalAmount" type="number" step="0.1" placeholder="？" 
+                  <input id="inputOriginalAmount" type="number" inputmode="decimal" step="0.1" placeholder="？" 
                          class="w-16 text-center font-black text-slate-800 text-sm sm:text-base border-b-2 border-sky-400 focus:outline-none focus:border-sky-600 bg-sky-50/50 py-0.5 rounded" />
                 </div>
                 <div class="text-[9px] text-sky-600 mt-0.5" id="discTipText">$100 × (1 - 折扣%)</div>
@@ -208,7 +227,7 @@
                 <div class="text-[10px] font-bold text-rose-800">現在付多少？</div>
                 <div class="flex items-center justify-center gap-1 mt-0.5">
                   <span class="font-bold text-slate-500 text-xs">$</span>
-                  <input id="inputActualAmount" type="number" step="0.1" placeholder="？" 
+                  <input id="inputActualAmount" type="number" inputmode="decimal" step="0.1" placeholder="？" 
                          class="w-16 text-center font-black text-slate-800 text-sm sm:text-base border-b-2 border-rose-400 focus:outline-none focus:border-rose-600 bg-rose-50/50 py-0.5 rounded" />
                 </div>
                 <div class="text-[9px] text-rose-600 mt-0.5" id="actTipText">現在結清應付額</div>
@@ -236,7 +255,7 @@
             <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200 flex items-center justify-between">
               <span class="text-xs font-bold text-slate-700">⏳ 多拖延了幾天？</span>
               <div class="flex items-center gap-1">
-                <input id="inputUserDelayDays" type="number" placeholder="填入天數" 
+                <input id="inputUserDelayDays" type="number" inputmode="numeric" placeholder="填入天數" 
                        class="w-20 text-center font-black text-amber-900 bg-white border-2 border-amber-300 focus:outline-none focus:border-amber-500 py-1 rounded-lg text-sm" />
                 <span class="text-xs font-bold text-slate-600">天</span>
               </div>
@@ -247,7 +266,7 @@
               <span class="text-xs font-bold text-slate-700">💸 多付多少代價(利息)？</span>
               <div class="flex items-center gap-1">
                 <span class="text-xs font-bold text-slate-600">$</span>
-                <input id="inputUserInterest" type="number" step="0.1" placeholder="填入差額" 
+                <input id="inputUserInterest" type="number" inputmode="decimal" step="0.1" placeholder="填入差額" 
                        class="w-20 text-center font-black text-rose-900 bg-white border-2 border-rose-300 focus:outline-none focus:border-rose-500 py-1 rounded-lg text-sm" />
                 <span class="text-xs font-bold text-slate-600">元</span>
               </div>
@@ -284,39 +303,43 @@
 
         <!-- Strict Single Row Track (Guaranteed to stay on one row on mobile) -->
         <div class="math-one-line-container py-1">
-          <div class="inline-flex items-center justify-center gap-1.5 sm:gap-2.5 min-w-full font-math">
+          <div class="inline-flex items-center justify-center gap-1 sm:gap-2.5 min-w-full font-math">
             
             <!-- Block 1: Principal -->
-            <div class="bg-sky-500/25 border border-sky-400 rounded-xl px-3 sm:px-4 py-2 flex flex-col items-center flex-shrink-0">
-              <span class="text-[11px] sm:text-xs text-sky-300 font-sans font-bold">本金 P</span>
-              <span class="text-2xl sm:text-3xl font-black text-sky-100" id="blockPrincipal">$98</span>
+            <div class="bg-sky-500/25 border border-sky-400 rounded-xl px-1.5 sm:px-4 py-1.5 flex flex-col items-center flex-shrink-0">
+              <span class="text-[10px] sm:text-xs text-sky-300 font-sans font-bold">本金 P</span>
+              <span class="text-xl sm:text-3xl font-black text-sky-100 leading-tight" id="blockPrincipal">$98</span>
+              <span class="text-[9px] sm:text-[10px] text-sky-200/80 font-sans whitespace-nowrap">原本只要付</span>
             </div>
 
-            <span class="text-amber-400 text-sm sm:text-base font-black flex-shrink-0">×</span>
+            <span class="text-amber-400 text-xs sm:text-base font-black flex-shrink-0">×</span>
 
             <!-- Block 2: Time Fraction -->
-            <div class="bg-purple-500/25 border border-purple-400 rounded-xl px-3 sm:px-4 py-2 flex flex-col items-center flex-shrink-0">
-              <span class="text-[11px] sm:text-xs text-purple-300 font-sans font-bold">期間 (t/365)</span>
-              <div class="flex items-baseline gap-0.5 text-purple-100 font-black text-2xl sm:text-3xl">
+            <div class="bg-purple-500/25 border border-purple-400 rounded-xl px-1.5 sm:px-4 py-1.5 flex flex-col items-center flex-shrink-0">
+              <span class="text-[10px] sm:text-xs text-purple-300 font-sans font-bold">期間 (t/365)</span>
+              <div class="flex items-baseline gap-0.5 text-purple-100 font-black text-xl sm:text-3xl leading-tight">
                 <span id="blockDays">10</span>
-                <span class="text-sm sm:text-base text-purple-300">/365</span>
+                <span class="text-xs sm:text-base text-purple-300">/365</span>
               </div>
+              <span class="text-[9px] sm:text-[10px] text-purple-200/80 font-sans whitespace-nowrap">多拖幾天</span>
             </div>
 
-            <span class="text-amber-400 text-sm sm:text-base font-black flex-shrink-0">×</span>
+            <span class="text-amber-400 text-xs sm:text-base font-black flex-shrink-0">×</span>
 
             <!-- Block 3: Rate r -->
-            <div class="bg-emerald-500/25 border border-emerald-400 rounded-xl px-3 sm:px-4 py-2 flex flex-col items-center flex-shrink-0">
-              <span class="text-[11px] sm:text-xs text-emerald-300 font-sans font-bold">年利率</span>
-              <span class="text-2xl sm:text-3xl font-black italic text-emerald-300">r</span>
+            <div class="bg-emerald-500/25 border border-emerald-400 rounded-xl px-1.5 sm:px-4 py-1.5 flex flex-col items-center flex-shrink-0">
+              <span class="text-[10px] sm:text-xs text-emerald-300 font-sans font-bold">年利率</span>
+              <span class="text-xl sm:text-3xl font-black italic text-emerald-300 leading-tight">r</span>
+              <span class="text-[9px] sm:text-[10px] text-emerald-200/80 font-sans whitespace-nowrap">要求的未知數</span>
             </div>
 
-            <span class="text-amber-400 text-sm sm:text-base font-black flex-shrink-0">＝</span>
+            <span class="text-amber-400 text-xs sm:text-base font-black flex-shrink-0">＝</span>
 
             <!-- Block 4: Interest -->
-            <div class="bg-rose-500/25 border border-rose-400 rounded-xl px-3 sm:px-4 py-2 flex flex-col items-center flex-shrink-0">
-              <span class="text-[11px] sm:text-xs text-rose-300 font-sans font-bold">利息 I</span>
-              <span class="text-2xl sm:text-3xl font-black text-rose-200" id="blockInterest">$2</span>
+            <div class="bg-rose-500/25 border border-rose-400 rounded-xl px-1.5 sm:px-4 py-1.5 flex flex-col items-center flex-shrink-0">
+              <span class="text-[10px] sm:text-xs text-rose-300 font-sans font-bold">利息 I</span>
+              <span class="text-xl sm:text-3xl font-black text-rose-200 leading-tight" id="blockInterest">$2</span>
+              <span class="text-[9px] sm:text-[10px] text-rose-200/80 font-sans whitespace-nowrap">多付多少</span>
             </div>
 
           </div>
@@ -348,8 +371,8 @@
           <span id="stageStatusBadge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">第 0 步：等式就緒</span>
         </div>
 
-        <div class="math-one-line-container py-1 text-center font-math">
-          <div id="dynamicEquationTrack" class="inline-flex items-center justify-center gap-1.5 sm:gap-2 min-w-full text-xs sm:text-sm">
+        <div class="py-1 text-center font-math">
+          <div id="dynamicEquationTrack" class="flex flex-wrap items-center justify-center gap-2 text-lg sm:text-xl">
             <!-- Dynamic elements rendered by JS -->
           </div>
         </div>
@@ -375,7 +398,7 @@
       <!-- Action 2: Move 365 Days (Independent button) -->
       <div id="action365Box" class="bg-purple-50/70 p-3 sm:p-4 rounded-2xl border-2 border-purple-200 space-y-2.5 opacity-40 pointer-events-none transition">
         <div class="flex items-center justify-between">
-          <span class="font-bold text-xs sm:text-sm text-purple-950">② 分母的「365 天」移到等號右邊（年化）要怎麼乘除？</span>
+          <span class="font-bold text-xs sm:text-sm text-purple-950">② 左邊的「365」要怎麼移到右邊？</span>
           <span id="action365Badge" class="text-[10px] bg-purple-200 text-purple-900 px-2 py-0.5 rounded font-bold">待解鎖</span>
         </div>
         <div id="action365Btns" class="flex flex-wrap items-center gap-2">
@@ -392,7 +415,7 @@
       <!-- Action 3: Move Delta Days (Independent button) -->
       <div id="actionTBox" class="bg-indigo-50/70 p-3 sm:p-4 rounded-2xl border-2 border-indigo-200 space-y-2.5 opacity-40 pointer-events-none transition">
         <div class="flex items-center justify-between">
-          <span class="font-bold text-xs sm:text-sm text-indigo-950">③ 分子的「<span id="btnTVal">10</span> 天」移到等號右邊要怎麼乘除？</span>
+          <span class="font-bold text-xs sm:text-sm text-indigo-950">③ 左邊的「<span id="btnTVal">10</span> 天」要怎麼移到右邊？</span>
           <span id="actionTBadge" class="text-[10px] bg-indigo-200 text-indigo-900 px-2 py-0.5 rounded font-bold">待解鎖</span>
         </div>
         <div id="actionTBtns" class="flex flex-wrap items-center gap-2">
@@ -419,7 +442,7 @@
 
         <div class="flex flex-wrap items-center gap-2.5">
           <div class="relative flex items-center">
-            <input id="studentRateInput" type="number" step="0.01" placeholder="取到小數 2 位" 
+            <input id="studentRateInput" type="number" inputmode="decimal" step="0.01" placeholder="取到小數 2 位" 
                    class="w-36 px-3 py-2 text-center text-lg font-black font-math text-emerald-900 rounded-xl border-2 border-emerald-400 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
             <span class="ml-2 font-black text-slate-700 text-sm">%</span>
           </div>
@@ -443,207 +466,126 @@
     // Shift state machine: 0: initial, 1: P moved, 2: 365 moved, 3: t moved (r isolated)
     let shiftStage = 0;
 
-    // 12 Scenarios.
-    // 通則：基準日(origDays)一律為「最大折扣」的最後付款日，本金 origPrice 為該日應付額。
-    const scenarios = [
-      {
-        id: 's1',
-        title: '題型 1【三段式階梯條件】：2/10, 1/20, n/30（第 20 天付清）',
-        shortTag: '2/10, 1/20, n/30',
-        payDayText: '第 20 天付',
-        subtitle: '三段式・相較第 10 天',
-        origDays: 10,
-        origPrice: 98,
-        actualPayDays: 20,
-        actualPrice: 99,
-        netCreditDays: 30,
-        story: '貨款原價 $100，付款條件有三段「2/10, 1/20, n/30」。原本在第 10 天付享有 2% 折扣只需付 $98；拖到第 20 天付僅享 1% 折扣需付 $99。請算算這段延遲的代價！'
-      },
-      {
-        id: 's2',
-        title: '題型 2【三段式放棄所有折扣】：2/10, 1/20, n/30（第 30 天付清）',
-        shortTag: '2/10, 1/20, n/30',
-        payDayText: '第 30 天付 (期末)',
-        subtitle: '三段式・相較第 10 天',
-        origDays: 10,
-        origPrice: 98,
-        actualPayDays: 30,
-        actualPrice: 100,
-        netCreditDays: 30,
-        story: '條件同為「2/10, 1/20, n/30」。原本第 10 天付 $98 就能享最大 2% 折扣，結果一路拖到第 30 天付全額 $100。請以第 10 天為基準，計算放棄最大折扣的隱含代價！'
-      },
-      {
-        id: 's3',
-        title: '題型 3【兩段式中間日付款】：2/10, n/30（第 20 天付款）',
-        shortTag: '2/10, n/30',
-        payDayText: '第 20 天付',
-        subtitle: '中間日付清・無折扣',
-        origDays: 10,
-        origPrice: 98,
-        actualPayDays: 20,
-        actualPrice: 100,
-        netCreditDays: 30,
-        story: '貨款原價 $100，條件「2/10, n/30」。錯過第 10 天 2% 折扣，在第 20 天籌足全額付清 $100。'
-      },
-      {
-        id: 's4',
-        title: '題型 4【傳統經典期末付】：2/10, n/30（第 30 天期末付款）',
-        shortTag: '2/10, n/30',
-        payDayText: '第 30 天付 (期末)',
-        subtitle: '期末付款・拖到上限',
-        origDays: 10,
-        origPrice: 98,
-        actualPayDays: 30,
-        actualPrice: 100,
-        netCreditDays: 30,
-        story: '最常見的課本題目！貨款 $100，放棄第 10 天折扣，一路拖到信用期最後一天（第 30 天）才付款 $100。'
-      },
-      {
-        id: 's5',
-        title: '題型 5【超短暫多拖 5 天】：2/10, n/30（第 15 天付款）',
-        shortTag: '2/10, n/30',
-        payDayText: '第 15 天付',
-        subtitle: '中間日・極短多拖 5 天',
-        origDays: 10,
-        origPrice: 98,
-        actualPayDays: 15,
-        actualPrice: 100,
-        netCreditDays: 30,
-        story: '貨款 $100，條件「2/10, n/30」。錯過第 10 天折扣，但在第 15 天就全額付清 $100。'
-      },
-      {
-        id: 's6',
-        title: '題型 6【較高折扣長信用期】：3/15, n/45（第 30 天付款）',
-        shortTag: '3/15, n/45',
-        payDayText: '第 30 天付',
-        subtitle: '3% 折扣・中間日付',
-        origDays: 15,
-        origPrice: 97,
-        actualPayDays: 30,
-        actualPrice: 100,
-        netCreditDays: 45,
-        story: '大額進貨原價 $100，條件「3/15, n/45」。未在第 15 天享受 3% 折扣，而在第 30 天付全額 $100。'
-      },
-      {
-        id: 's7',
-        title: '題型 7【較高折扣期末付】：3/15, n/45（第 45 天期末付款）',
-        shortTag: '3/15, n/45',
-        payDayText: '第 45 天付 (期末)',
-        subtitle: '3% 折扣・拖到上限',
-        origDays: 15,
-        origPrice: 97,
-        actualPayDays: 45,
-        actualPrice: 100,
-        netCreditDays: 45,
-        story: '同樣是「3/15, n/45」，這次放棄第 15 天的 3% 折扣後，一路拖到信用期最後一天（第 45 天）才付全額 $100。和題型 6 比一比，年利率有什麼不同？'
-      },
-      {
-        id: 's8',
-        title: '題型 8【小折扣中間日付】：1/10, n/30（第 25 天付款）',
-        shortTag: '1/10, n/30',
-        payDayText: '第 25 天付',
-        subtitle: '1% 折扣・中間日付',
-        origDays: 10,
-        origPrice: 99,
-        actualPayDays: 25,
-        actualPrice: 100,
-        netCreditDays: 30,
-        story: '貨款 $100，條件「1/10, n/30」。折扣只有 1%，看起來不痛不癢？放棄第 10 天付 $99 的機會，在第 25 天付全額 $100，算算年化後到底划不划算。'
-      },
-      {
-        id: 's9',
-        title: '題型 9【大折扣期末付】：3/10, n/30（第 30 天期末付款）',
-        shortTag: '3/10, n/30',
-        payDayText: '第 30 天付 (期末)',
-        subtitle: '3% 折扣・期末付款',
-        origDays: 10,
-        origPrice: 97,
-        actualPayDays: 30,
-        actualPrice: 100,
-        netCreditDays: 30,
-        story: '貨款 $100，條件「3/10, n/30」。第 10 天付只要 $97，卻拖到第 30 天付全額 $100。同樣多拖 20 天，折扣從 2% 變 3%，隱含利率會差多少？'
-      },
-      {
-        id: 's10',
-        title: '題型 10【長信用期中間日付】：2/10, n/60（第 40 天付款）',
-        shortTag: '2/10, n/60',
-        payDayText: '第 40 天付',
-        subtitle: '信用期 60 天・中間日付',
-        origDays: 10,
-        origPrice: 98,
-        actualPayDays: 40,
-        actualPrice: 100,
-        netCreditDays: 60,
-        story: '貨款 $100，條件「2/10, n/60」。同樣是 2% 折扣，但信用期拉長到 60 天。放棄第 10 天付 $98，在第 40 天付全額 $100，多拖了 30 天，年利率會變高還是變低？'
-      },
-      {
-        id: 's11',
-        title: '題型 11【三段式第二階】：3/10, 2/20, n/60（第 20 天付清）',
-        shortTag: '3/10, 2/20, n/60',
-        payDayText: '第 20 天付',
-        subtitle: '三段式・相較第 10 天',
-        origDays: 10,
-        origPrice: 97,
-        actualPayDays: 20,
-        actualPrice: 98,
-        netCreditDays: 60,
-        story: '貨款 $100，條件「3/10, 2/20, n/60」。第 10 天付享 3% 折扣只要 $97；拖到第 20 天付僅享 2% 折扣需付 $98。以第 10 天為基準，算出這 10 天的代價！'
-      },
-      {
-        id: 's12',
-        title: '題型 12【三段式錯過所有折扣】：3/10, 2/20, n/60（第 45 天付清）',
-        shortTag: '3/10, 2/20, n/60',
-        payDayText: '第 45 天付',
-        subtitle: '三段式・中間日付',
-        origDays: 10,
-        origPrice: 97,
-        actualPayDays: 45,
-        actualPrice: 100,
-        netCreditDays: 60,
-        story: '條件同為「3/10, 2/20, n/60」。原本第 10 天付 $97 就能享最大 3% 折扣，結果兩段折扣都錯過，在第 45 天付全額 $100。請以第 10 天為基準計算隱含代價！'
-      }
-    ];
+    // ===== 自己出題：付款條件庫 =====
+    // 通則：基準日一律為「最大折扣」的最後付款日，本金為該日應付額。
+    const CONDITIONS = {
+      two: [
+        { tiers: [{ d: 2, day: 10 }], net: 30 },
+        { tiers: [{ d: 1, day: 10 }], net: 30 },
+        { tiers: [{ d: 3, day: 10 }], net: 30 },
+        { tiers: [{ d: 2, day: 10 }], net: 60 },
+        { tiers: [{ d: 3, day: 15 }], net: 45 },
+        { tiers: [{ d: 2, day: 15 }], net: 45 }
+      ],
+      three: [
+        { tiers: [{ d: 2, day: 10 }, { d: 1, day: 20 }], net: 30 },
+        { tiers: [{ d: 3, day: 10 }, { d: 2, day: 20 }], net: 60 },
+        { tiers: [{ d: 3, day: 10 }, { d: 1, day: 20 }], net: 30 },
+        { tiers: [{ d: 2, day: 10 }, { d: 1, day: 15 }], net: 45 }
+      ]
+    };
 
-    let currentScenario = scenarios[0];
+    let termType = 'three';
+    let condIndex = 0;
+    let payDay = 20;
+    let currentScenario = null;
+
+    function condTag(c) {
+      return c.tiers.map(t => `${t.d}/${t.day}`).join(', ') + `, n/${c.net}`;
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
-      renderScenarioCards();
-      loadScenario(scenarios[0]);
+      setTermType('three');
     });
 
-    function renderScenarioCards() {
-      const container = document.getElementById('presetsContainer');
-      container.innerHTML = scenarios.map((s) => `
-        <button onclick="selectScenario('${s.id}')" id="btnPreset_${s.id}" 
+    function setTermType(type) {
+      termType = type;
+      condIndex = 0;
+      ['two', 'three'].forEach(t => {
+        const b = document.getElementById(`termBtn_${t}`);
+        b.className = 'flex-1 py-2 rounded-xl border-2 text-xs font-black transition ' +
+          (t === type ? 'border-amber-500 bg-amber-100 text-amber-900' : 'border-slate-200 bg-white text-slate-600 hover:border-amber-300');
+      });
+      renderConditionChips();
+      applyCondition(0);
+    }
+
+    function renderConditionChips() {
+      const container = document.getElementById('condContainer');
+      container.innerHTML = CONDITIONS[termType].map((c, i) => `
+        <button onclick="applyCondition(${i})" id="condBtn_${i}"
                 class="pop-card text-left p-2.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-amber-300 transition">
-          <div class="flex items-center justify-between gap-1 mb-1">
-            <span class="text-[11px] font-black text-slate-800 truncate">${s.shortTag}</span>
-            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">${s.payDayText}</span>
-          </div>
-          <div class="text-[10px] text-slate-500 line-clamp-1">${s.subtitle}</div>
+          <div class="text-xs font-black text-slate-800">${condTag(c)}</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">折扣期 ${c.tiers[0].day} 天・信用期 ${c.net} 天</div>
         </button>
       `).join('');
     }
 
-    function selectScenario(id) {
-      const target = scenarios.find(s => s.id === id);
-      if (target) loadScenario(target);
+    function applyCondition(i) {
+      condIndex = i;
+      const c = CONDITIONS[termType][i];
+      CONDITIONS[termType].forEach((_, k) => {
+        const b = document.getElementById(`condBtn_${k}`);
+        if (b) b.classList.toggle('active-preset', k === i);
+      });
+
+      const minDay = c.tiers[0].day + 1;
+      const slider = document.getElementById('payDaySlider');
+      slider.min = minDay;
+      slider.max = c.net;
+      // 預設：三段式停在第二段折扣最後一天；兩段式停在信用期末
+      const defaultDay = c.tiers.length > 1 ? c.tiers[1].day : c.net;
+      slider.value = defaultDay;
+      document.getElementById('payDayMinLabel').innerText = `第 ${minDay} 天`;
+      document.getElementById('payDayMaxLabel').innerText = `第 ${c.net} 天（信用期末）`;
+
+      // 快速選日 chips
+      const chips = new Set();
+      c.tiers.slice(1).forEach(t => chips.add(t.day));
+      chips.add(Math.round((c.tiers[0].day + c.net) / 2));
+      chips.add(c.net);
+      document.getElementById('payDayChips').innerHTML = [...chips].sort((a, b) => a - b).map(d => `
+        <button onclick="setPayDay(${d})" class="text-[11px] font-bold px-2.5 py-1 rounded-lg border border-amber-300 bg-white hover:bg-amber-100 text-amber-900 transition">第 ${d} 天${d === c.net ? '（期末）' : ''}</button>
+      `).join('');
+
+      setPayDay(defaultDay);
+    }
+
+    function setPayDay(v) {
+      const c = CONDITIONS[termType][condIndex];
+      payDay = Math.min(Math.max(parseInt(v, 10), c.tiers[0].day + 1), c.net);
+      document.getElementById('payDaySlider').value = payDay;
+      document.getElementById('payDayVal').innerText = payDay;
+      loadScenario(buildScenario(c, payDay));
+    }
+
+    function buildScenario(c, day) {
+      const first = c.tiers[0];
+      let actualPrice = TOTAL_PRICE;
+      let inTier = null;
+      for (const t of c.tiers.slice(1)) {
+        if (day <= t.day) { actualPrice = TOTAL_PRICE - t.d; inTier = t; break; }
+      }
+      const tag = condTag(c);
+      const isEnd = day === c.net;
+      const stageText = inTier
+        ? `第 ${day} 天仍在「${inTier.d}/${inTier.day}」這一段的期限內`
+        : `第 ${day} 天已超過所有折扣期限${isEnd ? '，是信用期的最後一天' : ''}`;
+      return {
+        shortTag: tag,
+        payDayText: `第 ${day} 天付${isEnd ? ' (期末)' : ''}`,
+        title: `${termType === 'two' ? '兩段式' : '三段式'}條件：${tag}（第 ${day} 天付清）`,
+        origDays: first.day,
+        origPrice: TOTAL_PRICE - first.d,
+        actualPayDays: day,
+        actualPrice: actualPrice,
+        netCreditDays: c.net,
+        story: `貨款原價 $100，付款條件「${tag}」。這次選在第 ${day} 天付款（${stageText}）。請先想想：最大折扣的最後一天（第 ${first.day} 天）原本要付多少？第 ${day} 天實際要付多少？`
+      };
     }
 
     function loadScenario(sc) {
       currentScenario = sc;
-
-      // Update active card styling
-      scenarios.forEach(s => {
-        const btn = document.getElementById(`btnPreset_${s.id}`);
-        if (btn) {
-          if (s.id === sc.id) {
-            btn.classList.add('active-preset');
-          } else {
-            btn.classList.remove('active-preset');
-          }
-        }
-      });
 
       // Update sticky header information (No spoiler)
       document.getElementById('stickyScenarioBadge').innerText = sc.shortTag;
@@ -652,6 +594,9 @@
       // Update scenario description box
       document.getElementById('scenarioTitle').innerText = sc.title;
       document.getElementById('scenarioStory').innerText = sc.story;
+
+      // Question reminder inside step 1 (stays visible when the keyboard is up)
+      document.getElementById('step1QuestionBar').innerText = `📌 條件 ${sc.shortTag}・${sc.payDayText}・貨款 $100`;
 
       // Update timeline labels
       document.getElementById('timelineDiscDayLabel').innerText = `第 ${sc.origDays} 天 (基準日)`;
@@ -803,7 +748,7 @@
           <span class="bg-purple-500/30 text-purple-200 border border-purple-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">(${delayDays}/365)</span>
           <span class="text-amber-400 font-bold">×</span>
           <span class="bg-emerald-500/30 text-emerald-300 border border-emerald-400 px-2.5 py-1 rounded-lg font-black italic flex-shrink-0">r</span>
-          <span class="text-amber-400 font-black text-base px-0.5">＝</span>
+          <span class="text-amber-400 font-black text-xl px-0.5">＝</span>
           <span class="bg-rose-500/30 text-rose-200 border border-rose-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${interest}</span>
         `;
       } else if (shiftStage === 1) {
@@ -811,7 +756,7 @@
           <span class="bg-purple-500/30 text-purple-200 border border-purple-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">(${delayDays}/365)</span>
           <span class="text-amber-400 font-bold">×</span>
           <span class="bg-emerald-500/30 text-emerald-300 border border-emerald-400 px-2.5 py-1 rounded-lg font-black italic flex-shrink-0">r</span>
-          <span class="text-amber-400 font-black text-base px-0.5">＝</span>
+          <span class="text-amber-400 font-black text-xl px-0.5">＝</span>
           <span class="bg-rose-500/30 text-rose-200 border border-rose-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${interest}</span>
           <span class="text-sky-400 font-black">÷</span>
           <span class="bg-sky-500/40 text-sky-100 border-2 border-sky-300 px-2 py-1 rounded-lg font-black flex-shrink-0 animate-shift">$${origAmt}</span>
@@ -821,7 +766,7 @@
           <span class="bg-indigo-500/30 text-indigo-200 border border-indigo-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">${delayDays} 天</span>
           <span class="text-amber-400 font-bold">×</span>
           <span class="bg-emerald-500/30 text-emerald-300 border border-emerald-400 px-2.5 py-1 rounded-lg font-black italic flex-shrink-0">r</span>
-          <span class="text-amber-400 font-black text-base px-0.5">＝</span>
+          <span class="text-amber-400 font-black text-xl px-0.5">＝</span>
           <span class="bg-rose-500/30 text-rose-200 border border-rose-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${interest}</span>
           <span class="text-sky-400 font-black">÷</span>
           <span class="bg-sky-500/30 text-sky-200 border border-sky-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${origAmt}</span>
@@ -830,8 +775,8 @@
         `;
       } else if (shiftStage === 3) {
         track.innerHTML = `
-          <span class="bg-emerald-500/40 text-emerald-300 border-2 border-emerald-300 px-3 py-1 rounded-lg font-black italic text-base flex-shrink-0 shadow-sm shadow-emerald-500/50">r</span>
-          <span class="text-amber-400 font-black text-base px-0.5">＝</span>
+          <span class="bg-emerald-500/40 text-emerald-300 border-2 border-emerald-300 px-3 py-1 rounded-lg font-black italic text-2xl flex-shrink-0 shadow-sm shadow-emerald-500/50">r</span>
+          <span class="text-amber-400 font-black text-xl px-0.5">＝</span>
           <span class="bg-rose-500/30 text-rose-200 border border-rose-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${interest}</span>
           <span class="text-sky-400 font-black">÷</span>
           <span class="bg-sky-500/30 text-sky-200 border border-sky-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${origAmt}</span>
