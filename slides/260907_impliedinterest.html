@@ -189,7 +189,7 @@
                 <div class="text-[10px] font-bold text-sky-800">原本付多少？</div>
                 <div class="flex items-center justify-center gap-1 mt-0.5">
                   <span class="font-bold text-slate-500 text-xs">$</span>
-                  <input id="inputOriginalAmount" type="number" step="0.1" placeholder="98" 
+                  <input id="inputOriginalAmount" type="number" step="0.1" placeholder="？" 
                          class="w-16 text-center font-black text-slate-800 text-sm sm:text-base border-b-2 border-sky-400 focus:outline-none focus:border-sky-600 bg-sky-50/50 py-0.5 rounded" />
                 </div>
                 <div class="text-[9px] text-sky-600 mt-0.5" id="discTipText">$100 × (1 - 折扣%)</div>
@@ -208,7 +208,7 @@
                 <div class="text-[10px] font-bold text-rose-800">現在付多少？</div>
                 <div class="flex items-center justify-center gap-1 mt-0.5">
                   <span class="font-bold text-slate-500 text-xs">$</span>
-                  <input id="inputActualAmount" type="number" step="0.1" placeholder="99" 
+                  <input id="inputActualAmount" type="number" step="0.1" placeholder="？" 
                          class="w-16 text-center font-black text-slate-800 text-sm sm:text-base border-b-2 border-rose-400 focus:outline-none focus:border-rose-600 bg-rose-50/50 py-0.5 rounded" />
                 </div>
                 <div class="text-[9px] text-rose-600 mt-0.5" id="actTipText">現在結清應付額</div>
@@ -419,7 +419,7 @@
 
         <div class="flex flex-wrap items-center gap-2.5">
           <div class="relative flex items-center">
-            <input id="studentRateInput" type="number" step="0.01" placeholder="例如: 36.87" 
+            <input id="studentRateInput" type="number" step="0.01" placeholder="取到小數 2 位" 
                    class="w-36 px-3 py-2 text-center text-lg font-black font-math text-emerald-900 rounded-xl border-2 border-emerald-400 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
             <span class="ml-2 font-black text-slate-700 text-sm">%</span>
           </div>
@@ -443,7 +443,8 @@
     // Shift state machine: 0: initial, 1: P moved, 2: 365 moved, 3: t moved (r isolated)
     let shiftStage = 0;
 
-    // 6 Scenarios including three-tier terms
+    // 12 Scenarios.
+    // 通則：基準日(origDays)一律為「最大折扣」的最後付款日，本金 origPrice 為該日應付額。
     const scenarios = [
       {
         id: 's1',
@@ -463,13 +464,13 @@
         title: '題型 2【三段式放棄所有折扣】：2/10, 1/20, n/30（第 30 天付清）',
         shortTag: '2/10, 1/20, n/30',
         payDayText: '第 30 天付 (期末)',
-        subtitle: '三段式・相較第 20 天',
-        origDays: 20,
-        origPrice: 99,
+        subtitle: '三段式・相較第 10 天',
+        origDays: 10,
+        origPrice: 98,
         actualPayDays: 30,
         actualPrice: 100,
         netCreditDays: 30,
-        story: '條件同為「2/10, 1/20, n/30」。在第 20 天（原本付 $99 享 1% 折扣）沒有付款，一路拖到第 30 天付全額 $100。請計算相較第 20 天的隱含代價！'
+        story: '條件同為「2/10, 1/20, n/30」。原本第 10 天付 $98 就能享最大 2% 折扣，結果一路拖到第 30 天付全額 $100。請以第 10 天為基準，計算放棄最大折扣的隱含代價！'
       },
       {
         id: 's3',
@@ -515,13 +516,91 @@
         title: '題型 6【較高折扣長信用期】：3/15, n/45（第 30 天付款）',
         shortTag: '3/15, n/45',
         payDayText: '第 30 天付',
-        subtitle: '3% 折扣・多天數中間付',
+        subtitle: '3% 折扣・中間日付',
         origDays: 15,
         origPrice: 97,
         actualPayDays: 30,
         actualPrice: 100,
         netCreditDays: 45,
         story: '大額進貨原價 $100，條件「3/15, n/45」。未在第 15 天享受 3% 折扣，而在第 30 天付全額 $100。'
+      },
+      {
+        id: 's7',
+        title: '題型 7【較高折扣期末付】：3/15, n/45（第 45 天期末付款）',
+        shortTag: '3/15, n/45',
+        payDayText: '第 45 天付 (期末)',
+        subtitle: '3% 折扣・拖到上限',
+        origDays: 15,
+        origPrice: 97,
+        actualPayDays: 45,
+        actualPrice: 100,
+        netCreditDays: 45,
+        story: '同樣是「3/15, n/45」，這次放棄第 15 天的 3% 折扣後，一路拖到信用期最後一天（第 45 天）才付全額 $100。和題型 6 比一比，年利率有什麼不同？'
+      },
+      {
+        id: 's8',
+        title: '題型 8【小折扣中間日付】：1/10, n/30（第 25 天付款）',
+        shortTag: '1/10, n/30',
+        payDayText: '第 25 天付',
+        subtitle: '1% 折扣・中間日付',
+        origDays: 10,
+        origPrice: 99,
+        actualPayDays: 25,
+        actualPrice: 100,
+        netCreditDays: 30,
+        story: '貨款 $100，條件「1/10, n/30」。折扣只有 1%，看起來不痛不癢？放棄第 10 天付 $99 的機會，在第 25 天付全額 $100，算算年化後到底划不划算。'
+      },
+      {
+        id: 's9',
+        title: '題型 9【大折扣期末付】：3/10, n/30（第 30 天期末付款）',
+        shortTag: '3/10, n/30',
+        payDayText: '第 30 天付 (期末)',
+        subtitle: '3% 折扣・期末付款',
+        origDays: 10,
+        origPrice: 97,
+        actualPayDays: 30,
+        actualPrice: 100,
+        netCreditDays: 30,
+        story: '貨款 $100，條件「3/10, n/30」。第 10 天付只要 $97，卻拖到第 30 天付全額 $100。同樣多拖 20 天，折扣從 2% 變 3%，隱含利率會差多少？'
+      },
+      {
+        id: 's10',
+        title: '題型 10【長信用期中間日付】：2/10, n/60（第 40 天付款）',
+        shortTag: '2/10, n/60',
+        payDayText: '第 40 天付',
+        subtitle: '信用期 60 天・中間日付',
+        origDays: 10,
+        origPrice: 98,
+        actualPayDays: 40,
+        actualPrice: 100,
+        netCreditDays: 60,
+        story: '貨款 $100，條件「2/10, n/60」。同樣是 2% 折扣，但信用期拉長到 60 天。放棄第 10 天付 $98，在第 40 天付全額 $100，多拖了 30 天，年利率會變高還是變低？'
+      },
+      {
+        id: 's11',
+        title: '題型 11【三段式第二階】：3/10, 2/20, n/60（第 20 天付清）',
+        shortTag: '3/10, 2/20, n/60',
+        payDayText: '第 20 天付',
+        subtitle: '三段式・相較第 10 天',
+        origDays: 10,
+        origPrice: 97,
+        actualPayDays: 20,
+        actualPrice: 98,
+        netCreditDays: 60,
+        story: '貨款 $100，條件「3/10, 2/20, n/60」。第 10 天付享 3% 折扣只要 $97；拖到第 20 天付僅享 2% 折扣需付 $98。以第 10 天為基準，算出這 10 天的代價！'
+      },
+      {
+        id: 's12',
+        title: '題型 12【三段式錯過所有折扣】：3/10, 2/20, n/60（第 45 天付清）',
+        shortTag: '3/10, 2/20, n/60',
+        payDayText: '第 45 天付',
+        subtitle: '三段式・中間日付',
+        origDays: 10,
+        origPrice: 97,
+        actualPayDays: 45,
+        actualPrice: 100,
+        netCreditDays: 60,
+        story: '條件同為「3/10, 2/20, n/60」。原本第 10 天付 $97 就能享最大 3% 折扣，結果兩段折扣都錯過，在第 45 天付全額 $100。請以第 10 天為基準計算隱含代價！'
       }
     ];
 
