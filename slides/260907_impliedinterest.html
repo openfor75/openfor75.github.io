@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>隱含利率互動學習室 💰 拖延的代價算給你看！</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Canvas Confetti for celebrations -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts: Fredoka & Noto Sans TC -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              cream: '#FFFDF9',
+              yellow: '#FDE047',
+              amber: '#F59E0B',
+              coral: '#FB7185',
+              teal: '#14B8A6',
+              mint: '#34D399',
+              lavender: '#A78BFA',
+              sky: '#38BDF8',
+              slate: '#334155'
+            }
+          },
+          fontFamily: {
+            sans: ['"Noto Sans TC"', 'Fredoka', 'sans-serif'],
+            math: ['Fredoka', '"Noto Sans TC"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #FAF6EE;
+      color: #334155;
+      -webkit-text-size-adjust: 100%;
+    }
+    /* Prevents iOS Safari from auto-zooming when focusing on inputs */
+    input, button, select, textarea {
+      font-size: 16px !important;
+    }
+    .custom-shadow {
+      box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.12), 0 8px 10px -6px rgba(245, 158, 11, 0.08);
+    }
+    .pop-card {
+      transition: all 0.2s ease;
+    }
+    .pop-card:hover {
+      transform: translateY(-2px);
+    }
+    .active-preset {
+      border-color: #F59E0B !important;
+      background-color: #FEF3C7 !important;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+    }
+    /* Smooth formula block transitions */
+    .formula-pill {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    /* Pulse glow effect for moving blocks */
+    @keyframes blockShift {
+      0% { transform: scale(0.92); opacity: 0.6; }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-shift {
+      animation: blockShift 0.4s ease-out forwards;
+    }
+    /* Inline math bar ensuring 1-line display with horizontal scroll if screen is very narrow */
+    .math-one-line-container {
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none; /* Firefox */
+    }
+    .math-one-line-container::-webkit-scrollbar {
+      display: none; /* Chrome/Safari */
+    }
+  </style>
+</head>
+
+<body class="font-sans antialiased min-h-screen pb-20">
+
+  <header class="bg-white/95 backdrop-blur-md border-b-2 border-amber-200 sticky top-0 z-40 shadow-sm transition-all">
+    <div class="max-w-4xl mx-auto px-3 sm:px-4 py-2.5">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        
+        <!-- Left: Logo & Title -->
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-amber-400 flex items-center justify-center text-base sm:text-lg shadow-inner shadow-amber-500/30">
+            ⏳
+          </div>
+          <div>
+            <h1 class="text-sm sm:text-base font-black text-slate-800 tracking-tight flex items-center gap-1.5">
+              隱含利率動手算
+              <span class="text-[10px] bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded font-bold">貨款$100・365天</span>
+            </h1>
+          </div>
+        </div>
+
+        <!-- Right: Current Active Question Sticky Pill (Always Visible) -->
+        <div class="flex items-center gap-2 bg-amber-50 border border-amber-300 px-2.5 py-1 rounded-xl shadow-xs">
+          <span class="text-xs">📌 題目：</span>
+          <span id="stickyScenarioBadge" class="text-xs font-black bg-amber-500 text-white px-2 py-0.5 rounded-md">2/10, 1/20, n/30</span>
+          <span id="stickyPayDayBadge" class="text-xs font-bold text-slate-700">第 20 天付</span>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-3 sm:px-4 mt-4 space-y-5">
+
+    <section class="bg-white rounded-3xl p-4 sm:p-5 border-2 border-amber-200 custom-shadow">
+      <div class="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div class="flex items-center gap-1.5">
+          <span class="text-lg">📚</span>
+          <h2 class="text-sm sm:text-base font-black text-slate-800">精選題型庫（含三段階梯式、經典期末付與中間日付）：</h2>
+        </div>
+        <span class="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+          點擊按鈕切換題目
+        </span>
+      </div>
+
+      <!-- Scenarios Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="presetsContainer">
+        <!-- Injected by JavaScript -->
+      </div>
+
+      <!-- Current Question Detail Box -->
+      <div class="mt-3.5 bg-gradient-to-r from-amber-50 via-orange-50/50 to-amber-50 p-3.5 rounded-2xl border border-amber-200 flex items-start gap-2.5">
+        <span class="text-xl mt-0.5">🛒</span>
+        <div class="text-xs sm:text-sm text-slate-700 leading-relaxed">
+          <span class="font-black text-slate-900" id="scenarioTitle">題目載入中...</span>
+          <p id="scenarioStory" class="text-slate-600 mt-0.5">進貨原價 $100...</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="timelineMainCard" class="bg-white rounded-3xl p-4 sm:p-6 border-2 border-amber-200 custom-shadow space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 flex-wrap gap-2">
+        <div class="flex items-center gap-2">
+          <span class="flex items-center justify-center w-6 h-6 rounded-full bg-amber-400 text-slate-950 font-black text-xs">1</span>
+          <h3 class="text-sm sm:text-base font-black text-slate-800">步驟一：在時間線上填寫金額，並自行算出「拖延天數與代價」</h3>
+        </div>
+        <button onclick="autoFillAnswers()" class="text-xs font-bold text-amber-700 hover:text-amber-900 bg-amber-100/70 hover:bg-amber-200 px-2.5 py-1 rounded-lg transition">
+          💡 示範填入
+        </button>
+      </div>
+
+      <!-- Compact Timeline Graphic Container -->
+      <div class="bg-amber-50/60 p-3.5 sm:p-5 rounded-2xl border border-amber-200">
+        <div class="relative w-full pb-3 pt-2">
+          
+          <!-- Base Gray Line -->
+          <div class="h-2 bg-slate-200 rounded-full w-full absolute top-7 sm:top-8 transform -translate-y-1/2"></div>
+          
+          <!-- Highlighted Delay Bar -->
+          <div id="timelineSpanBar" class="h-2 bg-amber-400 rounded-full absolute top-7 sm:top-8 transform -translate-y-1/2 transition-all duration-300" style="left: 28%; width: 38%;"></div>
+
+          <!-- Nodes Container -->
+          <div class="relative flex justify-between items-start text-center">
+
+            <!-- Node 0: Day 0 -->
+            <div class="flex flex-col items-center w-12 sm:w-16">
+              <div class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-slate-400 border-2 border-white shadow mt-1.5 sm:mt-2 z-10"></div>
+              <span class="text-[11px] font-bold text-slate-500 mt-1">第 0 天</span>
+              <span class="text-[9px] text-slate-400">立帳日</span>
+            </div>
+
+            <!-- Node 1: Target Discount Day (Input: Original Amount) -->
+            <div class="flex flex-col items-center w-36 sm:w-44 z-10">
+              <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-sky-500 border-2 border-white shadow flex items-center justify-center text-[10px] text-white font-bold">✓</div>
+              
+              <span class="text-xs font-black text-sky-800 mt-1 bg-sky-100 px-2 py-0.5 rounded-md" id="timelineDiscDayLabel">
+                第 10 天
+              </span>
+
+              <div class="mt-2 w-full bg-white p-2 rounded-xl border-2 border-sky-300 shadow-xs">
+                <div class="text-[10px] font-bold text-sky-800">原本付多少？</div>
+                <div class="flex items-center justify-center gap-1 mt-0.5">
+                  <span class="font-bold text-slate-500 text-xs">$</span>
+                  <input id="inputOriginalAmount" type="number" step="0.1" placeholder="98" 
+                         class="w-16 text-center font-black text-slate-800 text-sm sm:text-base border-b-2 border-sky-400 focus:outline-none focus:border-sky-600 bg-sky-50/50 py-0.5 rounded" />
+                </div>
+                <div class="text-[9px] text-sky-600 mt-0.5" id="discTipText">$100 × (1 - 折扣%)</div>
+              </div>
+            </div>
+
+            <!-- Node 2: Actual Pay Day (Input: Actual Amount) -->
+            <div class="flex flex-col items-center w-36 sm:w-44 z-10">
+              <div class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-rose-500 border-2 border-white shadow flex items-center justify-center text-[10px] text-white font-bold">✕</div>
+              
+              <span class="text-xs font-black text-rose-800 mt-1 bg-rose-100 px-2 py-0.5 rounded-md" id="timelineActDayLabel">
+                第 20 天
+              </span>
+
+              <div class="mt-2 w-full bg-white p-2 rounded-xl border-2 border-rose-300 shadow-xs">
+                <div class="text-[10px] font-bold text-rose-800">現在付多少？</div>
+                <div class="flex items-center justify-center gap-1 mt-0.5">
+                  <span class="font-bold text-slate-500 text-xs">$</span>
+                  <input id="inputActualAmount" type="number" step="0.1" placeholder="99" 
+                         class="w-16 text-center font-black text-slate-800 text-sm sm:text-base border-b-2 border-rose-400 focus:outline-none focus:border-rose-600 bg-rose-50/50 py-0.5 rounded" />
+                </div>
+                <div class="text-[9px] text-rose-600 mt-0.5" id="actTipText">現在結清應付額</div>
+              </div>
+            </div>
+
+            <!-- Node 3: Net Term (Credit Limit) -->
+            <div class="flex flex-col items-center w-12 sm:w-16">
+              <div class="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded-full bg-slate-300 border-2 border-white shadow mt-1.5 sm:mt-2 z-10"></div>
+              <span class="text-[11px] font-bold text-slate-500 mt-1" id="timelineNetDayLabel">第 30 天</span>
+              <span class="text-[9px] text-slate-400">信用上限</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Student Self-Calculation: Days & Interest Inputs -->
+        <div class="mt-4 bg-white p-3.5 sm:p-4 rounded-2xl border-2 border-amber-300 shadow-xs space-y-2.5">
+          <div class="text-xs font-black text-amber-900 flex items-center gap-1">
+            <span>✍️</span> 請看著上方時間線，親自算出並填寫這兩個數值（不提示答案喔）：
+          </div>
+          
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <!-- Input: Delay Days -->
+            <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200 flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700">⏳ 多拖延了幾天？</span>
+              <div class="flex items-center gap-1">
+                <input id="inputUserDelayDays" type="number" placeholder="填入天數" 
+                       class="w-20 text-center font-black text-amber-900 bg-white border-2 border-amber-300 focus:outline-none focus:border-amber-500 py-1 rounded-lg text-sm" />
+                <span class="text-xs font-bold text-slate-600">天</span>
+              </div>
+            </div>
+
+            <!-- Input: Extra Interest -->
+            <div class="bg-rose-50 p-2.5 rounded-xl border border-rose-200 flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-700">💸 多付多少代價(利息)？</span>
+              <div class="flex items-center gap-1">
+                <span class="text-xs font-bold text-slate-600">$</span>
+                <input id="inputUserInterest" type="number" step="0.1" placeholder="填入差額" 
+                       class="w-20 text-center font-black text-rose-900 bg-white border-2 border-rose-300 focus:outline-none focus:border-rose-500 py-1 rounded-lg text-sm" />
+                <span class="text-xs font-bold text-slate-600">元</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-3 text-center">
+          <button id="step1ConfirmBtn" onclick="proceedToStep2()" class="w-full sm:w-auto bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs sm:text-sm px-6 py-2.5 rounded-xl shadow transition">
+            驗證四項數值，進入利息公式 ➔
+          </button>
+          <p id="step1ErrorMsg" class="text-xs text-rose-600 mt-2 font-bold hidden"></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="step2Section" class="bg-white rounded-3xl p-4 sm:p-6 border-2 border-amber-200 custom-shadow space-y-4 opacity-40 pointer-events-none transition-all duration-300">
+      <div class="border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="flex items-center justify-center w-6 h-6 rounded-full bg-teal-400 text-slate-950 font-black text-xs">2</span>
+          <h3 class="text-sm sm:text-base font-black text-slate-800">步驟二：單一直觀利息公式（數字直接套入積木中）</h3>
+        </div>
+        <p class="text-xs text-slate-500 ml-8 mt-0.5">
+          利息本質：<span class="text-slate-700 font-bold">借多少本金 × 借了多久時間 × 年利率 ＝ 多付的利息</span>
+        </p>
+      </div>
+
+      <!-- Unified Single-Line Math Card (Mobile Optimized Single Row) -->
+      <div class="bg-slate-900 text-white p-3.5 sm:p-5 rounded-2xl shadow-lg">
+        <div class="text-[11px] text-amber-300 font-bold mb-2 flex items-center justify-between">
+          <span>📐 整合式利息等式：</span>
+          <span class="text-slate-400 text-[10px]">嚴格單一行・對應填寫數值</span>
+        </div>
+
+        <!-- Strict Single Row Track (Guaranteed to stay on one row on mobile) -->
+        <div class="math-one-line-container py-1">
+          <div class="inline-flex items-center justify-center gap-1.5 sm:gap-2.5 min-w-full font-math">
+            
+            <!-- Block 1: Principal -->
+            <div class="bg-sky-500/25 border border-sky-400 rounded-xl px-2 sm:px-3 py-1.5 flex flex-col items-center flex-shrink-0">
+              <span class="text-[9px] sm:text-[10px] text-sky-300 font-sans font-bold">本金 P</span>
+              <span class="text-xs sm:text-base font-black text-sky-100" id="blockPrincipal">$98</span>
+            </div>
+
+            <span class="text-amber-400 text-sm sm:text-base font-black flex-shrink-0">×</span>
+
+            <!-- Block 2: Time Fraction -->
+            <div class="bg-purple-500/25 border border-purple-400 rounded-xl px-2 sm:px-3 py-1.5 flex flex-col items-center flex-shrink-0">
+              <span class="text-[9px] sm:text-[10px] text-purple-300 font-sans font-bold">期間 (t/365)</span>
+              <div class="flex items-center gap-0.5 text-purple-100 font-black text-xs sm:text-sm">
+                <span id="blockDays">10</span>
+                <span class="text-[10px] sm:text-xs text-purple-300">/365</span>
+              </div>
+            </div>
+
+            <span class="text-amber-400 text-sm sm:text-base font-black flex-shrink-0">×</span>
+
+            <!-- Block 3: Rate r -->
+            <div class="bg-emerald-500/25 border border-emerald-400 rounded-xl px-2 sm:px-3 py-1.5 flex flex-col items-center flex-shrink-0">
+              <span class="text-[9px] sm:text-[10px] text-emerald-300 font-sans font-bold">年利率</span>
+              <span class="text-xs sm:text-base font-black italic text-emerald-300">r</span>
+            </div>
+
+            <span class="text-amber-400 text-sm sm:text-base font-black flex-shrink-0">＝</span>
+
+            <!-- Block 4: Interest -->
+            <div class="bg-rose-500/25 border border-rose-400 rounded-xl px-2 sm:px-3 py-1.5 flex flex-col items-center flex-shrink-0">
+              <span class="text-[9px] sm:text-[10px] text-rose-300 font-sans font-bold">利息 I</span>
+              <span class="text-xs sm:text-base font-black text-rose-200" id="blockInterest">$2</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center pt-1">
+        <button id="step2ConfirmBtn" onclick="proceedToStep3()" class="w-full sm:w-auto bg-teal-500 hover:bg-teal-600 text-white font-black text-xs sm:text-sm px-6 py-2.5 rounded-xl shadow transition">
+          前往步驟三：親自動手「按按鈕動態移項」➔
+        </button>
+      </div>
+    </section>
+
+    <section id="step3Section" class="bg-white rounded-3xl p-4 sm:p-6 border-2 border-amber-200 custom-shadow space-y-4 opacity-40 pointer-events-none transition-all duration-300">
+      <div class="border-b border-slate-100 pb-2.5">
+        <div class="flex items-center gap-2">
+          <span class="flex items-center justify-center w-6 h-6 rounded-full bg-lavender text-slate-950 font-black text-xs">3</span>
+          <h3 class="text-sm sm:text-base font-black text-slate-800">步驟三：動態分步移項（親自點擊按鈕，看著積木位移）</h3>
+        </div>
+        <p class="text-xs text-slate-500 ml-8 mt-0.5">
+          目標：按下正確的乘除按鈕，依序將「本金」、「365」、「天數」移至等號右邊，抓出 <strong class="text-emerald-700">r</strong>！
+        </p>
+      </div>
+
+      <!-- Live Dynamic Equation Display -->
+      <div class="bg-slate-950 text-white p-3.5 sm:p-5 rounded-2xl shadow-md border-2 border-amber-300/40">
+        <div class="flex items-center justify-between text-[11px] text-amber-300 font-bold mb-2">
+          <span>🎬 算式動態演變看板：</span>
+          <span id="stageStatusBadge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono">第 0 步：等式就緒</span>
+        </div>
+
+        <div class="math-one-line-container py-1 text-center font-math">
+          <div id="dynamicEquationTrack" class="inline-flex items-center justify-center gap-1.5 sm:gap-2 min-w-full text-xs sm:text-sm">
+            <!-- Dynamic elements rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Action 1: Move Principal Button -->
+      <div id="actionPBox" class="bg-sky-50/70 p-3 sm:p-4 rounded-2xl border-2 border-sky-200 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-xs sm:text-sm text-sky-950">① 左邊的「本金 $<span id="btnPVal">98</span>」要怎麼移到右邊？</span>
+          <span id="actionPBadge" class="text-[10px] bg-sky-200 text-sky-900 px-2 py-0.5 rounded font-bold">請點擊運算</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="handleShiftAction('P', 'mul')" class="flex-1 sm:flex-none bg-white hover:bg-sky-100 text-slate-700 font-black text-xs px-4 py-2.5 rounded-xl border border-slate-300 shadow-xs transition active:scale-95">
+            ✖ 乘 $<span id="optPVal1">98</span>
+          </button>
+          <button onclick="handleShiftAction('P', 'div')" class="flex-1 sm:flex-none bg-sky-500 hover:bg-sky-600 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95">
+            ➗ 除 $<span id="optPVal2">98</span> (移到分母)
+          </button>
+        </div>
+        <p id="actionPMsg" class="text-xs font-bold hidden"></p>
+      </div>
+
+      <!-- Action 2: Move 365 Days (Independent button) -->
+      <div id="action365Box" class="bg-purple-50/70 p-3 sm:p-4 rounded-2xl border-2 border-purple-200 space-y-2.5 opacity-40 pointer-events-none transition">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-xs sm:text-sm text-purple-950">② 分母的「365 天」移到等號右邊（年化）要怎麼乘除？</span>
+          <span id="action365Badge" class="text-[10px] bg-purple-200 text-purple-900 px-2 py-0.5 rounded font-bold">待解鎖</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="handleShiftAction('365', 'div')" class="flex-1 sm:flex-none bg-white hover:bg-purple-100 text-slate-700 font-black text-xs px-4 py-2.5 rounded-xl border border-slate-300 shadow-xs transition active:scale-95">
+            ➗ 除 365
+          </button>
+          <button onclick="handleShiftAction('365', 'mul')" class="flex-1 sm:flex-none bg-purple-600 hover:bg-purple-700 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95">
+            ✖ 乘 365 (分母移過去變相乘)
+          </button>
+        </div>
+        <p id="action365Msg" class="text-xs font-bold hidden"></p>
+      </div>
+
+      <!-- Action 3: Move Delta Days (Independent button) -->
+      <div id="actionTBox" class="bg-indigo-50/70 p-3 sm:p-4 rounded-2xl border-2 border-indigo-200 space-y-2.5 opacity-40 pointer-events-none transition">
+        <div class="flex items-center justify-between">
+          <span class="font-bold text-xs sm:text-sm text-indigo-950">③ 分子的「<span id="btnTVal">10</span> 天」移到等號右邊要怎麼乘除？</span>
+          <span id="actionTBadge" class="text-[10px] bg-indigo-200 text-indigo-900 px-2 py-0.5 rounded font-bold">待解鎖</span>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button onclick="handleShiftAction('T', 'mul')" class="flex-1 sm:flex-none bg-white hover:bg-indigo-100 text-slate-700 font-black text-xs px-4 py-2.5 rounded-xl border border-slate-300 shadow-xs transition active:scale-95">
+            ✖ 乘 <span id="optTVal1">10</span> 天
+          </button>
+          <button onclick="handleShiftAction('T', 'div')" class="flex-1 sm:flex-none bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs px-5 py-2.5 rounded-xl shadow-xs transition active:scale-95">
+            ➗ 除 <span id="optTVal2">10</span> 天 (分子移過去變相除)
+          </button>
+        </div>
+        <p id="actionTMsg" class="text-xs font-bold hidden"></p>
+      </div>
+
+      <!-- Student Calculator Self-Input Area -->
+      <div id="calcInputBox" class="bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 p-4 sm:p-5 rounded-2xl border-2 border-emerald-300 space-y-3 opacity-40 pointer-events-none transition">
+        <div>
+          <h4 class="font-black text-xs sm:text-sm text-emerald-950 flex items-center gap-1.5">
+            <span>📱</span> 移項完成！拿出你的計算機親自按按看：
+          </h4>
+          <p class="text-xs text-slate-600 mt-0.5">
+            按照看板上的公式依序按下計算機，求出年化隱含利率（%）：
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <div class="relative flex items-center">
+            <input id="studentRateInput" type="number" step="0.01" placeholder="例如: 36.87" 
+                   class="w-36 px-3 py-2 text-center text-lg font-black font-math text-emerald-900 rounded-xl border-2 border-emerald-400 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 shadow-inner" />
+            <span class="ml-2 font-black text-slate-700 text-sm">%</span>
+          </div>
+
+          <button onclick="verifyStudentRate()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs sm:text-sm px-5 py-2.5 rounded-xl shadow transition active:scale-95">
+            送出對答案！
+          </button>
+        </div>
+
+        <div id="rateFeedbackBox" class="hidden p-3.5 sm:p-4 rounded-xl text-xs sm:text-sm font-medium"></div>
+      </div>
+
+    </section>
+  </main>
+
+  <script>
+    // Global fixed constants
+    const TOTAL_PRICE = 100;
+    const YEAR_DAYS = 365;
+
+    // Shift state machine: 0: initial, 1: P moved, 2: 365 moved, 3: t moved (r isolated)
+    let shiftStage = 0;
+
+    // 6 Scenarios including three-tier terms
+    const scenarios = [
+      {
+        id: 's1',
+        title: '題型 1【三段式階梯條件】：2/10, 1/20, n/30（第 20 天付清）',
+        shortTag: '2/10, 1/20, n/30',
+        payDayText: '第 20 天付',
+        subtitle: '三段式・相較第 10 天',
+        origDays: 10,
+        origPrice: 98,
+        actualPayDays: 20,
+        actualPrice: 99,
+        netCreditDays: 30,
+        story: '貨款原價 $100，付款條件有三段「2/10, 1/20, n/30」。原本在第 10 天付享有 2% 折扣只需付 $98；拖到第 20 天付僅享 1% 折扣需付 $99。請算算這段延遲的代價！'
+      },
+      {
+        id: 's2',
+        title: '題型 2【三段式放棄所有折扣】：2/10, 1/20, n/30（第 30 天付清）',
+        shortTag: '2/10, 1/20, n/30',
+        payDayText: '第 30 天付 (期末)',
+        subtitle: '三段式・相較第 20 天',
+        origDays: 20,
+        origPrice: 99,
+        actualPayDays: 30,
+        actualPrice: 100,
+        netCreditDays: 30,
+        story: '條件同為「2/10, 1/20, n/30」。在第 20 天（原本付 $99 享 1% 折扣）沒有付款，一路拖到第 30 天付全額 $100。請計算相較第 20 天的隱含代價！'
+      },
+      {
+        id: 's3',
+        title: '題型 3【兩段式中間日付款】：2/10, n/30（第 20 天付款）',
+        shortTag: '2/10, n/30',
+        payDayText: '第 20 天付',
+        subtitle: '中間日付清・無折扣',
+        origDays: 10,
+        origPrice: 98,
+        actualPayDays: 20,
+        actualPrice: 100,
+        netCreditDays: 30,
+        story: '貨款原價 $100，條件「2/10, n/30」。錯過第 10 天 2% 折扣，在第 20 天籌足全額付清 $100。'
+      },
+      {
+        id: 's4',
+        title: '題型 4【傳統經典期末付】：2/10, n/30（第 30 天期末付款）',
+        shortTag: '2/10, n/30',
+        payDayText: '第 30 天付 (期末)',
+        subtitle: '期末付款・拖到上限',
+        origDays: 10,
+        origPrice: 98,
+        actualPayDays: 30,
+        actualPrice: 100,
+        netCreditDays: 30,
+        story: '最常見的課本題目！貨款 $100，放棄第 10 天折扣，一路拖到信用期最後一天（第 30 天）才付款 $100。'
+      },
+      {
+        id: 's5',
+        title: '題型 5【超短暫多拖 5 天】：2/10, n/30（第 15 天付款）',
+        shortTag: '2/10, n/30',
+        payDayText: '第 15 天付',
+        subtitle: '中間日・極短多拖 5 天',
+        origDays: 10,
+        origPrice: 98,
+        actualPayDays: 15,
+        actualPrice: 100,
+        netCreditDays: 30,
+        story: '貨款 $100，條件「2/10, n/30」。錯過第 10 天折扣，但在第 15 天就全額付清 $100。'
+      },
+      {
+        id: 's6',
+        title: '題型 6【較高折扣長信用期】：3/15, n/45（第 30 天付款）',
+        shortTag: '3/15, n/45',
+        payDayText: '第 30 天付',
+        subtitle: '3% 折扣・多天數中間付',
+        origDays: 15,
+        origPrice: 97,
+        actualPayDays: 30,
+        actualPrice: 100,
+        netCreditDays: 45,
+        story: '大額進貨原價 $100，條件「3/15, n/45」。未在第 15 天享受 3% 折扣，而在第 30 天付全額 $100。'
+      }
+    ];
+
+    let currentScenario = scenarios[0];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderScenarioCards();
+      loadScenario(scenarios[0]);
+    });
+
+    function renderScenarioCards() {
+      const container = document.getElementById('presetsContainer');
+      container.innerHTML = scenarios.map((s) => `
+        <button onclick="selectScenario('${s.id}')" id="btnPreset_${s.id}" 
+                class="pop-card text-left p-2.5 rounded-2xl border-2 border-slate-200 bg-white hover:border-amber-300 transition">
+          <div class="flex items-center justify-between gap-1 mb-1">
+            <span class="text-[11px] font-black text-slate-800 truncate">${s.shortTag}</span>
+            <span class="text-[9px] font-black px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">${s.payDayText}</span>
+          </div>
+          <div class="text-[10px] text-slate-500 line-clamp-1">${s.subtitle}</div>
+        </button>
+      `).join('');
+    }
+
+    function selectScenario(id) {
+      const target = scenarios.find(s => s.id === id);
+      if (target) loadScenario(target);
+    }
+
+    function loadScenario(sc) {
+      currentScenario = sc;
+
+      // Update active card styling
+      scenarios.forEach(s => {
+        const btn = document.getElementById(`btnPreset_${s.id}`);
+        if (btn) {
+          if (s.id === sc.id) {
+            btn.classList.add('active-preset');
+          } else {
+            btn.classList.remove('active-preset');
+          }
+        }
+      });
+
+      // Update sticky header information (No spoiler)
+      document.getElementById('stickyScenarioBadge').innerText = sc.shortTag;
+      document.getElementById('stickyPayDayBadge').innerText = sc.payDayText;
+
+      // Update scenario description box
+      document.getElementById('scenarioTitle').innerText = sc.title;
+      document.getElementById('scenarioStory').innerText = sc.story;
+
+      // Update timeline labels
+      document.getElementById('timelineDiscDayLabel').innerText = `第 ${sc.origDays} 天 (基準日)`;
+      document.getElementById('timelineActDayLabel').innerText = `第 ${sc.actualPayDays} 天 (付款日)`;
+      document.getElementById('timelineNetDayLabel').innerText = `第 ${sc.netCreditDays} 天`;
+
+      // Clear all inputs
+      document.getElementById('inputOriginalAmount').value = '';
+      document.getElementById('inputActualAmount').value = '';
+      document.getElementById('inputUserDelayDays').value = '';
+      document.getElementById('inputUserInterest').value = '';
+
+      resetStepsState();
+    }
+
+    function resetStepsState() {
+      shiftStage = 0;
+      // Step 2 & 3 disable
+      document.getElementById('step2Section').classList.add('opacity-40', 'pointer-events-none');
+      document.getElementById('step3Section').classList.add('opacity-40', 'pointer-events-none');
+      document.getElementById('step1ErrorMsg').classList.add('hidden');
+
+      // Reset Step 3 interactive boxes
+      document.getElementById('actionPBadge').innerText = '請點擊運算';
+      document.getElementById('actionPBadge').className = 'text-[10px] bg-sky-200 text-sky-900 px-2 py-0.5 rounded font-bold';
+      document.getElementById('actionPMsg').classList.add('hidden');
+
+      document.getElementById('action365Box').classList.add('opacity-40', 'pointer-events-none');
+      document.getElementById('action365Badge').innerText = '待解鎖';
+      document.getElementById('action365Badge').className = 'text-[10px] bg-purple-200 text-purple-900 px-2 py-0.5 rounded font-bold';
+      document.getElementById('action365Msg').classList.add('hidden');
+
+      document.getElementById('actionTBox').classList.add('opacity-40', 'pointer-events-none');
+      document.getElementById('actionTBadge').innerText = '待解鎖';
+      document.getElementById('actionTBadge').className = 'text-[10px] bg-indigo-200 text-indigo-900 px-2 py-0.5 rounded font-bold';
+      document.getElementById('actionTMsg').classList.add('hidden');
+
+      document.getElementById('stageStatusBadge').innerText = '第 0 步：等式就緒';
+      document.getElementById('stageStatusBadge').className = 'text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded font-mono';
+
+      document.getElementById('calcInputBox').classList.add('opacity-40', 'pointer-events-none');
+      document.getElementById('studentRateInput').value = '';
+      document.getElementById('rateFeedbackBox').classList.add('hidden');
+    }
+
+    function autoFillAnswers() {
+      const sc = currentScenario;
+      document.getElementById('inputOriginalAmount').value = sc.origPrice;
+      document.getElementById('inputActualAmount').value = sc.actualPrice;
+      document.getElementById('inputUserDelayDays').value = sc.actualPayDays - sc.origDays;
+      document.getElementById('inputUserInterest').value = sc.actualPrice - sc.origPrice;
+    }
+
+    function proceedToStep2() {
+      const sc = currentScenario;
+      const origAmt = parseFloat(document.getElementById('inputOriginalAmount').value);
+      const actAmt = parseFloat(document.getElementById('inputActualAmount').value);
+      const userDays = parseInt(document.getElementById('inputUserDelayDays').value, 10);
+      const userInterest = parseFloat(document.getElementById('inputUserInterest').value);
+
+      const expectedDays = sc.actualPayDays - sc.origDays;
+      const expectedInterest = sc.actualPrice - sc.origPrice;
+
+      const err = document.getElementById('step1ErrorMsg');
+
+      if (isNaN(origAmt) || isNaN(actAmt) || isNaN(userDays) || isNaN(userInterest)) {
+        err.innerText = '請在上方將 4 個欄位（原本金額、現在金額、拖延天數、多付利息）全部填寫完成喔！';
+        err.classList.remove('hidden');
+        return;
+      }
+      if (Math.abs(origAmt - sc.origPrice) > 0.01) {
+        err.innerText = `原本付款金額有誤喔！根據題目條件，第 ${sc.origDays} 天付款應為 $${sc.origPrice}。`;
+        err.classList.remove('hidden');
+        return;
+      }
+      if (Math.abs(actAmt - sc.actualPrice) > 0.01) {
+        err.innerText = `現在付款金額有誤喔！第 ${sc.actualPayDays} 天付款應為 $${sc.actualPrice}。`;
+        err.classList.remove('hidden');
+        return;
+      }
+      if (userDays !== expectedDays) {
+        err.innerText = `多拖延的天數算錯囉！從第 ${sc.origDays} 天到第 ${sc.actualPayDays} 天，相減是 ${expectedDays} 天喔！`;
+        err.classList.remove('hidden');
+        return;
+      }
+      if (Math.abs(userInterest - expectedInterest) > 0.01) {
+        err.innerText = `多付的利息代價算錯囉！$${sc.actualPrice} 減去 $${sc.origPrice}，應為 $${expectedInterest} 元。`;
+        err.classList.remove('hidden');
+        return;
+      }
+
+      err.classList.add('hidden');
+      const step2 = document.getElementById('step2Section');
+      step2.classList.remove('opacity-40', 'pointer-events-none');
+
+      // Update Step 2 inline values
+      document.getElementById('blockPrincipal').innerText = `$${origAmt}`;
+      document.getElementById('blockDays').innerText = `${expectedDays}`;
+      document.getElementById('blockInterest').innerText = `$${expectedInterest.toFixed(1).replace('.0', '')}`;
+
+      step2.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function proceedToStep3() {
+      const sc = currentScenario;
+      const origAmt = sc.origPrice;
+      const delayDays = sc.actualPayDays - sc.origDays;
+
+      const step3 = document.getElementById('step3Section');
+      step3.classList.remove('opacity-40', 'pointer-events-none');
+
+      // Populate Step 3 button labels
+      document.getElementById('btnPVal').innerText = origAmt;
+      document.getElementById('optPVal1').innerText = origAmt;
+      document.getElementById('optPVal2').innerText = origAmt;
+
+      document.getElementById('btnTVal').innerText = delayDays;
+      document.getElementById('optTVal1').innerText = delayDays;
+      document.getElementById('optTVal2').innerText = delayDays;
+
+      // Render Stage 0 equation
+      shiftStage = 0;
+      renderDynamicEquation();
+
+      step3.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function renderDynamicEquation() {
+      const sc = currentScenario;
+      const origAmt = sc.origPrice;
+      const delayDays = sc.actualPayDays - sc.origDays;
+      const interest = (sc.actualPrice - sc.origPrice).toFixed(1).replace('.0', '');
+      const track = document.getElementById('dynamicEquationTrack');
+
+      if (shiftStage === 0) {
+        track.innerHTML = `
+          <span class="bg-sky-500/30 text-sky-200 border border-sky-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${origAmt}</span>
+          <span class="text-amber-400 font-bold">×</span>
+          <span class="bg-purple-500/30 text-purple-200 border border-purple-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">(${delayDays}/365)</span>
+          <span class="text-amber-400 font-bold">×</span>
+          <span class="bg-emerald-500/30 text-emerald-300 border border-emerald-400 px-2.5 py-1 rounded-lg font-black italic flex-shrink-0">r</span>
+          <span class="text-amber-400 font-black text-base px-0.5">＝</span>
+          <span class="bg-rose-500/30 text-rose-200 border border-rose-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${interest}</span>
+        `;
+      } else if (shiftStage === 1) {
+        track.innerHTML = `
+          <span class="bg-purple-500/30 text-purple-200 border border-purple-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">(${delayDays}/365)</span>
+          <span class="text-amber-400 font-bold">×</span>
+          <span class="bg-emerald-500/30 text-emerald-300 border border-emerald-400 px-2.5 py-1 rounded-lg font-black italic flex-shrink-0">r</span>
+          <span class="text-amber-400 font-black text-base px-0.5">＝</span>
+          <span class="bg-rose-500/30 text-rose-200 border border-rose-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${interest}</span>
+          <span class="text-sky-400 font-black">÷</span>
+          <span class="bg-sky-500/40 text-sky-100 border-2 border-sky-300 px-2 py-1 rounded-lg font-black flex-shrink-0 animate-shift">$${origAmt}</span>
+        `;
+      } else if (shiftStage === 2) {
+        track.innerHTML = `
+          <span class="bg-indigo-500/30 text-indigo-200 border border-indigo-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">${delayDays} 天</span>
+          <span class="text-amber-400 font-bold">×</span>
+          <span class="bg-emerald-500/30 text-emerald-300 border border-emerald-400 px-2.5 py-1 rounded-lg font-black italic flex-shrink-0">r</span>
+          <span class="text-amber-400 font-black text-base px-0.5">＝</span>
+          <span class="bg-rose-500/30 text-rose-200 border border-rose-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${interest}</span>
+          <span class="text-sky-400 font-black">÷</span>
+          <span class="bg-sky-500/30 text-sky-200 border border-sky-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${origAmt}</span>
+          <span class="text-amber-300 font-black">×</span>
+          <span class="bg-purple-500/40 text-purple-100 border-2 border-purple-300 px-2 py-1 rounded-lg font-black flex-shrink-0 animate-shift">365</span>
+        `;
+      } else if (shiftStage === 3) {
+        track.innerHTML = `
+          <span class="bg-emerald-500/40 text-emerald-300 border-2 border-emerald-300 px-3 py-1 rounded-lg font-black italic text-base flex-shrink-0 shadow-sm shadow-emerald-500/50">r</span>
+          <span class="text-amber-400 font-black text-base px-0.5">＝</span>
+          <span class="bg-rose-500/30 text-rose-200 border border-rose-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${interest}</span>
+          <span class="text-sky-400 font-black">÷</span>
+          <span class="bg-sky-500/30 text-sky-200 border border-sky-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">$${origAmt}</span>
+          <span class="text-amber-300 font-black">×</span>
+          <span class="bg-purple-500/30 text-purple-200 border border-purple-400 px-2 py-1 rounded-lg font-bold flex-shrink-0">365</span>
+          <span class="text-indigo-400 font-black">÷</span>
+          <span class="bg-indigo-500/40 text-indigo-100 border-2 border-indigo-300 px-2 py-1 rounded-lg font-black flex-shrink-0 animate-shift">${delayDays} 天</span>
+        `;
+      }
+    }
+
+    function handleShiftAction(target, op) {
+      if (target === 'P') {
+        const msg = document.getElementById('actionPMsg');
+        const badge = document.getElementById('actionPBadge');
+        msg.classList.remove('hidden');
+
+        if (op === 'div') {
+          badge.innerText = '✓ 移項成功！';
+          badge.className = 'text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded font-bold';
+          msg.className = 'text-xs font-bold text-emerald-700';
+          msg.innerText = '🎯 正確！左邊「乘本金」移到等號對面變成「除以本金」！本金已飛到右邊分母！';
+
+          shiftStage = 1;
+          renderDynamicEquation();
+
+          document.getElementById('stageStatusBadge').innerText = '第 1 步：本金已移到右邊 (÷ $P)';
+          document.getElementById('stageStatusBadge').className = 'text-[10px] bg-sky-900 text-sky-200 px-2 py-0.5 rounded font-mono';
+
+          // Unlock Action 365
+          document.getElementById('action365Box').classList.remove('opacity-40', 'pointer-events-none');
+          document.getElementById('action365Badge').innerText = '請點擊運算';
+        } else {
+          badge.innerText = '方向反了喔';
+          badge.className = 'text-[10px] bg-rose-200 text-rose-800 px-2 py-0.5 rounded font-bold';
+          msg.className = 'text-xs font-bold text-rose-600';
+          msg.innerText = '注意：左邊是「乘以本金」，等號移項必須反轉為「除以本金」喔！';
+        }
+      } else if (target === '365') {
+        const msg = document.getElementById('action365Msg');
+        const badge = document.getElementById('action365Badge');
+        msg.classList.remove('hidden');
+
+        if (op === 'mul') {
+          badge.innerText = '✓ 移項成功！';
+          badge.className = 'text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded font-bold';
+          msg.className = 'text-xs font-bold text-emerald-700';
+          msg.innerText = '🎉 正確！左邊分母是「除以 365」，移到右邊就變成「乘以 365」（進行年化換算）！';
+
+          shiftStage = 2;
+          renderDynamicEquation();
+
+          document.getElementById('stageStatusBadge').innerText = '第 2 步：365 成功移至右邊 (× 365)';
+          document.getElementById('stageStatusBadge').className = 'text-[10px] bg-purple-900 text-purple-200 px-2 py-0.5 rounded font-mono';
+
+          // Unlock Action T
+          document.getElementById('actionTBox').classList.remove('opacity-40', 'pointer-events-none');
+          document.getElementById('actionTBadge').innerText = '請點擊運算';
+        } else {
+          badge.innerText = '思考一下倒數';
+          badge.className = 'text-[10px] bg-rose-200 text-rose-800 px-2 py-0.5 rounded font-bold';
+          msg.className = 'text-xs font-bold text-rose-600';
+          msg.innerText = '365 原本在分母（代表除以 365），移到等號對面要變成「乘以 365」喔！';
+        }
+      } else if (target === 'T') {
+        const msg = document.getElementById('actionTMsg');
+        const badge = document.getElementById('actionTBadge');
+        msg.classList.remove('hidden');
+
+        if (op === 'div') {
+          badge.innerText = '✓ 移項成功！';
+          badge.className = 'text-[10px] bg-emerald-500 text-white px-2 py-0.5 rounded font-bold';
+          msg.className = 'text-xs font-bold text-emerald-700';
+          msg.innerText = '🌟 太厲害了！天數在分子（乘以天數），移到右邊變成「除以天數」！左邊只留下了 r，準備動手按計算機！';
+
+          shiftStage = 3;
+          renderDynamicEquation();
+
+          document.getElementById('stageStatusBadge').innerText = '第 3 步：r 已單獨留出！完全解鎖 🎉';
+          document.getElementById('stageStatusBadge').className = 'text-[10px] bg-emerald-900 text-emerald-200 px-2 py-0.5 rounded font-mono';
+
+          // Unlock Calculator
+          document.getElementById('calcInputBox').classList.remove('opacity-40', 'pointer-events-none');
+        } else {
+          badge.innerText = '再檢查一下';
+          badge.className = 'text-[10px] bg-rose-200 text-rose-800 px-2 py-0.5 rounded font-bold';
+          msg.className = 'text-xs font-bold text-rose-600';
+          msg.innerText = '天數原本在分子（乘以天數），移到等號對面要變成「除以天數（放到分母）」喔！';
+        }
+      }
+    }
+
+    function verifyStudentRate() {
+      const sc = currentScenario;
+      const P = sc.origPrice;
+      const I = sc.actualPrice - sc.origPrice;
+      const t = sc.actualPayDays - sc.origDays;
+      const standardRate = (I / P) * (YEAR_DAYS / t) * 100;
+
+      const userVal = parseFloat(document.getElementById('studentRateInput').value);
+      const fb = document.getElementById('rateFeedbackBox');
+      fb.classList.remove('hidden');
+
+      if (isNaN(userVal)) {
+        fb.className = 'p-3 rounded-xl text-xs font-bold bg-rose-100 text-rose-800';
+        fb.innerText = '請先在輸入框鍵入你用計算機按出來的數值（%）！';
+        return;
+      }
+
+      if (Math.abs(userVal - standardRate) < 0.25) {
+        fb.className = 'p-3.5 sm:p-4 rounded-xl text-xs sm:text-sm font-medium bg-emerald-100 text-emerald-950 border border-emerald-300';
+        fb.innerHTML = `
+          <div class="text-sm sm:text-base font-black text-emerald-800 flex items-center gap-1 mb-1">
+            <span>🎉</span> 太神了！計算完全正確！
+          </div>
+          你計算出的隱含年利率是 <strong>${userVal.toFixed(2)}%</strong>（精確標準值約為 ${standardRate.toFixed(2)}%）。<br>
+          <div class="mt-2 text-slate-700 bg-white/70 p-2.5 rounded-lg leading-relaxed">
+            💡 <strong>商業精髓解析：</strong><br>
+            借款本金 <strong>$${P}</strong>，僅多拖了 <strong>${t} 天</strong>，代價看似只有 <strong>$${I}</strong> 元；<br>
+            但年化後利率竟高達 <strong>${standardRate.toFixed(2)}%</strong>！比一般商業貸款高出數倍，證明放棄現金折扣的代價極其驚人！
+          </div>
+        `;
+        confetti({
+          particleCount: 60,
+          spread: 60,
+          origin: { y: 0.85 }
+        });
+      } else {
+        fb.className = 'p-3.5 sm:p-4 rounded-xl text-xs sm:text-sm font-medium bg-rose-100 text-rose-950 border border-rose-300';
+        fb.innerHTML = `
+          <div class="text-xs sm:text-sm font-bold text-rose-800 mb-1">答案差了一點點！請依序按計算機試試：</div>
+          你的輸入：<code class="font-mono bg-white px-1.5 py-0.5 rounded font-bold">${userVal}%</code><br>
+          按鍵步驟指引（按照上方看板的順序）：<br>
+          1. 按 <code>${I} ÷ ${P}</code> (單期利率)<br>
+          2. 接著按 <code>× 365</code><br>
+          3. 再按 <code>÷ ${t}</code><br>
+          4. 最後按 <code>× 100</code> 換算成百分比，結果約為 <strong>${standardRate.toFixed(2)}%</strong>。
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
