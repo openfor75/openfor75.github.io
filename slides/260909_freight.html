@@ -1,0 +1,1767 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>柴犬與小熊的運費會計冒險 • SOP 互動教室</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+TC:wght@400;600;700;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      touch-action: manipulation;
+    }
+    .font-cute {
+      font-family: 'Fredoka', 'Noto Sans TC', sans-serif;
+    }
+    .font-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    .animate-bob {
+      animation: bob 2.6s ease-in-out infinite;
+    }
+    @keyframes truckMove {
+      0%, 100% { transform: translateX(0); }
+      50% { transform: translateX(8px); }
+    }
+    .animate-truck {
+      animation: truckMove 2s ease-in-out infinite;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background-color: #cbd5e1;
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="bg-amber-50/40 text-slate-800 min-h-screen flex flex-col selection:bg-amber-200">
+
+  <header class="bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white shadow-md sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-3 py-2.5 flex flex-col sm:flex-row items-center justify-between gap-2.5">
+      <div class="flex items-center space-x-2.5 cursor-pointer w-full sm:w-auto justify-center sm:justify-start" onclick="switchTab('sop')">
+        <div class="w-10 h-10 bg-white text-2xl rounded-2xl flex items-center justify-center shadow-md animate-bob shrink-0">
+          🚚
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="text-lg sm:text-xl font-black tracking-wide font-cute">運費分錄大冒險</h1>
+            <span class="bg-amber-200 text-amber-900 text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">4 步 SOP</span>
+          </div>
+          <p class="text-[11px] text-amber-100 font-medium">【左】小熊老闆 🐻 (賣方) × 【右】柴犬店長 🐶 (買方)</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex bg-black/20 p-1 rounded-2xl text-xs font-bold backdrop-blur-sm w-full sm:w-auto justify-around">
+        <button onclick="switchTab('sop')" id="tab-btn-sop" class="px-3 py-1.5 rounded-xl transition-all bg-white text-orange-600 shadow-sm">
+          📖 圖像 SOP
+        </button>
+        <button onclick="switchTab('simulator')" id="tab-btn-simulator" class="px-3 py-1.5 rounded-xl transition-all text-amber-100 hover:text-white">
+          🧩 分錄積木台
+        </button>
+        <button onclick="switchTab('matrix')" id="tab-btn-matrix" class="px-3 py-1.5 rounded-xl transition-all text-amber-100 hover:text-white">
+          🗺️ 四大情境速查
+        </button>
+        <button onclick="switchTab('quiz')" id="tab-btn-quiz" class="px-3 py-1.5 rounded-xl transition-all text-amber-100 hover:text-white">
+          🎯 實戰擂台
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-5 space-y-4">
+
+    <section class="bg-white border-2 border-amber-300/80 rounded-2xl sm:rounded-3xl p-3 sm:p-4 shadow-sm transition-all duration-300 overflow-hidden">
+      <div class="flex items-center justify-between cursor-pointer select-none" onclick="toggleSopAccordion()">
+        <div class="flex items-center gap-2.5">
+          <span class="text-2xl p-1.5 bg-amber-100 rounded-xl">📜</span>
+          <div>
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <h2 class="text-base sm:text-lg font-black text-slate-800 font-cute">會計運費 4 大黃金 SOP</h2>
+              <span class="bg-emerald-100 text-emerald-800 text-[11px] px-2 py-0.5 rounded-md font-bold">口訣在手，借貸不愁</span>
+            </div>
+            <p class="text-[11px] text-slate-500">點擊隨時收合或展開 SOP 口訣卡片</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <span id="sop-toggle-text" class="text-xs text-amber-700 font-bold hidden sm:inline">點擊收合</span>
+          <div id="sop-toggle-icon" class="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center text-amber-800 font-bold transition-transform duration-300 text-xs">
+            ▼
+          </div>
+        </div>
+      </div>
+
+      <div id="sop-accordion-content" class="mt-3 pt-3 border-t border-amber-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 transition-all duration-300">
+        <div class="bg-gradient-to-br from-amber-50 to-orange-50/60 p-2.5 rounded-xl border border-amber-200">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="w-5 h-5 rounded-full bg-orange-500 text-white font-black text-[11px] flex items-center justify-center">1</span>
+            <span class="font-bold text-xs text-orange-950">權責基礎下，權利和責任是唯一標準</span>
+          </div>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            先不管運費！賣方給貨認列「<span class="text-blue-700 font-bold">銷貨收入</span>」；買方拿到貨認列「<span class="text-emerald-700 font-bold">進貨</span>」。
+          </p>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50/60 p-2.5 rounded-xl border border-blue-200">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="w-5 h-5 rounded-full bg-blue-500 text-white font-black text-[11px] flex items-center justify-center">2</span>
+            <span class="font-bold text-xs text-blue-950">判斷運費歸屬</span>
+          </div>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            誰的責任誰列費用！<br>
+            • 目的地：賣方借「<span class="text-blue-700 font-bold">運費</span>」<br>
+            • 起運點：買方借「<span class="text-emerald-700 font-bold">進貨費用</span>」
+          </p>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-50 to-teal-50/60 p-2.5 rounded-xl border border-emerald-200">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="w-5 h-5 rounded-full bg-emerald-500 text-white font-black text-[11px] flex items-center justify-center">3</span>
+            <span class="font-bold text-xs text-emerald-950">補上現金流出</span>
+          </div>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            誰掏錢包付運費，誰貸記「<span class="text-slate-800 font-bold">現金</span>」！沒掏錢的人這步不動。
+          </p>
+        </div>
+
+        <div class="bg-gradient-to-br from-purple-50 to-pink-50/60 p-2.5 rounded-xl border border-purple-200">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="w-5 h-5 rounded-full bg-purple-500 text-white font-black text-[11px] flex items-center justify-center">4</span>
+            <span class="font-bold text-xs text-purple-950">最後補上應收帳款、應付帳款</span>
+          </div>
+          <p class="text-[11px] text-slate-600 leading-relaxed">
+            借貸必平衡！買方貸「<span class="text-emerald-700 font-bold">應付帳款</span>」，賣方借「<span class="text-blue-700 font-bold">應收帳款</span>」。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div id="view-sop" class="space-y-3">
+
+      <!-- Scenario Selection: Big Buttons instead of Select -->
+      <div class="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex flex-col gap-2">
+          <span class="text-xs sm:text-sm font-black text-slate-700 flex items-center gap-1">
+            <span>🧭</span> 請點擊切換情境：
+          </span>
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-2">
+            <button onclick="loadSopScenario('fob-dest-seller')" id="btn-sc-fob-dest-seller" class="scenario-pill-btn p-2.5 rounded-xl border-2 text-xs font-bold text-left transition-all bg-amber-500 border-amber-600 text-white shadow-sm">
+              <div class="text-[10px] opacity-80">情境 1</div>
+              <div class="font-black">目的地 ＋ 賣方付款</div>
+              <div class="text-[10px] mt-0.5 opacity-90">標準宅配（賣方全理）</div>
+            </button>
+            <button onclick="loadSopScenario('fob-ship-buyer')" id="btn-sc-fob-ship-buyer" class="scenario-pill-btn p-2.5 rounded-xl border-2 text-xs font-bold text-left transition-all bg-white border-slate-200 text-slate-700 hover:border-amber-300">
+              <div class="text-[10px] text-slate-400">情境 2</div>
+              <div class="font-black">起運點 ＋ 買方付款</div>
+              <div class="text-[10px] mt-0.5 text-slate-500">工廠自取（買方全理）</div>
+            </button>
+            <button onclick="loadSopScenario('fob-ship-seller')" id="btn-sc-fob-ship-seller" class="scenario-pill-btn p-2.5 rounded-xl border-2 text-xs font-bold text-left transition-all bg-white border-slate-200 text-slate-700 hover:border-amber-300">
+              <div class="text-[10px] text-orange-500 font-bold">情境 3 ★考點</div>
+              <div class="font-black">起運點 ＋ 賣方代墊</div>
+              <div class="text-[10px] mt-0.5 text-slate-500">小熊先幫柴犬墊運費</div>
+            </button>
+            <button onclick="loadSopScenario('fob-dest-buyer')" id="btn-sc-fob-dest-buyer" class="scenario-pill-btn p-2.5 rounded-xl border-2 text-xs font-bold text-left transition-all bg-white border-slate-200 text-slate-700 hover:border-amber-300">
+              <div class="text-[10px] text-purple-600 font-bold">情境 4 ★考點</div>
+              <div class="font-black">目的地 ＋ 買方代墊</div>
+              <div class="text-[10px] mt-0.5 text-slate-500">柴犬收貨時幫小熊墊運費</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stepper Controls -->
+        <div class="flex items-center justify-between pt-1 border-t border-slate-100 flex-wrap gap-2">
+          <div class="flex items-center gap-1.5">
+            <button onclick="prevSopStep()" id="sop-btn-prev" class="px-3 py-1.5 rounded-xl text-xs font-bold border border-slate-300 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all">
+              ⬅️ 上一步
+            </button>
+            <div class="px-3 py-1.5 bg-amber-100 text-amber-900 rounded-xl text-xs font-black font-cute">
+              步驟 <span id="sop-step-indicator" class="text-sm text-orange-600 font-black">1</span> / 4
+            </div>
+            <button onclick="nextSopStep()" id="sop-btn-next" class="px-3 py-1.5 rounded-xl text-xs font-black bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white shadow-sm transition-all flex items-center gap-1">
+              下一步 ➡️
+            </button>
+          </div>
+          <button onclick="resetSopStep()" class="text-xs px-2.5 py-1.5 text-slate-500 hover:text-slate-800 rounded-xl border border-slate-200" title="重頭看起">
+            🔄 重頭觀看
+          </button>
+        </div>
+
+        <!-- Logistics Route Path -->
+        <div class="bg-gradient-to-r from-blue-50 via-amber-50/40 to-emerald-50 rounded-2xl p-3 border border-slate-200/80">
+          <div class="grid grid-cols-3 items-center text-center">
+            <!-- Left: Seller (Factory/Warehouse) -->
+            <div class="flex flex-col items-center">
+              <div class="w-11 h-11 sm:w-13 sm:h-13 bg-blue-100 border-2 border-blue-400 rounded-2xl flex items-center justify-center text-2xl shadow-xs animate-bob">
+                🐻
+              </div>
+              <span class="text-[11px] sm:text-xs font-black text-blue-950 mt-1">小熊老闆 (賣方)</span>
+              <span class="text-[10px] text-blue-700 bg-blue-100 px-1.5 py-0.2 rounded-full font-bold mt-0.5" id="vis-seller-status">商品出庫 $10,000</span>
+            </div>
+
+            <!-- Middle: Freight Truck -->
+            <div class="flex flex-col items-center px-1">
+              <div class="text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full shadow-xs mb-0.5" id="vis-term-badge">
+                📍 目的地交貨
+              </div>
+              <div class="relative w-full flex items-center justify-center my-0.5">
+                <div class="w-full border-b border-dashed border-amber-300 absolute"></div>
+                <div class="relative z-10 text-2xl animate-truck">
+                  🚚
+                </div>
+              </div>
+              <div class="text-[10px] font-bold text-slate-600 bg-white/90 px-1.5 py-0.5 rounded-md shadow-2xs" id="vis-freight-desc">
+                運費 $1,000 (賣方負擔)
+              </div>
+            </div>
+
+            <!-- Right: Buyer (Store) -->
+            <div class="flex flex-col items-center">
+              <div class="w-11 h-11 sm:w-13 sm:h-13 bg-emerald-100 border-2 border-emerald-400 rounded-2xl flex items-center justify-center text-2xl shadow-xs animate-bob">
+                🐶
+              </div>
+              <span class="text-[11px] sm:text-xs font-black text-emerald-950 mt-1">柴犬店長 (買方)</span>
+              <span class="text-[10px] text-emerald-700 bg-emerald-100 px-1.5 py-0.2 rounded-full font-bold mt-0.5" id="vis-buyer-status">等候收貨</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step Banner Note -->
+        <div id="sop-step-banner" class="bg-amber-500/10 border-l-4 border-amber-500 p-2.5 sm:p-3 rounded-xl flex items-start gap-2.5">
+          <div id="sop-banner-num" class="w-6 h-6 bg-amber-500 text-white rounded-lg flex items-center justify-center font-black text-xs shrink-0 mt-0.5">1</div>
+          <div>
+            <h3 id="sop-banner-title" class="font-black text-slate-800 text-xs sm:text-sm">步驟 1：給貨/收貨認本業</h3>
+            <p id="sop-banner-desc" class="text-[11px] sm:text-xs text-slate-600 mt-0.5">賣方出貨成立「銷貨收入 $10,000」；買方取得商品認列「進貨 $10,000」。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 sm:gap-4 items-start">
+
+        <!-- LEFT: Seller Ledger (小熊老闆) -->
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 shadow-sm border-2 border-blue-300 flex flex-col justify-between min-h-[300px]">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-blue-100">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xl sm:text-2xl">🐻</span>
+                <div>
+                  <h4 class="font-black text-slate-800 text-xs sm:text-base">【左】賣方帳簿</h4>
+                  <p class="text-[10px] text-blue-700 font-bold hidden sm:block">小熊老闆的銷貨日記簿</p>
+                </div>
+              </div>
+              <span class="bg-blue-100 text-blue-800 text-[10px] font-black px-1.5 py-0.5 rounded-md">賣方</span>
+            </div>
+
+            <!-- Ledger Table -->
+            <div class="mt-2 overflow-x-auto custom-scrollbar">
+              <table class="w-full text-[10px] sm:text-xs">
+                <thead>
+                  <tr class="bg-blue-50 text-blue-900 border-b border-blue-100 text-left font-bold">
+                    <th class="py-1.5 px-1.5 w-8 sm:w-12">借貸</th>
+                    <th class="py-1.5 px-1.5">會計會計項目</th>
+                    <th class="py-1.5 px-1.5 text-right w-14 sm:w-20">金額</th>
+                    <th class="py-1.5 px-1 text-center w-8 sm:w-14 hidden sm:table-cell">步驟</th>
+                  </tr>
+                </thead>
+                <tbody id="sop-seller-tbody" class="divide-y divide-slate-100 font-code font-bold">
+                  <!-- Dynamic JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Note Box -->
+          <div class="mt-2.5 p-2 bg-blue-50/80 border border-blue-200 rounded-xl">
+            <span class="text-[10px] font-black text-blue-900 block">💡 小熊老闆心得：</span>
+            <p id="sop-seller-step-note" class="text-[10px] sm:text-xs text-slate-600 leading-relaxed mt-0.5"></p>
+          </div>
+        </div>
+
+        <!-- RIGHT: Buyer Ledger (柴犬店長) -->
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 shadow-sm border-2 border-emerald-300 flex flex-col justify-between min-h-[300px]">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-emerald-100">
+              <div class="flex items-center gap-1.5">
+                <span class="text-xl sm:text-2xl">🐶</span>
+                <div>
+                  <h4 class="font-black text-slate-800 text-xs sm:text-base">【右】買方帳簿</h4>
+                  <p class="text-[10px] text-emerald-700 font-bold hidden sm:block">柴犬店長的進貨日記簿</p>
+                </div>
+              </div>
+              <span class="bg-emerald-100 text-emerald-800 text-[10px] font-black px-1.5 py-0.5 rounded-md">買方</span>
+            </div>
+
+            <!-- Ledger Table -->
+            <div class="mt-2 overflow-x-auto custom-scrollbar">
+              <table class="w-full text-[10px] sm:text-xs">
+                <thead>
+                  <tr class="bg-emerald-50 text-emerald-900 border-b border-emerald-100 text-left font-bold">
+                    <th class="py-1.5 px-1.5 w-8 sm:w-12">借貸</th>
+                    <th class="py-1.5 px-1.5">會計會計項目</th>
+                    <th class="py-1.5 px-1.5 text-right w-14 sm:w-20">金額</th>
+                    <th class="py-1.5 px-1 text-center w-8 sm:w-14 hidden sm:table-cell">步驟</th>
+                  </tr>
+                </thead>
+                <tbody id="sop-buyer-tbody" class="divide-y divide-slate-100 font-code font-bold">
+                  <!-- Dynamic JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Note Box -->
+          <div class="mt-2.5 p-2 bg-emerald-50/80 border border-emerald-200 rounded-xl">
+            <span class="text-[10px] font-black text-emerald-900 block">💡 柴犬店長心得：</span>
+            <p id="sop-buyer-step-note" class="text-[10px] sm:text-xs text-slate-600 leading-relaxed mt-0.5"></p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="view-simulator" class="hidden space-y-3">
+
+      <div class="bg-white p-3 sm:p-4 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm space-y-3">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-2.5">
+          <div>
+            <h3 class="font-black text-slate-800 text-sm sm:text-base flex items-center gap-1.5">
+              <span>🧩</span> 分錄積木挑戰台
+            </h3>
+            <p class="text-[11px] text-slate-500">所有會計項目都在下方共用積木池中！請點擊積木放入左右兩側借貸槽，用過即扣除！</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="randomizeSimTask()" class="px-2.5 py-1.5 bg-amber-100 text-amber-900 rounded-xl text-xs font-bold hover:bg-amber-200 transition-all">
+              🎲 隨機情境
+            </button>
+            <button onclick="resetSimSlots()" class="px-2.5 py-1.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-200 transition-all">
+              🔄 清空重做
+            </button>
+          </div>
+        </div>
+
+        <!-- Parameters Switchers -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">📦 貨款 ($)</label>
+            <input type="number" id="sim-input-goods" value="20000" step="1000" min="1000" onchange="resetSimSlots()"
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl p-1.5 font-bold text-slate-800 focus:border-amber-400 outline-none text-xs sm:text-sm">
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">🚚 運費 ($)</label>
+            <input type="number" id="sim-input-freight" value="2000" step="100" min="100" onchange="resetSimSlots()"
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl p-1.5 font-bold text-slate-800 focus:border-amber-400 outline-none text-xs sm:text-sm">
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">🚩 交貨條件</label>
+            <select id="sim-input-term" onchange="resetSimSlots()"
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl p-1.5 font-bold text-slate-800 focus:border-amber-400 outline-none text-xs sm:text-sm">
+              <option value="dest">目的地交貨 (賣方責任)</option>
+              <option value="ship">起運點交貨 (買方責任)</option>
+            </select>
+          </div>
+          <div>
+            <label class="font-bold text-slate-600 block mb-1">💵 誰付現給司機？</label>
+            <select id="sim-input-payer" onchange="resetSimSlots()"
+              class="w-full bg-slate-50 border border-slate-300 rounded-xl p-1.5 font-bold text-slate-800 focus:border-amber-400 outline-none text-xs sm:text-sm">
+              <option value="seller">賣方 (小熊老闆) 付現</option>
+              <option value="buyer">買方 (柴犬店長) 付現</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Task Banner -->
+        <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-xs flex items-center justify-between">
+          <span class="font-bold text-amber-950" id="sim-task-summary">
+            任務：請依 SOP 替【左賣方 🐻】與【右買方 🐶】各別放置正確會計項目與金額！（可點擊金額格叫出小計算機 🧮）
+          </span>
+          <span class="text-[10px] bg-amber-200 text-amber-900 font-bold px-2 py-0.5 rounded-md hidden sm:inline">小心別把應收放到買方！</span>
+        </div>
+      </div>
+
+      <div class="bg-white p-3 rounded-2xl sm:rounded-3xl border-2 border-dashed border-amber-300 shadow-sm space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1.5">
+            <span class="text-base">🗃️</span>
+            <span class="text-xs font-black text-slate-800">全域共用會計項目積木池（點選會計項目再放入槽位）</span>
+          </div>
+          <span class="text-[10px] font-bold text-slate-500">用完數量即為 0</span>
+        </div>
+
+        <div id="sim-blocks-pool" class="flex flex-wrap gap-2 pt-1">
+          <!-- Dynamically populated chips -->
+        </div>
+
+        <div id="active-chip-hint" class="text-[11px] text-orange-700 font-bold bg-orange-50 p-1.5 rounded-lg border border-orange-200 hidden">
+          👉 目前選中了積木：<span id="active-chip-name" class="underline"></span>，請點擊下方左邊或右邊的「＋ 點此放入」槽位！
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 sm:gap-4 items-start">
+
+        <!-- LEFT: Seller Slots (小熊賣方) -->
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 shadow-sm border-2 border-blue-300 space-y-2.5">
+          <div class="flex items-center justify-between pb-1.5 border-b border-blue-100">
+            <div class="flex items-center gap-1">
+              <span class="text-lg">🐻</span>
+              <h4 class="font-black text-slate-800 text-xs sm:text-sm">【左】小熊賣方分錄槽</h4>
+            </div>
+            <button onclick="clearSideSlots('seller')" class="text-[10px] text-rose-600 hover:underline">清空左側</button>
+          </div>
+
+          <!-- Debit Slots (Seller) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-bold text-blue-800">
+              <span>借方會計項目 (Debit)</span>
+              <button onclick="addCustomSlot('seller', '借')" class="text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded hover:bg-blue-100">＋槽位</button>
+            </div>
+            <div id="seller-debit-slots" class="space-y-1.5 min-h-[44px]">
+              <!-- Filled or empty slots -->
+            </div>
+          </div>
+
+          <!-- Credit Slots (Seller) -->
+          <div class="space-y-1.5 pt-1 border-t border-slate-100">
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
+              <span>貸方會計項目 (Credit)</span>
+              <button onclick="addCustomSlot('seller', '貸')" class="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded hover:bg-slate-200">＋槽位</button>
+            </div>
+            <div id="seller-credit-slots" class="space-y-1.5 min-h-[44px]">
+              <!-- Filled or empty slots -->
+            </div>
+          </div>
+
+          <!-- Balance Badge -->
+          <div class="pt-2 border-t border-blue-100 text-[11px] font-bold flex items-center justify-between font-mono">
+            <span>借: $<span id="seller-sum-debit">0</span></span>
+            <span>貸: $<span id="seller-sum-credit">0</span></span>
+            <span id="seller-sum-diff" class="text-slate-400">差額 $0</span>
+          </div>
+          <div id="seller-eval-feedback" class="text-[11px] font-bold text-slate-500">等待驗證...</div>
+        </div>
+
+        <!-- RIGHT: Buyer Slots (柴犬買方) -->
+        <div class="bg-white rounded-2xl sm:rounded-3xl p-2.5 sm:p-4 shadow-sm border-2 border-emerald-300 space-y-2.5">
+          <div class="flex items-center justify-between pb-1.5 border-b border-emerald-100">
+            <div class="flex items-center gap-1">
+              <span class="text-lg">🐶</span>
+              <h4 class="font-black text-slate-800 text-xs sm:text-sm">【右】柴犬買方分錄槽</h4>
+            </div>
+            <button onclick="clearSideSlots('buyer')" class="text-[10px] text-rose-600 hover:underline">清空右側</button>
+          </div>
+
+          <!-- Debit Slots (Buyer) -->
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-[11px] font-bold text-emerald-800">
+              <span>借方會計項目 (Debit)</span>
+              <button onclick="addCustomSlot('buyer', '借')" class="text-[10px] text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded hover:bg-emerald-100">＋槽位</button>
+            </div>
+            <div id="buyer-debit-slots" class="space-y-1.5 min-h-[44px]">
+              <!-- Filled or empty slots -->
+            </div>
+          </div>
+
+          <!-- Credit Slots (Buyer) -->
+          <div class="space-y-1.5 pt-1 border-t border-slate-100">
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600">
+              <span>貸方會計項目 (Credit)</span>
+              <button onclick="addCustomSlot('buyer', '貸')" class="text-[10px] text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded hover:bg-slate-200">＋槽位</button>
+            </div>
+            <div id="buyer-credit-slots" class="space-y-1.5 min-h-[44px]">
+              <!-- Filled or empty slots -->
+            </div>
+          </div>
+
+          <!-- Balance Badge -->
+          <div class="pt-2 border-t border-emerald-100 text-[11px] font-bold flex items-center justify-between font-mono">
+            <span>借: $<span id="buyer-sum-debit">0</span></span>
+            <span>貸: $<span id="buyer-sum-credit">0</span></span>
+            <span id="buyer-sum-diff" class="text-slate-400">差額 $0</span>
+          </div>
+          <div id="buyer-eval-feedback" class="text-[11px] font-bold text-slate-500">等待驗證...</div>
+        </div>
+
+      </div>
+
+      <!-- Action Verification Buttons -->
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <div class="text-[11px] text-slate-600">
+          💡 <span class="font-bold text-amber-900">檢測重點：</span>【左】小熊賣方絕無「進貨/應付」，【右】柴犬買方絕無「銷貨/應收」！
+        </div>
+        <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+          <button onclick="fillCorrectSimSolution()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs">
+            🪄 查看正解積木
+          </button>
+          <button onclick="validateSimAll()" class="px-5 py-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black rounded-xl text-xs sm:text-sm shadow-md flex items-center gap-1">
+            <span>🔍</span> 驗證借貸分錄
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="view-matrix" class="hidden space-y-3">
+      <div class="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm">
+        <div class="mb-3">
+          <h3 class="font-black text-slate-800 text-base sm:text-lg flex items-center gap-1.5">
+            <span>🗺️</span> 四大運費情境速查大補帖
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            左邊為賣方（小熊）帳簿、右邊為買方（柴犬）帳簿，一眼看穿代墊款的借貸奧秘！（以貨款 $10,000、運費 $1,000 為例）
+          </p>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-xs border-collapse min-w-[620px]">
+            <thead>
+              <tr class="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-left font-bold">
+                <th class="p-2.5 rounded-tl-xl w-36">情境條件</th>
+                <th class="p-2.5 w-36">運費與金流</th>
+                <th class="p-2.5 bg-blue-700/40">🐻 左：賣方分錄</th>
+                <th class="p-2.5 rounded-tr-xl bg-emerald-700/40">🐶 右：買方分錄</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200">
+              <!-- Case 1 -->
+              <tr class="hover:bg-amber-50/40">
+                <td class="p-2.5 font-black text-slate-800">
+                  ① 目的地交貨<br>
+                  <span class="text-[11px] font-medium text-slate-500">賣方包辦運費＋賣方現付</span>
+                </td>
+                <td class="p-2.5 text-[11px] space-y-0.5">
+                  <div>歸屬：<span class="font-bold text-blue-700">賣方 (運費)</span></div>
+                  <div>出錢：<span class="font-bold text-slate-700">賣方現付</span></div>
+                  <span class="text-slate-400">各付各的，無代墊</span>
+                </td>
+                <td class="p-2.5 font-code bg-blue-50/30">
+                  <div class="text-blue-800 font-bold">借：應收帳款 10,000</div>
+                  <div class="text-blue-800 font-bold">借：運費 1,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：銷貨收入 10,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：現金 1,000</div>
+                </td>
+                <td class="p-2.5 font-code bg-emerald-50/30">
+                  <div class="text-emerald-800 font-bold">借：進貨 10,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：應付帳款 10,000</div>
+                </td>
+              </tr>
+
+              <!-- Case 2 -->
+              <tr class="hover:bg-amber-50/40 bg-slate-50/50">
+                <td class="p-2.5 font-black text-slate-800">
+                  ② 起運點交貨<br>
+                  <span class="text-[11px] font-medium text-slate-500">買方自理運費＋買方現付</span>
+                </td>
+                <td class="p-2.5 text-[11px] space-y-0.5">
+                  <div>歸屬：<span class="font-bold text-emerald-700">買方 (進貨費用)</span></div>
+                  <div>出錢：<span class="font-bold text-slate-700">買方現付</span></div>
+                  <span class="text-slate-400">賣方不管運費</span>
+                </td>
+                <td class="p-2.5 font-code bg-blue-50/30">
+                  <div class="text-blue-800 font-bold">借：應收帳款 10,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：銷貨收入 10,000</div>
+                </td>
+                <td class="p-2.5 font-code bg-emerald-50/30">
+                  <div class="text-emerald-800 font-bold">借：進貨 10,000</div>
+                  <div class="text-emerald-800 font-bold">借：進貨費用 1,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：現金 1,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：應付帳款 10,000</div>
+                </td>
+              </tr>
+
+              <!-- Case 3 -->
+              <tr class="hover:bg-amber-50/60 bg-amber-50/20">
+                <td class="p-2.5 font-black text-amber-950">
+                  ③ 起運點交貨<br>
+                  <span class="text-[11px] font-bold text-orange-600">賣方代墊付現 ★重要考點</span>
+                </td>
+                <td class="p-2.5 text-[11px] space-y-0.5">
+                  <div>歸屬：<span class="font-bold text-emerald-700">買方 (進貨費用)</span></div>
+                  <div>出錢：<span class="font-bold text-orange-600">賣方先出 (貸現金)</span></div>
+                  <span class="font-bold text-orange-600">應收應付各自增加</span>
+                </td>
+                <td class="p-2.5 font-code bg-blue-50/30">
+                  <div class="text-orange-700 font-bold">借：應收帳款 11,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：銷貨收入 10,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：現金 1,000</div>
+                </td>
+                <td class="p-2.5 font-code bg-emerald-50/30">
+                  <div class="text-emerald-800 font-bold">借：進貨 10,000</div>
+                  <div class="text-emerald-800 font-bold">借：進貨費用 1,000</div>
+                  <div class="text-orange-700 font-bold pl-3">貸：應付帳款 11,000</div>
+                </td>
+              </tr>
+
+              <!-- Case 4 -->
+              <tr class="hover:bg-amber-50/60 bg-slate-50/50">
+                <td class="p-2.5 font-black text-amber-950">
+                  ④ 目的地交貨<br>
+                  <span class="text-[11px] font-bold text-purple-600">買方代墊付現 ★重要考點</span>
+                </td>
+                <td class="p-2.5 text-[11px] space-y-0.5">
+                  <div>歸屬：<span class="font-bold text-blue-700">賣方 (運費)</span></div>
+                  <div>出錢：<span class="font-bold text-purple-600">買方先出 (貸現金)</span></div>
+                  <span class="font-bold text-purple-600">應收應付各自扣抵減少</span>
+                </td>
+                <td class="p-2.5 font-code bg-blue-50/30">
+                  <div class="text-purple-700 font-bold">借：應收帳款 9,000</div>
+                  <div class="text-blue-800 font-bold">借：運費 1,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：銷貨收入 10,000</div>
+                </td>
+                <td class="p-2.5 font-code bg-emerald-50/30">
+                  <div class="text-emerald-800 font-bold">借：進貨 10,000</div>
+                  <div class="text-slate-600 font-bold pl-3">貸：現金 1,000</div>
+                  <div class="text-purple-700 font-bold pl-3">貸：應付帳款 9,000</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-quiz" class="hidden space-y-3">
+      <div class="bg-white p-3.5 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-200 shadow-sm">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="font-black text-slate-800 text-base sm:text-lg flex items-center gap-1.5">
+              <span>🎯</span> 運費會計隨堂小考
+            </h3>
+            <p class="text-xs text-slate-500 mt-0.5">運用 4 步驟 SOP 秒殺會計考題！</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-600">戰績：</span>
+            <span id="quiz-score" class="px-2.5 py-1 bg-amber-100 text-amber-900 font-black rounded-xl text-xs font-cute">0 / 0</span>
+            <button onclick="generateNewQuiz()" class="px-3 py-1 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-xs font-bold">
+              換下一題
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-3 p-3.5 bg-amber-50/70 border border-amber-200 rounded-2xl">
+          <span class="text-[10px] font-black uppercase text-amber-800 bg-amber-200 px-2 py-0.5 rounded-md">實戰情境題</span>
+          <p id="quiz-question-text" class="text-slate-800 text-xs sm:text-sm font-bold mt-2 leading-relaxed"></p>
+        </div>
+
+        <div id="quiz-options-container" class="mt-3 space-y-2">
+          <!-- Quiz options via JS -->
+        </div>
+
+        <div id="quiz-feedback" class="mt-3 hidden p-3.5 rounded-2xl text-xs sm:text-sm"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="toast" class="fixed bottom-5 right-5 bg-slate-900/90 text-white px-3.5 py-2.5 rounded-2xl shadow-xl transform translate-y-24 opacity-0 transition-all duration-300 pointer-events-none z-50 text-xs font-bold flex items-center gap-1.5 backdrop-blur-sm">
+    <span id="toast-message">通知訊息</span>
+  </div>
+
+  <!-- Accounting Mini Calculator Modal -->
+  <div id="calc-modal" class="fixed inset-0 bg-black/40 backdrop-blur-xs flex items-end sm:items-center justify-center z-50 hidden">
+    <div class="bg-white w-full sm:w-80 rounded-t-3xl sm:rounded-3xl p-4 shadow-2xl border border-amber-200 animate-in fade-in zoom-in-95 duration-200">
+      <!-- Calc Header -->
+      <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+        <div class="flex items-center gap-1.5 text-xs font-black text-amber-900">
+          <span class="text-base">🧮</span> 會計專用計算機
+        </div>
+        <button onclick="closeCalculator()" class="text-slate-400 hover:text-slate-600 font-bold text-sm px-1.5 py-0.5 rounded-lg">
+          ✕
+        </button>
+      </div>
+
+      <!-- Current Slot Target Display -->
+      <div class="text-[11px] text-slate-500 font-bold mt-2" id="calc-target-label">
+        正在輸入：小熊賣方 - 借方金額
+      </div>
+
+      <!-- Screen -->
+      <div class="bg-slate-900 text-amber-300 font-code font-bold text-right text-2xl p-3 rounded-2xl mt-1 tracking-wider overflow-x-auto select-none shadow-inner" id="calc-screen">
+        0
+      </div>
+
+      <!-- Quick Shortcuts -->
+      <div class="grid grid-cols-3 gap-1.5 mt-2.5">
+        <button onclick="calcAddQuick(1000)" class="py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-black rounded-lg transition-all">+1,000</button>
+        <button onclick="calcAddQuick(5000)" class="py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-black rounded-lg transition-all">+5,000</button>
+        <button onclick="calcAddQuick(10000)" class="py-1 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-[11px] font-black rounded-lg transition-all">+10,000</button>
+      </div>
+
+      <!-- Keypad Grid (with prominent 00 key) -->
+      <div class="grid grid-cols-4 gap-1.5 mt-2 text-sm font-bold font-code">
+        <button onclick="calcClear()" class="py-2.5 bg-rose-100 text-rose-800 hover:bg-rose-200 rounded-xl transition-all">AC</button>
+        <button onclick="calcBackspace()" class="py-2.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-xl transition-all">⌫</button>
+        <button onclick="calcOp('/')" class="py-2.5 bg-amber-100 text-amber-900 hover:bg-amber-200 rounded-xl transition-all">÷</button>
+        <button onclick="calcOp('*')" class="py-2.5 bg-amber-100 text-amber-900 hover:bg-amber-200 rounded-xl transition-all">×</button>
+
+        <button onclick="calcInput('7')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">7</button>
+        <button onclick="calcInput('8')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">8</button>
+        <button onclick="calcInput('9')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">9</button>
+        <button onclick="calcOp('-')" class="py-2.5 bg-amber-100 text-amber-900 hover:bg-amber-200 rounded-xl transition-all">−</button>
+
+        <button onclick="calcInput('4')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">4</button>
+        <button onclick="calcInput('5')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">5</button>
+        <button onclick="calcInput('6')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">6</button>
+        <button onclick="calcOp('+')" class="py-2.5 bg-amber-100 text-amber-900 hover:bg-amber-200 rounded-xl transition-all">＋</button>
+
+        <button onclick="calcInput('1')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">1</button>
+        <button onclick="calcInput('2')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">2</button>
+        <button onclick="calcInput('3')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">3</button>
+        <button onclick="calcEquals()" class="py-2.5 bg-orange-500 text-white hover:bg-orange-600 rounded-xl transition-all font-black">=</button>
+
+        <button onclick="calcInput('0')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">0</button>
+        <!-- Specialized "00" Key for Fast Accounting Input -->
+        <button onclick="calcInput('00')" class="py-2.5 bg-amber-200 text-amber-950 hover:bg-amber-300 font-black border border-amber-300 rounded-xl transition-all">00</button>
+        <button onclick="calcInput('.')" class="py-2.5 bg-slate-50 text-slate-800 hover:bg-slate-100 border border-slate-200 rounded-xl transition-all">.</button>
+        <button onclick="calcConfirm()" class="py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl transition-all font-black flex items-center justify-center text-xs">
+          ✓ 填入
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bg-white border-t border-slate-200 py-2.5 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center text-[11px] text-slate-400 font-medium">
+      會計運費 4 步 SOP 教學 • 【左】小熊賣方 🐻 × 【右】柴犬買方 🐶
+    </div>
+  </footer>
+
+  <script>
+    // Accordion
+    let isSopExpanded = true;
+    function toggleSopAccordion() {
+      const content = document.getElementById('sop-accordion-content');
+      const icon = document.getElementById('sop-toggle-icon');
+      const text = document.getElementById('sop-toggle-text');
+      isSopExpanded = !isSopExpanded;
+
+      if (isSopExpanded) {
+        content.classList.remove('hidden');
+        icon.style.transform = 'rotate(0deg)';
+        text.innerText = '點擊收合';
+      } else {
+        content.classList.add('hidden');
+        icon.style.transform = 'rotate(-90deg)';
+        text.innerText = '點擊展開';
+      }
+    }
+
+    // Tabs
+    function switchTab(tabId) {
+      const tabs = ['sop', 'simulator', 'matrix', 'quiz'];
+      tabs.forEach(t => {
+        const view = document.getElementById(`view-${t}`);
+        const btn = document.getElementById(`tab-btn-${t}`);
+        if (t === tabId) {
+          view.classList.remove('hidden');
+          btn.className = "px-3 py-1.5 rounded-xl transition-all bg-white text-orange-600 shadow-sm font-bold";
+        } else {
+          view.classList.add('hidden');
+          btn.className = "px-3 py-1.5 rounded-xl transition-all text-amber-100 hover:text-white font-bold";
+        }
+      });
+      if (tabId === 'simulator') {
+        renderPoolAndSlots();
+      }
+      if (tabId === 'quiz' && quizList.length === 0) {
+        initQuiz();
+      }
+    }
+
+    // SOP Scenarios Data
+    const SOP_SCENARIOS = {
+      'fob-dest-seller': {
+        title: '情境 1：目的地交貨 ＋ 賣方付款（標準宅配）',
+        termBadge: '📍 目的地交貨 (賣方責任)',
+        freightDesc: '運費 $1,000 (賣方小熊出)',
+        buyerStatus: '商品安全送達',
+        sellerStatus: '貨抵目的地',
+        steps: [
+          {
+            num: 1,
+            title: '步驟 1：給貨/收貨認本業（先不看運費！）',
+            desc: '小熊老闆給貨認列「銷貨收入 $10,000」；柴犬店長拿到商品借記「進貨 $10,000」。',
+            buyer: [{ side: '借', title: '進貨', amount: 10000, step: 1 }],
+            seller: [{ side: '貸', title: '銷貨收入', amount: 10000, step: 1 }],
+            buyerNote: '好物入庫！借記「進貨 $10,000」。',
+            sellerNote: '出庫成功！貸記「銷貨收入 $10,000」。'
+          },
+          {
+            num: 2,
+            title: '步驟 2：判斷運費歸屬（目的地＝賣方責任）',
+            desc: '「目的地交貨」貨要送到柴犬門口才算小熊的責任，因此由【賣方小熊】承擔運費費用！',
+            buyer: [{ side: '借', title: '進貨', amount: 10000, step: 1 }],
+            seller: [
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 },
+              { side: '借', title: '運費', amount: 1000, step: 2 }
+            ],
+            buyerNote: '柴犬不用負擔運費，帳上無運費會計項目。',
+            sellerNote: '身為賣方，借記營業費用「運費 $1,000」。'
+          },
+          {
+            num: 3,
+            title: '步驟 3：補現金（誰付現誰貸記現金）',
+            desc: '貨車出發前，小熊老闆掏現付給司機！小熊貸記「現金 $1,000」；柴犬沒掏錢故不動。',
+            buyer: [{ side: '借', title: '進貨', amount: 10000, step: 1 }],
+            seller: [
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 },
+              { side: '借', title: '運費', amount: 1000, step: 2 },
+              { side: '貸', title: '現金', amount: 1000, step: 3 }
+            ],
+            buyerNote: '柴犬在店裡等收貨，錢包沒動過。',
+            sellerNote: '小熊掏現付給司機，貸記「現金 $1,000」。'
+          },
+          {
+            num: 4,
+            title: '步驟 4：倒擠補平應收應付（借貸自然平衡）',
+            desc: '柴犬借方 10,000，補上「貸: 應付帳款 $10,000」；小熊兩邊各 11,000，補上「借: 應收帳款 $10,000」！',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '貸', title: '應付帳款', amount: 10000, step: 4 }
+            ],
+            seller: [
+              { side: '借', title: '應收帳款', amount: 10000, step: 4 },
+              { side: '借', title: '運費', amount: 1000, step: 2 },
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 },
+              { side: '貸', title: '現金', amount: 1000, step: 3 }
+            ],
+            buyerNote: '柴犬未來只要付小熊貨款 $10,000！借貸平衡。',
+            sellerNote: '小熊兩邊都是 $11,000！向柴犬收貨款 $10,000。'
+          }
+        ]
+      },
+      'fob-ship-buyer': {
+        title: '情境 2：起運點交貨 ＋ 買方付款（工廠自取）',
+        termBadge: '🏭 起運點交貨 (買方責任)',
+        freightDesc: '運費 $1,000 (買方柴犬出)',
+        buyerStatus: '柴犬自理運費',
+        sellerStatus: '小熊出庫完成責任',
+        steps: [
+          {
+            num: 1,
+            title: '步驟 1：給貨/收貨認本業（先不看運費！）',
+            desc: '小熊老闆認列「銷貨收入 $10,000」；柴犬店長借記「進貨 $10,000」。',
+            buyer: [{ side: '借', title: '進貨', amount: 10000, step: 1 }],
+            seller: [{ side: '貸', title: '銷貨收入', amount: 10000, step: 1 }],
+            buyerNote: '認列購貨本體，借記「進貨 $10,000」。',
+            sellerNote: '出貨成立銷售，貸記「銷貨收入 $10,000」。'
+          },
+          {
+            num: 2,
+            title: '步驟 2：判斷運費歸屬（起運點＝買方責任）',
+            desc: '起運點交貨貨物一出小熊工廠就是柴犬的，運費由【買方柴犬】承擔，借記「進貨費用 $1,000」！',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '借', title: '進貨費用', amount: 1000, step: 2 }
+            ],
+            seller: [{ side: '貸', title: '銷貨收入', amount: 10000, step: 1 }],
+            buyerNote: '運費計入存貨成本，借記「進貨費用 $1,000」。',
+            sellerNote: '起運點交貨與小熊無關，小熊不列任何運費！'
+          },
+          {
+            num: 3,
+            title: '步驟 3：補現金（誰付現誰貸記現金）',
+            desc: '柴犬店長自己掏現金付給送貨司機，柴犬貸記「現金 $1,000」！小熊沒掏錢。',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '借', title: '進貨費用', amount: 1000, step: 2 },
+              { side: '貸', title: '現金', amount: 1000, step: 3 }
+            ],
+            seller: [{ side: '貸', title: '銷貨收入', amount: 10000, step: 1 }],
+            buyerNote: '柴犬現場付現金給司機，貸記「現金 $1,000」。',
+            sellerNote: '小熊沒有掏皮夾。'
+          },
+          {
+            num: 4,
+            title: '步驟 4：倒擠補平應收應付（借貸自然平衡）',
+            desc: '柴犬借方 11,000 扣現金 1,000，補上「貸: 應付帳款 $10,000」；小熊補上「借: 應收帳款 $10,000」！',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '借', title: '進貨費用', amount: 1000, step: 2 },
+              { side: '貸', title: '現金', amount: 1000, step: 3 },
+              { side: '貸', title: '應付帳款', amount: 10000, step: 4 }
+            ],
+            seller: [
+              { side: '借', title: '應收帳款', amount: 10000, step: 4 },
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 }
+            ],
+            buyerNote: '柴犬兩邊總額都是 $11,000，應付小熊純貨款 $10,000。',
+            sellerNote: '小熊兩邊總額都是 $10,000，單純應收貨款 $10,000。'
+          }
+        ]
+      },
+      'fob-ship-seller': {
+        title: '情境 3：起運點交貨 ＋ 賣方代墊 ★高頻考點',
+        termBadge: '🏭 起運點 (買方負擔) ＋ 🐻 賣方代墊',
+        freightDesc: '小熊替柴犬代墊 $1,000',
+        buyerStatus: '柴犬享有代墊',
+        sellerStatus: '小熊先掏錢代墊',
+        steps: [
+          {
+            num: 1,
+            title: '步驟 1：給貨/收貨認本業（先不看運費！）',
+            desc: '小熊認列「銷貨收入 $10,000」；柴犬認列「進貨 $10,000」。',
+            buyer: [{ side: '借', title: '進貨', amount: 10000, step: 1 }],
+            seller: [{ side: '貸', title: '銷貨收入', amount: 10000, step: 1 }],
+            buyerNote: '進貨認列 $10,000。',
+            sellerNote: '銷貨收入認列 $10,000。'
+          },
+          {
+            num: 2,
+            title: '步驟 2：判斷運費歸屬（起運點＝買方承擔費用）',
+            desc: '起運點交貨運費由【買方柴犬】承擔！柴犬借記「進貨費用 $1,000」。小熊雖然幫忙付錢，但他不是承擔人，絕不能記運費費用！',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '借', title: '進貨費用', amount: 1000, step: 2 }
+            ],
+            seller: [{ side: '貸', title: '銷貨收入', amount: 10000, step: 1 }],
+            buyerNote: '這是柴犬的責任，借記「進貨費用 $1,000」！',
+            sellerNote: '我只是好心先墊錢，絕不能記「運費」！'
+          },
+          {
+            num: 3,
+            title: '步驟 3：補現金（誰付現誰貸記現金）',
+            desc: '貨車司機向小熊收款，小熊代墊掏現，小熊貸記「現金 $1,000」；柴犬此時沒付現。',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '借', title: '進貨費用', amount: 1000, step: 2 }
+            ],
+            seller: [
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 },
+              { side: '貸', title: '現金', amount: 1000, step: 3 }
+            ],
+            buyerNote: '柴犬還沒給錢，不記現金。',
+            sellerNote: '小熊掏皮夾代墊，貸記「現金 $1,000」。'
+          },
+          {
+            num: 4,
+            title: '步驟 4：倒擠補平應收應付（代墊自然算清！）',
+            desc: '柴犬借方 11,000，補上「貸: 應付帳款 $11,000」；小熊貸方 11,000，補上「借: 應收帳款 $11,000」！代墊款自動討回！',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '借', title: '進貨費用', amount: 1000, step: 2 },
+              { side: '貸', title: '應付帳款', amount: 11000, step: 4 }
+            ],
+            seller: [
+              { side: '借', title: '應收帳款', amount: 11000, step: 4 },
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 },
+              { side: '貸', title: '現金', amount: 1000, step: 3 }
+            ],
+            buyerNote: '柴犬應付帳款變 $11,000（貨款 10,000 + 墊付運費 1,000）！',
+            sellerNote: '小熊應收帳款也變 $11,000（貨款 10,000 + 討回墊付運費 1,000）！'
+          }
+        ]
+      },
+      'fob-dest-buyer': {
+        title: '情境 4：目的地交貨 ＋ 買方代墊 ★高頻考點',
+        termBadge: '📍 目的地 (賣方負擔) ＋ 🐶 買方代墊',
+        freightDesc: '柴犬先替小熊墊 $1,000',
+        buyerStatus: '柴犬現場代墊',
+        sellerStatus: '小熊應收貨款折抵',
+        steps: [
+          {
+            num: 1,
+            title: '步驟 1：給貨/收貨認本業（先不看運費！）',
+            desc: '小熊認列「銷貨收入 $10,000」；柴犬認列「進貨 $10,000」。',
+            buyer: [{ side: '借', title: '進貨', amount: 10000, step: 1 }],
+            seller: [{ side: '貸', title: '銷貨收入', amount: 10000, step: 1 }],
+            buyerNote: '認列進貨 $10,000。',
+            sellerNote: '認列銷貨收入 $10,000。'
+          },
+          {
+            num: 2,
+            title: '步驟 2：判斷運費歸屬（目的地＝賣方承擔費用）',
+            desc: '「目的地交貨」由【賣方小熊】負擔！小熊借記「運費 $1,000」。柴犬不承擔運費費用！',
+            buyer: [{ side: '借', title: '進貨', amount: 10000, step: 1 }],
+            seller: [
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 },
+              { side: '借', title: '運費', amount: 1000, step: 2 }
+            ],
+            buyerNote: '目的地是賣方的責任，柴犬絕不記「進貨費用」！',
+            sellerNote: '小熊承擔運費，借記「運費 $1,000」。'
+          },
+          {
+            num: 3,
+            title: '步驟 3：補現金（誰付現誰貸記現金）',
+            desc: '貨車送抵時柴犬店長幫忙掏現，柴犬貸記「現金 $1,000」；小熊沒掏現。',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '貸', title: '現金', amount: 1000, step: 3 }
+            ],
+            seller: [
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 },
+              { side: '借', title: '運費', amount: 1000, step: 2 }
+            ],
+            buyerNote: '柴犬好心幫忙掏現墊付，貸記「現金 $1,000」。',
+            sellerNote: '小熊不在場沒掏現，不記現金。'
+          },
+          {
+            num: 4,
+            title: '步驟 4：倒擠補平應收應付（代墊自動扣抵！）',
+            desc: '柴犬借 10,000 扣現金 1,000，補上「貸: 應付帳款 $9,000」；小熊貸 10,000 扣運費 1,000，補上「借: 應收帳款 $9,000」！少付少收！',
+            buyer: [
+              { side: '借', title: '進貨', amount: 10000, step: 1 },
+              { side: '貸', title: '現金', amount: 1000, step: 3 },
+              { side: '貸', title: '應付帳款', amount: 9000, step: 4 }
+            ],
+            seller: [
+              { side: '借', title: '應收帳款', amount: 9000, step: 4 },
+              { side: '借', title: '運費', amount: 1000, step: 2 },
+              { side: '貸', title: '銷貨收入', amount: 10000, step: 1 }
+            ],
+            buyerNote: '柴犬幫小熊墊了一千，未來只要再給小熊 $9,000 即可！（應付減少）',
+            sellerNote: '柴犬先出了一千運費，小熊未來只收 $9,000！（應收減少）'
+          }
+        ]
+      }
+    };
+
+    let currentSopKey = 'fob-dest-seller';
+    let currentSopStep = 1;
+
+    function loadSopScenario(key) {
+      currentSopKey = key;
+      currentSopStep = 1;
+
+      // Update active button state
+      document.querySelectorAll('.scenario-pill-btn').forEach(b => {
+        b.className = "scenario-pill-btn p-2.5 rounded-xl border-2 text-xs font-bold text-left transition-all bg-white border-slate-200 text-slate-700 hover:border-amber-300";
+      });
+      const activeBtn = document.getElementById(`btn-sc-${key}`);
+      if (activeBtn) {
+        activeBtn.className = "scenario-pill-btn p-2.5 rounded-xl border-2 text-xs font-bold text-left transition-all bg-amber-500 border-amber-600 text-white shadow-sm";
+      }
+
+      renderSopStepView();
+      showToast(`已切換：${SOP_SCENARIOS[key].title.split('：')[1]}`);
+    }
+
+    function nextSopStep() {
+      if (currentSopStep < 4) {
+        currentSopStep++;
+        renderSopStepView();
+      }
+    }
+
+    function prevSopStep() {
+      if (currentSopStep > 1) {
+        currentSopStep--;
+        renderSopStepView();
+      }
+    }
+
+    function resetSopStep() {
+      currentSopStep = 1;
+      renderSopStepView();
+      showToast("已重設至第 1 步驟！");
+    }
+
+    function renderSopStepView() {
+      const scenario = SOP_SCENARIOS[currentSopKey];
+      const stepData = scenario.steps[currentSopStep - 1];
+
+      document.getElementById('sop-step-indicator').innerText = currentSopStep;
+      document.getElementById('sop-btn-prev').disabled = (currentSopStep === 1);
+      document.getElementById('sop-btn-next').disabled = (currentSopStep === 4);
+
+      document.getElementById('vis-term-badge').innerText = scenario.termBadge;
+      document.getElementById('vis-term-badge').className = currentSopKey.includes('dest')
+        ? 'text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full shadow-xs mb-0.5 bg-amber-200 text-amber-900'
+        : 'text-[10px] sm:text-xs font-black px-2 py-0.5 rounded-full shadow-xs mb-0.5 bg-indigo-200 text-indigo-900';
+      document.getElementById('vis-freight-desc').innerText = scenario.freightDesc;
+      document.getElementById('vis-buyer-status').innerText = scenario.buyerStatus;
+      document.getElementById('vis-seller-status').innerText = scenario.sellerStatus;
+
+      document.getElementById('sop-banner-num').innerText = stepData.num;
+      document.getElementById('sop-banner-title').innerText = stepData.title;
+      document.getElementById('sop-banner-desc').innerText = stepData.desc;
+
+      // Buyer Table
+      const buyerTbody = document.getElementById('sop-buyer-tbody');
+      buyerTbody.innerHTML = '';
+      stepData.buyer.forEach(item => {
+        const isCurrent = (item.step === currentSopStep);
+        const row = document.createElement('tr');
+        if (isCurrent) row.className = 'bg-amber-100/80 text-slate-900';
+        const sideColor = item.side === '借' ? 'text-emerald-700' : 'text-slate-600';
+        const indent = item.side === '貸' ? 'pl-3 sm:pl-5' : 'pl-1';
+        row.innerHTML = `
+          <td class="py-1.5 px-1.5 ${sideColor}">${item.side}</td>
+          <td class="py-1.5 px-1.5 ${indent} text-slate-800">${item.title}</td>
+          <td class="py-1.5 px-1.5 text-right text-slate-800">$${item.amount.toLocaleString()}</td>
+          <td class="py-1.5 px-1 text-center hidden sm:table-cell">
+            <span class="text-[9px] font-bold px-1 py-0.2 rounded ${isCurrent ? 'bg-amber-300 text-amber-950 font-black' : 'bg-slate-100 text-slate-500'}">
+              SOP ${item.step}
+            </span>
+          </td>
+        `;
+        buyerTbody.appendChild(row);
+      });
+      document.getElementById('sop-buyer-step-note').innerText = stepData.buyerNote;
+
+      // Seller Table
+      const sellerTbody = document.getElementById('sop-seller-tbody');
+      sellerTbody.innerHTML = '';
+      stepData.seller.forEach(item => {
+        const isCurrent = (item.step === currentSopStep);
+        const row = document.createElement('tr');
+        if (isCurrent) row.className = 'bg-amber-100/80 text-slate-900';
+        const sideColor = item.side === '借' ? 'text-blue-700' : 'text-slate-600';
+        const indent = item.side === '貸' ? 'pl-3 sm:pl-5' : 'pl-1';
+        row.innerHTML = `
+          <td class="py-1.5 px-1.5 ${sideColor}">${item.side}</td>
+          <td class="py-1.5 px-1.5 ${indent} text-slate-800">${item.title}</td>
+          <td class="py-1.5 px-1.5 text-right text-slate-800">$${item.amount.toLocaleString()}</td>
+          <td class="py-1.5 px-1 text-center hidden sm:table-cell">
+            <span class="text-[9px] font-bold px-1 py-0.2 rounded ${isCurrent ? 'bg-amber-300 text-amber-950 font-black' : 'bg-slate-100 text-slate-500'}">
+              SOP ${item.step}
+            </span>
+          </td>
+        `;
+        sellerTbody.appendChild(row);
+      });
+      document.getElementById('sop-seller-step-note').innerText = stepData.sellerNote;
+    }
+
+    // Master inventory of chips to show in the common pool
+    const MASTER_BLOCK_DEFINITIONS = [
+      { name: '進貨', defaultStock: 1, type: 'buyer' },
+      { name: '進貨費用', defaultStock: 1, type: 'buyer' },
+      { name: '銷貨收入', defaultStock: 1, type: 'seller' },
+      { name: '運費', defaultStock: 1, type: 'seller' },
+      { name: '現金', defaultStock: 2, type: 'shared' },
+      { name: '應付帳款', defaultStock: 1, type: 'buyer' },
+      { name: '應收帳款', defaultStock: 1, type: 'seller' }
+    ];
+
+    let poolStock = {};
+    let activeSelectedChip = null;
+
+    // Slot states: each slot is { id, side: '借'/'貸', chipName: null, amount: '' }
+    let buyerSlots = { '借': [], '貸': [] };
+    let sellerSlots = { '借': [], '貸': [] };
+
+    // Calculator State
+    let activeCalcTarget = null; // { role, side, idx }
+    let calcExpression = "0";
+
+    function openCalculator(role, side, idx) {
+      activeCalcTarget = { role, side, idx };
+      const list = role === 'buyer' ? buyerSlots[side] : sellerSlots[side];
+      const currentVal = list[idx].amount;
+      calcExpression = currentVal && !isNaN(currentVal) ? String(currentVal) : "0";
+
+      const roleLabel = role === 'seller' ? '🐻 小熊賣方' : '🐶 柴犬買方';
+      const chipDesc = list[idx].chipName ? `「${list[idx].chipName}」` : '';
+      document.getElementById('calc-target-label').innerText = `正在輸入：${roleLabel} ${side}方 ${chipDesc} 金額`;
+      updateCalcScreen();
+      document.getElementById('calc-modal').classList.remove('hidden');
+    }
+
+    function closeCalculator() {
+      document.getElementById('calc-modal').classList.add('hidden');
+      activeCalcTarget = null;
+    }
+
+    function updateCalcScreen() {
+      document.getElementById('calc-screen').innerText = calcExpression;
+    }
+
+    function calcInput(char) {
+      if (calcExpression === "0" && char !== ".") {
+        calcExpression = char;
+      } else {
+        calcExpression += char;
+      }
+      updateCalcScreen();
+    }
+
+    function calcOp(op) {
+      const last = calcExpression.slice(-1);
+      if (['+', '-', '*', '/'].includes(last)) {
+        calcExpression = calcExpression.slice(0, -1) + op;
+      } else {
+        calcExpression += op;
+      }
+      updateCalcScreen();
+    }
+
+    function calcBackspace() {
+      if (calcExpression.length <= 1) {
+        calcExpression = "0";
+      } else {
+        calcExpression = calcExpression.slice(0, -1);
+      }
+      updateCalcScreen();
+    }
+
+    function calcClear() {
+      calcExpression = "0";
+      updateCalcScreen();
+    }
+
+    function calcAddQuick(val) {
+      calcEquals();
+      const current = parseFloat(calcExpression) || 0;
+      calcExpression = String(current + val);
+      updateCalcScreen();
+    }
+
+    function calcEquals() {
+      try {
+        // Safe evaluation of simple math
+        const sanitized = calcExpression.replace(/[^0-9+\-*/.]/g, '');
+        const res = Function(`'use strict'; return (${sanitized})`)();
+        calcExpression = String(Math.round(res * 100) / 100);
+      } catch (e) {
+        calcExpression = "0";
+      }
+      updateCalcScreen();
+    }
+
+    function calcConfirm() {
+      calcEquals();
+      const finalAmt = parseFloat(calcExpression) || 0;
+      if (activeCalcTarget) {
+        const { role, side, idx } = activeCalcTarget;
+        const list = role === 'buyer' ? buyerSlots[side] : sellerSlots[side];
+        list[idx].amount = finalAmt > 0 ? finalAmt : '';
+        renderPoolAndSlots();
+      }
+      closeCalculator();
+      showToast(`已填入金額：$${(parseFloat(calcExpression) || 0).toLocaleString()}`);
+    }
+
+    function resetSimSlots() {
+      // Re-initialize pool
+      poolStock = {};
+      MASTER_BLOCK_DEFINITIONS.forEach(b => {
+        poolStock[b.name] = b.defaultStock;
+      });
+      activeSelectedChip = null;
+
+      // Initialize default empty slots
+      buyerSlots = {
+        '借': [{ id: 'b-d-1', chipName: null, amount: '' }],
+        '貸': [{ id: 'b-c-1', chipName: null, amount: '' }]
+      };
+      sellerSlots = {
+        '借': [{ id: 's-d-1', chipName: null, amount: '' }],
+        '貸': [{ id: 's-c-1', chipName: null, amount: '' }]
+      };
+
+      renderPoolAndSlots();
+      document.getElementById('buyer-eval-feedback').innerText = '請點選積木與輸入金額...';
+      document.getElementById('buyer-eval-feedback').className = 'text-[11px] font-bold text-slate-500';
+      document.getElementById('seller-eval-feedback').innerText = '請點選積木與輸入金額...';
+      document.getElementById('seller-eval-feedback').className = 'text-[11px] font-bold text-slate-500';
+    }
+
+    function addCustomSlot(role, side) {
+      const list = role === 'buyer' ? buyerSlots[side] : sellerSlots[side];
+      list.push({
+        id: `${role[0]}-${side === '借' ? 'd' : 'c'}-${Date.now()}`,
+        chipName: null,
+        amount: ''
+      });
+      renderPoolAndSlots();
+    }
+
+    function removeSlot(role, side, idx) {
+      const list = role === 'buyer' ? buyerSlots[side] : sellerSlots[side];
+      const removed = list.splice(idx, 1)[0];
+      if (removed.chipName) {
+        poolStock[removed.chipName] = (poolStock[removed.chipName] || 0) + 1;
+      }
+      renderPoolAndSlots();
+    }
+
+    function clearSideSlots(role) {
+      const slots = role === 'buyer' ? buyerSlots : sellerSlots;
+      ['借', '貸'].forEach(s => {
+        slots[s].forEach(slot => {
+          if (slot.chipName) {
+            poolStock[slot.chipName] = (poolStock[slot.chipName] || 0) + 1;
+          }
+        });
+        slots[s] = [{ id: `${role[0]}-${s === '借' ? 'd' : 'c'}-1`, chipName: null, amount: '' }];
+      });
+      renderPoolAndSlots();
+    }
+
+    function selectChipToPlace(chipName) {
+      if (poolStock[chipName] <= 0) return;
+      if (activeSelectedChip === chipName) {
+        activeSelectedChip = null;
+      } else {
+        activeSelectedChip = chipName;
+      }
+      renderPoolAndSlots();
+    }
+
+    function handleSlotClick(role, side, idx) {
+      const targetList = role === 'buyer' ? buyerSlots[side] : sellerSlots[side];
+      const slot = targetList[idx];
+
+      // If slot already has a chip, clicking it removes it back to pool
+      if (slot.chipName) {
+        poolStock[slot.chipName] = (poolStock[slot.chipName] || 0) + 1;
+        slot.chipName = null;
+        renderPoolAndSlots();
+        return;
+      }
+
+      // If a chip is currently selected in pool, place it here
+      if (activeSelectedChip) {
+        if (poolStock[activeSelectedChip] > 0) {
+          slot.chipName = activeSelectedChip;
+          poolStock[activeSelectedChip]--;
+          activeSelectedChip = null; // reset selection
+          renderPoolAndSlots();
+        }
+      } else {
+        showToast('請先從上方「共用積木池」點選一個會計項目積木！');
+      }
+    }
+
+    function handleSlotAmountChange(role, side, idx, value) {
+      const list = role === 'buyer' ? buyerSlots[side] : sellerSlots[side];
+      list[idx].amount = value;
+      updateSlotMathTotals();
+    }
+
+    function renderPoolAndSlots() {
+      // 1. Render Pool
+      const poolContainer = document.getElementById('sim-blocks-pool');
+      poolContainer.innerHTML = '';
+
+      MASTER_BLOCK_DEFINITIONS.forEach(item => {
+        const count = poolStock[item.name] || 0;
+        const isDepleted = count <= 0;
+        const isSelected = activeSelectedChip === item.name;
+
+        const btn = document.createElement('button');
+        let bgStyle = isSelected
+          ? 'bg-amber-500 text-white ring-2 ring-amber-600 scale-105'
+          : isDepleted
+            ? 'bg-slate-100 text-slate-300 border-slate-200 cursor-not-allowed opacity-50'
+            : 'bg-white hover:bg-amber-50 text-slate-800 border-slate-300 hover:border-amber-400';
+
+        btn.className = `px-2.5 py-1.5 rounded-xl border text-xs font-black transition-all flex items-center gap-1.5 shadow-2xs ${bgStyle}`;
+        btn.disabled = isDepleted;
+        btn.innerHTML = `
+          <span>${item.name}</span>
+          <span class="text-[10px] px-1.5 py-0.2 rounded-full font-code ${isSelected ? 'bg-amber-700 text-white' : 'bg-slate-100 text-slate-600'}">
+            剩 ${count}
+          </span>
+        `;
+        btn.onclick = () => selectChipToPlace(item.name);
+        poolContainer.appendChild(btn);
+      });
+
+      // Selection hint
+      const hintBox = document.getElementById('active-chip-hint');
+      const hintName = document.getElementById('active-chip-name');
+      if (activeSelectedChip) {
+        hintBox.classList.remove('hidden');
+        hintName.innerText = activeSelectedChip;
+      } else {
+        hintBox.classList.add('hidden');
+      }
+
+      // 2. Render Slots for Buyer and Seller
+      renderSlotsForSide('buyer', '借', document.getElementById('buyer-debit-slots'));
+      renderSlotsForSide('buyer', '貸', document.getElementById('buyer-credit-slots'));
+      renderSlotsForSide('seller', '借', document.getElementById('seller-debit-slots'));
+      renderSlotsForSide('seller', '貸', document.getElementById('seller-credit-slots'));
+
+      updateSlotMathTotals();
+    }
+
+    function renderSlotsForSide(role, side, container) {
+      container.innerHTML = '';
+      const list = role === 'buyer' ? buyerSlots[side] : sellerSlots[side];
+
+      list.forEach((slot, idx) => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-1.5';
+
+        // Chip button (placeholder or filled)
+        const chipBtn = document.createElement('button');
+        if (slot.chipName) {
+          chipBtn.className = `flex-1 py-1 px-2 rounded-lg text-xs font-black border text-left flex items-center justify-between shadow-2xs ${
+            side === '借' ? 'bg-emerald-50 text-emerald-950 border-emerald-300' : 'bg-slate-100 text-slate-800 border-slate-300'
+          }`;
+          chipBtn.innerHTML = `
+            <span>${slot.chipName}</span>
+            <span class="text-[10px] text-rose-500 font-bold ml-1" title="點擊拔除">✕</span>
+          `;
+        } else {
+          chipBtn.className = 'flex-1 py-1 px-2 rounded-lg text-xs font-bold border border-dashed border-slate-300 text-slate-400 bg-slate-50 hover:bg-amber-50 hover:border-amber-400 text-left';
+          chipBtn.innerText = '+ 點此放積木';
+        }
+        chipBtn.onclick = () => handleSlotClick(role, side, idx);
+        // Amount input (click to open mini accounting calculator with 00 key)
+        const amtInput = document.createElement('div');
+        amtInput.className = 'w-18 sm:w-22 bg-slate-50 hover:bg-amber-50 border border-slate-200 hover:border-amber-400 rounded-lg p-1 text-right font-code font-bold text-xs text-slate-800 cursor-pointer select-none flex items-center justify-end gap-1 shadow-2xs';
+        amtInput.title = '點擊開啟會計小計算機 (含 00 鍵)';
+        amtInput.onclick = () => openCalculator(role, side, idx);
+        amtInput.innerHTML = `
+          <span>${slot.amount ? '$' + Number(slot.amount).toLocaleString() : '<span class="text-slate-300 font-normal">填金額🧮</span>'}</span>
+        `;
+
+        // Delete row button
+        const delBtn = document.createElement('button');
+        delBtn.className = 'text-slate-300 hover:text-rose-500 font-bold p-1 text-xs';
+        delBtn.innerText = '🗑️';
+        delBtn.onclick = () => removeSlot(role, side, idx);
+
+        row.appendChild(chipBtn);
+        row.appendChild(amtInput);
+        row.appendChild(delBtn);
+        container.appendChild(row);
+      });
+    }
+
+    function updateSlotMathTotals() {
+      // Buyer totals
+      let bDebit = 0, bCredit = 0;
+      buyerSlots['借'].forEach(s => bDebit += parseFloat(s.amount) || 0);
+      buyerSlots['貸'].forEach(s => bCredit += parseFloat(s.amount) || 0);
+      document.getElementById('buyer-sum-debit').innerText = bDebit.toLocaleString();
+      document.getElementById('buyer-sum-credit').innerText = bCredit.toLocaleString();
+      const bDiff = Math.abs(bDebit - bCredit);
+      const bDiffElem = document.getElementById('buyer-sum-diff');
+      if (bDiff === 0 && bDebit > 0) {
+        bDiffElem.innerText = '⚖️ 平衡';
+        bDiffElem.className = 'text-emerald-700 font-bold';
+      } else {
+        bDiffElem.innerText = `差 $${bDiff.toLocaleString()}`;
+        bDiffElem.className = 'text-rose-500 font-bold';
+      }
+
+      // Seller totals
+      let sDebit = 0, sCredit = 0;
+      sellerSlots['借'].forEach(s => sDebit += parseFloat(s.amount) || 0);
+      sellerSlots['貸'].forEach(s => sCredit += parseFloat(s.amount) || 0);
+      document.getElementById('seller-sum-debit').innerText = sDebit.toLocaleString();
+      document.getElementById('seller-sum-credit').innerText = sCredit.toLocaleString();
+      const sDiff = Math.abs(sDebit - sCredit);
+      const sDiffElem = document.getElementById('seller-sum-diff');
+      if (sDiff === 0 && sDebit > 0) {
+        sDiffElem.innerText = '⚖️ 平衡';
+        sDiffElem.className = 'text-blue-700 font-bold';
+      } else {
+        sDiffElem.innerText = `差 $${sDiff.toLocaleString()}`;
+        sDiffElem.className = 'text-rose-500 font-bold';
+      }
+    }
+
+    // Standard Math Calculation
+    function computeStandardSolution() {
+      const price = parseFloat(document.getElementById('sim-input-goods').value) || 0;
+      const freight = parseFloat(document.getElementById('sim-input-freight').value) || 0;
+      const term = document.getElementById('sim-input-term').value; // 'dest' or 'ship'
+      const payer = document.getElementById('sim-input-payer').value; // 'seller' or 'buyer'
+
+      // Buyer solution
+      let buyerExp = [];
+      buyerExp.push({ side: '借', title: '進貨', amount: price });
+      if (term === 'ship') {
+        buyerExp.push({ side: '借', title: '進貨費用', amount: freight });
+      }
+      if (payer === 'buyer') {
+        buyerExp.push({ side: '貸', title: '現金', amount: freight });
+      }
+      const bD = buyerExp.filter(i => i.side === '借').reduce((s, i) => s + i.amount, 0);
+      const bC = buyerExp.filter(i => i.side === '貸').reduce((s, i) => s + i.amount, 0);
+      buyerExp.push({ side: '貸', title: '應付帳款', amount: bD - bC });
+
+      // Seller solution
+      let sellerExp = [];
+      sellerExp.push({ side: '貸', title: '銷貨收入', amount: price });
+      if (term === 'dest') {
+        sellerExp.push({ side: '借', title: '運費', amount: freight });
+      }
+      if (payer === 'seller') {
+        sellerExp.push({ side: '貸', title: '現金', amount: freight });
+      }
+      const sC = sellerExp.filter(i => i.side === '貸').reduce((s, i) => s + i.amount, 0);
+      const sD = sellerExp.filter(i => i.side === '借').reduce((s, i) => s + i.amount, 0);
+      sellerExp.push({ side: '借', title: '應收帳款', amount: sC - sD });
+
+      return { buyerExp, sellerExp };
+    }
+
+    function validateSimAll() {
+      const { buyerExp, sellerExp } = computeStandardSolution();
+
+      // Gather Buyer user inputs
+      let userBuyerItems = [];
+      ['借', '貸'].forEach(side => {
+        buyerSlots[side].forEach(s => {
+          if (s.chipName) {
+            userBuyerItems.push({ side: side, title: s.chipName, amount: parseFloat(s.amount) || 0 });
+          }
+        });
+      });
+
+      // Gather Seller user inputs
+      let userSellerItems = [];
+      ['借', '貸'].forEach(side => {
+        sellerSlots[side].forEach(s => {
+          if (s.chipName) {
+            userSellerItems.push({ side: side, title: s.chipName, amount: parseFloat(s.amount) || 0 });
+          }
+        });
+      });
+
+      // Verification: Check Buyer
+      let bOk = true;
+      let bMsg = "";
+      // Check for illegal seller accounts in buyer side!
+      const illegalBuyer = userBuyerItems.find(i => ['應收帳款', '銷貨收入', '運費'].includes(i.title));
+      if (illegalBuyer) {
+        bOk = false;
+        bMsg = `柴犬是「買方」，絕不能記【${illegalBuyer.title}】！`;
+      } else if (userBuyerItems.length !== buyerExp.length) {
+        bOk = false;
+        bMsg = `分錄行數不符（應有 ${buyerExp.length} 筆借貸）。請回顧 SOP 步驟！`;
+      } else {
+        for (let exp of buyerExp) {
+          const m = userBuyerItems.find(u => u.side === exp.side && u.title === exp.title && u.amount === exp.amount);
+          if (!m) {
+            bOk = false;
+            bMsg = `缺少或算錯了【${exp.side}：${exp.title} $${exp.amount.toLocaleString()}】！`;
+            break;
+          }
+        }
+      }
+
+      // Verification: Check Seller
+      let sOk = true;
+      let sMsg = "";
+      const illegalSeller = userSellerItems.find(i => ['應付帳款', '進貨', '進貨費用'].includes(i.title));
+      if (illegalSeller) {
+        sOk = false;
+        sMsg = `小熊是「賣方」，絕不能記【${illegalSeller.title}】！`;
+      } else if (userSellerItems.length !== sellerExp.length) {
+        sOk = false;
+        sMsg = `分錄行數不符（應有 ${sellerExp.length} 筆借貸）。請回顧 SOP 步驟！`;
+      } else {
+        for (let exp of sellerExp) {
+          const m = userSellerItems.find(u => u.side === exp.side && u.title === exp.title && u.amount === exp.amount);
+          if (!m) {
+            sOk = false;
+            sMsg = `缺少或算錯了【${exp.side}：${exp.title} $${exp.amount.toLocaleString()}】！`;
+            break;
+          }
+        }
+      }
+
+      // Display feedback
+      const bFb = document.getElementById('buyer-eval-feedback');
+      if (bOk) {
+        bFb.className = 'text-[11px] font-black text-emerald-800 bg-emerald-100 p-2 rounded-xl';
+        bFb.innerHTML = '🎉 柴犬買方分錄完全正確！';
+      } else {
+        bFb.className = 'text-[11px] font-bold text-rose-800 bg-rose-100 p-2 rounded-xl';
+        bFb.innerHTML = `⚠️ 買方有誤：${bMsg}`;
+      }
+
+      const sFb = document.getElementById('seller-eval-feedback');
+      if (sOk) {
+        sFb.className = 'text-[11px] font-black text-blue-800 bg-blue-100 p-2 rounded-xl';
+        sFb.innerHTML = '🎉 小熊賣方分錄完全正確！';
+      } else {
+        sFb.className = 'text-[11px] font-bold text-rose-800 bg-rose-100 p-2 rounded-xl';
+        sFb.innerHTML = `⚠️ 賣方有誤：${sMsg}`;
+      }
+
+      if (bOk && sOk) {
+        showToast('太神了！買賣雙方借貸全部答對！');
+      } else {
+        showToast('有會計項目放錯囉！注意應收與應付不要搞混！');
+      }
+    }
+
+    function fillCorrectSimSolution() {
+      const { buyerExp, sellerExp } = computeStandardSolution();
+
+      // Reset pool
+      poolStock = {};
+      MASTER_BLOCK_DEFINITIONS.forEach(b => poolStock[b.name] = b.defaultStock);
+
+      buyerSlots = { '借': [], '貸': [] };
+      sellerSlots = { '借': [], '貸': [] };
+
+      buyerExp.forEach(item => {
+        buyerSlots[item.side].push({
+          id: `b-${Date.now()}-${Math.random()}`,
+          chipName: item.title,
+          amount: item.amount
+        });
+        if (poolStock[item.title] > 0) poolStock[item.title]--;
+      });
+
+      sellerExp.forEach(item => {
+        sellerSlots[item.side].push({
+          id: `s-${Date.now()}-${Math.random()}`,
+          chipName: item.title,
+          amount: item.amount
+        });
+        if (poolStock[item.title] > 0) poolStock[item.title]--;
+      });
+
+      activeSelectedChip = null;
+      renderPoolAndSlots();
+      validateSimAll();
+      showToast('已為您排出 SOP 正確積木分錄！');
+    }
+
+    function randomizeSimTask() {
+      const prices = [12000, 16000, 24000, 30000, 45000];
+      const freights = [1000, 1500, 2000, 2500];
+      const terms = ['dest', 'ship'];
+      const payers = ['seller', 'buyer'];
+
+      document.getElementById('sim-input-goods').value = prices[Math.floor(Math.random() * prices.length)];
+      document.getElementById('sim-input-freight').value = freights[Math.floor(Math.random() * freights.length)];
+      document.getElementById('sim-input-term').value = terms[Math.floor(Math.random() * terms.length)];
+      document.getElementById('sim-input-payer').value = payers[Math.floor(Math.random() * payers.length)];
+
+      resetSimSlots();
+      showToast('已隨機產生新情境！動手放積木吧！');
+    }
+
+    const quizBank = [
+      {
+        question: "小熊老闆（賣方）賒銷商品 $30,000 給柴犬店長，條件為【起運點交貨】。小熊在貨物出廠時代墊了現金運費 $2,000。請問小熊帳上應借記的「應收帳款」為多少？",
+        options: [
+          { text: "$30,000", correct: false, reason: "起運點交貨運費由買方承擔，小熊代墊的 $2,000 可以討回，必須併入應收帳款！" },
+          { text: "$32,000", correct: true, reason: "太厲害了！依 SOP 第四步倒擠：貸記銷貨收入 30,000 ＋ 貸記現金 2,000 ＝ 借記應收帳款 32,000！" },
+          { text: "$28,000", correct: false, reason: "賣方代墊是替對方付錢，是債權增加，絕不是扣減。" },
+          { text: "$2,000", correct: false, reason: "這只有代墊金額，貨款不可漏掉。" }
+        ]
+      },
+      {
+        question: "柴犬店長（買方）賒購商品 $60,000，條件為【目的地交貨】。貨到店鋪時，柴犬替小熊先行掏出現金代墊運費 $3,000。請問柴犬應貸記的「應付帳款」為多少？",
+        options: [
+          { text: "$60,000", correct: false, reason: "柴犬已經先掏出 3,000 現金幫忙墊付，結算時會抵扣，應付帳款會減少！" },
+          { text: "$57,000", correct: true, reason: "答對了！SOP 第四步倒擠：借記進貨 60,000，第三步已貸記現金 3,000，平衡差額貸記應付帳款 57,000！" },
+          { text: "$63,000", correct: false, reason: "目的地交貨是賣方的責任，買方代墊後少給賣方錢，應付帳款不可再疊加。" },
+          { text: "$3,000", correct: false, reason: "金額不正確，尚有商品款項需扣抵結算。" }
+        ]
+      },
+      {
+        question: "學生最容易犯錯的考點：買方在任何運費分錄中，可能出現「應收帳款」嗎？",
+        options: [
+          { text: "絕對不可能！買方欠別人錢是「應付帳款」，賣方討錢才是「應收帳款」", correct: true, reason: "觀念非常清晰！買方買東西只會產生進貨與應付，應收帳款是賣方資產，千萬別放錯邊！" },
+          { text: "可以，當買方幫賣方代墊運費時記應收帳款", correct: false, reason: "買方代墊運費時，是直接扣減原本要付給對方的「應付帳款」，不會另開應收帳款會計項目。" },
+          { text: "起運點交貨時可以", correct: false, reason: "起運點交貨是買方的責任，更不會有應收帳款。" }
+        ]
+      },
+      {
+        question: "在 SOP 第二步驟「判斷運費歸屬」中，若條款為【起運點交貨 (FOB Shipping Point)】，請問運費由誰認列？會計項目名稱為？",
+        options: [
+          { text: "賣方認列「運費」", correct: false, reason: "起運點交貨代表貨離廠即歸買方，賣方不負擔運費費用。" },
+          { text: "買方認列「進貨費用」", correct: true, reason: "完全正確！起運點由買方負擔，作為取得存貨的成本計入「進貨費用」。" },
+          { text: "買方認列「運費」", correct: false, reason: "買方進貨絕不會出現「銷貨」相關會計項目！" }
+        ]
+      }
+    ];
+
+    let quizList = [];
+    let currentQuizIndex = 0;
+    let quizStats = { correct: 0, total: 0 };
+    let hasAnsweredCurrent = false;
+
+    function initQuiz() {
+      quizList = [...quizBank].sort(() => Math.random() - 0.5);
+      currentQuizIndex = 0;
+      quizStats = { correct: 0, total: 0 };
+      renderQuizQuestion();
+    }
+
+    function generateNewQuiz() {
+      currentQuizIndex = (currentQuizIndex + 1) % quizBank.length;
+      hasAnsweredCurrent = false;
+      renderQuizQuestion();
+    }
+
+    function renderQuizQuestion() {
+      hasAnsweredCurrent = false;
+      const q = quizList[currentQuizIndex];
+      document.getElementById('quiz-question-text').innerText = q.question;
+      document.getElementById('quiz-score').innerText = `${quizStats.correct} / ${quizStats.total}`;
+
+      const feedback = document.getElementById('quiz-feedback');
+      feedback.classList.add('hidden');
+      feedback.className = "mt-3 hidden p-3.5 rounded-2xl text-xs sm:text-sm";
+
+      const optContainer = document.getElementById('quiz-options-container');
+      optContainer.innerHTML = '';
+
+      q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = "w-full text-left p-3 rounded-xl border border-slate-200 bg-white hover:bg-amber-50/60 hover:border-amber-300 transition-all font-bold text-slate-800 text-xs sm:text-sm flex items-center justify-between group shadow-2xs";
+        btn.innerHTML = `
+          <div class="flex items-center gap-2.5">
+            <span class="w-5 h-5 rounded-lg bg-slate-100 group-hover:bg-amber-400 text-slate-600 flex items-center justify-center text-[10px] font-black font-code">
+              ${['A','B','C','D'][idx]}
+            </span>
+            <span>${opt.text}</span>
+          </div>
+        `;
+        btn.onclick = () => selectQuizAnswer(opt, btn);
+        optContainer.appendChild(btn);
+      });
+    }
+
+    function selectQuizAnswer(option, btnElement) {
+      if (hasAnsweredCurrent) return;
+      hasAnsweredCurrent = true;
+      quizStats.total++;
+
+      const feedback = document.getElementById('quiz-feedback');
+      feedback.classList.remove('hidden');
+
+      if (option.correct) {
+        quizStats.correct++;
+        btnElement.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-950');
+        feedback.className = "mt-3 p-3 rounded-xl text-xs bg-emerald-50 border border-emerald-300 text-emerald-950 font-bold";
+        feedback.innerHTML = `🎉 答對了！<br><span class="font-normal text-slate-700">${option.reason}</span>`;
+      } else {
+        btnElement.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-950');
+        feedback.className = "mt-3 p-3 rounded-xl text-xs bg-rose-50 border border-rose-300 text-rose-950 font-bold";
+        feedback.innerHTML = `💡 再想想看～<br><span class="font-normal text-slate-700">${option.reason}</span>`;
+      }
+      document.getElementById('quiz-score').innerText = `${quizStats.correct} / ${quizStats.total}`;
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toast');
+      const msgElem = document.getElementById('toast-message');
+      msgElem.innerText = msg;
+      toast.classList.remove('translate-y-24', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-24', 'opacity-0');
+      }, 2200);
+    }
+
+    window.onload = function() {
+      renderSopStepView();
+      resetSimSlots();
+      initQuiz();
+    };
+  </script>
+</body>
+</html>
