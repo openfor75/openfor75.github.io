@@ -104,6 +104,29 @@
   .viewer .bar .spacer{flex:1}
   .viewer .stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:12px}
   .viewer canvas{max-width:100%;max-height:100%;box-shadow:0 8px 40px rgba(0,0,0,.5);background:#fff}
+  /* 閱讀模式 */
+  body.read #workspace,body.read .editonly{display:none}
+  #reader{display:none;flex-direction:column;height:100%}
+  body.read #reader{display:flex}
+  body.read main{padding:0;overflow:hidden}
+  .rbar{display:flex;align-items:center;gap:8px;padding:8px 14px;background:var(--paper);border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .rbar select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;max-width:260px;background:#fff}
+  .rbar input[type=text]{width:auto}
+  .rbar .pg{width:54px;text-align:center}
+  .rbar .find{width:180px}
+  .rbar .info{color:var(--ink-2);font-size:12px;min-width:60px}
+  .rscroll{flex:1;overflow:auto;padding:20px 0 40px;background:var(--bench)}
+  .rpage{position:relative;margin:0 auto 16px;background:#fff;box-shadow:0 1px 4px rgba(29,40,48,.18)}
+  .rpage canvas{display:block;width:100%;height:100%}
+  .rpage .pn{position:absolute;right:-1px;top:-1px;font-size:11px;color:var(--ink-2);background:var(--bench);padding:1px 6px;border-radius:0 0 0 4px}
+  .textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;text-align:initial;forced-color-adjust:none}
+  .textLayer span,.textLayer br{color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0 0}
+  .textLayer ::selection{background:rgba(14,124,123,.35)}
+  .textLayer span.hit{background:rgba(255,205,0,.55);color:transparent;border-radius:2px}
+  .textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:-1;cursor:default;user-select:none}
+  .locked{color:var(--cut);font-size:11px;margin-left:6px}
+  .file .name{cursor:pointer}
+  .file .name:hover{text-decoration:underline}
   @media (prefers-reduced-motion:reduce){*{transition:none!important}}
   @media (max-width:820px){body{grid-template-columns:1fr;grid-template-rows:56px auto 1fr}aside{max-height:40vh}header{grid-column:1}.status{left:16px}}
 </style>
@@ -114,13 +137,15 @@
   <span class="count" id="count">尚未載入檔案</span>
   <span class="spacer"></span>
   <div class="seg" role="group" aria-label="模式">
+    <button id="modeRead">閱讀</button>
     <button id="modeArrange" class="on">整理頁面</button>
     <button id="modeSplit">分割</button>
   </div>
-  <button id="selAll">全選</button>
-  <button id="selNone">取消選取</button>
-  <button id="delSel" class="danger">刪除選取</button>
-  <button id="exportAll" class="primary">輸出為一份 PDF</button>
+  <button id="selAll" class="editonly">全選</button>
+  <button id="selNone" class="editonly">取消選取</button>
+  <button id="delSel" class="danger editonly">刪除選取</button>
+  <button id="printAll" class="editonly">列印工作區結果</button>
+  <button id="exportAll" class="primary editonly">輸出為一份 PDF</button>
 </header>
 
 <aside>
@@ -152,14 +177,18 @@
       <button id="splitEach">每一頁存成一個檔 → ZIP</button>
     </div>
     <div class="range-row">
-      <input type="text" id="ranges" placeholder="頁碼範圍，例：1-3, 4-6, 7">
-      <button id="splitRanges" class="primary" style="white-space:nowrap">分割</button>
+      <input type="text" id="ranges" placeholder="頁碼，例：1-3, 5, 8-10">
     </div>
-    <p class="hint">頁碼以工作區目前的順序計算（左上第 1 頁）。分割模式下，點頁面之間的圓點放剪刀。</p>
+    <div class="range-row">
+      <button id="extractRanges" class="primary" style="flex:1">抽出成一份 PDF</button>
+      <button id="splitRanges" style="flex:1">各段分別存檔</button>
+    </div>
+    <p class="hint">頁碼以工作區目前的順序計算（左上第 1 頁）。「抽出」把輸入的頁碼合成一份；「各段分別存檔」每一段一個檔。分割模式下，也可點頁面之間的圓點放剪刀。</p>
   </section>
 </aside>
 
 <main id="main">
+ <div id="workspace">
   <div class="empty" id="emptyState">
     <h3>把 PDF 放進來，就能開始整理。</h3>
     <p>每一頁會變成一張卡片。拖曳卡片改變順序、用卡片上的按鈕旋轉或刪除，最後按「輸出為一份 PDF」。放入多個檔案就是合併；切到「分割」模式可以剪成多份。</p>
@@ -167,6 +196,22 @@
   </div>
   <div class="grid" id="grid"></div>
   <div class="drop-marker" id="dropMarker"></div>
+ </div>
+ <div id="reader">
+  <div class="rbar">
+    <select id="rFile" aria-label="選擇要閱讀的檔案"></select>
+    <button id="rPrev" title="上一頁">‹</button>
+    <input type="text" class="pg" id="rPage" value="1" aria-label="頁碼"><span class="info" id="rTotal">/ 0</span>
+    <button id="rNext" title="下一頁">›</button>
+    <button id="rZoomOut" title="縮小">−</button><span class="info" id="rZoom" style="min-width:44px;text-align:center">100%</span><button id="rZoomIn" title="放大">＋</button>
+    <button id="rFit">符合寬度</button>
+    <input type="text" class="find" id="rFind" placeholder="搜尋文字，Enter 找下一個">
+    <span class="info" id="rFindInfo"></span>
+    <span class="spacer"></span>
+    <button id="rPrint" class="primary">列印</button>
+  </div>
+  <div class="rscroll" id="rScroll"><div class="empty"><h3>選一個檔案來閱讀。</h3><p>左側放入 PDF，或在上方下拉選單選擇。有密碼的檔案輸入密碼後可以閱讀與列印，但不會進工作區編輯。</p></div></div>
+ </div>
 </main>
 
 <div class="status" id="status"></div>
@@ -206,13 +251,21 @@ async function addFiles(list){
     if (!/\.pdf$/i.test(f.name) && f.type !== "application/pdf"){ say(`略過「${f.name}」：不是 PDF`); continue; }
     try{
       const bytes = new Uint8Array(await f.arrayBuffer());
-      const pdfjs = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
-      const rec = { id: Date.now()+Math.random(), name: f.name, bytes, pdfjs, pageCount: pdfjs.numPages, color: SWATCHES[files.length % SWATCHES.length] };
+      let locked = false;
+      const task = pdfjsLib.getDocument({ data: bytes.slice() });
+      task.onPassword = (cb, reason)=>{
+        locked = true;
+        const pw = prompt(`「${f.name}」${reason===pdfjsLib.PasswordResponses.INCORRECT_PASSWORD ? "密碼不正確，請再輸入一次" : "有密碼保護，請輸入開啟密碼"}：`);
+        if (pw===null) throw new Error("cancelled"); cb(pw);
+      };
+      const pdfjs = await task.promise;
+      const rec = { id: Date.now()+Math.random(), name: f.name, bytes, pdfjs, pageCount: pdfjs.numPages, color: SWATCHES[files.length % SWATCHES.length], locked };
       files.push(rec);
-      for (let i=0;i<rec.pageCount;i++) pages.push({ uid: uidSeq++, fileId: rec.id, index: i, rotation: 0 });
-    }catch(e){ console.error(e); say(`無法讀取「${f.name}」：${e.message.includes("password") ? "檔案有密碼保護" : "檔案可能已損毀"}`, 4000); }
+      if (locked){ say(`「${f.name}」已解鎖，可閱讀與列印；受保護的檔案不進工作區編輯`, 5000); openReader(rec); }
+      else for (let i=0;i<rec.pageCount;i++) pages.push({ uid: uidSeq++, fileId: rec.id, index: i, rotation: 0 });
+    }catch(e){ console.error(e); if(!/cancelled/.test(e.message)) say(`無法讀取「${f.name}」：檔案可能已損毀`, 4000); }
   }
-  render(); renderFiles();
+  render(); renderFiles(); renderFileSelect();
 }
 $("drop").addEventListener("click", ()=>$("fileInput").click());
 $("drop").addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); $("fileInput").click(); }});
@@ -231,9 +284,10 @@ function renderFiles(){
     const used = pages.filter(p=>p.fileId===f.id).length;
     const row = document.createElement("div"); row.className="file";
     row.innerHTML = `<div class="swatch" style="background:${f.color}"></div>
-      <div><div class="name" title="${f.name}">${f.name}</div><div class="meta">${used} / ${f.pageCount} 頁在工作區</div></div>
-      <button title="移除此檔所有頁面">移除</button>`;
-    row.querySelector("button").onclick = ()=>{ pages = pages.filter(p=>p.fileId!==f.id); files.splice(files.indexOf(f),1); cuts.clear(); render(); renderFiles(); };
+      <div><div class="name" title="點一下開始閱讀">${f.name}</div><div class="meta">${f.locked ? '<span class="locked" style="margin:0">🔒 僅可閱讀／列印</span>' : `${used} / ${f.pageCount} 頁在工作區`}</div></div>
+      <button title="移除此檔">移除</button>`;
+    row.querySelector(".name").onclick = ()=>openReader(f);
+    row.querySelector("button").onclick = ()=>{ pages = pages.filter(p=>p.fileId!==f.id); files.splice(files.indexOf(f),1); cuts.clear(); if(R.file===f){ R.file=null; $("rScroll").innerHTML=""; } render(); renderFiles(); renderFileSelect(); };
     box.appendChild(row);
   }
 }
@@ -334,15 +388,21 @@ $("rotSelL").onclick = ()=>rotSel(-90); $("rotSelR").onclick = ()=>rotSel(90);
 $("reverse").onclick = ()=>{ pages.reverse(); cuts.clear(); render(); };
 document.addEventListener("keydown", e=>{
   if ($("viewer").classList.contains("open")){ if(e.key==="Escape") closeViewer(); if(e.key==="ArrowLeft") vStep(-1); if(e.key==="ArrowRight") vStep(1); return; }
-  if (e.target.tagName==="INPUT") return;
+  if (e.target.tagName==="INPUT"||e.target.tagName==="SELECT") return;
+  if (document.body.classList.contains("read")){ if(e.key==="ArrowLeft"||e.key==="PageUp") gotoPage(R.cur-1); if(e.key==="ArrowRight"||e.key==="PageDown") gotoPage(R.cur+1); if((e.ctrlKey||e.metaKey)&&e.key==="p"){ e.preventDefault(); $("rPrint").click(); } if((e.ctrlKey||e.metaKey)&&e.key==="f"){ e.preventDefault(); $("rFind").focus(); } return; }
   if ((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==="a"){ e.preventDefault(); setAll(true); }
   if (e.key==="Delete"||e.key==="Backspace"){ if(pages.some(p=>p.selected)) $("delSel").click(); }
   if (e.key==="Escape") setAll(false);
 });
 
 /* ---------- 模式 ---------- */
-function setMode(split){ splitMode = split; document.body.classList.toggle("split", split); $("modeSplit").classList.toggle("on", split); $("modeArrange").classList.toggle("on", !split); }
-$("modeArrange").onclick = ()=>setMode(false); $("modeSplit").onclick = ()=>setMode(true);
+function setMode(m){
+  splitMode = m==="split";
+  document.body.classList.toggle("split", m==="split"); document.body.classList.toggle("read", m==="read");
+  for (const [id,k] of [["modeRead","read"],["modeArrange","arrange"],["modeSplit","split"]]) $(id).classList.toggle("on", m===k);
+  if (m==="read" && !R.file && files.length) openReader(files[0]);
+}
+$("modeArrange").onclick = ()=>setMode("arrange"); $("modeSplit").onclick = ()=>setMode("split"); $("modeRead").onclick = ()=>setMode("read");
 
 /* ---------- 輸出 ---------- */
 const srcDocCache = new Map();
@@ -390,18 +450,98 @@ $("splitByCut").onclick = ()=>guard(async()=>{
   await exportGroups(groups, "分割");
 });
 $("splitEach").onclick = ()=>guard(async()=>{ if(!pages.length) return say("工作區沒有頁面"); await exportGroups(pages.map(p=>[p]), "逐頁"); });
-$("splitRanges").onclick = ()=>guard(async()=>{
-  const txt = $("ranges").value.trim(); if(!txt) return say("請輸入頁碼範圍，例如 1-3, 4-6, 7");
+function parseRanges(){
+  const txt = $("ranges").value.trim(); if(!txt){ say("請先輸入頁碼，例如 1-3, 5, 8-10"); return null; }
   const groups=[];
   for (const part of txt.split(/[,，、;]+/).map(s=>s.trim()).filter(Boolean)){
     const m = part.match(/^(\d+)\s*[-–~]\s*(\d+)$/) || part.match(/^(\d+)$/);
-    if(!m) return say(`看不懂「${part}」，請用 1-3 或 7 這種寫法`, 4000);
+    if(!m){ say(`看不懂「${part}」，請用 1-3 或 7 這種寫法`, 4000); return null; }
     let a=+m[1], b=+(m[2]||m[1]); if(a>b) [a,b]=[b,a];
-    if(a<1||b>pages.length) return say(`「${part}」超出範圍，目前共 ${pages.length} 頁`, 4000);
+    if(a<1||b>pages.length){ say(`「${part}」超出範圍，目前共 ${pages.length} 頁`, 4000); return null; }
     groups.push(pages.slice(a-1,b));
   }
-  await exportGroups(groups, "範圍");
+  return groups;
+}
+$("splitRanges").onclick = ()=>guard(async()=>{ const g=parseRanges(); if(g) await exportGroups(g, "範圍"); });
+$("extractRanges").onclick = ()=>guard(async()=>{
+  const g=parseRanges(); if(!g) return; const list = g.flat();
+  download(await buildPdf(list), outName(`-第${$("ranges").value.trim().replace(/\s+/g,"")}頁`)); say(`已抽出 ${list.length} 頁`);
 });
+
+/* ---------- 列印 ---------- */
+function printBytes(bytes){
+  const url = URL.createObjectURL(new Blob([bytes],{type:"application/pdf"}));
+  document.getElementById("printFrame")?.remove();
+  const fr = document.createElement("iframe"); fr.id="printFrame";
+  fr.style.cssText="position:fixed;right:0;bottom:0;width:2px;height:2px;opacity:0;border:0";
+  fr.src = url; document.body.appendChild(fr);
+  fr.onload = ()=>{ setTimeout(()=>{ try{ fr.contentWindow.focus(); fr.contentWindow.print(); say("已開啟列印對話框"); }catch(e){ window.open(url,"_blank"); say("瀏覽器不允許直接列印，已另開分頁，請按 Ctrl+P", 5000); } }, 300); };
+}
+$("printAll").onclick = ()=>guard(async()=>{ if(!pages.length) return say("工作區沒有頁面"); printBytes(await buildPdf(pages)); });
+$("rPrint").onclick = ()=>{ if(!R.file) return say("先選一個檔案"); printBytes(R.file.bytes); };
+
+/* ---------- 閱讀模式 ---------- */
+const R = { file:null, scale:1, fit:true, els:[], cur:1, hits:[], hitPos:-1, obs:null, textCache:new Map() };
+function renderFileSelect(){
+  const sel = $("rFile"); sel.innerHTML = files.length ? "" : '<option value="">（尚未載入檔案）</option>';
+  files.forEach((f,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=(f.locked?"🔒 ":"")+f.name; if(R.file===f) o.selected=true; sel.appendChild(o); });
+}
+$("rFile").onchange = e=>{ const f=files[+e.target.value]; if(f) openReader(f); };
+async function openReader(f){
+  R.file=f; R.hits=[]; R.hitPos=-1; $("rFindInfo").textContent=""; R.textCache.clear();
+  setMode("read"); renderFileSelect();
+  $("rTotal").textContent = `/ ${f.pageCount}`; $("rPage").value = 1; R.cur=1;
+  await layoutReader();
+}
+async function layoutReader(keepPage){
+  const f=R.file; if(!f) return;
+  const box=$("rScroll"); box.innerHTML=""; R.els=[]; R.obs?.disconnect();
+  const first = await f.pdfjs.getPage(1); const vp0 = first.getViewport({scale:1});
+  if (R.fit) R.scale = Math.max(.2, (box.clientWidth - 48) / vp0.width);
+  $("rZoom").textContent = Math.round(R.scale*100)+"%";
+  R.obs = new IntersectionObserver(ents=>{ for(const en of ents) if(en.isIntersecting) renderReaderPage(+en.target.dataset.n); }, {root:box, rootMargin:"600px 0px"});
+  for (let n=1;n<=f.pageCount;n++){
+    const pg = n===1 ? first : await f.pdfjs.getPage(n); const vp = pg.getViewport({scale:R.scale});
+    const el = document.createElement("div"); el.className="rpage"; el.dataset.n=n; el.style.width=vp.width+"px"; el.style.height=vp.height+"px";
+    el.innerHTML=`<span class="pn">${n}</span>`; box.appendChild(el); R.els.push(el); R.obs.observe(el);
+  }
+  if (keepPage) gotoPage(keepPage, true);
+}
+async function renderReaderPage(n){
+  const el = R.els[n-1]; if(!el || el.dataset.done) return; el.dataset.done="1";
+  const pg = await R.file.pdfjs.getPage(n); const vp = pg.getViewport({scale:R.scale});
+  const c = document.createElement("canvas"); const k = Math.min(devicePixelRatio||1, 2);
+  c.width=vp.width*k; c.height=vp.height*k; el.appendChild(c);
+  await pg.render({canvasContext:c.getContext("2d"), viewport: pg.getViewport({scale:R.scale*k})}).promise;
+  const tl = document.createElement("div"); tl.className="textLayer"; tl.style.setProperty("--scale-factor", vp.scale); el.appendChild(tl);
+  const tc = await pg.getTextContent(); R.textCache.set(n, tc);
+  await pdfjsLib.renderTextLayer({textContentSource: tc, container: tl, viewport: vp, textDivs: []}).promise;
+  const end=document.createElement("div"); end.className="endOfContent"; tl.appendChild(end);
+  markHits(n);
+}
+function gotoPage(n, instant){ n=Math.min(Math.max(1,n), R.file?.pageCount||1); const el=R.els[n-1]; if(!el) return; $("rScroll").scrollTo({top: el.offsetTop-20, behavior: instant?"auto":"smooth"}); R.cur=n; $("rPage").value=n; }
+$("rScroll").addEventListener("scroll", ()=>{ if(!R.els.length) return; const top=$("rScroll").scrollTop+ $("rScroll").clientHeight*0.3; let n=1; for(const el of R.els){ if(el.offsetTop<=top) n=+el.dataset.n; else break; } if(n!==R.cur){ R.cur=n; $("rPage").value=n; } });
+$("rPrev").onclick=()=>gotoPage(R.cur-1); $("rNext").onclick=()=>gotoPage(R.cur+1);
+$("rPage").addEventListener("keydown", e=>{ if(e.key==="Enter") gotoPage(+e.target.value||1); });
+function zoom(d){ R.fit=false; R.scale=Math.min(5, Math.max(.25, R.scale*d)); layoutReader(R.cur); }
+$("rZoomIn").onclick=()=>zoom(1.25); $("rZoomOut").onclick=()=>zoom(.8); $("rFit").onclick=()=>{ R.fit=true; layoutReader(R.cur); };
+window.addEventListener("resize", ()=>{ if(document.body.classList.contains("read") && R.fit && R.file) layoutReader(R.cur); });
+async function pageText(n){ if(!R.textCache.has(n)) R.textCache.set(n, await (await R.file.pdfjs.getPage(n)).getTextContent()); return R.textCache.get(n); }
+function markHits(n){
+  const q = $("rFind").value.trim().toLowerCase(); const tl=R.els[n-1]?.querySelector(".textLayer"); if(!tl) return;
+  tl.querySelectorAll("span").forEach(sp=>sp.classList.toggle("hit", !!q && sp.textContent.toLowerCase().includes(q)));
+}
+async function runFind(){
+  const q=$("rFind").value.trim().toLowerCase(); R.hits=[]; R.hitPos=-1;
+  if(!R.file||!q){ R.els.forEach((_,i)=>markHits(i+1)); $("rFindInfo").textContent=""; return; }
+  say("搜尋中…", 30000);
+  for (let n=1;n<=R.file.pageCount;n++){ const tc=await pageText(n); if(tc.items.map(it=>it.str).join(" ").toLowerCase().includes(q)) R.hits.push(n); }
+  R.els.forEach((_,i)=>markHits(i+1));
+  if(!R.hits.length){ $("rFindInfo").textContent="找不到"; say("找不到符合的文字（掃描檔沒有文字層）", 4000); return; }
+  status.classList.remove("show"); nextHit();
+}
+function nextHit(){ if(!R.hits.length) return; R.hitPos=(R.hitPos+1)%R.hits.length; gotoPage(R.hits[R.hitPos]); $("rFindInfo").textContent=`第 ${R.hitPos+1} / ${R.hits.length} 頁有結果`; }
+$("rFind").addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); if(R.hits.length && R.hitPos>=0 && $("rFind").dataset.q===$("rFind").value) nextHit(); else { $("rFind").dataset.q=$("rFind").value; runFind(); } } });
 
 /* ---------- 匯出 PNG ---------- */
 async function pageToPng(p, dpi=150){
