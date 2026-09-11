@@ -47,7 +47,7 @@
   .drop strong{color:var(--rail-ink);font-weight:500;display:block}
   .drop.over{border-color:var(--accent);background:rgba(14,124,123,.18);color:var(--rail-ink)}
   .files{flex:1;overflow:auto;padding:6px 8px}
-  .file{display:grid;grid-template-columns:8px 1fr auto;gap:10px;align-items:center;padding:8px 8px;border-radius:6px}
+  .file{display:grid;grid-template-columns:8px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 8px;border-radius:6px}
   .file:hover{background:rgba(255,255,255,.06)}
   .file .swatch{width:8px;height:28px;border-radius:2px}
   .file .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
@@ -259,9 +259,17 @@ async function addFiles(list){
         if (pw===null) throw new Error("cancelled"); cb(pw);
       };
       const pdfjs = await task.promise;
+      // 沒有開啟密碼、但設了權限加密（擁有者密碼）的檔案，pdf-lib 無法解密，重存會變空白 → 一律視為受保護
+      let permOnly = false;
+      if (!locked){ try{ const lib = await PDFDocument.load(bytes, {ignoreEncryption:true}); if (lib.isEncrypted){ locked = true; permOnly = true; } }catch(e){} }
       const rec = { id: Date.now()+Math.random(), name: f.name, bytes, pdfjs, pageCount: pdfjs.numPages, color: SWATCHES[files.length % SWATCHES.length], locked };
       files.push(rec);
-      if (locked){ say(`「${f.name}」已解鎖，可閱讀與列印；受保護的檔案不進工作區編輯`, 5000); openReader(rec); }
+      if (locked){
+        alert(permOnly
+          ? `「${f.name}」設有權限保護（加密但不需開啟密碼）。\n\n可以閱讀、搜尋、列印，但無法合併、分割或整理頁面——強行重存會得到空白頁。\n\n如果一定要編輯，可在左側檔案清單按「轉成圖片版」：每頁轉成圖片重新組成未加密的 PDF（文字會變成圖片，無法選取）。`
+          : `「${f.name}」已用密碼解鎖，可閱讀、搜尋、列印；受保護的檔案不進工作區編輯。\n\n若需要編輯，可在左側檔案清單按「轉成圖片版」。`);
+        openReader(rec);
+      }
       else for (let i=0;i<rec.pageCount;i++) pages.push({ uid: uidSeq++, fileId: rec.id, index: i, rotation: 0 });
     }catch(e){ console.error(e); if(!/cancelled/.test(e.message)) say(`無法讀取「${f.name}」：檔案可能已損毀`, 4000); }
   }
@@ -285,9 +293,10 @@ function renderFiles(){
     const row = document.createElement("div"); row.className="file";
     row.innerHTML = `<div class="swatch" style="background:${f.color}"></div>
       <div><div class="name" title="點一下開始閱讀">${f.name}</div><div class="meta">${f.locked ? '<span class="locked" style="margin:0">🔒 僅可閱讀／列印</span>' : `${used} / ${f.pageCount} 頁在工作區`}</div></div>
-      <button title="移除此檔">移除</button>`;
+      <div style="display:flex;gap:4px;flex-direction:column">${f.locked?'<button data-act="raster" title="每頁轉成圖片，重組成未加密 PDF">轉成圖片版</button>':""}<button data-act="remove" title="移除此檔">移除</button></div>`;
     row.querySelector(".name").onclick = ()=>openReader(f);
-    row.querySelector("button").onclick = ()=>{ pages = pages.filter(p=>p.fileId!==f.id); files.splice(files.indexOf(f),1); cuts.clear(); if(R.file===f){ R.file=null; $("rScroll").innerHTML=""; } render(); renderFiles(); renderFileSelect(); };
+    row.querySelector('[data-act="raster"]')?.addEventListener("click", ()=>rasterizeFile(f));
+    row.querySelector('[data-act="remove"]').onclick = ()=>{ pages = pages.filter(p=>p.fileId!==f.id); files.splice(files.indexOf(f),1); cuts.clear(); if(R.file===f){ R.file=null; $("rScroll").innerHTML=""; } render(); renderFiles(); renderFileSelect(); };
     box.appendChild(row);
   }
 }
@@ -467,6 +476,26 @@ $("extractRanges").onclick = ()=>guard(async()=>{
   const g=parseRanges(); if(!g) return; const list = g.flat();
   download(await buildPdf(list), outName(`-第${$("ranges").value.trim().replace(/\s+/g,"")}頁`)); say(`已抽出 ${list.length} 頁`);
 });
+
+/* ---------- 受保護檔案 → 圖片版 PDF ---------- */
+async function rasterizeFile(f){
+  if (!confirm(`要把「${f.name}」的 ${f.pageCount} 頁全部轉成圖片、重組成一份未加密的 PDF 嗎？\n文字會變成圖片（無法選取、搜尋），檔案通常會變大。`)) return;
+  await guard(async()=>{
+    const out = await PDFDocument.create(); out.setProducer("PDF 頁面工作台");
+    for (let n=1;n<=f.pageCount;n++){
+      say(`轉換中… ${n} / ${f.pageCount}`, 60000);
+      const pg = await f.pdfjs.getPage(n); const vp0 = pg.getViewport({scale:1}); const vp = pg.getViewport({scale:150/72});
+      const c = document.createElement("canvas"); c.width=vp.width; c.height=vp.height;
+      await pg.render({canvasContext:c.getContext("2d"), viewport:vp}).promise;
+      const jpg = await new Promise(r=>c.toBlob(r,"image/jpeg",.9));
+      const img = await out.embedJpg(new Uint8Array(await jpg.arrayBuffer()));
+      const page = out.addPage([vp0.width, vp0.height]); page.drawImage(img,{x:0,y:0,width:vp0.width,height:vp0.height});
+    }
+    const bytes = await out.save();
+    await addFiles([new File([bytes], `${baseName(f.name)}-圖片版.pdf`, {type:"application/pdf"})]);
+    setMode("arrange"); say(`已建立「${baseName(f.name)}-圖片版.pdf」，頁面已加入工作區`, 5000);
+  });
+}
 
 /* ---------- 列印 ---------- */
 function printBytes(bytes){
