@@ -78,7 +78,7 @@ h1,h2,h3 { color:#452A1D !important; letter-spacing:1px; }
 .wbar .wbarline { position:absolute;left:0;right:0;bottom:0;height:5px;background:#F3E9D8;
   border-radius:0 0 14px 14px;overflow:hidden }
 .wbar .wbarline i { display:block;height:100%;background:#E39B23 }
-.card .shot { height:150px;border-radius:14px;overflow:hidden;margin:-4px 0 10px;background:#F6EFE0 }
+.card .shot { height:200px;border-radius:14px;overflow:hidden;margin:-4px 0 10px;background:#F6EFE0 }
 .card .shot img { width:100%;height:100%;object-fit:cover;display:block }
 .card .shot.noimg { display:flex;align-items:center;justify-content:center }
 .card .shot.noimg::after { content:'尚未提供示意圖';font-size:13px;color:#B0A08C }
