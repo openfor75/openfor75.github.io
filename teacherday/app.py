@@ -69,19 +69,40 @@ h1,h2,h3 { color:#452A1D !important; letter-spacing:1px; }
          color:#7E2118;font-weight:700;font-size:15px;margin-right:6px }
 .badge.pink { background:#EEDFCD;color:#8A5A33 }
 .badge.gold { background:#FBEBCB;color:#A56A12 }
-.card { background:#FFFDF7;border:4px solid #F0DBD2;border-radius:24px 24px 8px 8px;
+.wbar { background:#FFFDF7;border:3px solid #F0DBD2;border-radius:18px;padding:14px 20px;
+  display:flex;align-items:center;gap:22px;flex-wrap:wrap;position:relative;margin-bottom:6px }
+.wbar .lb { display:block;font-size:12.5px;color:#9C8F70;letter-spacing:1px }
+.wbar .big { font-size:30px;font-weight:800;color:#A8342A;line-height:1.15 }
+.wbar .w2 b { font-size:17px;color:#452A1D }
+.wbar .wsep { width:1px;height:34px;background:#EDE0C9 }
+.wbar .wbarline { position:absolute;left:0;right:0;bottom:0;height:5px;background:#F3E9D8;
+  border-radius:0 0 14px 14px;overflow:hidden }
+.wbar .wbarline i { display:block;height:100%;background:#E39B23 }
+.card .shot { height:150px;border-radius:14px;overflow:hidden;margin:-4px 0 10px;background:#F6EFE0 }
+.card .shot img { width:100%;height:100%;object-fit:cover;display:block }
+.card .shot.noimg { display:flex;align-items:center;justify-content:center }
+.card .shot.noimg::after { content:'尚未提供示意圖';font-size:13px;color:#B0A08C }
+.card { min-height:372px;display:flex;flex-direction:column;
+  background:#FFFDF7;border:4px solid #F0DBD2;border-radius:24px 24px 8px 8px;
         padding:14px 16px 8px;margin-bottom:2px }
 .card h4 { margin:6px 0 2px;color:#452A1D;font-size:20px }
 .card .cls { color:#A56A12;font-size:14px;font-weight:700 }
-.card .desc { color:#7A5541;font-size:15px;line-height:1.5;min-height:48px }
-.card .why { background:#FBEFE2;border-radius:14px;padding:9px 12px;margin:8px 0 0;
+.card .desc { color:#7A5541;font-size:15px;line-height:1.5;min-height:46px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden }
+.card .why { background:#FDF6EC;border-radius:12px;padding:8px 11px;margin:8px 0 0;height:70px;overflow:hidden;position:relative;
   font-size:14px;color:#7A5541;line-height:1.55 }
 .card .why b { display:block;font-size:12.5px;color:#8A5A33;letter-spacing:1px;margin-bottom:3px }
-.card .items { background:#F8F0DF;border-radius:14px;padding:9px 12px;margin:8px 0 2px }
+.card .why span { display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden }
+.card .items { background:#FBF5E6;border-radius:12px;padding:8px 11px;margin:8px 0 2px;
+  height:104px;overflow:hidden;position:relative }
+.card .items::after,.card .why::after { content:'';position:absolute;left:0;right:0;bottom:0;height:16px }
+.card .items::after { background:linear-gradient(transparent,#FBF5E6) }
+.card .why::after { background:linear-gradient(transparent,#FDF6EC) }
 .card .items b { display:block;font-size:12.5px;color:#A56A12;letter-spacing:1px;margin-bottom:3px }
 .card .items ul { margin:0;padding-left:17px }
 .card .items li { font-size:14px;color:#452A1D;line-height:1.55 }
-.card .price { color:#7E2118;font-size:26px;font-weight:800;margin:4px 0 8px }
+.card .price { color:#7E2118;font-size:26px;font-weight:800;margin:10px 0 2px;margin-top:auto;
+  border-top:1px dashed #E9DCC6;padding-top:8px }
 .wallet { background:#FFFDF7;border:4px solid #EEDFCD;border-radius:24px;padding:16px 18px;text-align:center }
 .wallet .n { font-size:40px;font-weight:800;color:#452A1D;line-height:1.2 }
 .wallet .t { font-size:14px;color:#7A5541 }
@@ -406,14 +427,26 @@ def login_box(teachers: pd.DataFrame):
     st.caption(f"商貿幣（{COIN}）為本競賽之虛擬購買額度，不具現金價值，不得轉讓或兌現。")
 
 
-def wallet(total: int, used: int):
+def shot_html(p) -> str:
+    """商品示意圖：放在卡片內、固定高度，沒有圖就留一塊佔位，卡片才會等高。"""
+    url = str(p.get("示意圖", "")).strip()
+    if url.startswith(("http", "data:")):
+        return (f"<div class='shot'><img src='{url}' alt='示意圖' "
+                f"onerror=\"this.parentNode.classList.add('noimg');this.remove()\"></div>")
+    return "<div class='shot noimg'></div>"
+
+
+def wallet(total: int, used: int, cnt: int = 0):
     left = total - used
-    c1, c2, c3 = st.columns(3)
-    for col, n, t in [(c1, f"{COIN}{left}", "剩餘商貿幣"),
-                      (c2, f"{COIN}{used}", "已下訂金額"),
-                      (c3, f"{COIN}{total}", "您的總額度")]:
-        col.markdown(f"<div class='wallet'><div class='n'>{n}</div><div class='t'>{t}</div></div>",
-                     unsafe_allow_html=True)
+    pct = 0 if total <= 0 else min(100, round(used / total * 100))
+    st.markdown(
+        f"<div class='wbar'>"
+        f"<div class='w1'><span class='lb'>還可以用</span><span class='big'>{COIN}{left}</span></div>"
+        f"<div class='wsep'></div>"
+        f"<div class='w2'><span class='lb'>已下訂</span><b>{cnt} 件・{COIN}{used}</b></div>"
+        f"<div class='w2'><span class='lb'>總額度</span><b>{COIN}{total}</b></div>"
+        f"<div class='wbarline'><i style='width:{pct}%'></i></div>"
+        f"</div>", unsafe_allow_html=True)
 
 
 def shop_tab(products, my_orders, left, opened):
@@ -424,36 +457,30 @@ def shop_tab(products, my_orders, left, opened):
     for i, p in products.iterrows():
         pid, price = str(p["商品ID"]), int(p["售價"])
         with cols[i % 3]:
-            if str(p.get("示意圖", "")).startswith("http"):
-                try:
-                    st.image(p["示意圖"], use_container_width=True)
-                except Exception:
-                    st.caption("（示意圖載入失敗，請確認雲端硬碟共用權限）")
             raw = str(p.get("商品內容", "")).strip()
             items = [x.strip() for x in re.split(r"[；;\n]+", raw) if x.strip()]
             box = ("<div class='items'><b>內容物</b><ul>"
                    + "".join(f"<li>{x}</li>" for x in items) + "</ul></div>") if items else ""
             why = str(p.get("需求洞察", "")).strip()
-            whybox = (f"<div class='why'><b>為什麼想做給老師</b>{why}</div>") if why else ""
+            whybox = (f"<div class='why'><b>為什麼想做給老師</b><span>{why}</span></div>") if why else ""
             st.markdown(
-                f"<div class='card'><div class='cls'>{p.get('班級','')}</div>"
+                f"<div class='card'>{shot_html(p)}<div class='cls'>{p.get('班級','')}</div>"
                 f"<h4>{p['商品名稱']}</h4>"
                 f"<div class='desc'>{p.get('商品介紹','')}</div>"
                 f"{whybox}{box}"
                 f"<div class='price'>{COIN}{price}</div></div>", unsafe_allow_html=True)
             if pid in bought:
-                if st.button(f"已下訂「{p['商品名稱']}」・點此取消",
-                             key=f"c{pid}", use_container_width=True):
+                if st.button("✓ 已下訂・點此取消", key=f"c{pid}", use_container_width=True):
                     cancel_order(st.session_state.user, pid)
                     st.rerun()
             elif not opened:
-                st.button(f"「{p['商品名稱']}」尚未開賣", key=f"x{pid}", disabled=True, use_container_width=True)
+                st.button("尚未開賣", key=f"x{pid}", disabled=True, use_container_width=True)
             elif price > left:
-                st.button(f"「{p['商品名稱']}」餘額不足，差 {COIN}{price-left}",
+                st.button(f"餘額不足，還差 {COIN}{price-left}",
                           key=f"n{pid}", disabled=True, use_container_width=True)
             else:
-                if st.button(f"用 {COIN}{price} 把「{p['商品名稱']}」帶走",
-                             key=f"b{pid}", type="primary", use_container_width=True):
+                if st.button(f"用 {COIN}{price} 帶走", key=f"b{pid}", type="primary",
+                             use_container_width=True):
                     add_order(st.session_state.user, pid, price)
                     st.toast(f"已下訂：{p['商品名稱']}", icon="🎁")
                     st.rerun()
@@ -660,19 +687,14 @@ def guest_view():
     cols = st.columns(3)
     for i, (_, p) in enumerate(show.iterrows()):
         with cols[i % 3]:
-            if str(p.get("示意圖", "")).startswith("http"):
-                try:
-                    st.image(p["示意圖"], use_container_width=True)
-                except Exception:
-                    st.caption("（示意圖載入失敗）")
             raw = str(p.get("商品內容", "")).strip()
             items = [x.strip() for x in re.split(r"[；;\n]+", raw) if x.strip()]
             box = ("<div class='items'><b>內容物</b><ul>"
                    + "".join(f"<li>{x}</li>" for x in items) + "</ul></div>") if items else ""
             why = str(p.get("需求洞察", "")).strip()
-            whybox = (f"<div class='why'><b>為什麼想做給老師</b>{why}</div>") if why else ""
+            whybox = (f"<div class='why'><b>為什麼想做給老師</b><span>{why}</span></div>") if why else ""
             st.markdown(
-                f"<div class='card'><div class='cls'>{p.get('班級','')}</div>"
+                f"<div class='card'>{shot_html(p)}<div class='cls'>{p.get('班級','')}</div>"
                 f"<h4>{p['商品名稱']}</h4>"
                 f"<div class='desc'>{p.get('商品介紹','')}</div>"
                 f"{whybox}{box}"
@@ -711,7 +733,7 @@ def main():
     total, used = int(me["額度"]), int(my_orders["售價"].sum())
 
     with st.sidebar:
-        st.markdown(f"### {user} 老師")
+        st.markdown(f"### {user}")
         st.markdown(f"<span class='badge'>剩餘 {COIN}{total-used}</span>"
                     f"<span class='badge pink'>額度 {COIN}{total}</span>", unsafe_allow_html=True)
         st.caption(f"基本 {COIN}{BASE_CREDIT}　+　任教 {me['任教參賽班數']} 個參賽班 × {COIN}{CREDIT_PER_CLASS}")
@@ -726,7 +748,7 @@ def main():
             st.rerun()
 
     header()
-    wallet(total, used)
+    wallet(total, used, len(my_orders))
     st.write("")
 
     is_admin = bool(admin_pw) and admin_pw == str(secret("admin_password", "bae2026"))
