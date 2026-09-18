@@ -78,7 +78,17 @@ h1,h2,h3 { color:#452A1D !important; letter-spacing:1px; }
 .wbar .wbarline { position:absolute;left:0;right:0;bottom:0;height:5px;background:#F3E9D8;
   border-radius:0 0 14px 14px;overflow:hidden }
 .wbar .wbarline i { display:block;height:100%;background:#E39B23 }
-.card .shot { height:200px;border-radius:14px;overflow:hidden;margin:-4px 0 10px;background:#F6EFE0 }
+.card .shot { display:block;position:relative;height:200px;border-radius:14px;overflow:hidden;
+  margin:-4px 0 10px;background:#F6EFE0;cursor:zoom-in }
+.card a.shot .zoom { position:absolute;right:8px;bottom:8px;background:rgba(69,42,29,.78);color:#fff;
+  font-size:12.5px;font-weight:700;padding:3px 10px;border-radius:99px;letter-spacing:.5px }
+.card a.shot:hover .zoom { background:#A8342A }
+.zoomlb { display:none;position:fixed;inset:0;background:rgba(40,25,18,.92);z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:24px;cursor:zoom-out }
+.zoomlb:target { display:flex }
+.zoomlb img { max-width:92vw;max-height:82vh;border-radius:12px;display:block;
+  height:auto !important;object-fit:contain !important }
+.zoomlb .lbx { color:#F3E4CC;font-size:15px;font-weight:700;letter-spacing:1px }
 .card .shot img { width:100%;height:100%;object-fit:cover;display:block }
 .card .shot.noimg { display:flex;align-items:center;justify-content:center }
 .card .shot.noimg::after { content:'尚未提供示意圖';font-size:13px;color:#B0A08C }
@@ -428,11 +438,16 @@ def login_box(teachers: pd.DataFrame):
 
 
 def shot_html(p) -> str:
-    """商品示意圖：放在卡片內、固定高度，沒有圖就留一塊佔位，卡片才會等高。"""
+    """商品示意圖：卡片內固定高度；點一下可放大看原圖，再點一下關閉。"""
     url = str(p.get("示意圖", "")).strip()
+    pid = str(p.get("商品ID", "x"))
     if url.startswith(("http", "data:")):
-        return (f"<div class='shot'><img src='{url}' alt='示意圖' "
-                f"onerror=\"this.parentNode.classList.add('noimg');this.remove()\"></div>")
+        return (f"<a class='shot' href='#big{pid}' title='點一下看大圖'>"
+                f"<img src='{url}' alt='示意圖' "
+                f"onerror=\"this.parentNode.classList.add('noimg');this.remove()\">"
+                f"<span class='zoom'>🔍 點圖放大</span></a>"
+                f"<a class='zoomlb' id='big{pid}' href='#'><img src='{url}' alt='放大圖'>"
+                f"<span class='lbx'>點任一處關閉 ✕</span></a>")
     return "<div class='shot noimg'></div>"
 
 
