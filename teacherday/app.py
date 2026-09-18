@@ -20,7 +20,7 @@ import streamlit as st
 COIN = "✨"                 # 商貿幣符號
 BASE_CREDIT = 250          # 每位老師基本額度
 CREDIT_PER_CLASS = 50      # 每任教一個參賽班級加給
-PRICE_MIN, PRICE_MAX = 50, 200
+PRICE_MIN, PRICE_MAX = 50, 250
 TITLE = "誰能把禮物送進老師ㄉ心裡"
 SUBTITLE = "115學年度 教師節限定商品模擬市場｜國立員林家商 商貿科"
 
@@ -42,7 +42,7 @@ st.markdown("""
       蓋在我們的淺色底上就整片消失，所以這裡把文字色鎖回來 ── */
 :root{ color-scheme: only light; }
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"],
-section[data-testid="stSidebar"]{ color:#3B2F18; }
+section[data-testid="stSidebar"]{ color:#452A1D; }
 [data-testid="stMarkdownContainer"] > p,
 [data-testid="stMarkdownContainer"] > ul li,
 [data-testid="stMarkdownContainer"] > ol li,
@@ -50,49 +50,49 @@ section[data-testid="stSidebar"]{ color:#3B2F18; }
 [data-testid="stMarkdownContainer"] > h3, [data-testid="stMarkdownContainer"] > h4,
 [data-testid="stWidgetLabel"] p, label p, label,
 [data-baseweb="tab"] p, [data-testid="stExpander"] summary p,
-[data-testid="stMetricLabel"] p{ color:#3B2F18 !important; }
+[data-testid="stMetricLabel"] p{ color:#452A1D !important; }
 [data-testid="stCaptionContainer"], [data-testid="stCaptionContainer"] p,
-[data-testid="stCaptionContainer"] div{ color:#6E5A3A !important; }
-[data-baseweb="select"] *{ color:#3B2F18 !important; }
-[data-baseweb="popover"] li, [data-baseweb="menu"] li{ color:#3B2F18 !important; background:#FFFCF5 !important; }
+[data-testid="stCaptionContainer"] div{ color:#7A5541 !important; }
+[data-baseweb="select"] *{ color:#452A1D !important; }
+[data-baseweb="popover"] li, [data-baseweb="menu"] li{ color:#452A1D !important; background:#FFFDF7 !important; }
 [data-testid="stHeader"]{ background:transparent !important; }
-[data-testid="stExpander"] details{ background:#FFFCF5; border-radius:16px; }
-input, textarea, select{ background:#fff !important; color:#3B2F18 !important;
-  -webkit-text-fill-color:#3B2F18 !important; }
-::placeholder{ color:#A9A08B !important; -webkit-text-fill-color:#A9A08B !important; }
-hr{ border-color:#E3DCC9 !important; }
+[data-testid="stExpander"] details{ background:#FFFDF7; border-radius:16px; }
+input, textarea, select{ background:#fff !important; color:#452A1D !important;
+  -webkit-text-fill-color:#452A1D !important; }
+::placeholder{ color:#B0A28C !important; -webkit-text-fill-color:#B0A28C !important; }
+hr{ border-color:#E9DCC6 !important; }
 
 html, body, [class*="css"], .stApp { font-family:'jf-openhuninn','Microsoft JhengHei','PingFang TC',sans-serif; }
-.stApp { background: linear-gradient(180deg,#FFFCF5 0%,#FAF5E9 45%,#F1E9D6 100%); }
-h1,h2,h3 { color:#4A3B22 !important; letter-spacing:1px; }
-.badge { display:inline-block;padding:6px 16px;border-radius:99px;background:#DCE7C9;
-         color:#4E6B3B;font-weight:700;font-size:15px;margin-right:6px }
-.badge.pink { background:#EFDDE6;color:#8E5872 }
-.badge.gold { background:#F3E5C4;color:#8A6A1E }
-.card { background:#FFFCF5;border:4px solid #DCE7C9;border-radius:24px 24px 8px 8px;
+.stApp { background: linear-gradient(180deg,#FFFDF7 0%,#FBF4E7 45%,#F1E9D6 100%); }
+h1,h2,h3 { color:#452A1D !important; letter-spacing:1px; }
+.badge { display:inline-block;padding:6px 16px;border-radius:99px;background:#F0DBD2;
+         color:#7E2118;font-weight:700;font-size:15px;margin-right:6px }
+.badge.pink { background:#EEDFCD;color:#8A5A33 }
+.badge.gold { background:#FBEBCB;color:#A56A12 }
+.card { background:#FFFDF7;border:4px solid #F0DBD2;border-radius:24px 24px 8px 8px;
         padding:14px 16px 8px;margin-bottom:2px }
-.card h4 { margin:6px 0 2px;color:#4A3B22;font-size:20px }
-.card .cls { color:#8A6A1E;font-size:14px;font-weight:700 }
-.card .desc { color:#6E5A3A;font-size:15px;line-height:1.5;min-height:48px }
-.card .why { background:#F7ECF1;border-radius:14px;padding:9px 12px;margin:8px 0 0;
-  font-size:14px;color:#6E5A3A;line-height:1.55 }
-.card .why b { display:block;font-size:12.5px;color:#8E5872;letter-spacing:1px;margin-bottom:3px }
-.card .items { background:#F6F1E2;border-radius:14px;padding:9px 12px;margin:8px 0 2px }
-.card .items b { display:block;font-size:12.5px;color:#8A6A1E;letter-spacing:1px;margin-bottom:3px }
+.card h4 { margin:6px 0 2px;color:#452A1D;font-size:20px }
+.card .cls { color:#A56A12;font-size:14px;font-weight:700 }
+.card .desc { color:#7A5541;font-size:15px;line-height:1.5;min-height:48px }
+.card .why { background:#FBEFE2;border-radius:14px;padding:9px 12px;margin:8px 0 0;
+  font-size:14px;color:#7A5541;line-height:1.55 }
+.card .why b { display:block;font-size:12.5px;color:#8A5A33;letter-spacing:1px;margin-bottom:3px }
+.card .items { background:#F8F0DF;border-radius:14px;padding:9px 12px;margin:8px 0 2px }
+.card .items b { display:block;font-size:12.5px;color:#A56A12;letter-spacing:1px;margin-bottom:3px }
 .card .items ul { margin:0;padding-left:17px }
-.card .items li { font-size:14px;color:#4A3B22;line-height:1.55 }
-.card .price { color:#4E6B3B;font-size:26px;font-weight:800;margin:4px 0 8px }
-.wallet { background:#FFFCF5;border:4px solid #EFDDE6;border-radius:24px;padding:16px 18px;text-align:center }
-.wallet .n { font-size:40px;font-weight:800;color:#4A3B22;line-height:1.2 }
-.wallet .t { font-size:14px;color:#6E5A3A }
+.card .items li { font-size:14px;color:#452A1D;line-height:1.55 }
+.card .price { color:#7E2118;font-size:26px;font-weight:800;margin:4px 0 8px }
+.wallet { background:#FFFDF7;border:4px solid #EEDFCD;border-radius:24px;padding:16px 18px;text-align:center }
+.wallet .n { font-size:40px;font-weight:800;color:#452A1D;line-height:1.2 }
+.wallet .t { font-size:14px;color:#7A5541 }
 div[data-testid="stButton"] { width:100% }
-div[data-testid="stButton"] > button { border-radius:8px 8px 22px 22px;border:0;background:#7E9B60;
+div[data-testid="stButton"] > button { border-radius:8px 8px 22px 22px;border:0;background:#A8342A;
     color:#fff;font-weight:700;padding:11px 14px;min-height:48px;width:100% !important;
     font-size:15px;line-height:1.35;white-space:normal;margin-bottom:16px; }
 div[data-testid="stButton"] > button p{ color:#fff !important; }
-div[data-testid="stButton"] > button:hover { background:#4E6B3B;color:#fff }
-div[data-testid="stButton"] > button:disabled { background:#E3E0D5;color:#9A9284 }
-section[data-testid="stSidebar"] { background:#FBF7EC }
+div[data-testid="stButton"] > button:hover { background:#7E2118;color:#fff }
+div[data-testid="stButton"] > button:disabled { background:#E3E0D5;color:#9E9080 }
+section[data-testid="stSidebar"] { background:#FCF6E9 }
 </style>
 """, unsafe_allow_html=True)
 
@@ -388,6 +388,13 @@ def login_box(teachers: pd.DataFrame):
             st.session_state.user = name
             st.rerun()
     st.divider()
+    st.markdown("#### 學生看這裡")
+    st.write("想看看各班賣什麼？不用登入也能逛，但不能購買。")
+    if st.columns([1, 3])[0].button("👀 我是學生，我要參觀", use_container_width=True):
+        st.session_state.guest = True
+        st.rerun()
+
+    st.divider()
     with st.expander("主辦單位登入（老師不用點）"):
         pw = st.text_input("管理密碼", type="password", key="adminpw_login")
         if st.button("進入後台"):
@@ -627,6 +634,55 @@ def admin_console(teachers: pd.DataFrame):
         credit_tab(teachers, orders)
 
 
+def guest_view():
+    """學生參觀模式：看得到型錄，買不了東西。"""
+    with st.sidebar:
+        st.markdown("### 👀 參觀模式")
+        st.caption("學生可以看各班賣什麼，但不能購買。想知道自己班賣得如何，"
+                   "等 9/30 結算後就會公布。")
+        if st.button("回登入頁", use_container_width=True):
+            st.session_state.pop("guest", None)
+            st.rerun()
+
+    header()
+    st.info("你正在**參觀模式**：可以看所有班級的商品，但不能購買。購買只開放給商貿科老師。")
+
+    products = read_products()
+    if products.empty:
+        st.info("商品尚未上架——各班報名經主辦單位審查通過後，就會出現在這裡。")
+        return
+
+    classes = ["全部班級"] + sorted({str(x) for x in products.get("班級", []) if str(x).strip()})
+    pick = st.selectbox("看哪一班", classes)
+    show = products if pick == "全部班級" else products[products["班級"].astype(str) == pick]
+    st.caption(f"目前上架 {len(show)} 件商品")
+
+    cols = st.columns(3)
+    for i, (_, p) in enumerate(show.iterrows()):
+        with cols[i % 3]:
+            if str(p.get("示意圖", "")).startswith("http"):
+                try:
+                    st.image(p["示意圖"], use_container_width=True)
+                except Exception:
+                    st.caption("（示意圖載入失敗）")
+            raw = str(p.get("商品內容", "")).strip()
+            items = [x.strip() for x in re.split(r"[；;\n]+", raw) if x.strip()]
+            box = ("<div class='items'><b>內容物</b><ul>"
+                   + "".join(f"<li>{x}</li>" for x in items) + "</ul></div>") if items else ""
+            why = str(p.get("需求洞察", "")).strip()
+            whybox = (f"<div class='why'><b>為什麼想做給老師</b>{why}</div>") if why else ""
+            st.markdown(
+                f"<div class='card'><div class='cls'>{p.get('班級','')}</div>"
+                f"<h4>{p['商品名稱']}</h4>"
+                f"<div class='desc'>{p.get('商品介紹','')}</div>"
+                f"{whybox}{box}"
+                f"<div class='price'>{COIN}{int(p['售價'])}</div></div>", unsafe_allow_html=True)
+            st.button("參觀模式不能購買", key=f"g{p['商品ID']}", disabled=True, use_container_width=True)
+
+    st.divider()
+    st.caption("銷售數量、銷售額與毛利會在 9/30 結算後公布，現在看不到別班賣掉幾件。")
+
+
 # ═══════════════ 主流程 ═══════════════
 def main():
     teachers = read_teachers()
@@ -637,6 +693,10 @@ def main():
 
     if st.session_state.get("admin") and "user" not in st.session_state:
         admin_console(teachers)
+        st.stop()
+
+    if st.session_state.get("guest") and "user" not in st.session_state:
+        guest_view()
         st.stop()
 
     if "user" not in st.session_state:
