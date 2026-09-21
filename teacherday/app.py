@@ -69,6 +69,14 @@ h1,h2,h3 { color:#452A1D !important; letter-spacing:1px; }
          color:#7E2118;font-weight:700;font-size:15px;margin-right:6px }
 .badge.pink { background:#EEDFCD;color:#8A5A33 }
 .badge.gold { background:#FBEBCB;color:#A56A12 }
+.pulse { display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin:4px 0 14px }
+.pulse .pi { flex:1 1 120px;background:#FBEBCB;border-radius:14px;padding:9px 12px;text-align:center }
+.pulse .pi span { display:block;font-size:12.5px;color:#8A5A33;letter-spacing:.5px }
+.pulse .pi b { display:block;font-size:26px;color:#A8342A;line-height:1.2 }
+.pulse .pc { flex:2 1 220px;background:#FFFDF7;border:2px dashed #E39B23;border-radius:14px;
+  padding:9px 14px;font-size:14.5px;color:#5E4530;line-height:1.55;display:flex;flex-direction:column;justify-content:center }
+.pulse .pc b { color:#A8342A }
+.pulse .pc small { color:#9C8F70;font-size:12.5px }
 .wbar { background:#FFFDF7;border:3px solid #F0DBD2;border-radius:18px;padding:14px 20px;
   display:flex;align-items:center;gap:22px;flex-wrap:wrap;position:relative;margin-bottom:6px }
 .wbar .lb { display:block;font-size:12.5px;color:#9C8F70;letter-spacing:1px }
@@ -390,11 +398,43 @@ def cancel_order(teacher: str, pid: str) -> None:
 LOGO = Path(__file__).parent / "assets" / "logo.png"
 
 
-def header():
+def header(show_pulse: bool = True):
     if LOGO.exists():
         st.image(str(LOGO), width=340)
     st.markdown(f"# {COIN} {TITLE}")
     st.caption(SUBTITLE)
+    if show_pulse:
+        pulse()
+
+
+def pulse():
+    """全科戰況：只公開整體熱度，不公開任何一班的數字（避免從眾效應）。"""
+    try:
+        orders = read_orders()
+    except Exception:
+        return
+    from datetime import datetime, timedelta, timezone
+    tw = timezone(timedelta(hours=8))
+    now = datetime.now(tw)
+    end = datetime(2026, 9, 30, 17, 0, tzinfo=tw)
+    left = end - now
+    if left.total_seconds() > 0:
+        d, h = left.days, left.seconds // 3600
+        clock = f"{d} 天 {h} 小時" if d > 0 else f"{h} 小時 {(left.seconds % 3600)//60} 分"
+        clock_txt = f"距離 9/30（三）17:00 截止還有 <b>{clock}</b>"
+    else:
+        clock_txt = "<b>選購已截止</b>，結果即將公布"
+    n_orders = len(orders)
+    n_teachers = orders["老師"].nunique() if n_orders else 0
+    total = int(pd.to_numeric(orders["售價"], errors="coerce").fillna(0).sum()) if n_orders else 0
+    st.markdown(
+        f"<div class='pulse'>"
+        f"<div class='pi'><span>已經有</span><b>{n_teachers}</b><span>位老師參與</span></div>"
+        f"<div class='pi'><span>全科共帶走</span><b>{n_orders}</b><span>件禮物</span></div>"
+        f"<div class='pi'><span>總成交</span><b>{COIN}{total}</b><span>商貿幣</span></div>"
+        f"<div class='pc'>{clock_txt}<br>"
+        f"<small>各班銷量、銷售額與毛利會在截止後一起公布</small></div>"
+        f"</div>", unsafe_allow_html=True)
 
 
 def is_open(cfg) -> bool:
@@ -402,7 +442,7 @@ def is_open(cfg) -> bool:
 
 
 def login_box(teachers: pd.DataFrame):
-    header()
+    header(show_pulse=False)
     st.markdown("#### 老師，請先登入")
     st.write("選擇您的姓名，輸入商貿科發給您的 4 碼通行碼。")
     c1, c2 = st.columns([2, 1])
