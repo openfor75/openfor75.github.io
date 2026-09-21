@@ -477,10 +477,31 @@ def login_box(teachers: pd.DataFrame):
     st.caption(f"商貿幣（{COIN}）為本競賽之虛擬購買額度，不具現金價值，不得轉讓或兌現。")
 
 
+def blind_codes(products) -> dict:
+    """給每件商品一個固定的匿名編號（No.01…），順序由雜湊決定，跟班級順序無關。"""
+    import hashlib
+    ids = [str(x) for x in products["商品ID"]]
+    order = sorted(ids, key=lambda x: hashlib.md5(("bae-2026-" + x).encode()).hexdigest())
+    return {pid: f"No.{i+1:02d}" for i, pid in enumerate(order)}
+
+
+def anon_key(pid: str) -> str:
+    """網址錨點用的代號，不能露出班級名稱。"""
+    import hashlib
+    return hashlib.md5(("zoom-" + str(pid)).encode()).hexdigest()[:10]
+
+
+def shuffled(products, seed_text: str):
+    """每位老師看到的商品順序不同（但同一位老師每次一樣），避免排前面的比較好賣。"""
+    import hashlib
+    seed = int(hashlib.md5(seed_text.encode()).hexdigest()[:8], 16)
+    return products.sample(frac=1, random_state=seed).reset_index(drop=True)
+
+
 def shot_html(p) -> str:
     """商品示意圖：卡片內固定高度；點一下可放大看原圖，再點一下關閉。"""
     url = str(p.get("示意圖", "")).strip()
-    pid = str(p.get("商品ID", "x"))
+    pid = anon_key(p.get("商品ID", "x"))
     if url.startswith(("http", "data:")):
         return (f"<a class='shot' href='#big{pid}' title='點一下看大圖'>"
                 f"<img src='{url}' alt='示意圖' "
@@ -508,9 +529,12 @@ def shop_tab(products, my_orders, left, opened):
     bought = set(my_orders["商品ID"])
     if not opened:
         st.warning("目前不在開賣期間，型錄僅供瀏覽。")
+    codes = blind_codes(products)
+    view = shuffled(products, str(st.session_state.get("user", "")))
     cols = st.columns(3)
-    for i, p in products.iterrows():
+    for i, p in view.iterrows():
         pid, price = str(p["商品ID"]), int(p["售價"])
+        tag = p.get("班級", "") if not opened else codes.get(pid, "")
         with cols[i % 3]:
             raw = str(p.get("商品內容", "")).strip()
             items = [x.strip() for x in re.split(r"[；;\n]+", raw) if x.strip()]
@@ -519,7 +543,7 @@ def shop_tab(products, my_orders, left, opened):
             why = str(p.get("需求洞察", "")).strip()
             whybox = (f"<div class='why'><b>為什麼想做給老師</b><span>{why}</span></div>") if why else ""
             st.markdown(
-                f"<div class='card'>{shot_html(p)}<div class='cls'>{p.get('班級','')}</div>"
+                f"<div class='card'>{shot_html(p)}<div class='cls'>{tag}</div>"
                 f"<h4>{p['商品名稱']}</h4>"
                 f"<div class='desc'>{p.get('商品介紹','')}</div>"
                 f"{whybox}{box}"
@@ -541,13 +565,18 @@ def shop_tab(products, my_orders, left, opened):
                     st.rerun()
 
 
-def orders_tab(products, my_orders):
+def orders_tab(products, my_orders, opened=True):
     if my_orders.empty:
         st.info("您還沒有下訂任何商品。回到「商品型錄」逛一逛吧。")
         return
+    codes = blind_codes(products)
     m = my_orders.merge(products[["商品ID", "商品名稱", "班級"]], on="商品ID", how="left")
-    st.dataframe(m[["時間", "班級", "商品名稱", "售價"]],
-                 use_container_width=True, hide_index=True)
+    if opened:
+        m["編號"] = m["商品ID"].astype(str).map(codes)
+        cols = ["時間", "編號", "商品名稱", "售價"]
+    else:
+        cols = ["時間", "班級", "商品名稱", "售價"]
+    st.dataframe(m[cols], use_container_width=True, hide_index=True)
     st.markdown(f"**合計 {COIN}{int(m['售價'].sum())}**")
 
 
@@ -734,10 +763,16 @@ def guest_view():
         st.info("商品尚未上架——各班報名經主辦單位審查通過後，就會出現在這裡。")
         return
 
-    classes = ["全部班級"] + sorted({str(x) for x in products.get("班級", []) if str(x).strip()})
-    pick = st.selectbox("看哪一班", classes)
-    show = products if pick == "全部班級" else products[products["班級"].astype(str) == pick]
-    st.caption(f"目前上架 {len(show)} 件商品")
+    opened = is_open(read_settings())
+    codes = blind_codes(products)
+    if opened:
+        show = shuffled(products, "guest")
+        st.caption(f"目前上架 {len(show)} 件商品・為了公平，選購期間不顯示是哪一班做的，9/30 揭曉")
+    else:
+        classes = ["全部班級"] + sorted({str(x) for x in products.get("班級", []) if str(x).strip()})
+        pick = st.selectbox("看哪一班", classes)
+        show = products if pick == "全部班級" else products[products["班級"].astype(str) == pick]
+        st.caption(f"目前上架 {len(show)} 件商品")
 
     cols = st.columns(3)
     for i, (_, p) in enumerate(show.iterrows()):
@@ -749,12 +784,13 @@ def guest_view():
             why = str(p.get("需求洞察", "")).strip()
             whybox = (f"<div class='why'><b>為什麼想做給老師</b><span>{why}</span></div>") if why else ""
             st.markdown(
-                f"<div class='card'>{shot_html(p)}<div class='cls'>{p.get('班級','')}</div>"
+                f"<div class='card'>{shot_html(p)}<div class='cls'>"
+                f"{codes.get(str(p['商品ID']),'') if opened else p.get('班級','')}</div>"
                 f"<h4>{p['商品名稱']}</h4>"
                 f"<div class='desc'>{p.get('商品介紹','')}</div>"
                 f"{whybox}{box}"
                 f"<div class='price'>{COIN}{int(p['售價'])}</div></div>", unsafe_allow_html=True)
-            st.button("參觀模式不能購買", key=f"g{p['商品ID']}", disabled=True, use_container_width=True)
+            st.button("參觀模式不能購買", key=f"g{anon_key(p['商品ID'])}", disabled=True, use_container_width=True)
 
     st.divider()
     st.caption("銷售數量、銷售額與毛利會在 9/30 結算後公布，現在看不到別班賣掉幾件。")
@@ -815,7 +851,7 @@ def main():
         else:
             shop_tab(products, my_orders, total - used, is_open(cfg))
     with tabs[1]:
-        orders_tab(products, my_orders)
+        orders_tab(products, my_orders, is_open(cfg))
     if is_admin:
         with tabs[2]:
             review_tab()
