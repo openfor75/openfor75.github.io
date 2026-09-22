@@ -87,6 +87,11 @@ h1,h2,h3 { color:#452A1D !important; letter-spacing:1px; }
 .wbar .wbarline { position:absolute;left:0;right:0;bottom:0;height:5px;background:#F3E9D8;
   border-radius:0 0 14px 14px;overflow:hidden }
 .wbar .wbarline i { display:block;height:100%;background:#E39B23 }
+.gap { height:34px }
+.cmlist { max-height:260px;overflow:auto;background:#FBF5E6;border-radius:12px;padding:6px 12px;margin:4px 0 8px }
+.cmlist .cm { padding:7px 0;border-bottom:1px dashed #E9DCC6;font-size:14.5px;line-height:1.55;color:#452A1D }
+.cmlist .cm:last-child { border-bottom:0 }
+.cmlist .cm span { display:block;font-size:11.5px;color:#9C8F70 }
 .card .shot { display:block;position:relative;height:200px;border-radius:14px;overflow:hidden;
   margin:-4px 0 10px;background:#F6EFE0;cursor:zoom-in }
 .card a.shot .zoom { position:absolute;right:8px;bottom:8px;background:rgba(69,42,29,.78);color:#fff;
@@ -438,15 +443,46 @@ def add_comment(pid: str, text: str) -> None:
     read_comments.clear()
 
 
-def comment_box(pid: str, name: str):
+def delete_comment(when: str, pid: str, text: str) -> None:
+    if use_gsheet():
+        ws = with_retry(lambda: _open_sheet().worksheet(SHEETS["comments"]))
+        rows = with_retry(ws.get_all_values)
+        for i, r in enumerate(rows[1:], start=2):
+            if len(r) >= 3 and r[0] == when and str(r[1]) == str(pid) and r[2] == text:
+                with_retry(lambda: ws.delete_rows(i))
+                break
+    else:
+        f = DATA_DIR / f"{SHEETS['comments']}.csv"
+        if f.exists():
+            df = pd.read_csv(f, dtype=str).fillna("")
+            hit = df[(df["時間"] == when) & (df["商品ID"] == str(pid)) & (df["留言"] == text)].index
+            df.drop(hit[:1]).to_csv(f, index=False)
+    read_comments.clear()
+
+
+def comment_box(pid: str, name: str, board=None):
     """每張卡片下方的匿名留言格（收合在按鈕裡，不影響卡片等高）。"""
     k = anon_key(pid)
     sent = st.session_state.setdefault("sent_comments", set())
     ver = st.session_state.setdefault("comment_ver", {}).get(k, 0)
-    label = "💬 已留言，謝謝！再留一則" if k in sent else "💬 匿名留言給這班"
+    mine = pd.DataFrame(columns=COMMENT_COLS) if board is None else board[board["商品ID"] == str(pid)]
+    n = len(mine)
+    short = name if len(name) <= 7 else name[:6] + "…"
+    label = f"💬 {short}・{n} 則留言" if n else f"💬 {short}・來留言"
     with st.popover(label, use_container_width=True):
-        st.caption("留言完全匿名，不會記錄是哪位老師。會在 9/30 結算後轉交給該班。")
-        txt = st.text_area("想對做這份禮物的學生說什麼？", key=f"t{k}_{ver}", max_chars=150,
+        st.markdown(f"**{name}**　留言板")
+        if n:
+            items = "".join(
+                f"<div class='cm'><span>{str(r['時間'])[5:16]}</span>{str(r['留言'])}</div>"
+                for _, r in mine.sort_values("時間").iterrows())
+            st.markdown(f"<div class='cmlist'>{items}</div>", unsafe_allow_html=True)
+        else:
+            st.caption("還沒有人留言，來當第一個吧！")
+        if k in sent:
+            st.success("你的留言已送出，謝謝！")
+        st.caption("留言完全匿名，其他老師看得到內容，但看不到是誰寫的。9/30 結算後會轉交給做這份禮物的學生。"
+                   "請評論禮物本身，不要猜是哪一班做的喔。")
+        txt = st.text_area("我想說…", key=f"t{k}_{ver}", max_chars=150,
                            placeholder="例：我真的很需要潤喉糖！／如果換成大一點的杯子我會買", height=100)
         if st.button("送出留言", key=f"s{k}_{ver}", type="primary", use_container_width=True):
             if txt.strip():
@@ -629,6 +665,7 @@ def shop_tab(products, my_orders, left, opened):
     if not opened:
         st.warning("目前不在開賣期間，型錄僅供瀏覽。")
     codes = blind_codes(products)
+    board = read_comments()
     view = shuffled(products, str(st.session_state.get("user", "")))
     cols = st.columns(3)
     for i, p in view.iterrows():
@@ -663,7 +700,8 @@ def shop_tab(products, my_orders, left, opened):
                     st.toast(f"已下訂：{p['商品名稱']}", icon="🎁")
                     st.rerun()
             if opened:
-                comment_box(pid, p["商品名稱"])
+                comment_box(pid, p["商品名稱"], board)
+            st.markdown("<div class='gap'></div>", unsafe_allow_html=True)
 
 
 def orders_tab(products, my_orders, opened=True):
@@ -820,6 +858,7 @@ def credit_tab(teachers: pd.DataFrame, orders: pd.DataFrame):
 
 def comments_tab(products):
     st.markdown("### 老師匿名留言")
+    st.caption("留言在選購期間所有老師都看得到。若有不適合的內容（透露班級、人身攻擊等），可在這裡直接刪除。")
     c = read_comments()
     if c.empty:
         st.info("目前還沒有留言。")
@@ -830,8 +869,13 @@ def comments_tab(products):
     for cls in sorted(m["班級"].dropna().astype(str).unique()):
         sub = m[m["班級"].astype(str) == cls]
         with st.expander(f"{cls}｜{sub['商品名稱'].iloc[0]}（{len(sub)} 則）"):
-            for _, r in sub.iterrows():
-                st.markdown(f"- {r['留言']}")
+            for j, r in sub.reset_index(drop=True).iterrows():
+                a, b = st.columns([8, 1])
+                a.markdown(f"- {r['留言']}　<span style='color:#9C8F70;font-size:12px'>{r['時間']}</span>",
+                           unsafe_allow_html=True)
+                if b.button("刪除", key=f"del{cls}{j}{r['時間']}"):
+                    delete_comment(r["時間"], r["商品ID"], r["留言"])
+                    st.rerun()
     st.download_button("下載全部留言 CSV",
                        m[["班級", "商品名稱", "留言", "時間"]].to_csv(index=False).encode("utf-8-sig"),
                        "教師節模擬市場_老師留言.csv", "text/csv")
