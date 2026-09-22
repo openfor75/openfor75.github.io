@@ -26,8 +26,9 @@ SUBTITLE = "115學年度 教師節限定商品模擬市場｜國立員林家商 
 
 DATA_DIR = Path(__file__).parent / "data"
 SHEETS = {"products": "商品", "teachers": "老師", "orders": "訂單", "settings": "設定",
-          "signups": "報名"}
+          "signups": "報名", "comments": "留言"}
 ORDER_COLS = ["時間", "老師", "商品ID", "售價"]
+COMMENT_COLS = ["時間", "商品ID", "留言"]          # 刻意不存老師姓名：真正匿名
 TEACHER_COLS = ["姓名", "通行碼", "任教參賽班數", "自訂額度", "備註"]
 REVIEW_COLS = ["審查", "退件原因"]
 PRODUCT_COLS = ["商品ID", "班級", "商品名稱", "售價", "單位成本", "商品介紹", "商品內容",
@@ -402,6 +403,62 @@ def add_order(teacher: str, pid: str, price: int) -> None:
         read_orders.clear()
 
 
+@st.cache_data(ttl=60, show_spinner=False)
+def read_comments() -> pd.DataFrame:
+    try:
+        df = _read("comments")
+    except Exception:
+        return pd.DataFrame(columns=COMMENT_COLS)
+    if df.empty:
+        return pd.DataFrame(columns=COMMENT_COLS)
+    df["商品ID"] = df["商品ID"].astype(str)
+    return df
+
+
+def add_comment(pid: str, text: str) -> None:
+    """匿名留言：只記時間、商品、內容，不記是哪位老師。"""
+    text = text.strip()[:150]
+    if not text:
+        return
+    row = [dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), str(pid), text]
+    if use_gsheet():
+        sh = _open_sheet()
+        try:
+            ws = with_retry(lambda: sh.worksheet(SHEETS["comments"]))
+        except Exception:
+            ws = sh.add_worksheet(title=SHEETS["comments"], rows=500, cols=3)
+            ws.append_row(COMMENT_COLS)
+        with_retry(lambda: ws.append_row(row, value_input_option="USER_ENTERED"))
+    else:
+        DATA_DIR.mkdir(exist_ok=True)
+        f = DATA_DIR / f"{SHEETS['comments']}.csv"
+        df = pd.read_csv(f, dtype=str) if f.exists() else pd.DataFrame(columns=COMMENT_COLS)
+        df.loc[len(df)] = row
+        df.to_csv(f, index=False)
+    read_comments.clear()
+
+
+def comment_box(pid: str, name: str):
+    """每張卡片下方的匿名留言格（收合在按鈕裡，不影響卡片等高）。"""
+    k = anon_key(pid)
+    sent = st.session_state.setdefault("sent_comments", set())
+    ver = st.session_state.setdefault("comment_ver", {}).get(k, 0)
+    label = "💬 已留言，謝謝！再留一則" if k in sent else "💬 匿名留言給這班"
+    with st.popover(label, use_container_width=True):
+        st.caption("留言完全匿名，不會記錄是哪位老師。會在 9/30 結算後轉交給該班。")
+        txt = st.text_area("想對做這份禮物的學生說什麼？", key=f"t{k}_{ver}", max_chars=150,
+                           placeholder="例：我真的很需要潤喉糖！／如果換成大一點的杯子我會買", height=100)
+        if st.button("送出留言", key=f"s{k}_{ver}", type="primary", use_container_width=True):
+            if txt.strip():
+                add_comment(pid, txt)
+                sent.add(k)
+                st.session_state["comment_ver"][k] = ver + 1      # 換新的輸入框，等於清空
+                st.toast(f"已匿名送出給「{name}」，謝謝老師！", icon="💌")
+                st.rerun()
+            else:
+                st.warning("還沒寫內容喔。")
+
+
 def cancel_order(teacher: str, pid: str) -> None:
     df = read_orders()
     keep = ~((df["老師"] == teacher) & (df["商品ID"] == str(pid)))
@@ -605,6 +662,8 @@ def shop_tab(products, my_orders, left, opened):
                     add_order(st.session_state.user, pid, price)
                     st.toast(f"已下訂：{p['商品名稱']}", icon="🎁")
                     st.rerun()
+            if opened:
+                comment_box(pid, p["商品名稱"])
 
 
 def orders_tab(products, my_orders, opened=True):
@@ -637,7 +696,7 @@ def admin_tab(products, teachers, orders, cfg):
     show = r[["班級", "商品名稱", "售價", "單位成本", "購買數量", "銷售額", "銷貨成本", "毛利", "毛利率"]]
 
     c1, c2, c3 = st.columns(3)
-    for col, lab, key in [(c1, "🏆 人氣冠軍", "購買數量"), (c2, "🏆 銷售額冠軍", "銷售額"),
+    for col, lab, key in [(c1, "🏆 銷量冠軍", "購買數量"), (c2, "🏆 銷售額冠軍", "銷售額"),
                           (c3, "🏆 毛利冠軍", "毛利")]:
         top = r.sort_values(key, ascending=False).iloc[0]
         col.markdown(f"**{lab}**<br><span class='badge gold'>{top['班級']} {top['商品名稱']}</span>"
@@ -759,6 +818,25 @@ def credit_tab(teachers: pd.DataFrame, orders: pd.DataFrame):
                        "老師名單與額度.csv", "text/csv")
 
 
+def comments_tab(products):
+    st.markdown("### 老師匿名留言")
+    c = read_comments()
+    if c.empty:
+        st.info("目前還沒有留言。")
+        return
+    m = c.merge(products[["商品ID", "班級", "商品名稱"]], on="商品ID", how="left")
+    cnt = m.groupby("班級").size().reindex(sorted(products["班級"].astype(str))).fillna(0).astype(int)
+    st.caption("各班收到的留言數：" + "　".join(f"{k} {v}" for k, v in cnt.items()))
+    for cls in sorted(m["班級"].dropna().astype(str).unique()):
+        sub = m[m["班級"].astype(str) == cls]
+        with st.expander(f"{cls}｜{sub['商品名稱'].iloc[0]}（{len(sub)} 則）"):
+            for _, r in sub.iterrows():
+                st.markdown(f"- {r['留言']}")
+    st.download_button("下載全部留言 CSV",
+                       m[["班級", "商品名稱", "留言", "時間"]].to_csv(index=False).encode("utf-8-sig"),
+                       "教師節模擬市場_老師留言.csv", "text/csv")
+
+
 def admin_console(teachers: pd.DataFrame):
     """主辦單位專用畫面，不需要用老師身分登入。"""
     with st.sidebar:
@@ -778,12 +856,14 @@ def admin_console(teachers: pd.DataFrame):
         col.markdown(f"<div class='wallet'><div class='n'>{n}</div><div class='t'>{t}</div></div>",
                      unsafe_allow_html=True)
     st.write("")
-    t1, t2, t3 = st.tabs(["📋 報名審查", "🔐 後台結算", "✨ 額度設定"])
+    t1, t2, t3, t4 = st.tabs(["📋 報名審查", "🔐 後台結算", "💬 老師留言", "✨ 額度設定"])
     with t1:
         review_tab()
     with t2:
         admin_tab(products, teachers, orders, cfg)
     with t3:
+        comments_tab(products)
+    with t4:
         credit_tab(teachers, orders)
 
 
