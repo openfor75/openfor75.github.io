@@ -96,6 +96,27 @@ h1,h2,h3 { color:#452A1D !important; letter-spacing:1px; }
 .zoomlb:target { display:flex }
 .zoomlb img { max-width:92vw;max-height:82vh;border-radius:12px;display:block;
   height:auto !important;object-fit:contain !important }
+.card .price { display:flex;align-items:center;justify-content:space-between }
+.card a.more { font-size:13.5px;font-weight:700;color:#A8342A;text-decoration:none;
+  background:#FBEBCB;padding:5px 12px;border-radius:99px;letter-spacing:.5px }
+.card a.more:hover { background:#A8342A;color:#fff }
+.zoomlb, .zoomlb * { text-decoration:none !important }
+.infolb .infobox * { color:inherit }
+.infolb .iw, .infolb .ii, .infolb .id { font-weight:400 !important }
+.infolb .iw b, .infolb .ii b { font-weight:700 !important }
+.infolb .infobox { background:#FFFDF7;border-radius:20px;max-width:560px;width:100%;max-height:88vh;
+  overflow:auto;padding:20px 22px;color:#452A1D;cursor:default;text-align:left }
+.infolb .infobox img { width:100%;max-height:300px;object-fit:contain !important;border-radius:12px;
+  background:#F6EFE0;margin-bottom:12px }
+.infolb .it { font-size:13px;font-weight:700;color:#A56A12 }
+.infolb h3 { font-size:22px;margin:2px 0 8px;color:#452A1D }
+.infolb .id { font-size:15.5px;line-height:1.7;color:#5E4530;margin:0 0 10px;white-space:pre-wrap }
+.infolb .iw, .infolb .ii { background:#FBF5E6;border-radius:12px;padding:10px 13px;margin:8px 0;
+  font-size:14.5px;line-height:1.65 }
+.infolb .iw b, .infolb .ii b { display:block;font-size:12.5px;color:#8A5A33;letter-spacing:1px;margin-bottom:3px }
+.infolb .ii ul { margin:2px 0 0 18px;padding:0 }
+.infolb .ip { font-size:26px;font-weight:800;color:#7E2118;margin-top:8px }
+.infolb .ix { text-align:center;font-size:13px;color:#9C8F70;margin-top:10px }
 .zoomlb .lbx { color:#F3E4CC;font-size:15px;font-weight:700;letter-spacing:1px }
 .card .shot img { width:100%;height:100%;object-fit:cover;display:block }
 .card .shot.noimg { display:flex;align-items:center;justify-content:center }
@@ -498,6 +519,27 @@ def shuffled(products, seed_text: str):
     return products.sample(frac=1, random_state=seed).reset_index(drop=True)
 
 
+def info_html(p, tag: str) -> str:
+    """完整介紹：卡片上只放摘要，點「看完整介紹」全螢幕展開，點任一處關閉。"""
+    import html as _h
+    key = anon_key(p.get("商品ID", "x"))
+    url = str(p.get("示意圖", "")).strip()
+    img = (f"<img src='{url}' alt='示意圖'>" if url.startswith(("http", "data:")) else "")
+    raw = str(p.get("商品內容", "")).strip()
+    items = [x.strip() for x in re.split(r"[；;\n]+", raw) if x.strip()]
+    lis = "".join(f"<li>{_h.escape(x)}</li>" for x in items)
+    why = _h.escape(str(p.get("需求洞察", "")).strip())
+    desc = _h.escape(str(p.get("商品介紹", "")).strip())
+    return (f"<a class='more' href='#info{key}'>📖 看完整介紹</a>"
+            f"<a class='zoomlb infolb' id='info{key}' href='#'><div class='infobox'>"
+            f"{img}<div class='it'>{tag}</div><h3>{_h.escape(str(p['商品名稱']))}</h3>"
+            f"<p class='id'>{desc}</p>"
+            + (f"<div class='iw'><b>為什麼想做給老師</b>{why}</div>" if why else "")
+            + (f"<div class='ii'><b>內容物</b><ul>{lis}</ul></div>" if lis else "")
+            + f"<div class='ip'>{COIN}{int(p['售價'])}</div>"
+            f"<div class='ix'>點任一處關閉 ✕</div></div></a>")
+
+
 def shot_html(p) -> str:
     """商品示意圖：卡片內固定高度；點一下可放大看原圖，再點一下關閉。"""
     url = str(p.get("示意圖", "")).strip()
@@ -547,7 +589,7 @@ def shop_tab(products, my_orders, left, opened):
                 f"<h4>{p['商品名稱']}</h4>"
                 f"<div class='desc'>{p.get('商品介紹','')}</div>"
                 f"{whybox}{box}"
-                f"<div class='price'>{COIN}{price}</div></div>", unsafe_allow_html=True)
+                f"<div class='price'>{COIN}{price}{info_html(p, tag)}</div></div>", unsafe_allow_html=True)
             if pid in bought:
                 if st.button("✓ 已下訂・點此取消", key=f"c{pid}", use_container_width=True):
                     cancel_order(st.session_state.user, pid)
@@ -789,7 +831,9 @@ def guest_view():
                 f"<h4>{p['商品名稱']}</h4>"
                 f"<div class='desc'>{p.get('商品介紹','')}</div>"
                 f"{whybox}{box}"
-                f"<div class='price'>{COIN}{int(p['售價'])}</div></div>", unsafe_allow_html=True)
+                f"<div class='price'>{COIN}{int(p['售價'])}"
+                f"{info_html(p, codes.get(str(p['商品ID']),'') if opened else p.get('班級',''))}</div></div>",
+                unsafe_allow_html=True)
             st.button("參觀模式不能購買", key=f"g{anon_key(p['商品ID'])}", disabled=True, use_container_width=True)
 
     st.divider()
