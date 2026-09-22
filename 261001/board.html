@@ -3,21 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>老師端．即時戰況</title>
+<title>職場體驗偵察任務</title>
+</head>
+<body>
+<title>職場體驗偵察任務</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+
 <style>
 :root{
   --paper:#fbfaf7;--surface:#fff;--surface-2:#f2efe9;--line:#ddd7cc;--line-soft:#eae5db;
   --ink:#15181d;--ink-2:#4b5158;--ink-3:#787f87;
-  --accent:#dd4f1f;--accent-soft:#fdeee7;
+  --accent:#dd4f1f;--accent-soft:#fdeee7;--on-accent:#fff;
   --sea:#14566b;--sea-soft:#e4eff3;
   --gold:#9a6c00;--gold-soft:#fbf1d8;
   --ok:#1d6b45;--ok-soft:#e1f0e8;
   --shadow:0 1px 2px rgba(21,24,29,.06),0 6px 20px rgba(21,24,29,.08);
+  --shadow-lg:0 2px 4px rgba(21,24,29,.08),0 14px 36px rgba(21,24,29,.12);
   --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
   --disp:"Archivo Black","Noto Sans TC",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
@@ -25,210 +30,220 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;--line-soft:#2b3038;
   --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
-  --accent:#ff8154;--accent-soft:#33201a;--sea:#79b9cf;--sea-soft:#182a31;
-  --gold:#e5b458;--gold-soft:#2e2718;--ok:#6fc79b;--ok-soft:#16281f;
+  --accent:#ff8154;--accent-soft:#33201a;--on-accent:#14161a;
+  --sea:#79b9cf;--sea-soft:#182a31;--gold:#e5b458;--gold-soft:#2e2718;
+  --ok:#6fc79b;--ok-soft:#16281f;
   --shadow:0 1px 2px rgba(0,0,0,.5),0 6px 20px rgba(0,0,0,.4);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.5),0 14px 36px rgba(0,0,0,.5);
 }}
+:root[data-theme="dark"]{
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;--line-soft:#2b3038;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--on-accent:#14161a;
+  --sea:#79b9cf;--sea-soft:#182a31;--gold:#e5b458;--gold-soft:#2e2718;
+  --ok:#6fc79b;--ok-soft:#16281f;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 6px 20px rgba(0,0,0,.4);
+  --shadow-lg:0 2px 4px rgba(0,0,0,.5),0 14px 36px rgba(0,0,0,.5);
+}
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1180px;margin:0 auto;padding:0 18px 90px}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.7;-webkit-font-smoothing:antialiased;-webkit-text-size-adjust:100%}
+#app{max-width:680px;margin:0 auto;padding:0 16px 150px}
 
-/* 頂欄 */
-.top{position:sticky;top:0;z-index:40;background:var(--ink);color:#fff;box-shadow:var(--shadow)}
-.top-in{max-width:1180px;margin:0 auto;padding:10px 18px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.top .ttl{font-weight:900;font-size:19px;letter-spacing:-.01em}
-.top .ttl small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;opacity:.55;font-weight:500}
-.dot{width:9px;height:9px;border-radius:50%;background:#7a8088;display:inline-block;margin-right:6px;vertical-align:1px}
-.dot.on{background:#43d18b;animation:pl 1.9s infinite}
-@keyframes pl{0%,100%{opacity:1}50%{opacity:.35}}
-.stat{margin-left:auto;display:flex;gap:20px;text-align:right}
-.stat div span{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.12em;opacity:.55}
-.stat div b{font-family:var(--disp);font-size:22px;line-height:1.1;font-weight:400}
+/* HUD */
+.hud{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;margin:0 -16px;box-shadow:var(--shadow)}
+.hud-in{max-width:680px;margin:0 auto;padding:9px 16px;display:flex;align-items:center;gap:14px}
+.hud .lab{font-size:10px;letter-spacing:.14em;opacity:.6;display:block;line-height:1.3}
+.hud .clock{font-family:var(--mono);font-size:23px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.hud .clock.warn{color:#ff9d6e}
+.hud .rank{margin-left:auto;text-align:right}
+.hud .pts{font-family:var(--disp);font-size:29px;line-height:1;letter-spacing:-.02em}
+.hud .pts small{font-size:13px;opacity:.55;font-family:var(--mono)}
+.ticker{background:rgba(255,255,255,.08);overflow:hidden;height:0;transition:height .3s}
+.ticker.on{height:30px}
+.ticker div{max-width:680px;margin:0 auto;padding:5px 16px;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9}
+.ticker b{color:#ffb38a;font-weight:600}
 
-/* 控制列 */
-.bar{display:flex;gap:9px;align-items:center;flex-wrap:wrap;padding:16px 0 10px}
-.btn{font-family:inherit;font-size:14px;font-weight:500;padding:8px 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
-.btn:hover{border-color:var(--ink-3)}
-.btn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-.btn.go{background:var(--accent);color:#fff;border-color:var(--accent)}
-.sp{flex:1}
-.mini{font-size:13px;color:var(--ink-3);font-family:var(--mono)}
-.numin{width:58px;font-family:var(--mono);font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);text-align:center}
+/* mast */
+header.mast{padding:30px 0 18px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;color:var(--ink-3);margin:0 0 9px;text-transform:uppercase}
+h1{font-weight:900;font-size:clamp(31px,8.4vw,48px);line-height:1.08;margin:0 0 12px;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--accent)}
+.lede{color:var(--ink-2);margin:0 0 18px;font-size:16px}
+.rules{background:var(--sea-soft);border-radius:14px;padding:15px 17px;margin-bottom:8px}
+.rules h3{margin:0 0 7px;font-size:15.5px;font-weight:700;color:var(--sea)}
+.rules ol{margin:0;padding-left:19px;font-size:14.5px;color:var(--ink-2)}
+.rules li{margin-bottom:4px}
+.rules b{color:var(--ink)}
 
-/* 表格 */
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px}
-table{width:100%;border-collapse:collapse;font-size:14.5px}
-th{background:var(--surface-2);text-align:left;font-size:11.5px;letter-spacing:.06em;color:var(--ink-2);font-weight:600;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-td{padding:9px 10px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
-tr.g{cursor:pointer}
-tr.g:hover td{background:var(--surface-2)}
-td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
-td.rk{font-family:var(--disp);font-size:19px;width:52px;text-align:center;color:var(--ink-3)}
-tr.g:nth-child(1) td.rk{color:var(--gold)}
-td.who b{font-weight:700}
-td.who small{display:block;color:var(--ink-3);font-size:12px;line-height:1.4;max-width:290px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-td.tot{font-family:var(--disp);font-size:21px;text-align:right}
-.bar-mini{height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin-top:4px;width:110px}
-.bar-mini i{display:block;height:100%;background:var(--accent)}
-.stale{opacity:.45}
-.pill{display:inline-block;font-family:var(--mono);font-size:10.5px;padding:1px 7px;border-radius:20px;background:var(--sea-soft);color:var(--sea);margin-left:6px}
-tr.det td{background:var(--surface-2);padding:0}
-.det-in{padding:14px 18px 18px}
-.det-in h4{margin:14px 0 5px;font-size:14px;color:var(--accent);font-weight:700}
-.det-in h4:first-child{margin-top:0}
-.qa{border-left:3px solid var(--line);padding:2px 0 2px 11px;margin:0 0 9px}
-.qa .q{font-size:12.5px;color:var(--ink-3);font-family:var(--mono)}
-.qa .a{font-size:14.5px;white-space:pre-wrap;word-break:break-word}
-.tags span{display:inline-block;font-size:12px;background:var(--gold-soft);color:var(--gold);padding:1px 8px;border-radius:20px;margin:0 5px 5px 0;font-weight:600}
-.empty{padding:34px 18px;text-align:center;color:var(--ink-3)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:17px;margin:13px 0;box-shadow:var(--shadow)}
+.panel h2{margin:0 0 3px;font-size:18.5px;font-weight:700}
+.panel p.sub{margin:0 0 13px;font-size:14px;color:var(--ink-2)}
 
-/* 動態牆 */
-.feed{max-height:330px;overflow:auto}
-.feed li{list-style:none;padding:7px 14px;border-bottom:1px solid var(--line-soft);font-size:14px}
-.feed ul{margin:0;padding:0}
-.feed time{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);margin-right:9px}
-.feed b{color:var(--accent)}
-h3.sec{font-size:15px;margin:0;padding:11px 14px;background:var(--surface-2);border-bottom:1px solid var(--line);font-weight:700}
+.f{margin-bottom:11px}
+.f label{display:block;font-size:13.5px;font-weight:500;color:var(--ink-2);margin-bottom:4px}
+.f input,.f textarea{width:100%;font-family:inherit;font-size:17px;line-height:1.6;color:var(--ink);background:var(--surface-2);border:2px solid transparent;border-radius:10px;padding:10px 12px;resize:vertical}
+.f textarea{min-height:78px}
+.f input:focus,.f textarea:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.f input::placeholder,.f textarea::placeholder{color:var(--ink-3);opacity:.7}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+.cnt{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:right;margin-top:2px}
+.cnt.ok{color:var(--ok);font-weight:600}
+.codest{font-size:13px;color:var(--ink-3);background:var(--surface-2);border-radius:9px;padding:8px 11px;margin-top:2px}
+.codest.ok{background:var(--ok-soft);color:var(--ok);font-weight:600}
+.prev{background:var(--sea);color:#fff;border-radius:12px;padding:12px 15px;margin:14px 0 0;font-size:14px;line-height:1.6}
+.prev b{display:inline-block;margin-right:6px}
+.prev code{font-family:var(--mono);font-size:12.5px;background:rgba(255,255,255,.18);padding:1px 6px;border-radius:5px}
+.mic{background:var(--gold-soft);color:var(--gold);border-radius:10px;padding:10px 13px;font-size:13.5px;margin:12px 0 0;font-weight:500}
 
-/* 投影模式 */
-body.proj{font-size:21px}
-body.proj .bar,body.proj .note,body.proj .feedcard{display:none}
-body.proj .wrap{max-width:1500px}
-body.proj table{font-size:24px}
-body.proj th{font-size:15px}
-body.proj td.rk{font-size:33px;width:76px}
-body.proj td.tot{font-size:38px}
-body.proj td.who small,body.proj .bar-mini{display:none}
-body.proj tr.det{display:none}
-body.proj .top .ttl{font-size:26px}
-body.proj .stat div b{font-size:34px}
+button{font-family:inherit;font-size:16.5px;font-weight:700;padding:13px 22px;border-radius:12px;border:none;cursor:pointer;transition:transform .08s}
+button:active{transform:scale(.98)}
+button.big{display:block;width:100%;background:var(--accent);color:var(--on-accent);box-shadow:var(--shadow);font-size:18.5px;padding:16px}
+button.big:disabled{background:var(--line);color:var(--ink-3);box-shadow:none;cursor:not-allowed}
+button:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
 
-.pw{padding:16px 18px}
-.pw h3{margin:0 0 3px;font-size:16px;font-weight:700}
-.pw p.sub{margin:0 0 13px;font-size:13.5px;color:var(--ink-2)}
-.pwrow{display:flex;gap:9px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
-.pwf label{display:block;font-size:12px;color:var(--ink-3);margin-bottom:3px;font-family:var(--mono);letter-spacing:.06em}
-.pwf input{font-family:inherit;font-size:15px;padding:8px 11px;border-radius:9px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
-.pwf input.w{width:150px}.pwf input.s{width:66px;text-align:center;font-family:var(--mono)}
-.codes{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px;margin-top:6px}
-.codes div{border:1px solid var(--line);border-radius:10px;padding:8px 11px;background:var(--surface-2)}
-.codes b{display:block;font-size:13px;font-weight:600}
-.codes span{font-family:var(--disp);font-size:25px;letter-spacing:.08em;color:var(--accent)}
-.warnbox{background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:10px 13px;font-size:13.5px;margin-top:10px}
-.tick{color:var(--ok);font-weight:700}
-.bad{color:var(--accent);font-weight:700}
+/* stage tabs */
+.stages{display:flex;gap:7px;margin:16px 0 4px}
+.stages button{flex:1;padding:11px 6px;border-radius:12px;background:var(--surface);border:2px solid var(--line);color:var(--ink-3);font-size:14.5px;box-shadow:none}
+.stages button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.stages button b{display:block;font-family:var(--mono);font-size:11px;font-weight:500;opacity:.75}
 
-/* 密碼卡（列印用） */
-#slips{display:none}
+/* quests */
+.quest{background:var(--surface);border:1px solid var(--line);border-radius:16px;margin:12px 0;box-shadow:var(--shadow);overflow:hidden}
+.quest.done{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok-soft),var(--shadow)}
+.qhead{display:flex;align-items:center;gap:12px;padding:15px 17px;cursor:pointer;user-select:none}
+.qnum{font-family:var(--disp);font-size:18px;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);flex:none;line-height:1}
+.quest.done .qnum{background:var(--ok)}
+.qt{flex:1;min-width:0}
+.qt b{display:block;font-size:18px;font-weight:700;line-height:1.3}
+.qt span{display:block;font-size:13px;color:var(--ink-3);margin-top:1px}
+.qpts{font-family:var(--mono);font-size:13.5px;font-weight:600;color:var(--ink-3);white-space:nowrap}
+.quest.done .qpts{color:var(--ok)}
+.qbody{padding:0 17px 18px;border-top:1px solid var(--line-soft);display:none}
+.quest.open .qbody{display:block}
+.mission{background:var(--accent-soft);border-radius:12px;padding:12px 14px;margin:15px 0;font-size:15px}
+.mission b{color:var(--accent)}
 
-.note{font-size:13.5px;color:var(--ink-3);padding:2px 2px 18px;line-height:1.7}
-.note code{font-family:var(--mono);font-size:12.5px;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+/* 照片 */
+.ph{margin-bottom:13px}
+.ph img{display:block;width:100%;max-width:100%;border-radius:11px;margin-bottom:7px;border:1px solid var(--line)}
+.ph label{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--surface-2);border:2px dashed var(--line);border-radius:11px;padding:14px;cursor:pointer;font-size:15px;font-weight:600;color:var(--ink-2)}
+.ph.has label{border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ok);padding:9px;font-size:13.5px}
+.ph input{position:absolute;opacity:0;width:0;height:0}
+.ph .up{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);text-align:center;margin-top:5px}
 
+.gpsbar{display:flex;align-items:center;gap:9px;background:var(--sea-soft);color:var(--sea);border-radius:11px;padding:11px 14px;margin-bottom:9px;font-size:14.5px;font-weight:500}
+.gpsbar.hit{background:var(--ok-soft);color:var(--ok)}
+
+.terms{background:var(--gold-soft);border-radius:12px;padding:12px 14px;margin-top:13px;font-size:14px}
+.terms b{color:var(--gold)}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.chips i{font-style:normal;font-size:12.5px;padding:3px 9px;border-radius:99px;background:var(--surface);border:1px solid var(--line);color:var(--ink-3)}
+.chips i.hit{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
+
+/* 班際對抗 */
+.vs{background:var(--ink);color:#fff;border-radius:14px;padding:15px 17px;margin:13px 0;box-shadow:var(--shadow)}
+.vs h3{margin:0 0 11px;font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.vs h3 .live{width:8px;height:8px;border-radius:99px;background:#43d18b;animation:pulse 1.6s infinite}
+.vs-in{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+.vs-c{text-align:center;min-width:0}
+.vs-c .nm{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vs-c .av{font-family:var(--disp);font-size:36px;line-height:1.05;letter-spacing:-.02em}
+.vs-c.win .av{color:#ffb38a}
+.vs-c .de{font-family:var(--mono);font-size:11.5px;opacity:.6;line-height:1.5}
+.vs-mid{font-family:var(--disp);font-size:15px;opacity:.4}
+.vs-foot{font-size:11.5px;opacity:.55;margin-top:10px;text-align:center;font-family:var(--mono)}
+
+/* leaderboard */
+.lb{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);margin:13px 0}
+.lb h3{margin:0;padding:13px 16px;font-size:16px;font-weight:700;background:var(--surface-2);display:flex;align-items:center;gap:8px}
+.lb h3 .live{width:8px;height:8px;border-radius:99px;background:var(--ok);animation:pulse 1.6s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.lb ol{list-style:none;margin:0;padding:0}
+.lb li{display:flex;align-items:center;gap:11px;padding:10px 16px;border-top:1px solid var(--line-soft);font-size:15px}
+.lb li.me{background:var(--accent-soft);font-weight:700}
+.lb .p{font-family:var(--disp);font-size:16px;width:26px;color:var(--ink-3)}
+.lb li:nth-child(1) .p{color:var(--gold)}
+.lb .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb .s{font-family:var(--mono);font-weight:600;font-variant-numeric:tabular-nums}
+.lb .st{font-style:normal;font-size:11.5px;color:var(--gold);font-weight:700;font-family:var(--mono)}
+.lb .empty{padding:18px 16px;color:var(--ink-3);font-size:14.5px}
+
+/* 加碼 */
+.locked{background:var(--surface-2);border:2px dashed var(--line);border-radius:14px;padding:15px 17px;margin:13px 0;font-size:14.5px;color:var(--ink-2);text-align:center}
+.locked b{color:var(--ink);font-size:16px}
+.locked span{font-size:13px;color:var(--ink-3)}
+.unlocked{background:var(--gold);color:#fff;border-radius:12px;padding:11px;margin:16px 0 0;text-align:center;font-weight:700;letter-spacing:.06em;box-shadow:var(--shadow)}
+.bonusline{background:var(--gold);color:#fff;border-radius:10px;padding:9px 13px;margin-bottom:12px;font-weight:700;font-size:14.5px}
+
+/* result */
+.res{background:var(--ink);color:#fff;border-radius:16px;padding:21px;margin-top:20px;box-shadow:var(--shadow-lg)}
+.res h2{margin:0 0 3px;font-size:21px;font-weight:900}
+.res p{margin:0 0 14px;font-size:14px;opacity:.7}
+.bigscore{font-family:var(--disp);font-size:64px;line-height:1;letter-spacing:-.03em;margin:5px 0 2px}
+.bigscore small{font-size:21px;opacity:.5}
+.bd{display:flex;margin:16px 0;border-radius:11px;overflow:hidden;font-size:12.5px}
+.bd div{flex:1;padding:9px 6px;text-align:center;background:rgba(255,255,255,.08)}
+.bd div+div{border-left:1px solid rgba(255,255,255,.14)}
+.bd b{display:block;font-family:var(--mono);font-size:18px;font-weight:600}
+.bd span{opacity:.6;font-size:11px}
+.teach{font-size:12.5px;opacity:.6;margin:-6px 0 14px}
+#out{width:100%;min-height:190px;font-family:var(--mono);font-size:12px;line-height:1.7;background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.16);border-radius:11px;padding:12px;color:#fff;white-space:pre}
+.btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.btns button{flex:1;min-width:125px}
+.btns button.copy{background:var(--accent);color:var(--on-accent)}
+.btns button.pr{background:rgba(255,255,255,.14);color:#fff}
+.sync{font-family:var(--mono);font-size:11.5px;margin-top:9px;opacity:.6}
+
+.tn{margin-top:30px;border-top:1px solid var(--line);padding-top:16px;font-size:14px;color:var(--ink-3)}
+.tn summary{cursor:pointer;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase}
+.tn p{color:var(--ink-2)}
+.tn table{width:100%;border-collapse:collapse;margin:11px 0;font-size:13.5px}
+.tn th,.tn td{border:1px solid var(--line);padding:6px 9px;text-align:left}
+.tn th{background:var(--surface-2);font-weight:600}
+.tn code{font-family:var(--mono);font-size:12px;background:var(--surface-2);padding:1px 5px;border-radius:4px;word-break:break-all}
+footer{margin-top:20px;color:var(--ink-3);font-size:12px;font-family:var(--mono)}
+
+/* print 學習單 */
+#sheet{display:none}
 @media print{
-  .top{position:static;background:#fff;color:#000;box-shadow:none;border-bottom:2px solid #000}
-  .bar,.feedcard,.note,.dot,.pwcard{display:none}
-  body.slips .top,body.slips .card{display:none}
-  body.slips #slips{display:grid!important;grid-template-columns:1fr 1fr;gap:0}
-  body.slips #slips .slip{border:1px dashed #666;padding:13px 15px;height:118px;page-break-inside:avoid;font-family:"Noto Sans TC",sans-serif}
-  body.slips #slips .slip .t{font-size:9pt;letter-spacing:.14em;color:#555}
-  body.slips #slips .slip .g{font-size:14pt;font-weight:700;margin:2px 0 5px}
-  body.slips #slips .slip .c{font-size:30pt;font-weight:900;letter-spacing:.12em}
-  body.slips #slips .slip .u{font-size:8pt;color:#555;margin-top:4px;word-break:break-all}
-  body{background:#fff;font-size:11px}
-  .card{box-shadow:none;border:1px solid #000;border-radius:0}
-  table{font-size:11px}
-  th{background:#eee}
-  tr.det{display:none}
-  .wrap{padding:0}
+  .hud,header.mast,.rules,.panel,.quest,.res,.tn,footer,button,.stages,.lb,.terms,.vs,.locked,.unlocked{display:none!important}
+  #sheet{display:block!important}
+  body{background:#fff;font-size:11pt;color:#000}
+  #app{padding:0;max-width:none}
+  #sheet h1{font-size:15pt;text-align:center;margin:0 0 3px;font-weight:700}
+  #sheet .sub{text-align:center;font-size:10pt;margin:0 0 10px}
+  #sheet table{width:100%;border-collapse:collapse;margin-bottom:9px;font-size:10pt}
+  #sheet th,#sheet td{border:1px solid #000;padding:4px 7px;vertical-align:top}
+  #sheet th{background:#eee;width:88px;font-weight:600;white-space:nowrap}
+  #sheet .box{border:1px solid #000;padding:7px;min-height:150px;margin-bottom:9px;font-size:10pt}
+  #sheet .box .h{font-weight:700;margin-bottom:5px;border-bottom:1px solid #999;padding-bottom:3px}
+  #sheet .ph2{border:1px solid #000;height:230px;margin-bottom:9px;text-align:center;color:#666;font-size:9pt;overflow:hidden;position:relative}
+  #sheet .ph2 img{width:100%;height:230px;object-fit:cover;display:block}
+  #sheet .ph2 .cap{font-size:8pt;padding:2px}
+  #sheet .ph2.blank{padding-top:105px}
+  #sheet .pg{page-break-before:always}
+  #sheet .sign{display:flex;gap:10px;margin-top:10px;font-size:10pt}
+  #sheet .sign div{flex:1;border:1px solid #000;padding:6px;height:52px}
 }
-@media (max-width:760px){
-  .hidesm{display:none}
-  .stat{gap:12px}
+
+@media (max-width:480px){
+  #app{padding:0 13px 150px}
+  .hud{margin:0 -13px}.hud-in{padding:9px 13px}
+  .three,.two{grid-template-columns:1fr}
+  .vs-c .av{font-size:29px}
 }
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-</head>
-<body>
 
-<div class="top"><div class="top-in">
-  <div class="ttl"><span class="dot" id="dot"></span>老師端．即時戰況<small>115-1　商經科職場體驗　2026/10/01</small></div>
-  <div class="stat">
-    <div><span>回報組數</span><b id="sN">0</b></div>
-    <div><span>平均分</span><b id="sA">0</b></div>
-    <div><span>最高分</span><b id="sM">0</b></div>
-    <div class="hidesm"><span>更新</span><b id="sT" style="font-family:var(--mono);font-size:15px">—</b></div>
-  </div>
-</div></div>
-
-<div class="wrap">
-
-<div class="bar">
-  <button class="btn on" data-cls="">全部</button>
-  <button class="btn" data-cls="商二甲">商二甲</button>
-  <button class="btn" data-cls="商二乙">商二乙</button>
-  <span style="width:10px"></span>
-  <button class="btn on" data-sort="total">依總分</button>
-  <button class="btn" data-sort="name">依班級組別</button>
-  <button class="btn" data-sort="at">依更新時間</button>
-  <span class="sp"></span>
-  <span class="mini">預計組數</span><input class="numin" id="expN" type="number" value="14" min="1" max="40">
-  <span class="mini">任務滿分</span><input class="numin" id="maxN" type="number" value="100" min="10" max="200">
-  <button class="btn go" id="bProj">投影模式</button>
-  <button class="btn" id="bPrint">列印總表</button>
-  <button class="btn" id="bCsv">匯出 CSV</button>
-</div>
-
-<div class="card">
-<table>
-<thead><tr>
-  <th style="text-align:center">#</th><th>班級／組別</th>
-  <th class="n hidesm" style="text-align:right">魔菇<br>40</th>
-  <th class="n hidesm" style="text-align:right">三井<br>40</th>
-  <th class="n hidesm" style="text-align:right">術語<br>10</th>
-  <th class="n hidesm" style="text-align:right">GPS<br>10</th>
-  <th style="text-align:right">任務</th>
-  <th style="text-align:right">準時<br>20</th>
-  <th style="text-align:right">創意<br>10</th>
-  <th style="text-align:right">總評</th>
-  <th class="hidesm">最後更新</th>
-</tr></thead>
-<tbody id="tb"><tr><td colspan="11" class="empty">等待第一組上線⋯⋯<br><small>學生一填資料就會出現在這裡</small></td></tr></tbody>
-</table>
-</div>
-
-<div class="card pwcard"><div class="pw">
-  <h3>組別通行碼</h3>
-  <p class="sub">輸入一個只有你知道的<b>主密語</b>，系統就會算出每一組的四位數通行碼。同一個主密語永遠算出同一組號碼，<b>忘記了再打一次就回來了</b>，不用另外存檔。學生要輸入正確通行碼，紀錄才會進到那一組。</p>
-  <div class="pwrow">
-    <div class="pwf"><label>主密語</label><input class="w" id="mw" placeholder="例如 魔菇2026"></div>
-    <div class="pwf"><label>班級一</label><input class="w" id="cA" value="商二甲"></div>
-    <div class="pwf"><label>組數</label><input class="s" id="nA" type="number" value="7" min="1" max="20"></div>
-    <div class="pwf"><label>班級二</label><input class="w" id="cB" value="商二乙"></div>
-    <div class="pwf"><label>組數</label><input class="s" id="nB" type="number" value="7" min="1" max="20"></div>
-    <div class="pwf"><label>學生網址</label><input class="w" id="su" placeholder="https://…github.io/…"></div>
-    <button class="btn" id="bSlip">列印密碼卡</button>
-  </div>
-  <div id="codes"></div>
-</div></div>
-
-<div id="slips"></div>
-
-<div class="card feedcard">
-  <h3 class="sec">動態牆</h3>
-  <div class="feed" id="fd"><div class="empty">還沒有動靜</div></div>
-</div>
-
-<div class="note">
-  <b>怎麼用：</b>點任何一列可以展開那一組的完整答案。<b>準時</b>與<b>創意</b>兩欄直接在表上打分，只存在這台電腦（不會傳給學生），重新整理不會消失。<br>
-  <b>投影模式</b>放大字體、隱藏控制列，回程車上投影用；<b>列印總表</b>可以直接印成成績底稿；<b>匯出 CSV</b> 會把所有答案一起倒出來（Excel 開啟請選 UTF-8）。<br>
-  <b>GPS 定點</b>已設在三井大門（24.2599, 120.5165，半徑 300 公尺），走進商場自動 +10 分，任務滿分 <code>100</code>。<br>
-  <b>班級／組別欄位的 ✓</b> 代表那一列的通行碼算得出來、是真的那一組；<b>⚠ 未認證</b>代表有人沒輸入正確通行碼就開始填，點開看一下是誰。
-</div>
-
-</div>
+<div id="app"></div>
+<div id="sheet"></div>
 
 <script>
-(function(){
-"use strict";
+/* ============================================================
+   ① Firebase config
+   ============================================================ */
 var FB_CONFIG = {
   apiKey:        "AIzaSyAmEGKtYxq7ao9G0IWdHrmWeThdshIIALI",
   authDomain:    "moguoutlet.firebaseapp.com",
@@ -236,254 +251,669 @@ var FB_CONFIG = {
   projectId:     "moguoutlet"
 };
 var EVENT_ID = "115-1-1001";
-var LKEY = "ylhc-board-manual";
-var PKEY = "ylhc-board-pw";
 
-/* 與學生端同一套雜湊 */
-function fnvI(str){
-  var h=0x811c9dc5;
-  for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*0x01000193)>>>0; }
-  return h;
-}
-function fnv(str){ return ("0000000"+fnvI(str).toString(16)).slice(-8); }
-function codeOf(master,cls,grp){ return String(1000+(fnvI(master+"|"+cls+"|"+grp)%9000)); }
-function tokOf(cls,grp,code){ return fnv(cls+"|"+grp+"|"+code); }
+/* ② GPS 定點（三井），共 5 分 */
+var SPOTS = [
+  {name:"大門",         lat:24.2559, lng:120.5200, r:45, pts:1},
+  {name:"古拉爵",       lat:24.2577, lng:120.5218, r:45, pts:1},
+  {name:"特斯拉充電站", lat:24.2591, lng:120.5156, r:35, pts:1},
+  {name:"摩天輪",       lat:24.2599, lng:120.5160, r:35, pts:2}
+];
+</script>
 
-/* 題目標題對照（與學生端同步；只用來顯示，不影響計分） */
-var TITLE = {
-  m1:"魔菇①　它到底在賣什麼", m2:"魔菇②　簡報裡的三個數字", m3:"魔菇③　六星級廠區裡的技術",
-  m4:"魔菇④　為什麼要開觀光農場", m5:"魔菇⑤　250 元買到什麼",
-  q1:"三井①　黃金店面爭奪戰", q2:"三井②　折扣的數學", q3:"三井③　樓層的邏輯",
-  q4:"三井④　海景值多少錢", q5:"三井⑤　品牌偵探", q6:"三井⑥　動線實驗",
-  q7:"三井⑦　一期 vs 二期", q8:"三井⑧　空位之謎"
-};
+<script>
+(function(){
+"use strict";
+var PREVIEW=/[?&]preview=1/.test(location.search);
+var KEY=PREVIEW?"ylhc-preview-d":"ylhc-questday", PKEY=PREVIEW?"ylhc-preview-p":"ylhc-questpics";
+var DEADLINE=new Date(2026,9,1,14,50,0);
 
-var board=[], ansMap={}, feed=[], manual={}, filt="", sortBy="total", openKey=null, lastAt=0;
-var roster=[], tokMap={};
-var pw={mw:"",cA:"商二甲",nA:7,cB:"商二乙",nB:7,su:""};
-try{ pw=Object.assign(pw,JSON.parse(localStorage.getItem(PKEY)||"{}")||{}); }catch(e){}
-function savePw(){ try{ localStorage.setItem(PKEY,JSON.stringify(pw)); }catch(e){} }
-try{ manual=JSON.parse(localStorage.getItem(LKEY)||"{}")||{}; }catch(e){ manual={}; }
-function saveManual(){ try{ localStorage.setItem(LKEY,JSON.stringify(manual)); }catch(e){} }
+/* ---------- 題庫 ---------- */
+var MOGU=[
+ {id:"m1",t:"它到底在賣什麼",s:"不只是香菇",
+  m:"這家公司的產品線不只一種。<b>把你看到、聽到的全部列出來</b>——新鮮菇、加工食品、保健品、門票、DIY、料理課⋯⋯還有嗎？",
+  f:[{k:"a",l:"產品線盤點（越多越好）",t:"ta",min:40}]},
+ {id:"m2",t:"簡報裡的三個數字",s:"數字不會說謊",
+  m:"方先生的簡報裡一定會出現數字——成立幾年、幾座廠、一天出貨多少、市占多少。<b>抓三個記下來。</b>",
+  f:[{k:"a",l:"數字一（是什麼＋多少）",t:"in"},{k:"b",l:"數字二",t:"in"},{k:"c",l:"數字三",t:"in"}]},
+ {id:"m3",t:"六星級廠區裡的技術",s:"種菇也是科技業",
+  m:"智慧蕈菇生產廠區裡，<b>找出一個你覺得最厲害的技術或設備</b>，想想它取代了什麼人工。",
+  f:[{k:"a",l:"看到什麼技術／設備",t:"in"},{k:"b",l:"它取代了什麼？為什麼要自動化？",t:"ta",min:30}]},
+ {id:"m4",t:"為什麼要開觀光農場",s:"這題最重要",
+  m:"一家<b>種香菇、做生技的公司</b>，為什麼要花錢蓋園區、種落羽松、開小火車、讓學生來 DIY？",
+  f:[{k:"a",l:"你的推論（從賺錢的角度想）",t:"ta",min:50}]},
+ {id:"m5",t:"250 元買到什麼",s:"你自己就是消費者",
+  m:"今天你付了 250 元。<b>拆解看看這筆錢裡面，你實際上買到的是哪些東西？</b>材料？時間？體驗？回憶？",
+  f:[{k:"a",l:"拆解這 250 元",t:"ta",min:40},{k:"b",l:"如果漲到 400 元，你還會來嗎？為什麼",t:"ta",min:30}]}
+];
+
+var MITSUI=[
+ {id:"q1",t:"黃金店面爭奪戰",s:"位置就是錢",
+  m:"這裡有 220 家店。找出你認為<b>位置最好</b>的一家，再找一家<b>位置最吃虧</b>的。<b>拍一張能看出位置差別的照片。</b>",
+  f:[{k:"a",l:"位置最好的店名",t:"in"},{k:"b",l:"好在哪？",t:"ta",min:30},
+     {k:"c",l:"位置最吃虧的店名",t:"in"},{k:"d",l:"為什麼吃虧？",t:"ta",min:30}]},
+ {id:"q2",t:"折扣的數學",s:"它想讓你覺得賺到",
+  m:"OUTLET 靠折扣做生意。找一個<b>看得到原價和售價</b>的商品，拍下吊牌或價標。",
+  f:[{k:"a",l:"品牌",t:"in"},{k:"b",l:"原價",t:"in"},{k:"c",l:"售價",t:"in"},
+     {k:"d",l:"實際打幾折（自己算）",t:"in"},
+     {k:"e",l:"它用哪種手法讓你覺得便宜？",t:"ta",min:30}]},
+ {id:"q3",t:"一期 vs 二期",s:"隔了三年的兩個商場",
+  m:"一期 2018 年開幕，二期 2021 年底才開，多了五十家店。<b>一期有室內美食街和二樓餐廳，二期是全戶外的。</b>兩邊各走一趟，拍一張最能代表那一區的照片。",
+  f:[{k:"a",l:"一期你看到哪些業種",t:"in"},{k:"b",l:"二期你看到哪些業種",t:"in"},
+     {k:"c",l:"隔了三年，為什麼二期要換方向？",t:"ta",min:40}]},
+ {id:"q4",t:"海景值多少錢",s:"風景也是商品",
+  m:"這裡是全台第一座<b>海港型</b> OUTLET，摩天輪 60 公尺，是全台唯一看得到海的。找一個看得到海的角度拍下來。",
+  f:[{k:"a",l:"這裡有哪些設施在「賣風景」？",t:"ta",min:30},
+     {k:"b",l:"購物中心為什麼要花錢買海景？對生意有什麼幫助？",t:"ta",min:40}]},
+ {id:"q5",t:"品牌偵探",s:"220 家店裡的陌生人",
+  m:"找<b>三個你沒聽過</b>的品牌，拍一張有招牌的照片。",
+  f:[{k:"a1",l:"品牌一",t:"in"},{k:"a2",l:"賣什麼",t:"in"},{k:"a3",l:"賣給誰",t:"in"},
+     {k:"b1",l:"品牌二",t:"in"},{k:"b2",l:"賣什麼",t:"in"},{k:"b3",l:"賣給誰",t:"in"},
+     {k:"c1",l:"品牌三",t:"in"},{k:"c2",l:"賣什麼",t:"in"},{k:"c3",l:"賣給誰",t:"in"}],grid:3},
+ {id:"q6",t:"動線實驗",s:"你被帶著走",
+  m:"二期是<b>ㄇ字型</b>的路。選一個起點走到一個終點，<b>一路數你經過幾家店</b>，拍一張路的照片。",
+  f:[{k:"a",l:"起點",t:"in"},{k:"b",l:"終點",t:"in"},{k:"c",l:"經過幾家店",t:"in"},
+     {k:"d",l:"這條路為什麼設計成這樣？",t:"ta",min:30}]},
+ {id:"q7",t:"為什麼有遊樂設施",s:"不是來買東西的人",
+  m:"摩天輪、雪樂地、Asobi Square、湯姆熊——<b>一個賣衣服的地方，為什麼要花錢蓋這些？</b>挑一個拍下來，順便看看：在玩的是誰，在旁邊等的又是誰。",
+  f:[{k:"a",l:"你選哪一個設施",t:"in"},{k:"b",l:"在玩的人是誰？在旁邊等的人是誰？",t:"ta",min:30},
+     {k:"c",l:"這些設施幫商場賺到什麼？（提示：那些人等著等著會做什麼）",t:"ta",min:40}]},
+ {id:"q8",t:"最冷清的那一家",s:"人少的店在想什麼",
+  m:"找一家<b>客人最少</b>的店，拍店門口。<b>不要拍到店員和客人的臉，不要站在門口指指點點——人家在做生意。</b>",
+  f:[{k:"a",l:"店名（或賣什麼）",t:"in"},{k:"b",l:"可能原因一",t:"in"},
+     {k:"c",l:"可能原因二",t:"in"},{k:"d",l:"可能原因三",t:"in"}]}
+];
+
+var BONUS={id:"x1",t:"總經理的位子",s:"只能留一家",
+  m:"三井總公司丟了一個問題給你們：<b>如果台中港這個場子明年只能留下一家店，你們留哪一家？</b><br>不是留你最喜歡的，是留<b>最該留的</b>。你得說服一個只看數字的人。",
+  f:[{k:"a",l:"你們要留的那一家店",t:"in"},
+     {k:"b",l:"理由一：從位置或動線說",t:"ta",min:40},
+     {k:"c",l:"理由二：從客群或定價說",t:"ta",min:40},
+     {k:"d",l:"理由三：從你今天親眼看到的東西說（人潮、排隊、提袋⋯⋯）",t:"ta",min:40},
+     {k:"e",l:"最後一題：這家店最大的弱點是什麼？",t:"ta",min:30}]};
+
+var TERMS=["4P","STP","動線","坪效","客單價","目標客群","品牌定位","市場區隔","差異化","陳列","客層","人流","定價","促銷","通路","體驗行銷","集客","附加價值","產業升級"];
+
+var GPS_ON=SPOTS.length>0;
+var GPS_MAX=SPOTS.reduce(function(a,s){return a+s.pts;},0);
+var MAX = 30 + 40 + 5 + (GPS_ON?GPS_MAX:0);   /* 任務分 80，老師另計 20 */
+
+/* ---------- state ---------- */
+var st={cls:"",grp:"",mem:"",name:"",code:"",picked:null,d:{},photo:{},spots:{},open:null,stage:"mogu",
+        refl:{a:"",b:"",c:""}};
+try{var r=localStorage.getItem(KEY);if(r)st=Object.assign(st,JSON.parse(r)||{});}catch(e){}
+var pics={};
+try{pics=JSON.parse(localStorage.getItem(PKEY)||"{}")||{};}catch(e){pics={};}
+
+var db=null,online=false,board=[],feed=[],myKey="",upState={};
 
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
-function hhmm(t){ if(!t)return"—"; var d=new Date(t);
-  return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0")+":"+String(d.getSeconds()).padStart(2,"0"); }
-function man(k,f){ return (manual[k]&&manual[k][f])||0; }
+function all(){return MOGU.concat(MITSUI).concat([BONUS]);}
+function Q(id){return all().filter(function(x){return x.id===id;})[0];}
+function v(qid,k){return ((st.d[qid]||{})[k]||"").trim();}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(st));}catch(e){}}
+function savePics(){try{localStorage.setItem(PKEY,JSON.stringify(pics));}catch(e){}}
 
-/* ---------- 連線 ---------- */
-var db=null;
-try{
-  firebase.initializeApp(FB_CONFIG);
-  db=firebase.database();
-  db.ref(".info/connected").on("value",function(s){
-    document.getElementById("dot").className="dot"+(s.val()?" on":"");
-  });
-  db.ref("e/"+EVENT_ID+"/board").on("value",function(s){
-    var o=s.val()||{},a=[];
-    for(var k in o){ var r=o[k]||{}; r.k=k; a.push(r); }
-    board=a; paint();
-  });
-  db.ref("e/"+EVENT_ID+"/ans").on("value",function(s){ ansMap=s.val()||{}; paint(); });
-  db.ref("e/"+EVENT_ID+"/feed").limitToLast(80).on("value",function(s){
-    var o=s.val()||{},a=[];
-    for(var k in o) a.push(o[k]);
-    a.sort(function(x,y){return (y.t||0)-(x.t||0);});
-    feed=a; paintFeed();
-  });
-}catch(e){
-  document.getElementById("tb").innerHTML='<tr><td colspan="11" class="empty">連不上資料庫。<br><small>請確認這一頁是放在 GitHub Pages（https 網址）上開啟，不是用檔案直接點開。</small></td></tr>';
-}
-
-/* ---------- 通行碼 ---------- */
-function buildRoster(){
-  roster=[]; tokMap={};
-  if(!pw.mw.trim()) { paintCodes(); return; }
-  [[pw.cA,pw.nA],[pw.cB,pw.nB]].forEach(function(p){
-    var cls=(p[0]||"").trim(), n=Math.max(0,Math.min(20,+p[1]||0));
-    if(!cls) return;
-    for(var i=1;i<=n;i++){
-      var grp="第"+i+"組", code=codeOf(pw.mw.trim(),cls,grp), tk=tokOf(cls,grp,code);
-      var row={cls:cls,grp:grp,code:code,tok:tk};
-      roster.push(row); tokMap[tk]=row;
-    }
-  });
-  paintCodes();
-}
-function paintCodes(){
-  var el=document.getElementById("codes"); if(!el) return;
-  if(!roster.length){
-    el.innerHTML='<div class="warnbox">先填主密語，號碼才會出現。主密語自己想一個好記的就行，<b>不要給學生看到</b>。</div>';
-    document.getElementById("slips").innerHTML=""; return;
+/* ---------- 計分 ---------- */
+function qScore(qid){
+  var q=Q(qid),sc=0;
+  if(qid[0]==="x"){
+    q.f.forEach(function(f){ var t=v(qid,f.k); if(f.min? t.length>=f.min : t.length>0) sc+=2; });
+    return Math.min(10,sc);
   }
-  el.innerHTML='<div class="codes">'+roster.map(function(r){
-    return '<div><b>'+esc(r.cls+"　"+r.grp)+'</b><span>'+r.code+'</span></div>';
-  }).join("")+'</div>';
-  document.getElementById("slips").innerHTML=roster.map(function(r){
-    return '<div class="slip"><div class="t">職場體驗偵察任務　10/01</div>'+
-           '<div class="g">'+esc(r.cls+"　"+r.grp)+'</div>'+
-           '<div class="c">'+r.code+'</div>'+
-           '<div class="u">'+esc(pw.su||"（把學生網址填進老師端就會印在這裡）")+'</div></div>';
-  }).join("");
+  var filled=q.f.every(function(f){return v(qid,f.k).length>0;});
+  var mins=q.f.filter(function(f){return f.min;});
+  var longEnough=mins.length?mins.every(function(f){return v(qid,f.k).length>=f.min;}):filled;
+  if(qid[0]==="m"){ if(filled)sc+=3; if(longEnough)sc+=3; }        /* 魔菇 6 */
+  else { if(st.photo[qid])sc+=3; if(filled)sc+=4; if(longEnough)sc+=3; }  /* 三井 10 */
+  return sc;
+}
+function qMax(qid){return qid[0]==="m"?6:10;}
+function unlocked(){ if(PREVIEW)return true; return (st.picked||[]).length===4&&(st.picked||[]).every(function(id){return qScore(id)===10;}); }
+var lastUnlocked=false;
+function justUnlocked(){
+  var u=unlocked();
+  if(u&&!lastUnlocked){ lastUnlocked=true; return true; }
+  if(!u) lastUnlocked=false;
+  return false;
+}
+function hits(){
+  var t="";all().forEach(function(q){q.f.forEach(function(f){t+=v(q.id,f.k)+" ";});});
+  return TERMS.filter(function(w){return t.indexOf(w)>=0;});
+}
+function tot(){
+  var mo=MOGU.reduce(function(a,q){return a+qScore(q.id);},0);
+  var mi=(PREVIEW?MITSUI.map(function(q){return q.id;}):(st.picked||[])).reduce(function(a,id){return a+qScore(id);},0);
+  var te=Math.min(5,hits().length);
+  var gp=GPS_ON?SPOTS.reduce(function(a,s){return a+(st.spots[s.name]?s.pts:0);},0):0;
+  var bo=unlocked()?qScore("x1"):0;
+  return {mo:mo,mi:mi,te:te,gp:gp,bo:bo,all:mo+mi+te+gp};
 }
 
-/* ---------- 畫表 ---------- */
-function rows(){
-  var a=board.filter(function(r){ return !filt||r.cls===filt; });
-  if(sortBy==="total") a.sort(function(x,y){ return grand(y)-grand(x) || (y.total||0)-(x.total||0); });
-  else if(sortBy==="at") a.sort(function(x,y){ return (y.at||0)-(x.at||0); });
-  else a.sort(function(x,y){ return (x.cls+x.grp).localeCompare(y.cls+y.grp,"zh-Hant"); });
-  return a;
+/* ---------- Firebase ---------- */
+function fnv(str){
+  var h=0x811c9dc5;
+  for(var i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=(h*0x01000193)>>>0; }
+  return ("0000000"+h.toString(16)).slice(-8);
 }
-function grand(r){ return (r.total||0)+man(r.k,"p")+man(r.k,"c"); }
+function okCode(){ return /^\d{4}$/.test(st.code); }
+function gkey(){ return okCode() ? fnv(st.cls+"|"+st.grp+"|"+st.code) : ""; }
 
-function paint(){
-  var a=rows(), tb=document.getElementById("tb"), mx=+document.getElementById("maxN").value||90;
-  var exp=+document.getElementById("expN").value||14;
-  document.getElementById("sN").textContent=board.length+" / "+exp;
-  var tots=board.map(grand);
-  document.getElementById("sA").textContent=tots.length?Math.round(tots.reduce(function(x,y){return x+y;},0)/tots.length):0;
-  document.getElementById("sM").textContent=tots.length?Math.max.apply(null,tots):0;
-  lastAt=board.reduce(function(m,r){return Math.max(m,r.at||0);},0);
-  document.getElementById("sT").textContent=lastAt?hhmm(lastAt):"—";
-
-  if(!a.length){ tb.innerHTML='<tr><td colspan="11" class="empty">'+(board.length?"這個班還沒有組別回報":"等待第一組上線⋯⋯")+'</td></tr>'; return; }
-
-  var now=Date.now(),h=[];
-  a.forEach(function(r,i){
-    var stale=r.at&&(now-r.at>25*60000)?" stale":"";
-    var pct=Math.min(100,Math.round((r.total||0)/mx*100));
-    h.push('<tr class="g'+stale+'" data-k="'+esc(r.k)+'">');
-    h.push('<td class="rk">'+(sortBy==="total"?(i+1):"·")+'</td>');
-    var vf=tokMap[r.k];
-    var badge=!pw.mw.trim()?"":(vf?' <span class="tick">✓</span>':' <span class="bad">⚠ 未認證</span>');
-    h.push('<td class="who"><b>'+esc(r.cls)+'　'+esc(r.grp)+'</b>'+badge+
-           (ansMap[r.k]&&ansMap[r.k].picked?'<span class="pill">'+esc(ansMap[r.k].picked.split(",").length)+' 關</span>':'')+
-           '<small>'+esc(r.mem||"（未填組員）")+'</small>'+
-           '<div class="bar-mini"><i style="width:'+pct+'%"></i></div></td>');
-    h.push('<td class="n hidesm">'+(r.mo||0)+'</td><td class="n hidesm">'+(r.mi||0)+'</td>');
-    h.push('<td class="n hidesm">'+(r.te||0)+'</td><td class="n hidesm">'+(r.gp||0)+'</td>');
-    h.push('<td class="n"><b>'+(r.total||0)+'</b><span style="color:var(--ink-3)">/'+mx+'</span></td>');
-    h.push('<td class="n"><input class="numin mi" data-k="'+esc(r.k)+'" data-f="p" type="number" min="0" max="20" value="'+man(r.k,"p")+'"></td>');
-    h.push('<td class="n"><input class="numin mi" data-k="'+esc(r.k)+'" data-f="c" type="number" min="0" max="10" value="'+man(r.k,"c")+'"></td>');
-    h.push('<td class="tot">'+grand(r)+'</td>');
-    h.push('<td class="n hidesm" style="color:var(--ink-3);font-size:12.5px">'+hhmm(r.at)+'</td>');
-    h.push('</tr>');
-    if(openKey===r.k) h.push('<tr class="det"><td colspan="11"><div class="det-in">'+detail(r)+'</div></td></tr>');
+function initFB(){
+  if(PREVIEW)return;
+  if(!FB_CONFIG.databaseURL||typeof firebase==="undefined")return;
+  try{
+    firebase.initializeApp(FB_CONFIG);
+    db=firebase.database();
+    db.ref(".info/connected").on("value",function(s){ online=!!s.val(); paintSync(); });
+    db.ref("e/"+EVENT_ID+"/board").on("value",function(s){
+      var o=s.val()||{},arr=[];
+      for(var k in o){ arr.push(Object.assign({k:k},o[k])); }
+      arr.sort(function(a,b){return (b.total||0)-(a.total||0);});
+      board=arr; render();
+    });
+    db.ref("e/"+EVENT_ID+"/feed").limitToLast(8).on("value",function(s){
+      var o=s.val()||{},arr=[];
+      for(var k in o) arr.push(o[k]);
+      arr.sort(function(a,b){return (a.t||0)-(b.t||0);});
+      feed=arr; paintTicker();
+    });
+  }catch(e){ db=null; }
+}
+function cleanD(){
+  var o={};
+  all().forEach(function(q){
+    var row={},any=false;
+    q.f.forEach(function(f){ var t=v(q.id,f.k); if(t){ row[f.k]=t.slice(0,1200); any=true; } });
+    if(any) o[q.id]=row;
   });
-  tb.innerHTML=h.join("");
+  return o;
+}
+var pushT=null;
+function push(ev){
+  if(PREVIEW||!db||!st.cls||!st.grp||!okCode())return;
+  myKey=gkey();
+  var T=tot();
+  clearTimeout(pushT);
+  pushT=setTimeout(function(){
+    db.ref("e/"+EVENT_ID+"/board/"+myKey).set({
+      cls:st.cls,grp:st.grp,mem:st.mem,total:T.all,mo:T.mo,mi:T.mi,te:T.te,gp:T.gp,bo:T.bo,
+      at:firebase.database.ServerValue.TIMESTAMP
+    }).catch(function(){});
+    db.ref("e/"+EVENT_ID+"/ans/"+myKey).set({
+      cls:st.cls,grp:st.grp,mem:st.mem,
+      picked:(st.picked||[]).join(","),
+      ph:Object.keys(st.photo).filter(function(k){return st.photo[k];}).join(","),
+      terms:hits().join("、"),
+      d:cleanD(),
+      at:firebase.database.ServerValue.TIMESTAMP
+    }).catch(function(){});
+  },900);
+  if(ev) db.ref("e/"+EVENT_ID+"/feed").push({t:Date.now(),c:st.cls,g:st.grp,x:ev}).catch(function(){});
 }
 
-function detail(r){
-  var A=ansMap[r.k];
-  if(!A) return '<div class="empty">這一組還沒有送出任何答案內容。</div>';
-  var h=[],ph=(A.ph||"").split(",").filter(Boolean);
-  h.push('<h4>魔菇部落</h4>');
-  ["m1","m2","m3","m4","m5"].forEach(function(id){ h.push(qa(id,A.d&&A.d[id])); });
-  h.push('<h4>三中港奧特萊斯　（抽到 '+esc(A.picked||"—")+'）</h4>');
-  (A.picked?A.picked.split(","):[]).forEach(function(id){
-    h.push(qa(id,A.d&&A.d[id],ph.indexOf(id)>=0));
+/* ---------- 照片 ---------- */
+function shrink(file,cb){
+  var fr=new FileReader();
+  fr.onerror=function(){cb(null);};
+  fr.onload=function(){
+    var img=new Image();
+    img.onerror=function(){cb(null);};
+    img.onload=function(){
+      var m=800,w=img.width||m,h=img.height||m,s=Math.min(1,m/Math.max(w,h));
+      var c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(w*s)); c.height=Math.max(1,Math.round(h*s));
+      try{
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        cb(c.toDataURL("image/jpeg",0.6));
+      }catch(err){ cb(null); }
+    };
+    img.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+function pushPic(k,url){
+  if(PREVIEW||!db||!okCode()) return;
+  if(url.length>250000){ upState[k]="too-big"; paintUp(k); return; }
+  upState[k]="up";
+  paintUp(k);
+  db.ref("e/"+EVENT_ID+"/pic/"+gkey()+"/"+k).set(url)
+    .then(function(){ upState[k]="ok"; paintUp(k); })
+    .catch(function(){ upState[k]="fail"; paintUp(k); });
+}
+function upText(k){
+  if(!pics[k]) return "";
+  if(!db||!okCode()) return "已存在手機裡";
+  var s=upState[k];
+  return s==="ok"?"已上傳":s==="up"?"上傳中⋯":s==="fail"?"上傳失敗，回校再傳":s==="too-big"?"檔案太大，只留在手機":"已存在手機裡";
+}
+function paintUp(k){
+  var el=document.querySelector('[data-up="'+k+'"]');
+  if(el) el.textContent=upText(k);
+}
+
+/* ---------- GPS ---------- */
+function dist(a,b,c,d){
+  var R=6371000,p=Math.PI/180;
+  var x=Math.sin((c-a)*p/2),y=Math.sin((d-b)*p/2);
+  var h=x*x+Math.cos(a*p)*Math.cos(c*p)*y*y;
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+var pos=null;
+function startGPS(){
+  if(!GPS_ON||!navigator.geolocation)return;
+  navigator.geolocation.watchPosition(function(p){
+    pos=p.coords;
+    var slack=Math.min(pos.accuracy||0,20);
+    SPOTS.forEach(function(s){
+      var d=dist(pos.latitude,pos.longitude,s.lat,s.lng);
+      if(d-slack<=s.r&&!st.spots[s.name]){ st.spots[s.name]=1; save(); push("抵達「"+s.name+"」"); render(); }
+    });
+    paintGPS();
+  },function(){},{enableHighAccuracy:true,maximumAge:15000,timeout:20000});
+}
+
+/* ---------- 倒數 ---------- */
+function clk(){
+  var now=new Date(),diff=DEADLINE-now;
+  if(now.toDateString()!==DEADLINE.toDateString()){
+    var d=Math.ceil((new Date(2026,9,1)-new Date(now.getFullYear(),now.getMonth(),now.getDate()))/86400000);
+    return {t:d>0?"10/1　還有 "+d+" 天":"任務已結束",w:false};
+  }
+  if(diff<=0)return {t:"集合時間到！",w:true};
+  var m=Math.floor(diff/60000),s=Math.floor(diff%60000/1000);
+  return {t:String(m).padStart(2,"0")+":"+String(s).padStart(2,"0"),w:m<15};
+}
+
+/* ---------- 班際對抗 ---------- */
+function classCard(){
+  if(!db||board.length<2) return "";
+  var m={};
+  board.forEach(function(b){
+    var c=(b.cls||"").trim(); if(!c) return;
+    m[c]=m[c]||{n:0,s:0,mo:0,mi:0,te:0,gp:0,top:-1,tn:""};
+    var x=m[c];
+    x.n++; x.s+=(b.total||0); x.mo+=(b.mo||0); x.mi+=(b.mi||0); x.te+=(b.te||0); x.gp+=(b.gp||0);
+    if((b.total||0)>x.top){ x.top=b.total||0; x.tn=b.grp||""; }
   });
-  h.push('<h4>抓到的商業術語</h4>');
-  h.push(A.terms?'<div class="tags">'+A.terms.split("、").map(function(t){return '<span>'+esc(t)+'</span>';}).join("")+'</div>':'<div class="qa"><div class="a" style="color:var(--ink-3)">（沒有出現關鍵字）</div></div>');
+  var ks=Object.keys(m);
+  if(ks.length<2) return "";
+  ks.sort(function(a,b){ return (m[b].s/m[b].n)-(m[a].s/m[a].n); });
+  var h=['<div class="vs"><h3><span class="live"></span>班際對抗</h3><div class="vs-in">'];
+  [ks[0],ks[1]].forEach(function(c,i){
+    var x=m[c],av=(x.s/x.n);
+    if(i===1) h.push('<div class="vs-mid">VS</div>');
+    h.push('<div class="vs-c'+(i===0?" win":"")+'">');
+    h.push('<div class="nm">'+esc(c)+'</div>');
+    h.push('<div class="av">'+av.toFixed(1)+'</div>');
+    h.push('<div class="de">總分 '+x.s+' ／ '+x.n+' 組<br>最強 '+esc(x.tn)+' '+x.top+' 分</div>');
+    h.push('</div>');
+  });
+  h.push('</div><div class="vs-foot">以平均分定勝負，兩班組數不同也公平</div></div>');
   return h.join("");
 }
-function qa(id,row,photo){
-  var h=['<div class="qa"><div class="q">'+esc(TITLE[id]||id)+(photo?'　📷 已拍':'')+'</div>'];
-  if(!row){ h.push('<div class="a" style="color:var(--ink-3)">（未作答）</div></div>'); return h.join(""); }
-  var ks=Object.keys(row);
-  ks.forEach(function(k){ h.push('<div class="a">'+esc(row[k])+'</div>'); });
+
+/* ---------- render ---------- */
+function render(){
+  var h=[],T=tot(),c=clk();
+  var mk=gkey();
+  var rank=mk?board.map(function(b){return b.k;}).indexOf(mk):-1;
+
+  h.push('<div class="hud"><div class="hud-in">');
+  h.push('<div><span class="lab">距離 14:50 集合</span><span class="clock'+(c.w?" warn":"")+'" id="clk">'+c.t+'</span></div>');
+  h.push('<div class="rank"><span class="lab">'+(rank>=0?"目前第 "+(rank+1)+" 名":"任務得分")+'</span>');
+  h.push('<span class="pts" id="pts">'+T.all+'<small>/'+MAX+'</small></span></div>');
+  h.push('</div><div class="ticker'+(feed.length?" on":"")+'" id="tick"><div></div></div></div>');
+
+  if(PREVIEW) h.push('<div class="prev"><b>預覽模式</b>　八關全部打開，分數不會上傳，也不會影響學生的紀錄。網址拿掉 <code>?preview=1</code> 就回到正常模式。</div>');
+  h.push('<header class="mast"><p class="eyebrow">員林家商　商經科　10/1 職場體驗</p>');
+  h.push('<h1>職場體驗<br><em>偵察任務</em></h1>');
+  h.push('<p class="lede">早上在魔菇部落，下午在三井 OUTLET。一整天，兩個完全不同的生意。你們的工作是看懂它們怎麼賺錢。</p>');
+  h.push('<div class="rules"><h3>怎麼玩</h3><ol>');
+  h.push('<li><b>一組一份紀錄</b>，同組的人填的東西會互相同步。</li>');
+  h.push('<li>魔菇 5 題全班一樣，三井 4 關<b>每組抽的不同</b>。</li>');
+  h.push('<li>魔菇時段<b>不要用打的，用說的</b>——鍵盤上的麥克風按下去直接講。</li>');
+  h.push('<li>答案裡用對<b>商業名詞</b>會加分。</li>');
+  h.push('<li><b>14:50 準時到集合點</b>，遲到扣的是全班的平均。</li>');
+  h.push('</ol></div></header>');
+
+  h.push(classCard());
+
+  h.push('<div class="panel"><h2>這一組是誰</h2><p class="sub">同組的人填一樣的班級和組別，紀錄就會同步。一組四到五個人。</p>');
+  h.push('<div class="two">');
+  h.push('<div class="f"><label>班級</label><input id="i-cls" data-s="cls" value="'+esc(st.cls)+'" placeholder="商二甲"></div>');
+  h.push('<div class="f"><label>組別</label><input id="i-grp" data-s="grp" value="'+esc(st.grp)+'" placeholder="第 3 組"></div></div>');
+  h.push('<div class="f"><label>組員（第一位是組長）</label><input id="i-mem" data-s="mem" value="'+esc(st.mem)+'" placeholder="王小明、李小華、陳大同、林小美"></div>');
+  h.push('<div class="f"><label>你的姓名（心得會印上這個名字）</label><input id="i-name" data-s="name" value="'+esc(st.name)+'" placeholder="王小明"></div>');
+  h.push('<div class="f"><label>組別通行碼（老師發的那四位數字）</label><input id="i-code" data-s="code" inputmode="numeric" maxlength="4" value="'+esc(st.code)+'" placeholder="0000"></div>');
+  h.push('<div class="codest'+(okCode()?" ok":"")+'">'+(okCode()
+      ? "✓ 已認證　這一組的紀錄只有輸入同一組通行碼的人能寫"
+      : "輸入通行碼之後才會開始同步。沒輸入也能作答，但不會進排行榜。")+'</div>');
+  h.push('<div class="mic"><b>快三倍的作法：</b>鍵盤上有一個麥克風的圖示，按下去直接用講的。講完看一眼再送出——語音輸入常常把「坪效」聽成「平效」。</div>');
+  h.push('</div>');
+
+  var ready=st.cls&&st.grp&&st.mem&&okCode();
+
+  h.push('<div class="lb"><h3>'+(db?'<span class="live"></span>即時排行榜':'排行榜（單機模式）')+'</h3>');
+  if(!db) h.push('<div class="empty">還沒接上連線，分數只會存在這支手機。</div>');
+  else if(!board.length) h.push('<div class="empty">還沒有人交卷。第一名就是你們。</div>');
+  else { h.push('<ol>'); board.slice(0,10).forEach(function(b,i){
+    h.push('<li class="'+(b.k===mk?"me":"")+'"><span class="p">'+(i+1)+'</span><span class="n">'+esc((b.cls||"")+" "+(b.grp||""))+(b.bo?' <i class="st">★'+b.bo+'</i>':'')+'</span><span class="s">'+(b.total||0)+'</span></li>');
+  }); h.push('</ol>'); }
+  h.push('</div>');
+
+  h.push('<div class="stages">');
+  h.push('<button data-stage="mogu" class="'+(st.stage==="mogu"?"on":"")+'">魔菇部落<b>'+T.mo+' / 30</b></button>');
+  h.push('<button data-stage="mitsui" class="'+(st.stage==="mitsui"?"on":"")+'">三井 OUTLET<b>'+T.mi+' / 40</b></button>');
+  h.push('<button data-stage="refl" class="'+(st.stage==="refl"?"on":"")+'">心得與照片<b>各自寫</b></button>');
+  h.push('</div>');
+
+  if(st.stage==="mogu"){
+    MOGU.forEach(function(q,i){ h.push(card(q,i+1)); });
+  } else if(st.stage==="mitsui"){
+    if(PREVIEW){
+      h.push(gpsPanel());
+      MITSUI.forEach(function(q,i){ h.push(card(q,i+1)); });
+      h.push('<div class="unlocked">★　加碼關</div>');
+      h.push(card(BONUS,"★"));
+    } else if(!st.picked){
+      h.push('<div class="panel"><h2>抽任務</h2><p class="sub">8 關裡抽 4 關，每組抽到的組合不一樣。抽完就不能重抽。'+(ready?"":"<br><b>要先填完班級、組別、組員和通行碼。</b>")+'</p>');
+      h.push('<button class="big" id="draw"'+(ready?"":" disabled")+'>抽 4 個任務</button></div>');
+    } else {
+      h.push(gpsPanel());
+      st.picked.forEach(function(id,i){ h.push(card(Q(id),i+1)); });
+      if(unlocked()){
+        h.push('<div class="unlocked">★　加碼關已解鎖</div>');
+        h.push(card(BONUS,"★"));
+      } else {
+        h.push('<div class="locked"><b>加碼關．總經理的位子</b><br>四關全部拿到滿分才會打開。還差 '+(40-T.mi)+' 分。<br><span>加碼分不計入排名，不影響誰贏</span></div>');
+      }
+    }
+  } else {
+    h.push(reflPanel());
+  }
+
+  if(st.stage!=="refl"){
+    var ht=hits();
+    h.push('<div class="terms"><b>商業名詞加分　'+Math.min(5,ht.length)+' / 5</b>　每用對一個 +1');
+    h.push('<div class="chips">');
+    TERMS.forEach(function(w){h.push('<i class="'+(ht.indexOf(w)>=0?"hit":"")+'">'+esc(w)+'</i>');});
+    h.push('</div></div>');
+  }
+
+  h.push('<div class="res"><h2>戰績</h2><p>填完按一下，貼到班級群組。</p>');
+  h.push('<div class="bigscore">'+T.all+'<small> / '+MAX+'</small></div>');
+  h.push('<div class="bd"><div><b>'+T.mo+'</b><span>魔菇 30</span></div><div><b>'+T.mi+'</b><span>三井 40</span></div><div><b>'+T.te+'</b><span>名詞 5</span></div>'+(GPS_ON?'<div><b>'+T.gp+'</b><span>打卡 '+GPS_MAX+'</span></div>':'')+'</div>');
+  h.push('<p class="teach">準時集合 10 分、創意分 10 分由老師另計，全部加起來滿分 100。</p>');
+  h.push('<div class="bonusline" id="bl"'+(T.bo?'':' hidden')+'>★　加碼關　'+T.bo+' / 10　（另計）</div>');
+  h.push('<textarea id="out" readonly placeholder="按下面的「產生戰績」"></textarea>');
+  h.push('<div class="btns"><button class="copy" id="gen">產生戰績</button><button class="pr" id="cp">複製</button><button class="pr" id="prt">列印學習單</button></div>');
+  h.push('<div class="sync" id="sy"></div></div>');
+
+  h.push('<details class="tn"><summary>老師用：計分方式</summary>');
+  h.push('<table><tr><th>項目</th><th>配分</th><th>怎麼算</th></tr>');
+  h.push('<tr><td>魔菇 5 題</td><td>30</td><td>每題 6（填滿 3＋字數 3），全班相同</td></tr>');
+  h.push('<tr><td>三井 4 關</td><td>40</td><td>每關 10（照片 3＋填滿 4＋字數 3），抽籤</td></tr>');
+  h.push('<tr><td>商業名詞</td><td>5</td><td>用對一個 +1，上限 5 個</td></tr>');
+  h.push('<tr><td>定點打卡</td><td>'+(GPS_ON?GPS_MAX:"未啟用")+'</td><td>大門 1／古拉爵 1／特斯拉 1／摩天輪 2</td></tr>');
+  h.push('<tr><td>準時集合</td><td>10</td><td>老師另計</td></tr>');
+  h.push('<tr><td>創意分</td><td>10</td><td>老師另計</td></tr>');
+  h.push('<tr><td><b>合計</b></td><td><b>100</b></td><td>加碼關 10 分不計入</td></tr></table>');
+  h.push('<p><b>備案：</b>現場沒網路照樣能填，資料存在手機裡，有網路時才同步。照片也一樣。</p>');
+  h.push('</details>');
+  h.push('<footer>115 學年度第 1 學期　商業經營科職場體驗</footer>');
+
+  document.getElementById("app").innerHTML=h.join("");
+  paintTicker(); paintSync(); paintGPS(); buildSheet();
+}
+
+function gpsPanel(){
+  if(!GPS_ON)return "";
+  var got=SPOTS.filter(function(s){return st.spots[s.name];}).length;
+  var h=['<div class="panel"><h2>打卡地圖　'+SPOTS.reduce(function(a,s){return a+(st.spots[s.name]?s.pts:0);},0)+' / '+GPS_MAX+'</h2>'];
+  h.push('<p class="sub">走到這四個地方，手機會自己跳分，不用按任何東西。'+(got===SPOTS.length?"<b>四個都到齊了。</b>":"從大門走到摩天輪大約 600 公尺，先排好順序再出發。")+'</p>');
+  SPOTS.forEach(function(s){
+    var ok=st.spots[s.name];
+    h.push('<div class="gpsbar'+(ok?" hit":"")+'" data-spot="'+esc(s.name)+'">'+
+      (ok?"✓ "+esc(s.name)+"　＋"+s.pts+" 分"
+         :"<b>"+esc(s.name)+"</b>　＋"+s.pts+" 分　<span class=\"dd\">定位中…</span>")+'</div>');
+  });
+  return h.join("")+'</div>';
+}
+
+function card(q,n){
+  var sc=qScore(q.id),mx=qMax(q.id),open=st.open===q.id;
+  var h=['<section class="quest'+(sc===mx?" done":"")+(open?" open":"")+'">'];
+  h.push('<div class="qhead" data-q="'+q.id+'"><span class="qnum">'+n+'</span>');
+  h.push('<span class="qt"><b>'+esc(q.t)+'</b><span>'+esc(q.s)+'</span></span>');
+  h.push('<span class="qpts">'+sc+' / '+mx+'</span></div><div class="qbody">');
+  h.push('<div class="mission">'+q.m+'</div>');
+  if(q.id[0]==="q") h.push(photoBox(q.id,"拍照　＋3 分"));
+  if(q.grid===3){ for(var g=0;g<3;g++){ h.push('<div class="three">'); q.f.slice(g*3,g*3+3).forEach(function(f){h.push(fld(q.id,f));}); h.push('</div>'); } }
+  else q.f.forEach(function(f){h.push(fld(q.id,f));});
+  h.push('</div></section>');
+  return h.join("");
+}
+function photoBox(k,lab){
+  var has=!!pics[k];
+  var h=['<div class="ph'+(has?" has":"")+'">'];
+  if(has) h.push('<img src="'+pics[k]+'" alt="">');
+  h.push('<label for="pic-'+k+'"><input type="file" accept="image/*" capture="environment" id="pic-'+k+'" data-pic="'+k+'">');
+  h.push('<span>'+(has?"✓ 已拍　點這裡重拍":lab)+'</span></label>');
+  if(has) h.push('<div class="up" data-up="'+k+'">'+upText(k)+'</div>');
   h.push('</div>');
   return h.join("");
 }
+function fld(qid,f){
+  var val=esc(v(qid,f.k)),id="f-"+qid+"-"+f.k;
+  var s='<div class="f"><label for="'+id+'">'+esc(f.l)+'</label>';
+  s+=f.t==="in"?'<input id="'+id+'" data-q="'+qid+'" data-k="'+f.k+'" value="'+val+'">'
+               :'<textarea id="'+id+'" data-q="'+qid+'" data-k="'+f.k+'">'+val+'</textarea>';
+  if(f.min){var n=v(qid,f.k).length;s+='<div class="cnt'+(n>=f.min?" ok":"")+'">'+n+' / '+f.min+' 字</div>';}
+  return s+'</div>';
+}
+function reflPanel(){
+  var h=['<div class="panel"><h2>學習單照片</h2><p class="sub">這兩張會直接印在學習單上，<b>不用再洗照片、不用剪貼</b>。挑最能代表那個地方的一張。</p>'];
+  h.push(photoBox("sheetM","魔菇部落　選一張"));
+  h.push(photoBox("sheetT","三井 OUTLET　選一張"));
+  h.push('</div>');
+  h.push('<div class="panel"><h2>個人心得</h2><p class="sub">這一段是<b>你自己</b>寫的，不會同步給同組的人，老師端也看不到。填完按「列印學習單」就是可以交的那一份。</p>');
+  h.push('<div class="f"><label for="r-a">今天印象最深的一件事</label><textarea id="r-a" data-r="a" placeholder="一個畫面、一句話、一個數字都可以">'+esc(st.refl.a)+'</textarea>'+cntR("a",50)+'</div>');
+  h.push('<div class="f"><label for="r-b">參訪心得（至少 400 字）</label><textarea id="r-b" data-r="b" style="min-height:220px" placeholder="從上面的任務紀錄裡找素材：你原本以為什麼，後來發現什麼？哪個觀察讓你改變想法？">'+esc(st.refl.b)+'</textarea>'+cntR("b",400)+'</div>');
+  h.push('<div class="f"><label for="r-c">對這次活動的建議</label><textarea id="r-c" data-r="c" placeholder="行程、時間、地點、任務設計都可以講">'+esc(st.refl.c)+'</textarea>'+cntR("c",30)+'</div>');
+  h.push('</div>');
+  return h.join("");
+}
+function cntR(k,min){var n=(st.refl[k]||"").trim().length;return '<div class="cnt'+(n>=min?" ok":"")+'">'+n+' / '+min+' 字</div>';}
 
-function paintFeed(){
-  var el=document.getElementById("fd");
-  if(!feed.length){ el.innerHTML='<div class="empty">還沒有動靜</div>'; return; }
-  el.innerHTML='<ul>'+feed.map(function(f){
-    return '<li><time>'+hhmm(f.t)+'</time><b>'+esc(f.c)+' '+esc(f.g)+'</b>　'+esc(f.x)+'</li>';
-  }).join("")+'</ul>';
+/* ---------- paints ---------- */
+function paintTicker(){
+  var el=document.getElementById("tick");if(!el)return;
+  if(!feed.length){el.classList.remove("on");return;}
+  el.classList.add("on");
+  var f=feed[feed.length-1];
+  el.firstChild.innerHTML='<b>'+esc((f.c||"")+" "+(f.g||""))+'</b>　'+esc(f.x);
+}
+function paintSync(){
+  var el=document.getElementById("sy");if(!el)return;
+  el.textContent=!db?"單機模式　分數只存在這支手機"
+    :(!okCode()?"尚未輸入通行碼　分數只存在這支手機"
+    :(online?"已連線　分數即時同步":"離線中　有網路時會自動補傳"));
+}
+function paintGPS(){
+  var els=document.querySelectorAll(".gpsbar .dd");
+  for(var i=0;i<els.length;i++){
+    (function(el){
+      var bar=el.parentNode; while(bar&&!bar.dataset.spot) bar=bar.parentNode;
+      if(!bar)return;
+      var sp=SPOTS.filter(function(s){return s.name===bar.dataset.spot;})[0];
+      if(!sp||!pos){el.textContent="定位中…";return;}
+      var d=Math.round(dist(pos.latitude,pos.longitude,sp.lat,sp.lng));
+      el.textContent="距離 "+d+" 公尺"+(pos.accuracy?("，誤差 ±"+Math.round(pos.accuracy)):"");
+    })(els[i]);
+  }
+}
+function paintBonus(){
+  var el=document.getElementById("bl"); if(!el)return;
+  var bo=tot().bo;
+  el.hidden=!bo;
+  el.textContent="★　加碼關　"+bo+" / 10　（另計）";
 }
 
-/* ---------- 互動 ---------- */
-document.addEventListener("click",function(e){
-  var b=e.target.closest("button");
-  if(b&&b.dataset.cls!==undefined){
-    filt=b.dataset.cls;
-    document.querySelectorAll("[data-cls]").forEach(function(x){x.classList.toggle("on",x===b);});
-    paint(); return;
+/* ---------- 學習單 ---------- */
+function buildSheet(){
+  var T=tot(),h=[];
+  h.push('<h1>國立員林家商 115 學年度第 1 學期商業經營科</h1>');
+  h.push('<h1>學生業界實習和職場體驗計畫－「職場體驗」學習心得</h1>');
+  h.push('<p class="sub">魔菇部落生態休閒農場／三中港奧特萊斯股份有限公司</p>');
+  h.push('<table><tr><th>班級</th><td>'+esc(st.cls)+'</td><th>姓名</th><td>'+esc(st.name)+'</td><th>組別</th><td>'+esc(st.grp)+'</td></tr>');
+  h.push('<tr><th>參訪日期</th><td>115年10月1日</td><th>課程名稱</th><td colspan="3">專題製作－職場體驗</td></tr>');
+  h.push('<tr><th>組員</th><td colspan="5">'+esc(st.mem)+'</td></tr>');
+  h.push('<tr><th>任務得分</th><td colspan="5">'+T.all+' / '+MAX+'　（魔菇 '+T.mo+'／三井 '+T.mi+'／名詞 '+T.te+(GPS_ON?'／打卡 '+T.gp:'')+'）</td></tr></table>');
+
+  h.push('<div class="box"><div class="h">參訪內容　魔菇部落生態休閒農場</div>');
+  MOGU.forEach(function(q){ h.push('<p><b>'+esc(q.t)+'</b>　'+q.f.map(function(f){return esc(v(q.id,f.k));}).filter(Boolean).join('／')+'</p>'); });
+  h.push('</div>');
+
+  h.push('<div class="box"><div class="h">參訪內容　三中港奧特萊斯股份有限公司</div>');
+  (st.picked||[]).forEach(function(id){ var q=Q(id);
+    h.push('<p><b>'+esc(q.t)+'</b>　'+q.f.map(function(f){return esc(v(id,f.k));}).filter(Boolean).join('／')+'</p>'); });
+  h.push('</div>');
+
+  if(T.bo){
+    h.push('<div class="box" style="min-height:0"><div class="h">加碼關　總經理的位子（'+T.bo+'/10）</div>');
+    BONUS.f.forEach(function(f){ var t=v("x1",f.k); if(t) h.push('<p><b>'+esc(f.l)+'</b>　'+esc(t)+'</p>'); });
+    h.push('</div>');
   }
-  if(b&&b.dataset.sort){
-    sortBy=b.dataset.sort;
-    document.querySelectorAll("[data-sort]").forEach(function(x){x.classList.toggle("on",x===b);});
-    paint(); return;
-  }
-  if(b&&b.id==="bProj"){ document.body.classList.toggle("proj"); b.classList.toggle("on"); return; }
-  if(b&&b.id==="bPrint"){ document.body.classList.remove("slips"); window.print(); return; }
-  if(b&&b.id==="bSlip"){
-    if(!roster.length){ alert("先填主密語。"); return; }
-    document.body.classList.add("slips");
-    setTimeout(function(){ window.print(); document.body.classList.remove("slips"); },80);
-    return;
-  }
-  if(b&&b.id==="bCsv"){ csv(); return; }
-  var tr=e.target.closest("tr.g");
-  if(tr&&!e.target.closest("input")){ openKey=(openKey===tr.dataset.k)?null:tr.dataset.k; paint(); }
-});
+
+  h.push('<div class="box"><div class="h">印象最深的一件事</div><p>'+esc(st.refl.a)+'</p></div>');
+  h.push('<div class="box" style="min-height:330px"><div class="h">參訪心得</div><p>'+esc(st.refl.b).replace(/\n/g,"<br>")+'</p></div>');
+  h.push('<div class="box" style="min-height:90px"><div class="h">建議</div><p>'+esc(st.refl.c)+'</p></div>');
+  h.push('<div class="sign"><div>授課老師簽章</div><div>科主任簽章</div></div>');
+
+  h.push('<div class="pg"><h1>115 年度商業經營科「職場體驗」活動相片紀錄</h1>');
+  h.push(sheetPhoto("sheetM","魔菇部落生態休閒農場"));
+  h.push(sheetPhoto("sheetT","三中港奧特萊斯股份有限公司"));
+  h.push('</div>');
+  document.getElementById("sheet").innerHTML=h.join("");
+}
+function sheetPhoto(k,cap){
+  if(pics[k]) return '<div class="ph2"><img src="'+pics[k]+'" alt=""></div><div class="cap">'+esc(cap)+'</div>';
+  return '<div class="ph2 blank">照片黏貼處（'+esc(cap)+'）</div>';
+}
+
+/* ---------- events ---------- */
 document.addEventListener("input",function(e){
-  var t=e.target;
-  if(t.classList.contains("mi")){
-    var k=t.dataset.k;
-    manual[k]=manual[k]||{};
-    manual[k][t.dataset.f]=Math.max(0,+t.value||0);
-    saveManual();
-    var row=board.filter(function(r){return r.k===k;})[0];
-    if(row){ var td=t.closest("tr").querySelector("td.tot"); if(td)td.textContent=grand(row); }
-    document.getElementById("sA").textContent=(function(){
-      var v=board.map(grand); return v.length?Math.round(v.reduce(function(x,y){return x+y;},0)/v.length):0;})();
-    document.getElementById("sM").textContent=(function(){
-      var v=board.map(grand); return v.length?Math.max.apply(null,v):0;})();
-    return;
+  var el=e.target;
+  if(el.dataset.s){
+    var val=el.value;
+    if(el.dataset.s==="code"){ val=val.replace(/\D/g,"").slice(0,4); el.value=val; }
+    var was=st[el.dataset.s]; st[el.dataset.s]=val; save();
+    if(el.dataset.s==="code"&&val.length===4&&was.length!==4){ push("加入了任務"); render(); return; }
+    push(); return;
   }
-  if(t.id==="maxN"||t.id==="expN") paint();
-  if(["mw","cA","nA","cB","nB","su"].indexOf(t.id)>=0){
-    pw[t.id]=(t.id==="nA"||t.id==="nB")?(+t.value||0):t.value;
-    savePw(); buildRoster(); paint();
+  if(el.dataset.r){
+    st.refl[el.dataset.r]=el.value; save();
+    var f=el.closest(".f"),c=f&&f.querySelector(".cnt");
+    if(c){var mn=el.dataset.r==="b"?400:(el.dataset.r==="a"?50:30),n=el.value.trim().length;
+      c.textContent=n+" / "+mn+" 字";c.className="cnt"+(n>=mn?" ok":"");}
+    buildSheet(); return;
+  }
+  if(el.dataset.q&&el.dataset.k){
+    st.d[el.dataset.q]=st.d[el.dataset.q]||{};
+    st.d[el.dataset.q][el.dataset.k]=el.value; save();
+    var T=tot(),p=document.getElementById("pts"); if(p)p.innerHTML=T.all+'<small>/'+MAX+'</small>';
+    var f2=el.closest(".f"),c2=f2&&f2.querySelector(".cnt");
+    if(c2){var q=Q(el.dataset.q),fd=q.f.filter(function(x){return x.k===el.dataset.k;})[0];
+      c2.textContent=el.value.trim().length+" / "+fd.min+" 字";
+      c2.className="cnt"+(el.value.trim().length>=fd.min?" ok":"");}
+    var sec=el.closest(".quest"),hd=sec&&sec.querySelector(".qpts");
+    if(hd){
+      var sc=qScore(el.dataset.q);
+      hd.textContent=sc+" / "+qMax(el.dataset.q);
+      var was2=sec.classList.contains("done");
+      sec.classList.toggle("done",sc===qMax(el.dataset.q));
+      var ev=(!was2&&sc===qMax(el.dataset.q))?"完成了「"+Q(el.dataset.q).t+"」":null;
+      if(justUnlocked()){ push("★ 解鎖了加碼關！"); render(); return; }
+      push(ev); paintBonus();
+    } else push();
   }
 });
 
-/* ---------- CSV ---------- */
-function csv(){
-  var ids=["m1","m2","m3","m4","m5","q1","q2","q3","q4","q5","q6","q7","q8"];
-  var head=["班級","組別","認證","組員","魔菇","三井","術語","GPS","任務小計","準時","創意","總評","抽到關卡","術語清單","最後更新"];
-  ids.forEach(function(id){ head.push(TITLE[id]||id); });
-  var lines=[head];
-  rows().forEach(function(r){
-    var A=ansMap[r.k]||{};
-    var line=[r.cls,r.grp,(tokMap[r.k]?"✓":"未認證"),r.mem||"",r.mo||0,r.mi||0,r.te||0,r.gp||0,r.total||0,
-              man(r.k,"p"),man(r.k,"c"),grand(r),A.picked||"",A.terms||"",hhmm(r.at)];
-    ids.forEach(function(id){
-      var row=(A.d||{})[id];
-      line.push(row?Object.keys(row).map(function(k){return row[k];}).join(" ／ "):"");
+document.addEventListener("change",function(e){
+  var t=e.target;
+  if(t.dataset.pic!==undefined&&t.files&&t.files[0]){
+    var k=t.dataset.pic;
+    upState[k]="up";
+    shrink(t.files[0],function(url){
+      if(!url){ upState[k]="fail"; paintUp(k); return; }
+      pics[k]=url; savePics();
+      if(k.indexOf("sheet")!==0){
+        st.photo[k]=1; save();
+        pushPic(k,url);
+        if(justUnlocked()){ push("★ 解鎖了加碼關！"); render(); return; }
+        push();
+      } else {
+        pushPic(k,url);
+      }
+      render();
     });
-    lines.push(line);
-  });
-  var out=lines.map(function(L){
-    return L.map(function(c){ return '"'+String(c==null?"":c).replace(/"/g,'""')+'"'; }).join(",");
-  }).join("\r\n");
-  var blob=new Blob(["﻿"+out],{type:"text/csv;charset=utf-8"});
-  var a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download="職場體驗任務成績_"+EVENT_ID+".csv";
-  document.body.appendChild(a); a.click(); a.remove();
+  }
+});
+
+document.addEventListener("click",function(e){
+  var t=e.target;
+  var hd=t.closest(".qhead");
+  if(hd){ st.open=(st.open===hd.dataset.q)?null:hd.dataset.q; save(); render(); return; }
+  var sb=t.closest("[data-stage]");
+  if(sb){ st.stage=sb.dataset.stage; st.open=null; save(); render(); return; }
+  if(t.id==="draw"){
+    var pool=MITSUI.map(function(x){return x.id;});
+    for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),k=pool[i];pool[i]=pool[j];pool[j]=k;}
+    st.picked=pool.slice(0,4); st.open=st.picked[0]; save(); push("抽到了任務"); render(); return;
+  }
+  if(t.id==="gen"){ gen(); return; }
+  if(t.id==="prt"){ buildSheet(); setTimeout(function(){window.print();},60); return; }
+  if(t.id==="cp"){
+    var o=document.getElementById("out"); if(!o.value)gen();
+    var done=function(){t.textContent="已複製";setTimeout(function(){t.textContent="複製";},1800);};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(o.value).then(done).catch(fb);else fb();
+    function fb(){o.removeAttribute("readonly");o.select();try{document.execCommand("copy");done();}catch(x){t.textContent="請長按選取";}o.setAttribute("readonly","");}
+  }
+});
+
+function gen(){
+  var T=tot(),L=[];
+  L.push("【職場體驗偵察任務】"+st.cls+" "+st.grp);
+  L.push("組員："+st.mem);
+  L.push("任務分："+T.all+" / "+MAX+"　魔菇 "+T.mo+"／三井 "+T.mi+"／名詞 "+T.te+(GPS_ON?"／打卡 "+T.gp:""));
+  L.push("");
+  L.push("══ 魔菇部落 ══");
+  MOGU.forEach(function(q){ L.push("── "+q.t+"　"+qScore(q.id)+"/6");
+    q.f.forEach(function(f){L.push("　"+f.l+"："+v(q.id,f.k));}); });
+  L.push("");
+  L.push("══ 三井 OUTLET ══");
+  (st.picked||[]).forEach(function(id){var q=Q(id);
+    L.push("── "+q.t+"　"+qScore(id)+"/10");
+    q.f.forEach(function(f){L.push("　"+f.l+"："+v(id,f.k));});
+    L.push("　照片："+(pics[id]?"已拍":"未拍")); });
+  L.push("");
+  if(T.bo){
+    L.push("══ ★ 加碼關　"+T.bo+"/10（另計） ══");
+    BONUS.f.forEach(function(f){L.push("　"+f.l+"："+v("x1",f.k));});
+    L.push("");
+  }
+  var ht=hits();
+  L.push("用到的商業名詞："+(ht.length?ht.join("、"):"（沒有）"));
+  document.getElementById("out").value=L.join("\n");
 }
 
-["mw","cA","nA","cB","nB","su"].forEach(function(k){
-  var el=document.getElementById(k); if(el) el.value=pw[k];
-});
-buildRoster();
-paint();
+lastUnlocked=unlocked();
+initFB(); render(); startGPS();
+setInterval(function(){var el=document.getElementById("clk");if(!el)return;var c=clk();el.textContent=c.t;el.className="clock"+(c.w?" warn":"");},1000);
 })();
 </script>
+
+
 </body>
 </html>
