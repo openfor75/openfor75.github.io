@@ -92,6 +92,27 @@ h1 em{font-style:normal;color:var(--accent)}
 .cnt.ok{color:var(--ok);font-weight:600}
 .codest{font-size:13px;color:var(--ink-3);background:var(--surface-2);border-radius:9px;padding:8px 11px;margin-top:2px}
 .codest.ok{background:var(--ok-soft);color:var(--ok);font-weight:600}
+.meet h2{margin-bottom:3px}
+.mrow{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:12px;padding:11px 14px;margin-bottom:9px}
+.mrow.ok{background:var(--ok-soft)}
+.mrow.bad{background:var(--accent-soft)}
+.mt{flex:1;min-width:0}
+.mt b{display:block;font-size:16px;font-weight:700}
+.mt span{display:block;font-size:12.5px;color:var(--ink-3);line-height:1.4}
+.mbtn{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.mbtn button{font-size:14.5px;padding:9px 14px;border-radius:10px;background:var(--accent);color:var(--on-accent);box-shadow:none}
+.mbtn button.sub2{background:var(--surface);color:var(--ink-3);border:1.5px solid var(--line);font-weight:500}
+.mdone{font-size:13.5px;font-weight:700;color:var(--ok);text-align:right;line-height:1.4;white-space:nowrap}
+.mdone.bad{color:var(--accent)}
+.mdone i{font-style:normal;font-family:var(--mono);font-size:12px;font-weight:500;opacity:.8}
+.mnote{font-size:12.5px;color:var(--ink-3);line-height:1.6;margin:2px 0 0}
+.laws{background:var(--accent-soft);border-radius:14px;padding:15px 17px;margin-top:9px}
+.laws h3{margin:0 0 7px;font-size:15.5px;font-weight:700;color:var(--accent)}
+.laws ol{margin:0;padding-left:19px;font-size:14.5px;color:var(--ink-2)}
+.laws li{margin-bottom:4px}
+.laws b{color:var(--ink)}
+.tip{background:var(--gold-soft);color:var(--gold);border-radius:14px;padding:14px 17px;margin-top:9px;font-size:14px;line-height:1.65}
+.tip b{color:var(--gold)}
 .prev{background:var(--sea);color:#fff;border-radius:12px;padding:12px 15px;margin:14px 0 0;font-size:14px;line-height:1.6}
 .prev b{display:inline-block;margin-right:6px}
 .prev code{font-family:var(--mono);font-size:12.5px;background:rgba(255,255,255,.18);padding:1px 6px;border-radius:5px}
@@ -332,16 +353,23 @@ var BONUS={id:"x1",t:"總經理的位子",s:"只能留一家",
      {k:"d",l:"理由三：從你今天親眼看到的東西說（人潮、排隊、提袋⋯⋯）",t:"ta",min:40},
      {k:"e",l:"最後一題：這家店最大的弱點是什麼？",t:"ta",min:30}]};
 
+var MEET=[
+ {t:"09:10",n:"出發",   w:"中廊集合，準備上車"},
+ {t:"12:00",n:"魔菇離園",w:"集合上車，車上用餐"},
+ {t:"14:50",n:"三井集合",w:"集合點名、拍大合照"}
+];
+
 var TERMS=["4P","STP","動線","坪效","客單價","目標客群","品牌定位","市場區隔","差異化","陳列","客層","人流","定價","促銷","通路","體驗行銷","集客","附加價值","產業升級"];
 
 var GPS_ON=SPOTS.length>0;
 var GPS_MAX=SPOTS.reduce(function(a,s){return a+s.pts;},0);
-var MAX = 30 + 40 + 5 + (GPS_ON?GPS_MAX:0);   /* 任務分 80，老師另計 20 */
+var MAX = 40 + 40 + 5 + (GPS_ON?GPS_MAX:0);   /* 任務分 90，老師創意分 10，合計 100 */
 
 /* ---------- state ---------- */
 var st={cls:"",grp:"",mem:"",name:"",code:"",picked:null,d:{},photo:{},spots:{},open:null,stage:"mogu",
-        refl:{a:"",b:"",c:""}};
+        roll:[0,0,0],refl:{a:"",b:"",c:""}};
 try{var r=localStorage.getItem(KEY);if(r)st=Object.assign(st,JSON.parse(r)||{});}catch(e){}
+if(!st.roll||st.roll.length!==3) st.roll=[0,0,0];
 var pics={};
 try{pics=JSON.parse(localStorage.getItem(PKEY)||"{}")||{};}catch(e){pics={};}
 
@@ -358,17 +386,17 @@ function savePics(){try{localStorage.setItem(PKEY,JSON.stringify(pics));}catch(e
 function qScore(qid){
   var q=Q(qid),sc=0;
   if(qid[0]==="x"){
-    q.f.forEach(function(f){ var t=v(qid,f.k); if(f.min? t.length>=f.min : t.length>0) sc+=2; });
-    return Math.min(10,sc);
+    q.f.forEach(function(f){ var t=v(qid,f.k); if(f.min? t.length>=f.min : t.length>0) sc+=1; });
+    return Math.min(5,sc);
   }
   var filled=q.f.every(function(f){return v(qid,f.k).length>0;});
   var mins=q.f.filter(function(f){return f.min;});
   var longEnough=mins.length?mins.every(function(f){return v(qid,f.k).length>=f.min;}):filled;
-  if(qid[0]==="m"){ if(filled)sc+=3; if(longEnough)sc+=3; }        /* 魔菇 6 */
+  if(qid[0]==="m"){ if(filled)sc+=4; if(longEnough)sc+=4; }        /* 魔菇 8 */
   else { if(st.photo[qid])sc+=3; if(filled)sc+=4; if(longEnough)sc+=3; }  /* 三井 10 */
   return sc;
 }
-function qMax(qid){return qid[0]==="m"?6:10;}
+function qMax(qid){return qid[0]==="m"?8:(qid[0]==="x"?5:10);}
 function unlocked(){ if(PREVIEW)return true; return (st.picked||[]).length===4&&(st.picked||[]).every(function(id){return qScore(id)===10;}); }
 var lastUnlocked=false;
 function justUnlocked(){
@@ -438,6 +466,7 @@ function push(ev){
   pushT=setTimeout(function(){
     db.ref("e/"+EVENT_ID+"/board/"+myKey).set({
       cls:st.cls,grp:st.grp,mem:st.mem,total:T.all,mo:T.mo,mi:T.mi,te:T.te,gp:T.gp,bo:T.bo,
+      r0:st.roll[0]||0, r1:st.roll[1]||0, r2:st.roll[2]||0,
       at:firebase.database.ServerValue.TIMESTAMP
     }).catch(function(){});
     db.ref("e/"+EVENT_ID+"/ans/"+myKey).set({
@@ -571,13 +600,22 @@ function render(){
   h.push('<p class="lede">早上在魔菇部落，下午在三井 OUTLET。一整天，兩個完全不同的生意。你們的工作是看懂它們怎麼賺錢。</p>');
   h.push('<div class="rules"><h3>怎麼玩</h3><ol>');
   h.push('<li><b>一組一份紀錄</b>，同組的人填的東西會互相同步。</li>');
-  h.push('<li>魔菇 5 題全班一樣，三井 4 關<b>每組抽的不同</b>。</li>');
-  h.push('<li>魔菇時段<b>不要用打的，用說的</b>——鍵盤上的麥克風按下去直接講。</li>');
-  h.push('<li>答案裡用對<b>商業名詞</b>會加分。</li>');
-  h.push('<li><b>14:50 準時到集合點</b>，遲到扣的是全班的平均。</li>');
-  h.push('</ol></div></header>');
+  h.push('<li>魔菇 5 題全班一樣，三井 4 關<b>每組抽的不同</b>，每一關都要拍照。</li>');
+  h.push('<li>答案裡用對<b>商業名詞</b>會加分，走到四個定點會自己加分。</li>');
+  h.push('<li>任務 90 分，<b>創意分 10 分老師評</b>，合計 100。加碼關 5 分另計。</li>');
+  h.push('<li><b>一天三次集合</b>：09:10 出發、12:00 魔菇離園、14:50 三井。遲到扣分。</li>');
+  h.push('</ol></div>');
+  h.push('<div class="laws"><h3>四個鐵則</h3><ol>');
+  h.push('<li><b>小組行動，不落單、不離開園區。</b>要走一起走，不要剩一兩個人自己行動。</li>');
+  h.push('<li><b>講師在簡報的時候不要用手機。</b>那是基本的尊重，任務等講完再做。</li>');
+  h.push('<li><b>拍照盡量不要拍到路人。</b>店員、顧客、小朋友的臉都避開。</li>');
+  h.push('<li><b>當天穿制服。</b></li>');
+  h.push('</ol></div>');
+  h.push('<div class="tip"><b>建議：不要用打的，用說的。</b>鍵盤上有一個麥克風的圖示，按下去直接講，比打字快三倍，也不用一直低頭。講完看一眼再送出——語音輸入常常把「坪效」聽成「平效」。</div>');
+  h.push('</header>');
 
   h.push(classCard());
+  h.push(meetPanel());
 
   h.push('<div class="panel"><h2>這一組是誰</h2><p class="sub">同組的人填一樣的班級和組別，紀錄就會同步。一組四到五個人。</p>');
   h.push('<div class="two">');
@@ -603,7 +641,7 @@ function render(){
   h.push('</div>');
 
   h.push('<div class="stages">');
-  h.push('<button data-stage="mogu" class="'+(st.stage==="mogu"?"on":"")+'">魔菇部落<b>'+T.mo+' / 30</b></button>');
+  h.push('<button data-stage="mogu" class="'+(st.stage==="mogu"?"on":"")+'">魔菇部落<b>'+T.mo+' / 40</b></button>');
   h.push('<button data-stage="mitsui" class="'+(st.stage==="mitsui"?"on":"")+'">三井 OUTLET<b>'+T.mi+' / 40</b></button>');
   h.push('<button data-stage="refl" class="'+(st.stage==="refl"?"on":"")+'">心得與照片<b>各自寫</b></button>');
   h.push('</div>');
@@ -626,7 +664,7 @@ function render(){
         h.push('<div class="unlocked">★　加碼關已解鎖</div>');
         h.push(card(BONUS,"★"));
       } else {
-        h.push('<div class="locked"><b>加碼關．總經理的位子</b><br>四關全部拿到滿分才會打開。還差 '+(40-T.mi)+' 分。<br><span>加碼分不計入排名，不影響誰贏</span></div>');
+        h.push('<div class="locked"><b>加碼關．總經理的位子</b><br>四關全部拿到滿分才會打開。還差 '+(40-T.mi)+' 分。<br><span>加碼關 5 分，不計入 100 分的排名</span></div>');
       }
     }
   } else {
@@ -643,8 +681,8 @@ function render(){
 
   h.push('<div class="res"><h2>戰績</h2><p>填完按一下，貼到班級群組。</p>');
   h.push('<div class="bigscore">'+T.all+'<small> / '+MAX+'</small></div>');
-  h.push('<div class="bd"><div><b>'+T.mo+'</b><span>魔菇 30</span></div><div><b>'+T.mi+'</b><span>三井 40</span></div><div><b>'+T.te+'</b><span>名詞 5</span></div>'+(GPS_ON?'<div><b>'+T.gp+'</b><span>打卡 '+GPS_MAX+'</span></div>':'')+'</div>');
-  h.push('<p class="teach">準時集合 10 分、創意分 10 分由老師另計，全部加起來滿分 100。</p>');
+  h.push('<div class="bd"><div><b>'+T.mo+'</b><span>魔菇 40</span></div><div><b>'+T.mi+'</b><span>三井 40</span></div><div><b>'+T.te+'</b><span>名詞 5</span></div>'+(GPS_ON?'<div><b>'+T.gp+'</b><span>打卡 '+GPS_MAX+'</span></div>':'')+'</div>');
+  h.push('<p class="teach">創意分 10 分由老師另計，加起來滿分 100。三次集合遲到會扣分：第一次 −3、第二次 −5、第三次 −10。</p>');
   h.push('<div class="bonusline" id="bl"'+(T.bo?'':' hidden')+'>★　加碼關　'+T.bo+' / 10　（另計）</div>');
   h.push('<textarea id="out" readonly placeholder="按下面的「產生戰績」"></textarea>');
   h.push('<div class="btns"><button class="copy" id="gen">產生戰績</button><button class="pr" id="cp">複製</button><button class="pr" id="prt">列印學習單</button></div>');
@@ -652,19 +690,37 @@ function render(){
 
   h.push('<details class="tn"><summary>老師用：計分方式</summary>');
   h.push('<table><tr><th>項目</th><th>配分</th><th>怎麼算</th></tr>');
-  h.push('<tr><td>魔菇 5 題</td><td>30</td><td>每題 6（填滿 3＋字數 3），全班相同</td></tr>');
+  h.push('<tr><td>魔菇 5 題</td><td>40</td><td>每題 8（填滿 4＋字數 4），全班相同</td></tr>');
   h.push('<tr><td>三井 4 關</td><td>40</td><td>每關 10（照片 3＋填滿 4＋字數 3），抽籤</td></tr>');
   h.push('<tr><td>商業名詞</td><td>5</td><td>用對一個 +1，上限 5 個</td></tr>');
   h.push('<tr><td>定點打卡</td><td>'+(GPS_ON?GPS_MAX:"未啟用")+'</td><td>大門 1／古拉爵 1／特斯拉 1／摩天輪 2</td></tr>');
-  h.push('<tr><td>準時集合</td><td>10</td><td>老師另計</td></tr>');
-  h.push('<tr><td>創意分</td><td>10</td><td>老師另計</td></tr>');
-  h.push('<tr><td><b>合計</b></td><td><b>100</b></td><td>加碼關 10 分不計入</td></tr></table>');
+  h.push('<tr><td>創意分</td><td>10</td><td>老師評，在老師端登錄</td></tr>');
+  h.push('<tr><td><b>合計</b></td><td><b>100</b></td><td>加碼關 5 分另計，不進 100</td></tr>');
+  h.push('<tr><td>遲到扣分</td><td>−18</td><td>三次集合，第一次 −3、第二次 −5、第三次 −10</td></tr></table>');
   h.push('<p><b>備案：</b>現場沒網路照樣能填，資料存在手機裡，有網路時才同步。照片也一樣。</p>');
   h.push('</details>');
   h.push('<footer>115 學年度第 1 學期　商業經營科職場體驗</footer>');
 
   document.getElementById("app").innerHTML=h.join("");
   paintTicker(); paintSync(); paintGPS(); buildSheet();
+}
+
+function hhmm(ms){ var d=new Date(Math.abs(ms)); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function meetPanel(){
+  var done=st.roll.filter(function(x){return x;}).length;
+  var h=['<div class="panel meet"><h2>集合回報　'+done+' / 3</h2>'];
+  h.push('<p class="sub">每次集合，<b>組長按一下</b>就好。老師那邊會即時看到你們到了，不用排隊等點名。</p>');
+  MEET.forEach(function(m,i){
+    var r=st.roll[i]||0;
+    h.push('<div class="mrow'+(r>0?" ok":(r<0?" bad":""))+'">');
+    h.push('<div class="mt"><b>'+m.t+'　'+esc(m.n)+'</b><span>'+esc(m.w)+'</span></div>');
+    if(r>0) h.push('<div class="mdone">✓ 已回報<br><i>'+hhmm(r)+'</i></div>');
+    else if(r<0) h.push('<div class="mdone bad">⚠ 已回報缺人<br><i>'+hhmm(r)+'</i></div>');
+    else h.push('<div class="mbtn"><button data-meet="'+i+'" data-ok="1">全組到齊</button><button data-meet="'+i+'" data-ok="0" class="sub2">有人沒到</button></div>');
+    h.push('</div>');
+  });
+  h.push('<p class="mnote">按錯了可以再按一次取消。<b>「有人沒到」按下去之後，組長要馬上去找最近的老師</b>，不要只按按鈕就沒事了。</p>');
+  return h.join("")+'</div>';
 }
 
 function gpsPanel(){
@@ -757,7 +813,7 @@ function paintBonus(){
   var el=document.getElementById("bl"); if(!el)return;
   var bo=tot().bo;
   el.hidden=!bo;
-  el.textContent="★　加碼關　"+bo+" / 10　（另計）";
+  el.textContent="★　加碼關　"+bo+" / 5　（另計）";
 }
 
 /* ---------- 學習單 ---------- */
@@ -867,6 +923,14 @@ document.addEventListener("click",function(e){
   if(hd){ st.open=(st.open===hd.dataset.q)?null:hd.dataset.q; save(); render(); return; }
   var sb=t.closest("[data-stage]");
   if(sb){ st.stage=sb.dataset.stage; st.open=null; save(); render(); return; }
+  var mb=t.closest("[data-meet]");
+  if(mb){
+    var i=+mb.dataset.meet, ok=mb.dataset.ok==="1";
+    st.roll[i]= st.roll[i] ? 0 : (ok?Date.now():-Date.now());
+    save();
+    push(st.roll[i]?("到了「"+MEET[i].n+"」集合點"+(ok?"":"（有人沒到）")):null);
+    render(); return;
+  }
   if(t.id==="draw"){
     var pool=MITSUI.map(function(x){return x.id;});
     for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),k=pool[i];pool[i]=pool[j];pool[j]=k;}
@@ -889,7 +953,7 @@ function gen(){
   L.push("任務分："+T.all+" / "+MAX+"　魔菇 "+T.mo+"／三井 "+T.mi+"／名詞 "+T.te+(GPS_ON?"／打卡 "+T.gp:""));
   L.push("");
   L.push("══ 魔菇部落 ══");
-  MOGU.forEach(function(q){ L.push("── "+q.t+"　"+qScore(q.id)+"/6");
+  MOGU.forEach(function(q){ L.push("── "+q.t+"　"+qScore(q.id)+"/8");
     q.f.forEach(function(f){L.push("　"+f.l+"："+v(q.id,f.k));}); });
   L.push("");
   L.push("══ 三井 OUTLET ══");
@@ -899,7 +963,7 @@ function gen(){
     L.push("　照片："+(pics[id]?"已拍":"未拍")); });
   L.push("");
   if(T.bo){
-    L.push("══ ★ 加碼關　"+T.bo+"/10（另計） ══");
+    L.push("══ ★ 加碼關　"+T.bo+"/5（另計） ══");
     BONUS.f.forEach(function(f){L.push("　"+f.l+"："+v("x1",f.k));});
     L.push("");
   }
