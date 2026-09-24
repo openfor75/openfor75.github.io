@@ -7,11 +7,15 @@
 </head>
 <body>
 <title>職場體驗偵察任務</title>
+</head>
+<body>
+<title>職場體驗偵察任務</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+<script src="students.js"></script>
 
 <style>
 :root{
@@ -92,16 +96,33 @@ h1 em{font-style:normal;color:var(--accent)}
 .cnt.ok{color:var(--ok);font-weight:600}
 .codest{font-size:13px;color:var(--ink-3);background:var(--surface-2);border-radius:9px;padding:8px 11px;margin-top:2px}
 .codest.ok{background:var(--ok-soft);color:var(--ok);font-weight:600}
+.f select{width:100%;font-family:inherit;font-size:17px;line-height:1.6;color:var(--ink);background-color:var(--surface-2);border:2px solid transparent;border-radius:10px;padding:11px 34px 11px 12px;appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);
+  background-position:calc(100% - 19px) 22px,calc(100% - 13px) 22px;background-size:6px 6px,6px 6px;background-repeat:no-repeat}
+.f select:focus{outline:none;border-color:var(--accent);background-color:var(--surface)}
+.f select:disabled{opacity:.5}
+.auto{display:grid;gap:7px;background:var(--ok-soft);border-radius:11px;padding:11px 14px;margin-bottom:11px}
+.auto .lb,.idl .lb,.idm .lb{font-size:11.5px;font-family:var(--mono);letter-spacing:.1em;color:var(--ink-3);display:block}
+.auto b{font-size:16px;font-weight:700;color:var(--ok)}
+.warn2{color:var(--accent)!important;font-weight:600}
+.idlock{background:var(--ink);border-color:var(--ink);color:#fff}
+.idl{display:flex;gap:26px;flex-wrap:wrap}
+.idl .lb,.idm .lb{color:#8a9199}
+.idl b{font-size:20px;font-weight:700}
+.idm{margin:11px 0 0;font-size:14.5px;color:#b3bac2}
+.unlock{background:transparent;border:1.5px solid #3a4048;color:#8a9199;font-size:13px;font-weight:500;padding:7px 13px;border-radius:9px;margin-top:13px}
+.unlock.arm{border-color:var(--accent);color:var(--accent)}
 .meet h2{margin-bottom:3px}
 .mrow{display:flex;align-items:center;gap:12px;background:var(--surface-2);border-radius:12px;padding:11px 14px;margin-bottom:9px}
 .mrow.ok{background:var(--ok-soft)}
-.mrow.bad{background:var(--accent-soft)}
+.mrow.wait{background:var(--gold-soft)}
 .mt{flex:1;min-width:0}
 .mt b{display:block;font-size:16px;font-weight:700}
 .mt span{display:block;font-size:12.5px;color:var(--ink-3);line-height:1.4}
 .mbtn{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.mbtn button{font-size:14.5px;padding:9px 14px;border-radius:10px;background:var(--accent);color:var(--on-accent);box-shadow:none}
-.mbtn button.sub2{background:var(--surface);color:var(--ink-3);border:1.5px solid var(--line);font-weight:500}
+.mbtn button{font-size:14px;padding:9px 13px;border-radius:10px;background:var(--surface);color:var(--ink-3);border:1.5px solid var(--line);box-shadow:none;font-weight:600}
+.mbtn button.wait.on{background:var(--gold);border-color:var(--gold);color:#fff}
+.mbtn button.full.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .mdone{font-size:13.5px;font-weight:700;color:var(--ok);text-align:right;line-height:1.4;white-space:nowrap}
 .mdone.bad{color:var(--accent)}
 .mdone i{font-style:normal;font-family:var(--mono);font-size:12px;font-weight:500;opacity:.8}
@@ -229,24 +250,60 @@ footer{margin-top:20px;color:var(--ink-3);font-size:12px;font-family:var(--mono)
 /* print 學習單 */
 #sheet{display:none}
 @media print{
-  .hud,header.mast,.rules,.panel,.quest,.res,.tn,footer,button,.stages,.lb,.terms,.vs,.locked,.unlocked{display:none!important}
+  .hud,header.mast,.rules,.laws,.tip,.panel,.quest,.res,.tn,footer,button,.stages,.lb,.terms,.vs,.locked,.unlocked,.prev{display:none!important}
   #sheet{display:block!important}
-  body{background:#fff;font-size:11pt;color:#000}
+  @page{margin:12mm 11mm}
+  body{background:#fff;color:#000;font-size:10.2pt;line-height:1.6;
+       font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif}
   #app{padding:0;max-width:none}
-  #sheet h1{font-size:15pt;text-align:center;margin:0 0 3px;font-weight:700}
-  #sheet .sub{text-align:center;font-size:10pt;margin:0 0 10px}
-  #sheet table{width:100%;border-collapse:collapse;margin-bottom:9px;font-size:10pt}
-  #sheet th,#sheet td{border:1px solid #000;padding:4px 7px;vertical-align:top}
-  #sheet th{background:#eee;width:88px;font-weight:600;white-space:nowrap}
-  #sheet .box{border:1px solid #000;padding:7px;min-height:150px;margin-bottom:9px;font-size:10pt}
-  #sheet .box .h{font-weight:700;margin-bottom:5px;border-bottom:1px solid #999;padding-bottom:3px}
-  #sheet .ph2{border:1px solid #000;height:230px;margin-bottom:9px;text-align:center;color:#666;font-size:9pt;overflow:hidden;position:relative}
-  #sheet .ph2 img{width:100%;height:230px;object-fit:cover;display:block}
-  #sheet .ph2 .cap{font-size:8pt;padding:2px}
-  #sheet .ph2.blank{padding-top:105px}
+
+  #sheet .sheet-head{text-align:center;position:relative;padding:2mm 0 4mm;margin-bottom:4mm;
+    border-bottom:0.5mm dotted #000}
+  #sheet .sheet-head .deco{position:absolute;left:0;top:0;width:26mm;height:9mm;opacity:.5}
+  #sheet .sheet-head h1{font-size:15pt;font-weight:900;margin:0 0 1mm;letter-spacing:.5pt}
+  #sheet .sheet-head .sub{font-size:8.5pt;margin:0;line-height:1.5;color:#333}
+  #sheet .sheet-head.small h1{font-size:13pt}
+
+  #sheet table.info{width:100%;border-collapse:separate;border-spacing:0;margin-bottom:4mm;
+    font-size:9.5pt;border:0.4mm solid #000;border-radius:3mm;overflow:hidden}
+  #sheet table.info th,#sheet table.info td{border-bottom:0.25mm solid #999;border-right:0.25mm solid #ccc;
+    padding:1.6mm 2.4mm;text-align:left;vertical-align:top}
+  #sheet table.info tr:last-child th,#sheet table.info tr:last-child td{border-bottom:none}
+  #sheet table.info th{background:#f0f0f0;font-weight:700;white-space:nowrap;width:16mm;font-size:8.5pt}
+
+  #sheet .bub{border:0.45mm solid #000;border-radius:5mm;padding:4mm 5mm 3mm;margin-bottom:4mm;
+    page-break-inside:avoid;position:relative}
+  #sheet .bub.star{border-style:double;border-width:1mm}
+  #sheet .bub h3{margin:-7mm 0 3mm;text-align:left}
+  #sheet .bub h3 span{display:inline-block;background:#fff;border:0.4mm solid #000;border-radius:99px;
+    padding:1mm 4mm;font-size:10pt;font-weight:700}
+  #sheet .qa{display:flex;gap:2.5mm;margin-bottom:2.4mm;page-break-inside:avoid}
+  #sheet .qa .dot{flex:none;width:5.4mm;height:5.4mm;border:0.35mm solid #000;border-radius:99px;
+    display:flex;align-items:center;justify-content:center;font-size:8pt;font-weight:700;margin-top:.4mm}
+  #sheet .qa b{font-size:9.5pt;font-weight:700;display:block}
+  #sheet .qa p{margin:.4mm 0 0;font-size:9.5pt;line-height:1.55}
+  #sheet .empty2{color:#888;font-size:9pt;margin:0}
+
+  #sheet .terms2{font-size:9pt;margin:0 0 4mm;padding:0 2mm}
+  #sheet .terms2 i{font-style:normal;display:inline-block;border:0.3mm solid #000;border-radius:99px;
+    padding:.3mm 2.4mm;margin:0 1.2mm 1.2mm 0;font-size:8.5pt}
+
+  #sheet .free{margin:0;white-space:pre-wrap;word-break:break-word;font-size:9.8pt;line-height:1.75}
+  #sheet .free.short{min-height:18mm}
+  #sheet .free.tall{min-height:62mm}
+
+  #sheet .sign{display:flex;gap:4mm;margin-top:5mm}
+  #sheet .sign div{flex:1;border:0.4mm solid #000;border-radius:3mm;padding:2mm 3mm;height:18mm;font-size:9pt}
+
   #sheet .pg{page-break-before:always}
-  #sheet .sign{display:flex;gap:10px;margin-top:10px;font-size:10pt}
-  #sheet .sign div{flex:1;border:1px solid #000;padding:6px;height:52px}
+  #sheet .shot{margin:0 0 5mm;page-break-inside:avoid;text-align:center}
+  #sheet .shot img{width:100%;height:98mm;object-fit:cover;display:block;
+    border:0.45mm solid #000;border-radius:5mm}
+  #sheet .shot .blank{width:100%;height:98mm;border:0.5mm dashed #666;border-radius:5mm;
+    display:flex;align-items:center;justify-content:center;color:#999;font-size:9pt}
+  #sheet .shot figcaption{margin-top:-3.2mm}
+  #sheet .shot figcaption span{display:inline-block;background:#fff;border:0.4mm solid #000;
+    border-radius:99px;padding:1mm 4mm;font-size:9pt;font-weight:700}
 }
 
 @media (max-width:480px){
@@ -366,10 +423,31 @@ var GPS_MAX=SPOTS.reduce(function(a,s){return a+s.pts;},0);
 var MAX = 40 + 40 + 5 + (GPS_ON?GPS_MAX:0);   /* 任務分 90，老師創意分 10，合計 100 */
 
 /* ---------- state ---------- */
-var st={cls:"",grp:"",mem:"",name:"",code:"",picked:null,d:{},photo:{},spots:{},open:null,stage:"mogu",
+var st={cls:"",grp:"",mem:"",name:"",no:"",code:"",locked:false,pushedKey:"",picked:null,d:{},photo:{},spots:{},open:null,stage:"mogu",
         roll:[0,0,0],refl:{a:"",b:"",c:""}};
 try{var r=localStorage.getItem(KEY);if(r)st=Object.assign(st,JSON.parse(r)||{});}catch(e){}
 if(!st.roll||st.roll.length!==3) st.roll=[0,0,0];
+
+/* ---------- 名冊 ---------- */
+function hasRoster(){
+  try{ return typeof STUDENTS==="object"&&STUDENTS&&Object.keys(STUDENTS).length>0; }catch(e){ return false; }
+}
+function clsList(){ return hasRoster()?Object.keys(STUDENTS):[]; }
+function rowsOf(c){ return (hasRoster()&&STUDENTS[c])?STUDENTS[c]:[]; }
+function meRow(){
+  if(!hasRoster()||!st.cls||!st.no) return null;
+  return rowsOf(st.cls).filter(function(r){return String(r.no)===String(st.no);})[0]||null;
+}
+function grpName(g){ return "第"+g+"組"; }
+function mateList(){
+  var me=meRow(); if(!me) return [];
+  return rowsOf(st.cls).filter(function(r){return String(r.grp)===String(me.grp);});
+}
+function syncFromRoster(){
+  var me=meRow(); if(!me) return;
+  st.name=me.name; st.grp=grpName(me.grp);
+  st.mem=mateList().map(function(r){return r.name;}).join("、");
+}
 var pics={};
 try{pics=JSON.parse(localStorage.getItem(PKEY)||"{}")||{};}catch(e){pics={};}
 
@@ -461,6 +539,13 @@ var pushT=null;
 function push(ev){
   if(PREVIEW||!db||!st.cls||!st.grp||!okCode())return;
   myKey=gkey();
+  if(st.pushedKey&&st.pushedKey!==myKey){
+    var oldK=st.pushedKey;
+    ["board","ans","pic"].forEach(function(n){
+      try{ db.ref("e/"+EVENT_ID+"/"+n+"/"+oldK).remove(); }catch(e){}
+    });
+  }
+  st.pushedKey=myKey; save();
   var T=tot();
   clearTimeout(pushT);
   pushT=setTimeout(function(){
@@ -617,20 +702,9 @@ function render(){
   h.push(classCard());
   h.push(meetPanel());
 
-  h.push('<div class="panel"><h2>這一組是誰</h2><p class="sub">同組的人填一樣的班級和組別，紀錄就會同步。一組四到五個人。</p>');
-  h.push('<div class="two">');
-  h.push('<div class="f"><label>班級</label><input id="i-cls" data-s="cls" value="'+esc(st.cls)+'" placeholder="商二甲"></div>');
-  h.push('<div class="f"><label>組別</label><input id="i-grp" data-s="grp" value="'+esc(st.grp)+'" placeholder="第 3 組"></div></div>');
-  h.push('<div class="f"><label>組員（第一位是組長）</label><input id="i-mem" data-s="mem" value="'+esc(st.mem)+'" placeholder="王小明、李小華、陳大同、林小美"></div>');
-  h.push('<div class="f"><label>你的姓名（心得會印上這個名字）</label><input id="i-name" data-s="name" value="'+esc(st.name)+'" placeholder="王小明"></div>');
-  h.push('<div class="f"><label>組別通行碼（老師發的那四位數字）</label><input id="i-code" data-s="code" inputmode="numeric" maxlength="4" value="'+esc(st.code)+'" placeholder="0000"></div>');
-  h.push('<div class="codest'+(okCode()?" ok":"")+'">'+(okCode()
-      ? "✓ 已認證　這一組的紀錄只有輸入同一組通行碼的人能寫"
-      : "輸入通行碼之後才會開始同步。沒輸入也能作答，但不會進排行榜。")+'</div>');
-  h.push('<div class="mic"><b>快三倍的作法：</b>鍵盤上有一個麥克風的圖示，按下去直接用講的。講完看一眼再送出——語音輸入常常把「坪效」聽成「平效」。</div>');
-  h.push('</div>');
+  h.push(idPanel());
 
-  var ready=st.cls&&st.grp&&st.mem&&okCode();
+  var ready=st.locked&&st.cls&&st.grp&&okCode();
 
   h.push('<div class="lb"><h3>'+(db?'<span class="live"></span>即時排行榜':'排行榜（單機模式）')+'</h3>');
   if(!db) h.push('<div class="empty">還沒接上連線，分數只會存在這支手機。</div>');
@@ -706,20 +780,66 @@ function render(){
 }
 
 function hhmm(ms){ var d=new Date(Math.abs(ms)); return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); }
+function idPanel(){
+  var h=[];
+  if(st.locked){
+    h.push('<div class="panel idlock"><div class="idl">');
+    h.push('<div><span class="lb">班級</span><b>'+esc(st.cls)+'</b></div>');
+    h.push('<div><span class="lb">組別</span><b>'+esc(st.grp)+'</b></div>');
+    h.push('<div><span class="lb">你</span><b>'+esc((st.no?st.no+"　":"")+st.name)+'</b></div>');
+    h.push('</div>');
+    h.push('<p class="idm"><span class="lb">組員</span>'+esc(st.mem||"—")+'</p>');
+    h.push('<button class="unlock" id="unlock">要改資料？點這裡</button>');
+    h.push('</div>');
+    return h.join("");
+  }
+  h.push('<div class="panel"><h2>先確認你是誰</h2>');
+  if(hasRoster()){
+    h.push('<p class="sub">選好按下「確定」就開始，之後不能再改。組別和組員會自動帶出來，不用自己打。</p>');
+    h.push('<div class="f"><label for="i-cls">班級</label><select id="i-cls" data-s="cls"><option value="">請選擇⋯</option>');
+    clsList().forEach(function(c){ h.push('<option value="'+esc(c)+'"'+(st.cls===c?" selected":"")+'>'+esc(c)+'</option>'); });
+    h.push('</select></div>');
+    h.push('<div class="f"><label for="i-no">你是誰（座號　姓名）</label><select id="i-no" data-s="no"'+(st.cls?"":" disabled")+'><option value="">'+(st.cls?"請選擇⋯":"請先選班級")+'</option>');
+    rowsOf(st.cls).forEach(function(r){
+      h.push('<option value="'+esc(r.no)+'"'+(String(st.no)===String(r.no)?" selected":"")+'>'+esc(r.no)+'　'+esc(r.name)+'　（'+esc(grpName(r.grp))+'）</option>');
+    });
+    h.push('</select></div>');
+    var me=meRow();
+    if(me){
+      h.push('<div class="auto"><div><span class="lb">你的組別</span><b>'+esc(grpName(me.grp))+'</b></div>');
+      h.push('<div><span class="lb">同組的人</span><b>'+esc(mateList().map(function(r){return r.name;}).join("、"))+'</b></div></div>');
+    }
+  } else {
+    h.push('<p class="sub warn2">找不到名冊檔 students.js，先用手動輸入。請確認名冊有跟著上傳。</p>');
+    h.push('<div class="two">');
+    h.push('<div class="f"><label for="i-cls">班級</label><input id="i-cls" data-s="cls" value="'+esc(st.cls)+'" placeholder="商二甲"></div>');
+    h.push('<div class="f"><label for="i-grp">組別</label><input id="i-grp" data-s="grp" value="'+esc(st.grp)+'" placeholder="第 3 組"></div></div>');
+    h.push('<div class="f"><label for="i-name">你的姓名</label><input id="i-name" data-s="name" value="'+esc(st.name)+'" placeholder="王小明"></div>');
+    h.push('<div class="f"><label for="i-mem">組員</label><input id="i-mem" data-s="mem" value="'+esc(st.mem)+'" placeholder="王小明、李小華"></div>');
+  }
+  h.push('<div class="f"><label for="i-code">組別通行碼（任務卡上的四位數字）</label><input id="i-code" data-s="code" inputmode="numeric" maxlength="4" value="'+esc(st.code)+'" placeholder="0000"></div>');
+  var can = st.cls && st.grp && okCode() && (hasRoster()? !!meRow() : !!st.name);
+  h.push('<button class="big" id="lockin"'+(can?"":" disabled")+'>'+(can?"確定，開始任務":"上面填完才能開始")+'</button>');
+  h.push('<p class="mnote">按下確定之後，班級、組別、姓名就鎖住了——這是為了避免同一組被拆成好幾筆紀錄。真的要改還是可以，但要再確認一次。</p>');
+  h.push('</div>');
+  return h.join("");
+}
+
 function meetPanel(){
   var done=st.roll.filter(function(x){return x;}).length;
   var h=['<div class="panel meet"><h2>集合回報　'+done+' / 3</h2>'];
   h.push('<p class="sub">每次集合，<b>組長按一下</b>就好。老師那邊會即時看到你們到了，不用排隊等點名。</p>');
   MEET.forEach(function(m,i){
     var r=st.roll[i]||0;
-    h.push('<div class="mrow'+(r>0?" ok":(r<0?" bad":""))+'">');
-    h.push('<div class="mt"><b>'+m.t+'　'+esc(m.n)+'</b><span>'+esc(m.w)+'</span></div>');
-    if(r>0) h.push('<div class="mdone">✓ 已回報<br><i>'+hhmm(r)+'</i></div>');
-    else if(r<0) h.push('<div class="mdone bad">⚠ 已回報缺人<br><i>'+hhmm(r)+'</i></div>');
-    else h.push('<div class="mbtn"><button data-meet="'+i+'" data-ok="1">全組到齊</button><button data-meet="'+i+'" data-ok="0" class="sub2">有人沒到</button></div>');
+    h.push('<div class="mrow'+(r>0?" ok":(r<0?" wait":""))+'">');
+    h.push('<div class="mt"><b>'+m.t+'　'+esc(m.n)+'</b><span>'+(r?((r>0?"已回報到齊　":"集合中　")+hhmm(r)):esc(m.w))+'</span></div>');
+    h.push('<div class="mbtn">');
+    h.push('<button data-meet="'+i+'" data-ok="0" class="wait'+(r<0?" on":"")+'">還沒到齊</button>');
+    h.push('<button data-meet="'+i+'" data-ok="1" class="full'+(r>0?" on":"")+'">全員到齊</button>');
+    h.push('</div>');
     h.push('</div>');
   });
-  h.push('<p class="mnote">按錯了可以再按一次取消。<b>「有人沒到」按下去之後，組長要馬上去找最近的老師</b>，不要只按按鈕就沒事了。</p>');
+  h.push('<p class="mnote"><b>一到集合點就按「還沒到齊」</b>，老師就知道你們在集合了。人到齊再按「全員到齊」。<br>按錯了再按一次同一顆就取消，可以改到對為止。</p>');
   return h.join("")+'</div>';
 }
 
@@ -745,6 +865,7 @@ function card(q,n){
   h.push('<span class="qpts">'+sc+' / '+mx+'</span></div><div class="qbody">');
   h.push('<div class="mission">'+q.m+'</div>');
   if(q.id[0]==="q") h.push(photoBox(q.id,"拍照　＋3 分"));
+  if(q.id[0]==="m") h.push(photoBox(q.id,"配一張照片（選填，不計分）"));
   if(q.grid===3){ for(var g=0;g<3;g++){ h.push('<div class="three">'); q.f.slice(g*3,g*3+3).forEach(function(f){h.push(fld(q.id,f));}); h.push('</div>'); } }
   else q.f.forEach(function(f){h.push(fld(q.id,f));});
   h.push('</div></section>');
@@ -817,56 +938,109 @@ function paintBonus(){
 }
 
 /* ---------- 學習單 ---------- */
+function anyPic(pref){
+  if(pics["sheet"+pref]) return pics["sheet"+pref];
+  var ks=Object.keys(pics).filter(function(k){return k.charAt(0)===(pref==="M"?"m":"q")&&pics[k];});
+  return ks.length?pics[ks[0]]:"";
+}
+function bub(title,inner,cls){
+  return '<section class="bub '+(cls||"")+'"><h3><span>'+esc(title)+'</span></h3>'+inner+'</section>';
+}
 function buildSheet(){
   var T=tot(),h=[];
-  h.push('<h1>國立員林家商 115 學年度第 1 學期商業經營科</h1>');
-  h.push('<h1>學生業界實習和職場體驗計畫－「職場體驗」學習心得</h1>');
-  h.push('<p class="sub">魔菇部落生態休閒農場／三中港奧特萊斯股份有限公司</p>');
-  h.push('<table><tr><th>班級</th><td>'+esc(st.cls)+'</td><th>姓名</th><td>'+esc(st.name)+'</td><th>組別</th><td>'+esc(st.grp)+'</td></tr>');
-  h.push('<tr><th>參訪日期</th><td>115年10月1日</td><th>課程名稱</th><td colspan="3">專題製作－職場體驗</td></tr>');
-  h.push('<tr><th>組員</th><td colspan="5">'+esc(st.mem)+'</td></tr>');
-  h.push('<tr><th>任務得分</th><td colspan="5">'+T.all+' / '+MAX+'　（魔菇 '+T.mo+'／三井 '+T.mi+'／名詞 '+T.te+(GPS_ON?'／打卡 '+T.gp:'')+'）</td></tr></table>');
 
-  h.push('<div class="box"><div class="h">參訪內容　魔菇部落生態休閒農場</div>');
-  MOGU.forEach(function(q){ h.push('<p><b>'+esc(q.t)+'</b>　'+q.f.map(function(f){return esc(v(q.id,f.k));}).filter(Boolean).join('／')+'</p>'); });
-  h.push('</div>');
+  h.push('<div class="sheet-head">'
+    +'<svg class="deco" viewBox="0 0 120 40" aria-hidden="true">'
+    +'<circle cx="14" cy="20" r="11" fill="none" stroke="#000" stroke-width="1"/>'
+    +'<circle cx="34" cy="14" r="6.5" fill="none" stroke="#000" stroke-width="1"/>'
+    +'<circle cx="46" cy="27" r="3.5" fill="none" stroke="#000" stroke-width="1"/>'
+    +'<circle cx="56" cy="17" r="1.8" fill="#000"/></svg>'
+    +'<h1>職場體驗　學習心得</h1>'
+    +'<p class="sub">國立員林家商　商業經營科　115 學年度第 1 學期<br>魔菇部落生態休閒農場　／　三中港奧特萊斯股份有限公司</p>'
+    +'</div>');
 
-  h.push('<div class="box"><div class="h">參訪內容　三中港奧特萊斯股份有限公司</div>');
-  (st.picked||[]).forEach(function(id){ var q=Q(id);
-    h.push('<p><b>'+esc(q.t)+'</b>　'+q.f.map(function(f){return esc(v(id,f.k));}).filter(Boolean).join('／')+'</p>'); });
-  h.push('</div>');
+  h.push('<table class="info"><tr>'
+    +'<th>班級</th><td>'+esc(st.cls)+'</td>'
+    +'<th>座號</th><td>'+esc(st.no)+'</td>'
+    +'<th>姓名</th><td>'+esc(st.name)+'</td>'
+    +'<th>組別</th><td>'+esc(st.grp)+'</td></tr>'
+    +'<tr><th>參訪日期</th><td colspan="3">115 年 10 月 1 日（四）</td>'
+    +'<th>課程</th><td colspan="3">專題製作－職場體驗</td></tr>'
+    +'<tr><th>組員</th><td colspan="7">'+esc(st.mem)+'</td></tr>'
+    +'<tr><th>任務得分</th><td colspan="7">'+T.all+' / '+MAX+'　　魔菇 '+T.mo+'　三井 '+T.mi+'　名詞 '+T.te+(GPS_ON?'　打卡 '+T.gp:'')+(T.bo?'　★加碼 '+T.bo:'')+'</td></tr></table>');
+
+  var mg=[];
+  MOGU.forEach(function(q,i){
+    var vals=q.f.map(function(f){return esc(v(q.id,f.k));}).filter(Boolean).join('／');
+    mg.push('<div class="qa"><span class="dot">'+(i+1)+'</span><div><b>'+esc(q.t)+'</b><p>'+(vals||'—')+'</p></div></div>');
+  });
+  h.push(bub("上午　魔菇部落生態休閒農場",mg.join("")));
+
+  var mt=[];
+  (st.picked||[]).forEach(function(id,i){
+    var q=Q(id);
+    var vals=q.f.map(function(f){return esc(v(id,f.k));}).filter(Boolean).join('／');
+    mt.push('<div class="qa"><span class="dot">'+(i+1)+'</span><div><b>'+esc(q.t)+'</b><p>'+(vals||'—')+'</p></div></div>');
+  });
+  h.push(bub("下午　三中港奧特萊斯（抽中的四關）",mt.join("")||'<p class="empty2">尚未抽關</p>'));
 
   if(T.bo){
-    h.push('<div class="box" style="min-height:0"><div class="h">加碼關　總經理的位子（'+T.bo+'/10）</div>');
-    BONUS.f.forEach(function(f){ var t=v("x1",f.k); if(t) h.push('<p><b>'+esc(f.l)+'</b>　'+esc(t)+'</p>'); });
-    h.push('</div>');
+    var bx=[];
+    BONUS.f.forEach(function(f){ var t=v("x1",f.k); if(t) bx.push('<div class="qa"><span class="dot">★</span><div><b>'+esc(f.l)+'</b><p>'+esc(t)+'</p></div></div>'); });
+    h.push(bub("加碼關　總經理的位子（"+T.bo+"/5）",bx.join(""),"star"));
   }
 
-  h.push('<div class="box"><div class="h">印象最深的一件事</div><p>'+esc(st.refl.a)+'</p></div>');
-  h.push('<div class="box" style="min-height:330px"><div class="h">參訪心得</div><p>'+esc(st.refl.b).replace(/\n/g,"<br>")+'</p></div>');
-  h.push('<div class="box" style="min-height:90px"><div class="h">建議</div><p>'+esc(st.refl.c)+'</p></div>');
+  var ht=hits();
+  if(ht.length) h.push('<p class="terms2"><b>用到的商業名詞</b>　'+ht.map(function(w){return '<i>'+esc(w)+'</i>';}).join('')+'</p>');
+
+  h.push(bub("印象最深的一件事",'<p class="free short">'+esc(st.refl.a).replace(/\n/g,"<br>")+'</p>'));
+  h.push(bub("參訪心得",'<p class="free tall">'+esc(st.refl.b).replace(/\n/g,"<br>")+'</p>'));
+  h.push(bub("給這次活動的建議",'<p class="free short">'+esc(st.refl.c).replace(/\n/g,"<br>")+'</p>'));
+
   h.push('<div class="sign"><div>授課老師簽章</div><div>科主任簽章</div></div>');
 
-  h.push('<div class="pg"><h1>115 年度商業經營科「職場體驗」活動相片紀錄</h1>');
-  h.push(sheetPhoto("sheetM","魔菇部落生態休閒農場"));
-  h.push(sheetPhoto("sheetT","三中港奧特萊斯股份有限公司"));
+  h.push('<div class="pg"><div class="sheet-head small">'
+    +'<svg class="deco" viewBox="0 0 120 40" aria-hidden="true">'
+    +'<circle cx="14" cy="20" r="9" fill="none" stroke="#000" stroke-width="1"/>'
+    +'<circle cx="30" cy="15" r="5" fill="none" stroke="#000" stroke-width="1"/>'
+    +'<circle cx="40" cy="25" r="2.6" fill="#000"/></svg>'
+    +'<h1>活動相片紀錄</h1>'
+    +'<p class="sub">'+esc(st.cls+"　"+st.grp+"　"+st.name)+'</p></div>');
+  h.push(shot("魔菇部落生態休閒農場",anyPic("M")));
+  h.push(shot("三中港奧特萊斯股份有限公司",anyPic("T")));
   h.push('</div>');
+
   document.getElementById("sheet").innerHTML=h.join("");
 }
-function sheetPhoto(k,cap){
-  if(pics[k]) return '<div class="ph2"><img src="'+pics[k]+'" alt=""></div><div class="cap">'+esc(cap)+'</div>';
-  return '<div class="ph2 blank">照片黏貼處（'+esc(cap)+'）</div>';
+function shot(cap,src){
+  return '<figure class="shot">'+(src?'<img src="'+src+'" alt="">':'<div class="blank">照片黏貼處</div>')
+        +'<figcaption><span>'+esc(cap)+'</span></figcaption></figure>';
 }
 
 /* ---------- events ---------- */
+function onField(el){
+  var val=el.value;
+  if(el.dataset.s==="code"){ val=val.replace(/\D/g,"").slice(0,4); el.value=val; }
+  st[el.dataset.s]=val;
+  if(el.dataset.s==="cls"&&hasRoster()){ st.no=""; st.grp=""; st.mem=""; st.name=""; }
+  if(hasRoster()&&(el.dataset.s==="no"||el.dataset.s==="cls")) syncFromRoster();
+  save(); render();
+}
+document.addEventListener("change",function(e){
+  var el=e.target;
+  if(el.tagName==="SELECT"&&el.dataset.s) onField(el);
+});
 document.addEventListener("input",function(e){
   var el=e.target;
   if(el.dataset.s){
+    if(el.tagName==="SELECT") return;
     var val=el.value;
     if(el.dataset.s==="code"){ val=val.replace(/\D/g,"").slice(0,4); el.value=val; }
-    var was=st[el.dataset.s]; st[el.dataset.s]=val; save();
-    if(el.dataset.s==="code"&&val.length===4&&was.length!==4){ push("加入了任務"); render(); return; }
-    push(); return;
+    var was=(st[el.dataset.s]||"").length;
+    st[el.dataset.s]=val; save();
+    if(el.dataset.s==="code"&&((val.length===4)!==(was===4))){ render(); return; }
+    if(st.locked) push();
+    return;
   }
   if(el.dataset.r){
     st.refl[el.dataset.r]=el.value; save();
@@ -905,7 +1079,8 @@ document.addEventListener("change",function(e){
       if(!url){ upState[k]="fail"; paintUp(k); return; }
       pics[k]=url; savePics();
       if(k.indexOf("sheet")!==0){
-        st.photo[k]=1; save();
+        if(k.charAt(0)!=="m") st.photo[k]=1;
+        save();
         pushPic(k,url);
         if(justUnlocked()){ push("★ 解鎖了加碼關！"); render(); return; }
         push();
@@ -925,11 +1100,18 @@ document.addEventListener("click",function(e){
   if(sb){ st.stage=sb.dataset.stage; st.open=null; save(); render(); return; }
   var mb=t.closest("[data-meet]");
   if(mb){
-    var i=+mb.dataset.meet, ok=mb.dataset.ok==="1";
-    st.roll[i]= st.roll[i] ? 0 : (ok?Date.now():-Date.now());
+    var i=+mb.dataset.meet, ok=mb.dataset.ok==="1", cur=st.roll[i]||0;
+    var want=ok?1:-1, now=(cur>0?1:(cur<0?-1:0));
+    st.roll[i]=(now===want)?0:(ok?Date.now():-Date.now());
     save();
-    push(st.roll[i]?("到了「"+MEET[i].n+"」集合點"+(ok?"":"（有人沒到）")):null);
+    push(st.roll[i]?("「"+MEET[i].n+"」"+(st.roll[i]>0?"全員到齊":"集合中")):null);
     render(); return;
+  }
+  if(t.id==="lockin"){ st.locked=true; save(); push("加入了任務"); render(); return; }
+  if(t.id==="unlock"){
+    if(t.dataset.sure){ st.locked=false; save(); render(); }
+    else { t.dataset.sure="1"; t.textContent="真的要改？再點一次（分數會保留）"; t.classList.add("arm"); }
+    return;
   }
   if(t.id==="draw"){
     var pool=MITSUI.map(function(x){return x.id;});
