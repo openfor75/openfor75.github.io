@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
 :root{
   --paper:#fbfaf7;--surface:#fff;--surface-2:#f2efe9;--line:#ddd7cc;--line-soft:#eae5db;
@@ -173,6 +174,11 @@ body.proj .vsc .nm{font-size:26px}
 .codes div{border:1px solid var(--line);border-radius:10px;padding:8px 11px;background:var(--surface-2)}
 .codes b{display:block;font-size:13px;font-weight:600}
 .codes span{font-family:var(--disp);font-size:25px;letter-spacing:.08em;color:var(--accent)}
+.chkbar{font-size:14px;color:var(--ink-2);background:var(--surface-2);border-radius:10px;padding:9px 13px;margin-bottom:10px}
+.chkbar b.okc{color:var(--ok)} .chkbar b.badc{color:var(--accent)}
+.codes div.on{border-color:var(--ok);background:var(--ok-soft)}
+.codes div.on b{color:var(--ok)}
+.codes b i{font-style:normal;color:var(--ok);margin-left:5px}
 .warnbox{background:var(--accent-soft);color:var(--accent);border-radius:10px;padding:10px 13px;font-size:13.5px;margin-top:10px}
 .tick{color:var(--ok);font-weight:700}
 .bad{color:var(--accent);font-weight:700}
@@ -188,11 +194,26 @@ body.proj .vsc .nm{font-size:26px}
   .bar,.feedcard,.note,.dot,.pwcard{display:none}
   body.slips .top,body.slips .card{display:none}
   body.slips #slips{display:grid!important;grid-template-columns:1fr 1fr;gap:0}
-  body.slips #slips .slip{border:1px dashed #666;padding:13px 15px;height:118px;page-break-inside:avoid;font-family:"Noto Sans TC",sans-serif}
-  body.slips #slips .slip .t{font-size:9pt;letter-spacing:.14em;color:#555}
-  body.slips #slips .slip .g{font-size:14pt;font-weight:700;margin:2px 0 5px}
-  body.slips #slips .slip .c{font-size:30pt;font-weight:900;letter-spacing:.12em}
-  body.slips #slips .slip .u{font-size:8pt;color:#555;margin-top:4px;word-break:break-all}
+  body.slips #slips .slip{border:1px dashed #999;page-break-inside:avoid;font-family:"Noto Sans TC",sans-serif;
+    height:69mm;display:flex;flex-direction:column;overflow:hidden;color:#000}
+  body.slips .sh{background:#15181D;color:#fff;padding:2.2mm 4mm;display:flex;justify-content:space-between;align-items:baseline}
+  body.slips .sh span{font-size:9pt;letter-spacing:.18em;font-weight:700}
+  body.slips .sh b{font-size:9pt;letter-spacing:.1em;color:#FFB38A}
+  body.slips .sb{flex:1;display:flex;gap:3mm;padding:3.5mm 4mm 1mm}
+  body.slips .sl{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
+  body.slips .sg{font-size:11pt;line-height:1.35;color:#444}
+  body.slips .sg b{font-size:17pt;font-weight:900;color:#000}
+  body.slips .sc span{display:block;font-size:7.5pt;letter-spacing:.16em;color:#666}
+  body.slips .sc b{font-size:29pt;font-weight:900;letter-spacing:.02em;color:#DD4F1F;line-height:1.1}
+  body.slips .sr{width:26mm;display:flex;flex-direction:column;align-items:center;gap:1.4mm}
+  body.slips .qr{width:24mm;height:24mm}
+  body.slips .qr svg{width:100%;height:100%;display:block}
+  body.slips .qrx{width:24mm;height:24mm;border:.4mm dashed #bbb;display:flex;align-items:center;justify-content:center;text-align:center;font-size:6.5pt;color:#999;line-height:1.4}
+  body.slips .su{font-size:6pt;color:#555;word-break:break-all;text-align:center;line-height:1.35}
+  body.slips .sm{padding:0 4mm;display:flex;align-items:flex-end;gap:2mm}
+  body.slips .sm span{font-size:7.5pt;color:#666;white-space:nowrap}
+  body.slips .sm i{flex:1;border-bottom:.4mm solid #bbb;height:4.5mm}
+  body.slips .sf{padding:1.8mm 4mm 2.5mm;font-size:6.5pt;color:#777}
   body{background:#fff;font-size:11px}
   .card{box-shadow:none;border:1px solid #000;border-radius:0}
   table{font-size:11px}
@@ -286,6 +307,8 @@ body.proj .vsc .nm{font-size:26px}
 
 <div class="note">
   <b>怎麼用：</b>點任何一列可以展開那一組的完整答案。<b>創意</b>那欄可以直接在表上打，也可以按上面的「創意評分」一組一組看。所有你打的分數只存在這台電腦，不會傳給學生，重新整理不會消失。<br>
+  <b>密碼卡：</b>按「列印密碼卡」會印出 16 張任務卡（A4 一頁 8 張，裁開），上面有班級、組別、四位數通行碼、<b>可以直接掃的 QR Code</b>，還有五條寫組員名字的線。建議印在稍微厚一點的紙上。<br>
+  <b>行前檢查：</b>通行碼那一區上面有一條「已上線 X / 16」。<b>學生一連上系統，他那一組的號碼卡就會變綠色打勾</b>——行前講座當場就看得出來哪一組還沒設定好。<br>
   <b>集合點名：</b>學生在自己手機上按「全組到齊」，這裡就自動變綠，底下會寫「自報」和時間——<b>你什麼都不用做</b>。要改判就點那一格（一下到齊、兩下遲到、三下清除），你點的一定蓋過學生回報。橘色的「缺」是學生按了「有人沒到」，那一組的組長正在找你。扣分只看你標的「遲到」：第一次 −3、第二次 −5、第三次 −10。<br>
   <b>投影模式</b>放大字體、隱藏控制列，回程車上投影用；<b>列印總表</b>可以直接印成成績底稿；<b>匯出 CSV</b> 會把所有答案一起倒出來（Excel 開啟請選 UTF-8）。<br>
   <b>配分</b>：魔菇 40＋三井 40＋術語 5＋打卡 5 ＝ <b>任務 90</b>，加上你打的創意 10，<b>滿分 100</b>；遲到再扣。任務滿分欄請維持 <code>90</code>。<br>
@@ -390,14 +413,40 @@ function paintCodes(){
     el.innerHTML='<div class="warnbox">先填主密語，號碼才會出現。主密語自己想一個好記的就行，<b>不要給學生看到</b>。</div>';
     document.getElementById("slips").innerHTML=""; return;
   }
-  el.innerHTML='<div class="codes">'+roster.map(function(r){
-    return '<div><b>'+esc(r.cls+"　"+r.grp)+'</b><span>'+r.code+'</span></div>';
+  var live={}; board.forEach(function(b){ live[b.k]=1; });
+  var on=roster.filter(function(r){return live[r.tok];}).length;
+  el.innerHTML='<div class="chkbar"><b>行前檢查</b>　已上線 <b class="'+(on===roster.length?"okc":"badc")+'">'+on+' / '+roster.length+'</b>　'+
+    (on===roster.length?'全部都連上了':'綠色打勾的組別已經連上系統，灰色的還沒')+'</div>'+
+    '<div class="codes">'+roster.map(function(r){
+    return '<div class="'+(live[r.tok]?"on":"")+'"><b>'+esc(r.cls+"　"+r.grp)+(live[r.tok]?'<i>✓</i>':'')+'</b><span>'+r.code+'</span></div>';
   }).join("")+'</div>';
+  var url=(pw.su||"").trim();
+  var qsvg="";
+  if(url&&typeof qrcode!=="undefined"){
+    try{
+      var q=qrcode(0,"M"); q.addData(url); q.make();
+      try{ qsvg=q.createSvgTag({cellSize:2,margin:0,scalable:true}); }
+      catch(e2){ qsvg=q.createSvgTag(2,0); }
+      if(qsvg&&qsvg.indexOf("viewBox")<0){
+        var mm=qsvg.match(/width="(\d+)(px)?"/);
+        if(mm) qsvg=qsvg.replace("<svg",'<svg viewBox="0 0 '+mm[1]+' '+mm[1]+'"');
+      }
+    }catch(e){ qsvg=""; }
+  }
   document.getElementById("slips").innerHTML=roster.map(function(r){
-    return '<div class="slip"><div class="t">職場體驗偵察任務　10/01</div>'+
-           '<div class="g">'+esc(r.cls+"　"+r.grp)+'</div>'+
-           '<div class="c">'+r.code+'</div>'+
-           '<div class="u">'+esc(pw.su||"（把學生網址填進老師端就會印在這裡）")+'</div></div>';
+    return '<div class="slip">'+
+      '<div class="sh"><span>職場體驗　偵察任務</span><b>10.01</b></div>'+
+      '<div class="sb">'+
+        '<div class="sl">'+
+          '<div class="sg">'+esc(r.cls)+'<br><b>'+esc(r.grp)+'</b></div>'+
+          '<div class="sc"><span>組別通行碼</span><b>'+r.code.split("").join(" ")+'</b></div>'+
+        '</div>'+
+        '<div class="sr">'+(qsvg?'<div class="qr">'+qsvg+'</div>':'<div class="qrx">QR 沒產生<br>請確認有網路</div>')+
+          '<div class="su">'+esc(url||"（請在老師端填入學生網址）")+'</div></div>'+
+      '</div>'+
+      '<div class="sm"><span>組員</span><i></i><i></i><i></i><i></i><i></i></div>'+
+      '<div class="sf">這張卡請收好　·　通行碼填錯不會進排行榜</div>'+
+      '</div>';
   }).join("");
 }
 
@@ -558,7 +607,7 @@ function paint(){
     if(openKey===r.k) h.push('<tr class="det"><td colspan="12"><div class="det-in">'+detail(r)+'</div></td></tr>');
   });
   tb.innerHTML=h.join("");
-  paintVS(); paintRoll(); paintGrade();
+  paintVS(); paintRoll(); paintGrade(); paintCodes();
 }
 
 function detail(r){
