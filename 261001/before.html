@@ -1,0 +1,305 @@
+<title>偵察任務規則書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --paper:#fbfaf7;--surface:#fff;--surface-2:#f2efe9;--line:#ddd7cc;--line-soft:#eae5db;
+  --ink:#15181d;--ink-2:#4b5158;--ink-3:#787f87;
+  --accent:#dd4f1f;--accent-soft:#fdeee7;
+  --sea:#14566b;--sea-soft:#e4eff3;
+  --gold:#9a6c00;--gold-soft:#fbf1d8;
+  --ok:#1d6b45;--ok-soft:#e1f0e8;
+  --shadow:0 1px 2px rgba(21,24,29,.06),0 6px 20px rgba(21,24,29,.08);
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --disp:"Archivo Black","Noto Sans TC",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;--line-soft:#2b3038;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--sea:#79b9cf;--sea-soft:#182a31;
+  --gold:#e5b458;--gold-soft:#2e2718;--ok:#6fc79b;--ok-soft:#16281f;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 6px 20px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;--line-soft:#2b3038;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--sea:#79b9cf;--sea-soft:#182a31;
+  --gold:#e5b458;--gold-soft:#2e2718;--ok:#6fc79b;--ok-soft:#16281f;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 6px 20px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.75;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding-block:0 80px;padding-left:18px;padding-right:18px}
+
+/* 封面 */
+header{padding-block:44px 8px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:var(--ink-3);margin:0 0 12px;text-transform:uppercase}
+h1{font-family:var(--disp);font-weight:400;font-size:clamp(38px,11vw,68px);line-height:.98;margin:0 0 6px;letter-spacing:-.025em;text-wrap:balance}
+h1 em{font-style:normal;color:var(--accent)}
+.sub{font-size:19px;color:var(--ink-2);margin:0 0 4px;max-width:34em}
+.stamp{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.1em;border:1.5px solid var(--accent);color:var(--accent);border-radius:99px;padding:3px 13px;margin-top:16px}
+
+h2{font-size:24px;font-weight:900;margin:52px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+h2 .no{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--accent);display:block;letter-spacing:.14em;margin-bottom:2px}
+h3{font-size:17.5px;font-weight:700;margin:28px 0 4px}
+p{margin:0 0 14px;max-width:38em}
+strong{font-weight:700}
+.lead{font-size:18.5px;color:var(--ink-2)}
+
+/* 計分 */
+.budget{display:grid;gap:9px;margin:20px 0 6px}
+.row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:13px 16px;box-shadow:var(--shadow)}
+.row .t{min-width:0}
+.row .t b{display:block;font-size:16.5px;font-weight:700;line-height:1.4}
+.row .t span{display:block;font-size:13.5px;color:var(--ink-3);line-height:1.5}
+.row .v{font-family:var(--disp);font-size:27px;line-height:1;color:var(--accent);white-space:nowrap}
+.row.teach{background:var(--sea-soft);border-color:transparent}
+.row.teach .v{color:var(--sea)}
+.row.star{background:var(--gold-soft);border-color:transparent}
+.row.star .v{color:var(--gold)}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:2.5px solid var(--ink);margin-top:14px;padding-top:11px;font-weight:700;font-size:17px}
+.total b{font-family:var(--disp);font-size:34px;font-weight:400;letter-spacing:-.02em}
+
+/* 時間軸 */
+ol.tl{list-style:none;margin:20px 0 0;padding:0;position:relative}
+ol.tl::before{content:"";position:absolute;left:73px;top:10px;bottom:16px;width:2px;background:var(--line)}
+ol.tl li{display:grid;grid-template-columns:64px 1fr;gap:22px;position:relative;padding-bottom:20px}
+ol.tl time{font-family:var(--mono);font-size:13.5px;font-weight:600;color:var(--ink-2);padding-top:3px;text-align:right;font-variant-numeric:tabular-nums}
+ol.tl li::before{content:"";position:absolute;left:68px;top:10px;width:12px;height:12px;border-radius:99px;background:var(--line);border:3px solid var(--paper)}
+ol.tl li.hot::before{background:var(--accent)}
+ol.tl li b{display:block;font-size:16.5px;line-height:1.45}
+ol.tl li span{display:block;font-size:14px;color:var(--ink-3);line-height:1.55}
+
+/* 鐵則 */
+.laws{display:grid;gap:11px;margin:18px 0}
+.law{display:grid;grid-template-columns:34px 1fr;gap:13px;align-items:start}
+.law i{font-style:normal;font-family:var(--disp);font-size:19px;color:var(--accent);line-height:1.3}
+.law b{font-weight:700}
+.law p{margin:0;font-size:15.5px;color:var(--ink-2)}
+
+.callout{background:var(--surface);border-left:4px solid var(--accent);border-radius:0 12px 12px 0;padding:15px 18px;margin:20px 0;box-shadow:var(--shadow)}
+.callout.sea{border-left-color:var(--sea)}
+.callout.gold{border-left-color:var(--gold)}
+.callout h4{margin:0 0 5px;font-size:16.5px;font-weight:700}
+.callout p{margin:0;font-size:15.5px;color:var(--ink-2)}
+.callout p+p{margin-top:9px}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.chips i{font-style:normal;font-size:13.5px;padding:4px 12px;border-radius:99px;background:var(--gold-soft);color:var(--gold);font-weight:600}
+
+.deck{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin:14px 0}
+.deck div{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:10px 13px}
+.deck b{display:block;font-size:15px;font-weight:700}
+.deck span{font-size:12.5px;color:var(--ink-3)}
+
+dl.qa{margin:14px 0 0}
+dl.qa dt{font-weight:700;font-size:16px;margin-top:18px}
+dl.qa dd{margin:2px 0 0;color:var(--ink-2);font-size:15.5px}
+
+footer{margin-top:60px;border-top:1px solid var(--line);padding-top:16px;color:var(--ink-3);font-size:13px;font-family:var(--mono)}
+
+@media (max-width:480px){
+  ol.tl::before{left:57px}
+  ol.tl li{grid-template-columns:50px 1fr;gap:16px}
+  ol.tl li::before{left:52px}
+  .row{grid-template-columns:1fr auto;padding:12px 14px}
+  .row .v{font-size:23px}
+}
+@media print{
+  body{background:#fff;color:#000;font-size:11pt}
+  .wrap{max-width:none;padding:0}
+  .row,.callout,.deck div{box-shadow:none}
+  h2{margin-top:26px;page-break-after:avoid}
+  ol.tl li,.row,.callout{page-break-inside:avoid}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">員林家商　商業經營科　商二甲・商二乙</p>
+  <h1>偵察任務<br><em>規則書</em></h1>
+  <p class="sub">10 月 1 日，你們會去兩個地方：一家把香菇種成科技業的公司，和一座蓋在海邊的購物中心。你們的工作不是參觀，是<strong>看懂它們怎麼賺錢</strong>。</p>
+  <span class="stamp">2026 / 10 / 01　星期四</span>
+</header>
+
+<h2><span class="no">01</span>你是誰</h2>
+<p class="lead">你和另外三～四個人是一組偵察小隊，一班八組。一組一份紀錄，同組的人填的東西會即時同步——同一題誰先寫都算數，所以先分工，不要全組盯著同一格。</p>
+<p><strong>做三件事：選班級、選自己的座號、輸入任務卡上的四位數通行碼。</strong>組別和組員會自動帶出來，不用打字。按下「確定」之後這一段就鎖住了。</p>
+<p>通行碼對了才會進排行榜，填錯的話你們會變成一支查無此人的部隊。<strong>任務卡請收好</strong>，上面有你們那一組的號碼。</p>
+<div class="callout">
+  <h4>任務網址</h4>
+  <p style="font-family:var(--mono); font-size:16px; word-break:break-all; color:var(--accent); font-weight:600">openfor75.github.io/261001</p>
+  <p>用手機瀏覽器打開就好，<strong>不用下載 App、不用註冊帳號</strong>。加到書籤或加到主畫面，當天比較好找。</p>
+</div>
+
+<h2><span class="no">02</span>分數從哪裡來</h2>
+
+<div class="budget">
+  <div class="row">
+    <div class="t"><b>魔菇部落．5 題</b><span>全班同一份，每題 8 分</span></div>
+    <div class="v">40</div>
+  </div>
+  <div class="row">
+    <div class="t"><b>三井 OUTLET．4 關</b><span>8 關裡抽 4 關，每組抽到的不一樣，每關 10 分</span></div>
+    <div class="v">40</div>
+  </div>
+  <div class="row">
+    <div class="t"><b>商業名詞</b><span>答案裡用對一個 +1，最多 5 個</span></div>
+    <div class="v">5</div>
+  </div>
+  <div class="row">
+    <div class="t"><b>定點打卡</b><span>走到四個地方，手機自己跳分</span></div>
+    <div class="v">5</div>
+  </div>
+  <div class="row teach">
+    <div class="t"><b>創意分</b><span>老師評。同樣的題目，你們看到別人沒看到的東西</span></div>
+    <div class="v">10</div>
+  </div>
+  <div class="total"><span>滿分</span><b>100</b></div>
+</div>
+
+<div class="budget" style="margin-top:20px">
+  <div class="row star">
+    <div class="t"><b>★ 加碼關</b><span>四關全滿才解鎖。</span></div>
+    <div class="v">＋5</div>
+  </div>
+  <div class="row" style="background:var(--accent-soft); border-color:transparent">
+    <div class="t"><b>遲到扣分</b><span>一天三次集合，第一次 −3、第二次 −5、第三次 −10</span></div>
+    <div class="v">−18</div>
+  </div>
+</div>
+
+<div class="callout sea">
+  <h4>每次集合，組長按兩下</h4>
+  <p>一到集合點，先按 <strong>「還沒到齊」</strong>——老師那邊就知道你們在集合了，不用排隊等點名。人到齊再按 <strong>「全員到齊」</strong>，收工。</p>
+  <p>按錯了再按一次同一顆就取消，可以改到對為止。少一個人的時候<strong>不要只按按鈕，要去把人找回來</strong>，找不到就馬上跟最近的老師講。</p>
+</div>
+
+<div class="callout">
+  <h4>準時不加分，遲到才扣分</h4>
+  <p>一天要集合三次：<strong>8:50員家中廊集合、11:50 魔菇離園、14:50 三井集合</strong>。準時是本來就該做到的事，所以不加分；但遲到會扣，而且<strong>愈遲愈重</strong>——第一次 −3，第二次 −5，第三次 −10。</p>
+</div>
+
+<div class="callout sea">
+  <h4>還有一個分數：班級平均</h4>
+  <p>系統會把<strong>全班八組的分數平均起來，商二甲對商二乙，即時比。</strong>所以遲到扣的不只是你們那一組，是整班的平均——隔壁組如果還在摩天輪那邊拖拖拉拉，你們是可以去催的。</p>
+</div>
+
+<h3>每一關的 10 分是怎麼拆的</h3>
+<p>照片拍了 <strong>3 分</strong>，每一格都有字 <strong>4 分</strong>，該寫長的地方寫夠字數 <strong>3 分</strong>。魔菇的 8 分則是填滿 4 分、字數 4 分（不用拍照）。<br>
+所以「隨便填兩個字」和「什麼都沒填」差不了多少分，但「認真寫完」和「隨便填」差很多。畫面上每一格下面都有字數計數器，變綠色就是達標了。</p>
+
+<div class="callout">
+  <h4>可以商量的事</h4>
+  <p>題目沒有標準答案，我們要的是<strong>你的推論</strong>。</p>
+</div>
+
+<h2><span class="no">03</span>行程表</h2>
+
+<ol class="tl">
+  <li><time>08:50</time><div><b>中廊集合、整隊、發餐盒。</b><span>手機先把網頁打開，確認能連上</span></div></li>
+  <li class="hot"><time>09:10</time><div><b>第一次集合　·　出發</b><span>逾時不候。遲到 −3</span></div></li>
+  <li><time>09:30</time><div><b>抵達魔菇部落</b><span>大合照、企業簡報、餅乾 DIY、六星級廠區導覽、蕈菇料理教學</span></div></li>
+  <li class="hot"><time>09:30<br>12:00</time><div><b>魔菇時段：盡量用語音輸入，不要用打字的</b><span>拍照＋語音輸入記關鍵字。五題的完整答案<strong>車上再補</strong></span></div></li>
+  <li class="hot"><time>12:00</time><div><b>第二次集合　·　魔菇離園上車</b><span>車上吃早上發的麵包餐盒。吃完就是黃金時間：趁記憶還熱，把魔菇 5 題寫完</span></div></li>
+  <li><time>13:00</time><div><b>抵達三中港奧特萊斯</b><span>先聽三井的簡報講座，大約 15 分鐘</span></div></li>
+  <li class="hot"><time>13:15<br>14:50</time><div><b>三井時段：抽 4 關，開始跑</b><span>簡報結束後才開始。從大門走到摩天輪大約 600 公尺，先看打卡地圖排路線</span></div></li>
+  <li class="hot"><time>14:50</time><div><b>第三次集合　·　點名、拍大合照</b><span>畫面上有倒數，最後 15 分鐘會變紅色。這一次遲到 −10</span></div></li>
+  <li><time>16:05</time><div><b>返校</b><span>回程車上公布排行榜</span></div></li>
+</ol>
+
+<h2><span class="no">04</span>四個鐵則</h2>
+
+<div class="laws">
+  <div class="law"><i>1</i><div><b>小組行動，不落單、不離開園區。</b><p>要走一起走。不是兩三個人就可以自己跑——全組一起移動，少一個人就停下來等。停車場、聯外道路、施工區都算園區外。</p></div></div>
+  <div class="law"><i>2</i><div><b>講師在簡報的時候，不要用手機。</b><p>人家準備了一場簡報，低頭滑手機不是「在做任務」，是沒禮貌。任務的時間很夠，等講完再做。<b>這一條最重要。</b></p></div></div>
+  <div class="law"><i>3</i><div><b>拍照盡量不要拍到路人。</b><p>店員、顧客、小朋友的臉都避開。拍店門口、拍招牌、拍吊牌都可以，但不要站在人家門口指指點點——他們在做生意。</p></div></div>
+  <div class="law"><i>4</i><div><b>當天穿制服。</b><p>我們是代表學校出去的。</p></div></div>
+</div>
+
+<div class="callout gold">
+  <h4>建議：用語音輸入，不要用打的</h4>
+  <p>鍵盤上有一個<strong>麥克風</strong>的圖示，按下去直接講，比打字，也不用一直低頭，講完看一眼再送出。</p>
+</div>
+
+<h2><span class="no">05</span>三井的八關，你會抽到四關</h2>
+<div class="deck">
+  <div><b>黃金店面爭奪戰</b><span>位置就是錢</span></div>
+  <div><b>折扣的數學</b><span>它想讓你覺得賺到</span></div>
+  <div><b>一期 vs. 二期</b><span>隔了三年的兩個商場</span></div>
+  <div><b>海景值多少錢</b><span>風景也是商品</span></div>
+  <div><b>品牌偵探</b><span>220 家店裡的陌生人</span></div>
+  <div><b>動線實驗</b><span>你被帶著走</span></div>
+  <div><b>為什麼有遊樂設施</b><span>不是來買東西的人</span></div>
+  <div><b>最冷清的那一家</b><span>人少的店在想什麼</span></div>
+</div>
+<div class="callout">
+  <h4>先知道這些，比較好找</h4>
+  <p>這裡有 <strong>220 家店</strong>，是全台第一座海港型 OUTLET。<strong>一期 2018 年開幕</strong>，有室內的美食街、二樓餐廳和誠品，運動品牌大多在這裡；<strong>二期 2021 年底才開</strong>，一口氣多了五十家，全都是戶外的，國際服飾、家居、3C、親子用品，還有摩天輪、雪樂地和 Asobi Square。</p>
+  <p>摩天輪叫「台中之星」，60 公尺高，是全台唯一看得到海的。</p>
+</div>
+<p>三井每一關都要<strong>拍一張照片</strong>上傳，拍照有 3 分。<strong>魔菇那五題也可以配照片</strong>（選填、不計分，但會印在學習單上）。照片直接在網頁裡拍、直接上傳，不用另外傳給老師。</p>
+<p>抽籤是按「抽」那一下決定的，<strong>抽完不能重抽</strong>。抽到哪四關就是哪四關，別組抽到什麼跟你無關。</p>
+
+<h2><span class="no">06</span>打卡地圖</h2>
+<p>四個點，走到附近手機就會自己加分，不用按任何東西。畫面上會顯示還差幾公尺。</p>
+<div class="deck">
+  <div><b>大門</b><span>＋1 分</span></div>
+  <div><b>古拉爵</b><span>＋1 分</span></div>
+  <div><b>特斯拉充電站</b><span>＋1 分</span></div>
+  <div><b>摩天輪</b><span>＋2 分</span></div>
+</div>
+<p>摩天輪<strong>不用搭</strong>，走到底下就算。大門到摩天輪大約 600 公尺，四個點分散在園區兩端，出發前先排好順序，不要來回跑兩趟。</p>
+
+<h2><span class="no">07</span>商業名詞加分</h2>
+<p>你的答案裡只要用對下面這些詞，系統自動 +1，最多加到 5 分。<strong>不要硬塞</strong>——塞得不對雖然照樣加分，但創意分那 10 分是老師打的，老師看得出來。</p>
+<div class="chips">
+  <i>4P</i><i>STP</i><i>動線</i><i>坪效</i><i>單價</i><i>目標客群</i><i>品牌定位</i><i>市場區隔</i><i>差異化</i><i>陳列</i><i>客層</i><i>人流</i><i>定價</i><i>促銷</i><i>通路</i><i>體驗行銷</i><i>集客</i><i>附加價值</i><i>產業升級</i>
+</div>
+
+<h2><span class="no">08</span>加碼關：總經理的位子</h2>
+<div class="callout gold">
+  <h4>★　四關全部拿到滿分才會打開</h4>
+  <p>題目只有一個：<strong>如果台中港這個場子明年只能留下一家店，你們留哪一家？</strong></p>
+  <p>不是留你最喜歡的，是留最該留的。要講三個理由，還要自己說出這家店最大的弱點。</p>
+  <p>加碼關滿分 <strong>5 分，另計</strong>，不進 100 分的排名，所以它不會影響誰贏。</p>
+  <p><strong>全場最高分的那一組，可以跟科主任領獎品。</strong>同分就抽籤。</p>
+</div>
+
+<h2><span class="no">09</span>會被問到的問題</h2>
+<dl class="qa">
+  <dt>一組要幾支手機？</dt>
+  <dd>一支就夠。輪流填也行，兩三支一起填也行，反正會同步。建議至少兩支，一支沒電還有備援。拍照那 3 分也只要有一支手機拍到就好。</dd>
+
+  <dt>現場沒網路怎麼辦？</dt>
+  <dd>照樣填。資料和照片都存在手機裡，有網路的時候自己補傳。排行榜會暫時不動，分數不會掉。</dd>
+
+  <dt>我的心得會被同組的人看到嗎？</dt>
+  <dd>不會。任務答案是全組共用的，<strong>個人心得那一頁只存在你自己手機裡</strong>，誰也看不到，老師端也收不到。</dd>
+
+  <dt>學習單還要另外寫嗎？</dt>
+  <dd>不用。任務答案加上你的心得，按「列印學習單」就會自動排成可以交的那一份，<strong>連照片都幫你印好了，不用洗照片、不用剪貼</strong>。系統會自動挑照片；想自己指定哪兩張，到「心得與照片」那一頁選。這就是為什麼心得那一頁要認真寫。</dd>
+
+  <dt>午餐吃什麼？要自己帶嗎？</dt>
+  <dd>不用帶。<strong>出發前會發麵包餐盒，葷素都可以吃</strong>，12 點上車以後在車上解決。真的不喜歡吃的話可以給老師，不要丟掉。</dd>
+
+  <dt>可以逛街買東西嗎？</dt>
+  <dd>可以，簡報聽完到 14:50 本來就是自由時間。但任務沒做完就只顧著逛，掉的不只是你們那一組的分，還有全班的平均。</dd>
+
+  <dt>可以抄別組的嗎？</dt>
+  <dd>抄不到。每組抽到的四關不一樣，而且老師端看得到每一組的完整答案和照片，一路對下來一清二楚。</dd>
+</dl>
+
+<div class="callout sea">
+  <h4>最後一件事</h4>
+  <p>這一天結束之後，你會記得的大概不是分數，是某個你第一次注意到的東西——為什麼那家店開在那個轉角、為什麼香菇工廠長得像無塵室、為什麼有人願意花錢坐那個摩天輪。</p>
+  <p>題目只是讓你停下來看的藉口。分數只是讓你願意停下來的理由。</p>
+</div>
+
+<footer>115 學年度第 1 學期　商業經營科　職場體驗　場次編號 A10004・A10005</footer>
+
+</div>
