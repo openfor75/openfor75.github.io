@@ -1,0 +1,715 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>讀書打卡牆</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
+<script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+:root{
+  --paper:#F6F8FC; --grid:#E1E7F2; --ink:#1D2B53; --ink-2:#5B6789; --line:#C9D2E4;
+  --hl:#FFE14D; --pink:#FF7AA2; --blue:#4D7CFE; --stamp:#D7263D;
+  --wood:#EDD3A3; --wood-d:#C79D5E; --card:#FFFFFF;
+  --f-display:"Huninn","jf-openhuninn","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --f-body:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --stick-w:54px; --stick-gap:12px;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  font-family:var(--f-body); color:var(--ink); font-size:16px; line-height:1.6;
+  background-color:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px;
+  -webkit-text-size-adjust:100%;
+}
+.hidden{display:none !important}
+button,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0}
+.wrap{max-width:560px;margin:0 auto;padding:0 18px}
+.mark{background:linear-gradient(transparent 58%,var(--hl) 58%);padding:0 .1em}
+
+/* 載入 */
+.boot{min-height:100vh;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:24px}
+.boot .stick{animation:wob 1s ease-in-out infinite alternate}
+@keyframes wob{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+
+/* 登記 */
+.reg{padding-top:calc(env(safe-area-inset-top,0px) + 40px);padding-bottom:48px}
+.reg h1{font-size:40px;line-height:1.2}
+.reg .lead{margin:12px 0 28px;color:var(--ink-2)}
+.field-label{display:block;font-weight:600;margin:20px 0 8px}
+.hint{font-size:14px;color:var(--ink-2);margin:6px 0 0}
+input[type=text],textarea{
+  width:100%;border:2px solid var(--ink);border-radius:12px;background:var(--card);padding:12px 14px;
+}
+textarea{resize:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:2px solid var(--ink);background:var(--card);border-radius:999px;padding:6px 16px}
+.chip[aria-pressed=true]{background:var(--hl)}
+.btn{
+  display:block;width:100%;margin-top:24px;border:0;border-radius:14px;padding:14px;
+  background:var(--ink);color:#fff;font-size:18px;font-family:var(--f-display);
+  box-shadow:0 4px 0 #0E1735;transition:transform .08s,box-shadow .08s;
+}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0E1735}
+.btn[disabled]{opacity:.6}
+.btn.ghost{background:var(--card);color:var(--ink);border:2px solid var(--ink);box-shadow:0 4px 0 var(--ink)}
+.err{color:var(--stamp);min-height:1.6em;margin:10px 0 0;font-size:15px}
+
+/* 頂部 */
+.top{
+  position:sticky;top:0;z-index:5;background:rgba(246,248,252,.94);backdrop-filter:blur(6px);
+  border-bottom:2px solid var(--ink);padding-top:env(safe-area-inset-top,0px);
+}
+.top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;padding-bottom:10px}
+.who{display:flex;align-items:baseline;gap:8px;min-width:0}
+.who strong{font-family:var(--f-display);font-weight:400;font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:13px;border:1.5px solid var(--ink-2);color:var(--ink-2);border-radius:6px;padding:0 6px;white-space:nowrap}
+.stats{display:flex;gap:14px;text-align:center}
+.stats b{display:block;font-family:var(--f-display);font-weight:400;font-size:22px;line-height:1.1}
+.stats small{font-size:12px;color:var(--ink-2)}
+
+main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
+.tab{padding-top:20px}
+.tab h2{font-size:26px}
+.status{color:var(--ink-2);margin:6px 0 16px}
+
+/* 打卡 */
+.photo-drop{
+  display:grid;place-items:center;aspect-ratio:4/3;border:2px dashed var(--ink-2);border-radius:16px;
+  background:var(--card);overflow:hidden;cursor:pointer;position:relative;
+}
+.photo-drop span{font-family:var(--f-display);font-size:20px;color:var(--ink-2)}
+.photo-drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.counter{text-align:right;font-size:13px;color:var(--ink-2)}
+.rule{font-size:14px;background:var(--card);border-left:4px solid var(--pink);padding:8px 12px;margin:16px 0 0;border-radius:0 8px 8px 0}
+
+/* 打卡牆 */
+.day-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.day-strip::-webkit-scrollbar{display:none}
+.day-strip .chip{flex:none}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px 14px;margin-top:8px}
+.card{
+  margin:0;background:var(--card);padding:8px 8px 10px;border-radius:4px;position:relative;
+  box-shadow:0 2px 0 rgba(29,43,83,.14);
+}
+.card::before{
+  content:"";position:absolute;top:-9px;left:50%;width:56px;height:18px;margin-left:-28px;
+  background:rgba(255,122,162,.55);transform:rotate(-3deg);
+}
+.card:nth-child(3n+2)::before{background:rgba(255,225,77,.7);transform:rotate(2deg)}
+.card:nth-child(3n)::before{background:rgba(77,124,254,.35);transform:rotate(-1deg)}
+.card img{display:block;width:100%;aspect-ratio:1;object-fit:cover;background:var(--grid);cursor:zoom-in}
+.card .meta{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-top:6px}
+.card .nick{font-family:var(--f-display);font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .time{font-size:12px;color:var(--ink-2);flex:none}
+.card .subj{font-size:12px;color:var(--ink-2)}
+.card .cap{font-size:14px;margin:4px 0 0;line-height:1.45;word-break:break-word}
+.card.mine{outline:3px solid var(--hl)}
+.empty{grid-column:1/-1;text-align:center;color:var(--ink-2);padding:32px 0}
+
+/* 籤筒 */
+.pot{display:flex;align-items:flex-end;gap:18px;margin-bottom:18px}
+.cup{position:relative;width:96px;height:112px;flex:none}
+.cup-body{
+  position:absolute;left:0;right:0;bottom:0;height:70px;border-radius:8px 8px 16px 16px;
+  background:var(--stamp);border:2px solid var(--ink);display:grid;place-items:center;
+  color:#fff;font-family:var(--f-display);font-size:22px;z-index:2;
+}
+.cup-sticks span{
+  position:absolute;bottom:40px;width:7px;border-radius:4px 4px 0 0;background:var(--wood);
+  border:1.5px solid var(--wood-d);transform-origin:bottom center;
+}
+.pot-text{flex:1}
+.pot-text h2{font-size:24px;line-height:1.3}
+.pot-text p{margin:4px 0 0;color:var(--ink-2)}
+.countdown{font-family:var(--f-display);font-size:20px;color:var(--ink)}
+
+.stage{background:var(--card);border:2px solid var(--ink);border-radius:20px;padding:16px;box-shadow:0 5px 0 var(--ink)}
+.stage-title{font-family:var(--f-display);font-size:20px;margin:0 0 10px}
+.reel-window{
+  position:relative;height:250px;overflow:hidden;border-radius:12px;
+  background:repeating-linear-gradient(90deg,#FBF6EC 0 22px,#F6EEDD 22px 23px);
+}
+.reel-window::before{ /* 螢光筆框選中央 */
+  content:"";position:absolute;top:0;bottom:0;left:50%;width:calc(var(--stick-w) + 10px);
+  margin-left:calc((var(--stick-w) + 10px) / -2);background:rgba(255,225,77,.35);z-index:0;
+}
+.pointer{
+  position:absolute;top:0;left:50%;width:0;height:0;margin-left:-12px;z-index:3;
+  border-left:12px solid transparent;border-right:12px solid transparent;border-top:18px solid var(--stamp);
+  transform-origin:50% 0;
+}
+.pointer.tick{animation:tick .12s ease-out}
+@keyframes tick{50%{transform:rotate(-14deg)}}
+.reel{position:absolute;left:0;bottom:0;display:flex;gap:var(--stick-gap);padding-bottom:8px;will-change:transform;z-index:1}
+.stick{
+  flex:none;width:var(--stick-w);height:200px;border-radius:27px 27px 6px 6px;
+  background:linear-gradient(var(--stamp) 0 24px,var(--wood) 24px);
+  box-shadow:inset -5px 0 0 var(--wood-d),0 2px 0 rgba(0,0,0,.12);
+  display:flex;justify-content:center;padding-top:34px;transition:transform .45s cubic-bezier(.2,1.6,.4,1),background .3s;
+}
+.stick span{ /* 一行一個字，直式籤條 */
+  display:block;width:1.05em;font-family:var(--f-display);font-size:18px;line-height:1.12;
+  text-align:center;word-break:break-all;white-space:normal;max-height:152px;overflow:hidden;
+}
+.stick.won{transform:translateY(-34px);background:linear-gradient(var(--stamp) 0 24px,var(--hl) 24px)}
+
+.result{text-align:center;padding:18px 0 4px}
+.polaroid{
+  position:relative;display:inline-block;background:#fff;padding:10px 10px 14px;border:1px solid var(--line);
+  transform:rotate(-2deg);box-shadow:0 6px 18px rgba(29,43,83,.18);max-width:78%;
+}
+.polaroid img{display:block;width:240px;max-width:100%;aspect-ratio:1;object-fit:cover;background:var(--grid)}
+.seal{
+  position:absolute;right:-18px;top:-18px;width:78px;height:78px;border-radius:50%;
+  border:4px solid var(--stamp);color:var(--stamp);display:grid;place-items:center;
+  font-family:var(--f-display);font-size:24px;transform:rotate(14deg);background:rgba(255,255,255,.75);
+}
+.winner-name{font-family:var(--f-display);font-size:34px;margin:18px 0 0;line-height:1.2}
+.winner-note{color:var(--ink-2);margin:4px 0 0}
+.winner-me{display:inline-block;margin-top:10px;background:var(--hl);padding:4px 12px;border-radius:8px;font-weight:600}
+.pop{animation:pop .55s cubic-bezier(.2,1.4,.4,1)}
+@keyframes pop{from{transform:scale(.6) rotate(-6deg);opacity:0}}
+
+.history-title{font-size:20px;margin:28px 0 8px}
+.history{list-style:none;margin:0;padding:0}
+.history button{
+  width:100%;display:flex;align-items:center;gap:12px;text-align:left;background:var(--card);
+  border:0;border-bottom:1.5px solid var(--line);padding:12px 6px;
+}
+.history .d{font-family:var(--f-display);width:48px;flex:none}
+.history .w{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.history .n{font-size:13px;color:var(--ink-2);flex:none}
+.history .me{background:var(--hl);border-radius:4px;padding:0 4px;font-size:12px;margin-left:6px}
+
+/* 底部分頁 */
+.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:2px solid var(--ink);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+.tabs .wrap{display:grid;grid-template-columns:repeat(3,1fr)}
+.tabs button{border:0;background:none;padding:12px 0 14px;font-family:var(--f-display);font-size:18px;color:var(--ink-2)}
+.tabs button[aria-current=page]{color:var(--ink)}
+.tabs button[aria-current=page] span{background:linear-gradient(transparent 55%,var(--hl) 55%)}
+
+/* 打卡印章 */
+.stamp-overlay{position:fixed;inset:0;z-index:20;display:grid;place-items:center;background:rgba(246,248,252,.75)}
+.stamp{
+  width:210px;height:210px;border-radius:50%;border:8px solid var(--stamp);color:var(--stamp);
+  display:grid;place-content:center;text-align:center;transform:rotate(-12deg);background:rgba(255,255,255,.6);
+  animation:thunk .5s cubic-bezier(.3,1.5,.5,1);
+}
+.stamp b{font-family:var(--f-display);font-weight:400;font-size:46px;line-height:1.1}
+.stamp small{font-size:16px}
+@keyframes thunk{from{transform:scale(2.4) rotate(-30deg);opacity:0}}
+
+.lightbox{position:fixed;inset:0;z-index:25;background:rgba(14,23,53,.92);display:grid;place-items:center;padding:24px;cursor:zoom-out}
+.lightbox figure{margin:0;text-align:center;color:#fff}
+.lightbox img{max-width:100%;max-height:78vh;border-radius:6px}
+.lightbox figcaption{margin-top:10px}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:30;width:100%;height:100%}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+
+<div id="boot" class="boot">
+  <div class="stick"><span>讀書</span></div>
+  <p id="bootMsg">打開書本中…</p>
+</div>
+
+<section id="register" class="wrap reg hidden">
+  <h1>讀書打卡牆</h1>
+  <p class="lead">唸書時拍一張照片打卡，班上同學都看得到。每天 <span id="regHour">21:00</span> 從當天有打卡的人抽一位送小禮物。</p>
+  <span class="field-label">你的班級</span>
+  <div id="regClasses" class="chips"></div>
+  <label class="field-label" for="regNick">暱稱</label>
+  <input id="regNick" type="text" maxlength="10" placeholder="例如：借貸平衡" autocomplete="off">
+  <p class="hint">同學只會看到暱稱，不要用本名或座號。登記後想改名請找老師。</p>
+  <button id="regBtn" class="btn">開始打卡</button>
+  <p id="regErr" class="err" role="alert"></p>
+</section>
+
+<div id="app" class="hidden">
+  <header class="top">
+    <div class="wrap">
+      <div class="who"><strong id="meNick" class="mark"></strong><span id="meClass" class="tag"></span></div>
+      <div class="stats">
+        <div><b id="meStreak">0</b><small>連續天數</small></div>
+        <div><b id="meTotal">0</b><small>累計天數</small></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="tab-checkin" class="tab">
+      <h2>今天唸了什麼？</h2>
+      <p id="ciStatus" class="status"></p>
+      <label class="photo-drop" for="photoInput">
+        <input id="photoInput" type="file" accept="image/*" hidden>
+        <img id="photoPreview" alt="準備上傳的照片" hidden>
+        <span id="photoHint">點這裡拍照或選照片</span>
+      </label>
+      <span class="field-label">科目</span>
+      <div id="ciSubjects" class="chips"></div>
+      <label class="field-label" for="ciCaption">一句話（可不填）</label>
+      <textarea id="ciCaption" rows="2" maxlength="60" placeholder="例如：把第三章的分錄全部重寫一遍"></textarea>
+      <div class="counter"><span id="ciCount">0</span>/60</div>
+      <p class="rule">只拍課本、筆記或題目，不要拍到臉、姓名和學號。</p>
+      <button id="ciBtn" class="btn">打卡</button>
+      <p id="ciErr" class="err" role="alert"></p>
+    </section>
+
+    <section id="tab-wall" class="tab hidden">
+      <div id="dayStrip" class="day-strip"></div>
+      <p id="wallSummary" class="status"></p>
+      <div id="wallGrid" class="grid"></div>
+    </section>
+
+    <section id="tab-draw" class="tab hidden">
+      <div class="pot">
+        <div class="cup" aria-hidden="true"><div id="cupSticks" class="cup-sticks"></div><div class="cup-body">籤</div></div>
+        <div class="pot-text">
+          <h2 id="potTitle"></h2>
+          <p id="potNote"></p>
+          <p class="countdown" id="countdown"></p>
+        </div>
+      </div>
+
+      <div class="stage">
+        <p id="stageTitle" class="stage-title"></p>
+        <div id="reelWindow" class="reel-window">
+          <div id="pointer" class="pointer"></div>
+          <div id="reel" class="reel"></div>
+        </div>
+        <div id="result" class="result hidden" aria-live="polite"></div>
+        <button id="replayBtn" class="btn ghost">看開獎重播</button>
+      </div>
+
+      <h3 class="history-title">最近開獎</h3>
+      <ul id="history" class="history"></ul>
+    </section>
+  </main>
+
+  <nav class="tabs" aria-label="分頁">
+    <div class="wrap">
+      <button data-tab="checkin" aria-current="page"><span>打卡</span></button>
+      <button data-tab="wall"><span>打卡牆</span></button>
+      <button data-tab="draw"><span>開獎</span></button>
+    </div>
+  </nav>
+</div>
+
+<div id="stampOverlay" class="stamp-overlay hidden"><div class="stamp"><b>已打卡</b><small id="stampDate"></small></div></div>
+<div id="lightbox" class="lightbox hidden"><figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure></div>
+<canvas id="confetti"></canvas>
+
+<script>
+/* ===== 設定：部署後填入 ===== */
+const LIFF_ID = '請填 LIFF ID';
+const API_URL = '請填 Apps Script 網頁應用程式網址（結尾是 /exec）';
+
+/* ===== 基本工具 ===== */
+const DEMO = new URLSearchParams(location.search).has('demo');
+const $ = id => document.getElementById(id);
+const state = { me:null, subject:null, photo:null, wallDate:null, draws:null, playing:false, timer:null };
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+function show(id, on=true){ $(id).classList.toggle('hidden', !on); }
+function tpeKey(d){ return new Date(d.getTime()+8*3600e3).toISOString().slice(0,10); }
+function addDays(key,n){ const d=new Date(key+'T12:00:00+08:00'); return tpeKey(new Date(d.getTime()+n*864e5)); }
+function md(key){ const p=key.split('-'); return (+p[1])+'/'+(+p[2]); }
+function dayName(key){ const t=tpeKey(new Date()); if(key===t) return '今天'; if(key===addDays(t,-1)) return '昨天'; if(key===addDays(t,1)) return '明天'; return md(key); }
+function drawAt(key){ return new Date(key+'T'+String(state.me.drawHour).padStart(2,'0')+':00:00+08:00'); }
+function drawWhen(key){ return (key===tpeKey(new Date()) ? '今晚 ' : '明晚 ') + state.me.drawHour + ':00'; }
+function imgUrl(id){ return id.startsWith('data:') ? id : 'https://lh3.googleusercontent.com/d/'+id+'=w900'; }
+function setImg(img,id){
+  img.src=imgUrl(id);
+  img.onerror=()=>{ img.onerror=null; img.src='https://drive.google.com/thumbnail?id='+id+'&sz=w900'; };
+}
+function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){ return null; } }
+
+async function api(action, payload={}){
+  if(DEMO) return demoApi(action, payload);
+  const res = await fetch(API_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify(Object.assign({action, idToken: liff.getIDToken()}, payload))
+  });
+  const j = await res.json();
+  if(!j.ok) throw new Error(j.error);
+  return j.data;
+}
+
+/* ===== 啟動 ===== */
+async function boot(){
+  try{
+    if(!DEMO){
+      await liff.init({ liffId: LIFF_ID });
+      if(!liff.isLoggedIn()){ liff.login({ redirectUri: location.href }); return; }
+    }
+    state.me = await api('me');
+    show('boot', false);
+    state.me.registered ? startApp() : startRegister();
+  }catch(e){
+    $('bootMsg').textContent = e.message || '頁面打不開，請關掉再從 LINE 重新開啟';
+  }
+}
+
+/* ===== 登記 ===== */
+function startRegister(){
+  show('register');
+  $('regHour').textContent = state.me.drawHour + ':00';
+  let picked = null;
+  const box = $('regClasses');
+  state.me.classes.forEach(c=>{
+    const b = el('button','chip',c); b.setAttribute('aria-pressed','false');
+    b.onclick = ()=>{ picked=c; box.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed', String(x===b))); };
+    box.append(b);
+  });
+  $('regBtn').onclick = async ()=>{
+    const nick = $('regNick').value.trim();
+    $('regErr').textContent = '';
+    if(!picked) return $('regErr').textContent='先選你的班級';
+    if(nick.length<2) return $('regErr').textContent='暱稱至少 2 個字';
+    $('regBtn').disabled = true;
+    try{
+      state.me = await api('register', { classCode:picked, nickname:nick });
+      show('register', false); startApp();
+    }catch(e){ $('regErr').textContent = e.message; }
+    finally{ $('regBtn').disabled = false; }
+  };
+}
+
+/* ===== 主畫面 ===== */
+function startApp(){
+  show('app');
+  renderMe();
+  const sb = $('ciSubjects');
+  state.me.subjects.forEach(s=>{
+    const b = el('button','chip',s); b.setAttribute('aria-pressed','false');
+    b.onclick = ()=>{ state.subject=s; sb.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed', String(x===b))); };
+    sb.append(b);
+  });
+  document.querySelectorAll('.tabs button').forEach(b=> b.onclick = ()=>switchTab(b.dataset.tab));
+  $('photoInput').onchange = onPhoto;
+  $('ciCaption').oninput = e=> $('ciCount').textContent = e.target.value.length;
+  $('ciBtn').onclick = doCheckin;
+  $('lightbox').onclick = ()=> show('lightbox', false);
+  $('replayBtn').onclick = ()=> state.current && play(state.current);
+  if(location.hash==='#draw') switchTab('draw');
+}
+
+function renderMe(){
+  const m = state.me;
+  $('meNick').textContent = m.nickname;
+  $('meClass').textContent = m.classCode;
+  $('meStreak').textContent = m.streak;
+  $('meTotal').textContent = m.total;
+  $('ciStatus').textContent = m.checkedToday
+    ? '今天已經有籤了，'+drawWhen(m.today)+'開獎。再多傳幾張也可以，籤還是一支。'
+    : drawWhen(m.today)+'開獎，現在打卡就能參加。';
+}
+
+function switchTab(name){
+  ['checkin','wall','draw'].forEach(t=>{
+    show('tab-'+t, t===name);
+    document.querySelector('[data-tab="'+t+'"]').setAttribute('aria-current', t===name ? 'page' : 'false');
+  });
+  window.scrollTo(0,0);
+  clearInterval(state.timer);
+  if(name==='wall') loadWall(state.wallDate || state.me.today);
+  if(name==='draw') loadDraws();
+}
+
+/* ===== 打卡 ===== */
+async function onPhoto(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  $('ciErr').textContent = '';
+  try{
+    state.photo = await compress(file);
+    $('photoPreview').src = state.photo; $('photoPreview').hidden = false; $('photoHint').hidden = true;
+  }catch(err){ $('ciErr').textContent = err.message; }
+}
+
+function compress(file){
+  return new Promise((ok,no)=>{
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = ()=>{
+      const s = Math.min(1, 1280/Math.max(img.naturalWidth, img.naturalHeight));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.naturalWidth*s); c.height = Math.round(img.naturalHeight*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      URL.revokeObjectURL(url);
+      ok(c.toDataURL('image/jpeg',0.82));
+    };
+    img.onerror = ()=> no(new Error('這張照片讀不出來，換一張試試'));
+    img.src = url;
+  });
+}
+
+async function doCheckin(){
+  $('ciErr').textContent = '';
+  if(!state.photo) return $('ciErr').textContent = '先拍一張讀書照';
+  if(!state.subject) return $('ciErr').textContent = '選一個科目';
+  const btn = $('ciBtn'); btn.disabled = true; btn.textContent = '上傳中…';
+  try{
+    state.me = await api('checkin', { image: state.photo.split(',')[1], subject: state.subject, caption: $('ciCaption').value.trim() });
+    renderMe();
+    state.photo = null; $('photoInput').value=''; $('photoPreview').hidden = true; $('photoHint').hidden = false;
+    $('ciCaption').value=''; $('ciCount').textContent='0';
+    $('stampDate').textContent = md(state.me.today);
+    show('stampOverlay');
+    setTimeout(()=>{ show('stampOverlay', false); state.wallDate = state.me.today; switchTab('wall'); }, 1500);
+  }catch(e){ $('ciErr').textContent = e.message; }
+  finally{ btn.disabled = false; btn.textContent = '打卡'; }
+}
+
+/* ===== 打卡牆 ===== */
+function renderDayStrip(){
+  const strip = $('dayStrip'); strip.replaceChildren();
+  for(let i=0;i<7;i++){
+    const key = addDays(state.me.today, -i);
+    const b = el('button','chip', dayName(key));
+    b.setAttribute('aria-pressed', String(key===state.wallDate));
+    b.onclick = ()=> loadWall(key);
+    strip.append(b);
+  }
+}
+
+async function loadWall(date){
+  state.wallDate = date;
+  renderDayStrip();
+  $('wallSummary').textContent = '';
+  $('wallGrid').replaceChildren(el('p','empty','載入中…'));
+  try{
+    const w = await api('wall', { date });
+    if(state.wallDate !== date) return;
+    const grid = $('wallGrid'); grid.replaceChildren();
+    $('wallSummary').textContent = w.items.length ? dayName(date)+'有 '+w.people+' 位同學打卡，共 '+w.items.length+' 張' : '';
+    if(!w.items.length){
+      const p = el('div','empty');
+      p.append(el('p',null, date===state.me.today ? '還沒有人打卡，當第一個吧' : '這天沒有人打卡'));
+      if(date===state.me.today){ const b=el('button','btn ghost','去打卡'); b.onclick=()=>switchTab('checkin'); p.append(b); }
+      grid.append(p); return;
+    }
+    w.items.forEach((it,i)=>{
+      const f = el('figure','card'+(it.mine?' mine':''));
+      f.style.transform = 'rotate('+[-1.2,.8,-.4,1.1][i%4]+'deg)';
+      const img = el('img'); img.loading='lazy'; img.alt = it.nick+' 的讀書照'; setImg(img, it.fileId);
+      img.onclick = ()=>{ setImg($('lbImg'), it.fileId); $('lbCap').textContent = it.nick+'｜'+it.subject+(it.caption?'｜'+it.caption:''); show('lightbox'); };
+      const meta = el('div','meta'); meta.append(el('span','nick',it.nick), el('span','time',it.time));
+      f.append(img, meta, el('div','subj',it.subject));
+      if(it.caption) f.append(el('p','cap',it.caption));
+      grid.append(f);
+    });
+  }catch(e){ $('wallGrid').replaceChildren(el('p','empty',e.message)); }
+}
+
+/* ===== 開獎 ===== */
+async function loadDraws(){
+  $('stageTitle').textContent = '載入中…';
+  try{
+    const d = await api('draws');
+    state.draws = d;
+    renderPot(d);
+    renderHistory(d.draws);
+    const prevKey = addDays(d.today,-1);
+    const latest = d.draws[0];
+    const waiting = (!latest || latest.date !== prevKey) && (Date.now() - drawAt(prevKey)) < 2*3600e3 && Date.now() >= drawAt(prevKey);
+    if(waiting){
+      $('stageTitle').textContent = '開獎機器正在轉，過幾分鐘再回來看';
+      $('reel').replaceChildren(); show('result',false); show('replayBtn',false);
+      return;
+    }
+    if(!latest){ $('stageTitle').textContent = '還沒有開獎紀錄，第一次開獎在'+drawWhen(d.today); show('replayBtn',false); $('reel').replaceChildren(); return; }
+    prepare(latest, true);
+  }catch(e){ $('stageTitle').textContent = e.message; }
+}
+
+function renderPot(d){
+  const n = d.todayCount;
+  $('potTitle').textContent = dayName(d.today)+'的籤筒有 '+n+' 支籤';
+  $('potNote').textContent = drawWhen(d.today)+'開獎';
+  const box = $('cupSticks'); box.replaceChildren();
+  const shown = Math.min(n, 14), rnd = seeded(hash(d.today+n));
+  for(let i=0;i<shown;i++){
+    const s = el('span');
+    s.style.left = (12 + (shown>1 ? i*66/(shown-1) : 33) + (rnd()-.5)*4) + 'px';
+    s.style.height = (46 + rnd()*26) + 'px';
+    s.style.transform = 'rotate('+((rnd()-.5)*22)+'deg)';
+    box.append(s);
+  }
+  const tickClock = ()=>{
+    const ms = drawAt(d.today) - Date.now();
+    if(ms<=0){ $('countdown').textContent='開獎時間到了'; return; }
+    const h=Math.floor(ms/3600e3), m=Math.floor(ms%3600e3/6e4), s=Math.floor(ms%6e4/1e3);
+    $('countdown').textContent = '還有 '+h+' 小時 '+String(m).padStart(2,'0')+' 分 '+String(s).padStart(2,'0')+' 秒';
+  };
+  tickClock(); clearInterval(state.timer); state.timer = setInterval(tickClock, 1000);
+}
+
+function renderHistory(list){
+  const ul = $('history'); ul.replaceChildren();
+  if(!list.length){ ul.append(el('li','empty','還沒有紀錄')); return; }
+  list.forEach(dr=>{
+    const b = el('button');
+    b.append(el('span','d',md(dr.date)));
+    const w = el('span','w',dr.winner); if(dr.isMe) w.append(el('span','me','你'));
+    b.append(w, el('span','n', dr.entrants.length ? dr.entrants.length+' 人參加' : ''));
+    b.onclick = ()=>{ if(state.playing) return; prepare(dr, false); play(dr); $('reelWindow').scrollIntoView({behavior:'smooth', block:'center'}); };
+    const li = el('li'); li.append(b); ul.append(li);
+  });
+}
+
+function prepare(dr, autoplay){
+  state.current = dr;
+  $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）的開獎';
+  show('result', false);
+  if(!dr.entrants.length){
+    $('reel').replaceChildren(); show('replayBtn', false);
+    const r = $('result'); r.replaceChildren(el('p','winner-note',dr.winner)); show('result');
+    return;
+  }
+  show('replayBtn');
+  const { seq } = buildSeq(dr);
+  renderReel(seq, 2);
+  const seenKey = 'seen_'+state.me.classCode+'_'+dr.date;
+  if(autoplay && !store(seenKey)) setTimeout(()=>play(dr), 500);
+}
+
+function buildSeq(dr){
+  const E = dr.entrants, rnd = seeded(hash(dr.date+dr.winner));
+  let seq = [];
+  while(seq.length < 44) seq = seq.concat(shuffle(E.slice(), rnd));
+  const P = seq.length;
+  seq.push(dr.winner);
+  const others = E.filter(n=>n!==dr.winner), pool = others.length ? others : E;
+  let tail = [];
+  while(tail.length < 5) tail = tail.concat(shuffle(pool.slice(), rnd));
+  seq.push(...tail.slice(0,5));
+  return { seq, P };
+}
+
+function renderReel(seq, centerIdx){
+  const reel = $('reel'); reel.replaceChildren();
+  seq.forEach(n=>{ const s=el('div','stick'); s.append(el('span',null,n)); reel.append(s); });
+  reel.style.transform = 'translateX('+posOf(centerIdx)+'px)';
+}
+function stepW(){ const cs=getComputedStyle(document.documentElement); return parseFloat(cs.getPropertyValue('--stick-w'))+parseFloat(cs.getPropertyValue('--stick-gap')); }
+function posOf(i){ const w=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stick-w')); return -(i*stepW() + w/2) + $('reelWindow').clientWidth/2; }
+
+function play(dr){
+  if(state.playing || !dr.entrants.length) return;
+  state.playing = true;
+  show('result', false); $('replayBtn').disabled = true;
+  const { seq, P } = buildSeq(dr);
+  renderReel(seq, 2);
+  const reel = $('reel'), from = posOf(2), rnd = seeded(hash(dr.date));
+  const to = posOf(P) + (rnd()-.5)*20;
+  const dur = reduceMotion ? 0 : 7000, t0 = performance.now(), sw = stepW(), half = $('reelWindow').clientWidth/2;
+  let last = -1;
+  const frame = t=>{
+    const k = dur ? Math.min(1,(t-t0)/dur) : 1;
+    const e = 1 - Math.pow(1-k, 4);
+    const x = from + (to-from)*e;
+    reel.style.transform = 'translateX('+x+'px)';
+    const idx = Math.round((half - x)/sw - .5);
+    if(idx !== last){ last = idx; const p=$('pointer'); p.classList.remove('tick'); void p.offsetWidth; p.classList.add('tick'); }
+    if(k < 1) requestAnimationFrame(frame); else finish(dr, reel.children[P]);
+  };
+  requestAnimationFrame(frame);
+}
+
+function finish(dr, stick){
+  stick.classList.add('won');
+  setTimeout(()=>{
+    const r = $('result'); r.replaceChildren();
+    const pol = el('div','polaroid pop');
+    if(dr.fileId){ const img=el('img'); img.alt=dr.winner+' 的讀書照'; setImg(img, dr.fileId); pol.append(img); }
+    pol.append(el('div','seal','中籤'));
+    r.append(pol, el('p','winner-name mark',dr.winner), el('p','winner-note', dr.entrants.length+' 位同學打卡，抽出這一支'));
+    if(dr.isMe) r.append(el('p','winner-me','是你！上課時找老師領禮物'));
+    show('result');
+    confetti();
+    store('seen_'+state.me.classCode+'_'+dr.date, '1');
+    state.playing = false; $('replayBtn').disabled = false;
+  }, reduceMotion ? 0 : 550);
+}
+
+/* ===== 亂數與洗牌（同一天大家看到的重播一模一樣） ===== */
+function hash(s){ let h=2166136261; for(const c of s){ h^=c.codePointAt(0); h=Math.imul(h,16777619); } return h>>>0; }
+function seeded(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
+function shuffle(arr,rnd){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
+
+/* ===== 彩帶 ===== */
+function confetti(){
+  if(reduceMotion) return;
+  const c = $('confetti'), ctx = c.getContext('2d'), dpr = devicePixelRatio||1;
+  c.width = innerWidth*dpr; c.height = innerHeight*dpr; ctx.scale(dpr,dpr);
+  const colors = ['#FFE14D','#FF7AA2','#4D7CFE','#1D2B53','#D7263D'];
+  const bits = Array.from({length:150}, ()=>({
+    x: innerWidth/2 + (Math.random()-.5)*80, y: innerHeight*.45,
+    vx: (Math.random()-.5)*14, vy: -Math.random()*14-4, r: Math.random()*6.28, vr:(Math.random()-.5)*.4,
+    w: 6+Math.random()*6, h: 10+Math.random()*8, c: colors[Math.floor(Math.random()*colors.length)]
+  }));
+  const t0 = performance.now();
+  const step = t=>{
+    ctx.clearRect(0,0,innerWidth,innerHeight);
+    bits.forEach(b=>{ b.vy+=.35; b.vx*=.99; b.x+=b.vx; b.y+=b.vy; b.r+=b.vr;
+      ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.r); ctx.fillStyle=b.c; ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h*Math.abs(Math.cos(b.r))); ctx.restore(); });
+    if(t-t0 < 3200) requestAnimationFrame(step); else ctx.clearRect(0,0,innerWidth,innerHeight);
+  };
+  requestAnimationFrame(step);
+}
+
+/* ===== 示範模式：網址加上 ?demo=1 就能在電腦上預覽 ===== */
+const demoApi = (()=>{
+  const names = ['借貸平衡','早八戰士','咖啡續命','折讓大師','期中必過','阿凱不睡','豆花','分錄機器','統測衝衝衝','會計魂','小熊軟糖'];
+  const subjects = ['會計學','會計資訊','商業概論','其他科目'];
+  const pic = (bg,t)=>'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="'+bg+'"/><text x="300" y="360" font-size="200" text-anchor="middle">'+t+'</text></svg>');
+  const pics = [pic('#D6E4FF','📒'),pic('#FFF0A8','✏️'),pic('#FFD6E2','🧮'),pic('#D8F5E4','📚')];
+  const now = new Date(), H = 21;
+  const tpeHour = new Date(now.getTime()+8*3600e3).getUTCHours();
+  const today = tpeKey(new Date(now.getTime() + (tpeHour >= H ? 864e5 : 0)));
+  const rnd = seeded(7);
+  const me = { registered:true, nickname:'小熊軟糖', classCode:'商二乙', streak:3, total:12, checkedToday:false,
+               classes:['商二乙','貿二丙'], subjects, drawHour:H, today };
+  const wall = {}, draws = [];
+  for(let i=0;i<7;i++){
+    const key = addDays(today,-i), who = shuffle(names.slice(0,10), rnd).slice(0, i===0 ? 4 : 5+Math.floor(rnd()*5));
+    wall[key] = who.map((n,j)=>({ nick:n, subject:subjects[j%4], caption:['第三章分錄寫完了','複利公式終於懂了','','錯題訂正三遍'][j%4],
+      time:String(18+j%4).padStart(2,'0')+':'+String(10+j*7%50).padStart(2,'0'), fileId:pics[j%4], mine:false }));
+    if(i>0){ const w = who[Math.floor(rnd()*who.length)]; draws.push({ date:key, entrants:who, winner:w, fileId:pics[who.indexOf(w)%4], isMe:false }); }
+  }
+  const sleep = ms=>new Promise(r=>setTimeout(r,ms));
+  return async (action, p)=>{
+    await sleep(350);
+    if(action==='me') return Object.assign({}, me);
+    if(action==='register'){ Object.assign(me,{registered:true,nickname:p.nickname,classCode:p.classCode}); return Object.assign({},me); }
+    if(action==='checkin'){
+      wall[today].unshift({ nick:me.nickname, subject:p.subject, caption:p.caption, time:'現在', fileId:'data:image/jpeg;base64,'+p.image, mine:true });
+      if(!me.checkedToday){ me.checkedToday=true; me.streak++; me.total++; }
+      return Object.assign({},me);
+    }
+    if(action==='wall'){ const items = wall[p.date]||[]; return { date:p.date, people:new Set(items.map(i=>i.nick)).size, items }; }
+    if(action==='draws') return { today, drawHour:H, todayCount:new Set((wall[today]||[]).map(i=>i.nick)).size, draws };
+  };
+})();
+
+boot();
+</script>
+</body>
+</html>
