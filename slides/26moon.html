@@ -15,11 +15,11 @@
   --wood:#EDD3A3; --wood-d:#C79D5E; --card:#FFFFFF;
   --f-display:"Huninn","jf-openhuninn","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
   --f-body:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
-  --stick-w:54px; --stick-gap:12px;
+  --stick-w:54px; --stick-gap:12px; --tabs-h:58px;
   color-scheme:light;
 }
 *{box-sizing:border-box}
-html,body{margin:0}
+html,body{margin:0;height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
 body{
   font-family:var(--f-body); color:var(--ink); font-size:16px; line-height:1.6;
   background-color:var(--paper);
@@ -76,20 +76,27 @@ textarea{resize:none}
 .stats b{display:block;font-family:var(--f-display);font-weight:400;font-size:22px;line-height:1.1}
 .stats small{font-size:12px;color:var(--ink-2)}
 
-main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
+main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--tabs-h) + 24px)}
 .tab{padding-top:20px}
 .tab h2{font-size:26px}
 .status{color:var(--ink-2);margin:6px 0 16px}
 
 /* 打卡 */
 .photo-drop{
-  display:grid;place-items:center;aspect-ratio:4/3;border:2px dashed var(--ink-2);border-radius:16px;
+  display:grid;place-items:center;aspect-ratio:4/3;max-height:38vh;width:100%;border:2px dashed var(--ink-2);border-radius:16px;
   background:var(--card);overflow:hidden;cursor:pointer;position:relative;
 }
 .photo-drop span{font-family:var(--f-display);font-size:20px;color:var(--ink-2)}
 .photo-drop img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .counter{text-align:right;font-size:13px;color:var(--ink-2)}
-.rule{font-size:14px;background:var(--card);border-left:4px solid var(--pink);padding:8px 12px;margin:16px 0 0;border-radius:0 8px 8px 0}
+.rule{font-size:15px;background:var(--card);border-left:4px solid var(--pink);padding:8px 12px;margin:0 0 14px;border-radius:0 8px 8px 0}
+.rule b{background:linear-gradient(transparent 55%,var(--hl) 55%);font-weight:600}
+.submit-bar{ /* 固定在分頁列上方，畫面滑不動也按得到 */
+  position:sticky;bottom:calc(var(--tabs-h) + env(safe-area-inset-bottom,0px));z-index:4;
+  background:var(--paper);padding:10px 0 6px;margin-top:8px;
+}
+.submit-bar .btn{margin-top:0}
+.submit-bar .err{margin-top:6px;min-height:0}
 
 /* 打卡牆 */
 .day-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
@@ -110,7 +117,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 .card .meta{display:flex;justify-content:space-between;align-items:baseline;gap:6px;margin-top:6px}
 .card .nick{font-family:var(--f-display);font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card .time{font-size:12px;color:var(--ink-2);flex:none}
-.card .subj{font-size:12px;color:var(--ink-2)}
+.card .cls{font-size:12px;color:var(--ink-2)}
 .card .cap{font-size:14px;margin:4px 0 0;line-height:1.45;word-break:break-word}
 .card.mine{outline:3px solid var(--hl)}
 .empty{grid-column:1/-1;text-align:center;color:var(--ink-2);padding:32px 0}
@@ -215,7 +222,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 .lightbox figure{margin:0;text-align:center;color:#fff}
 .lightbox img{max-width:100%;max-height:78vh;border-radius:6px}
 .lightbox figcaption{margin-top:10px}
-#confetti{position:fixed;inset:0;pointer-events:none;z-index:30;width:100%;height:100%}
+#confetti{position:fixed;inset:0;pointer-events:none;z-index:30;width:100%;height:100%;display:none}
 
 @media (prefers-reduced-motion:reduce){
   *{animation:none !important;transition:none !important}
@@ -231,7 +238,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 
 <section id="register" class="wrap reg hidden">
   <h1>讀書打卡牆</h1>
-  <p class="lead">唸書時拍一張照片打卡，班上同學都看得到。每天 <span id="regHour">21:00</span> 從當天有打卡的人抽一位送小禮物。</p>
+  <p class="lead">唸書時拍一張照片打卡，大家都看得到。<span id="regEvent"></span></p>
   <span class="field-label">你的班級</span>
   <div id="regClasses" class="chips"></div>
   <label class="field-label" for="regNick">暱稱</label>
@@ -254,21 +261,21 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 96px)}
 
   <main class="wrap">
     <section id="tab-checkin" class="tab">
-      <h2>今天唸了什麼？</h2>
+      <h2>你在哪裡唸書？</h2>
       <p id="ciStatus" class="status"></p>
+      <p class="rule"><b>計算機一定要入鏡</b>，其他隨你拍：書桌前、烤肉旁、出國玩都算，分享你唸書的樣子。畫面裡不要出現姓名和學號。</p>
       <label class="photo-drop" for="photoInput">
         <input id="photoInput" type="file" accept="image/*" hidden>
         <img id="photoPreview" alt="準備上傳的照片" hidden>
         <span id="photoHint">點這裡拍照或選照片</span>
       </label>
-      <span class="field-label">科目</span>
-      <div id="ciSubjects" class="chips"></div>
       <label class="field-label" for="ciCaption">一句話（可不填）</label>
-      <textarea id="ciCaption" rows="2" maxlength="60" placeholder="例如：把第三章的分錄全部重寫一遍"></textarea>
+      <textarea id="ciCaption" rows="2" maxlength="60" placeholder="例如：在露營區算完第三章"></textarea>
       <div class="counter"><span id="ciCount">0</span>/60</div>
-      <p class="rule">只拍課本、筆記或題目，不要拍到臉、姓名和學號。</p>
-      <button id="ciBtn" class="btn">打卡</button>
-      <p id="ciErr" class="err" role="alert"></p>
+      <div class="submit-bar">
+        <button id="ciBtn" class="btn">打卡</button>
+        <p id="ciErr" class="err" role="alert"></p>
+      </div>
     </section>
 
     <section id="tab-wall" class="tab hidden">
@@ -323,7 +330,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxDvkhG0Oq9Uov74JSLsRnp
 /* ===== 基本工具 ===== */
 const DEMO = new URLSearchParams(location.search).has('demo');
 const $ = id => document.getElementById(id);
-const state = { me:null, subject:null, photo:null, wallDate:null, draws:null, playing:false, timer:null };
+const state = { me:null, photo:null, wallDate:null, draws:null, playing:false, timer:null };
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
@@ -333,6 +340,9 @@ function addDays(key,n){ const d=new Date(key+'T12:00:00+08:00'); return tpeKey(
 function md(key){ const p=key.split('-'); return (+p[1])+'/'+(+p[2]); }
 function dayName(key){ const t=tpeKey(new Date()); if(key===t) return '今天'; if(key===addDays(t,-1)) return '昨天'; if(key===addDays(t,1)) return '明天'; return md(key); }
 function drawAt(key){ return new Date(key+'T'+String(state.me.drawHour).padStart(2,'0')+':00:00+08:00'); }
+function eventText(){ const m=state.me; return md(m.eventStart)+'～'+md(m.eventEnd)+' 每天 '+m.drawHour+':00 抽出一位送小禮物，當天有打卡就有一支籤。'; }
+function eventDays(){ const out=[]; const last = state.me.today < state.me.eventEnd ? state.me.today : state.me.eventEnd;
+  for(let k=last; k>=state.me.eventStart; k=addDays(k,-1)) out.push(k); return out; }
 function drawWhen(key){ return (key===tpeKey(new Date()) ? '今晚 ' : '明晚 ') + state.me.drawHour + ':00'; }
 function imgUrl(id){ return id.startsWith('data:') ? id : 'https://lh3.googleusercontent.com/d/'+id+'=w900'; }
 function setImg(img,id){
@@ -370,7 +380,7 @@ async function boot(){
 /* ===== 登記 ===== */
 function startRegister(){
   show('register');
-  $('regHour').textContent = state.me.drawHour + ':00';
+  $('regEvent').textContent = eventText();
   let picked = null;
   const box = $('regClasses');
   state.me.classes.forEach(c=>{
@@ -396,12 +406,6 @@ function startRegister(){
 function startApp(){
   show('app');
   renderMe();
-  const sb = $('ciSubjects');
-  state.me.subjects.forEach(s=>{
-    const b = el('button','chip',s); b.setAttribute('aria-pressed','false');
-    b.onclick = ()=>{ state.subject=s; sb.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed', String(x===b))); };
-    sb.append(b);
-  });
   document.querySelectorAll('.tabs button').forEach(b=> b.onclick = ()=>switchTab(b.dataset.tab));
   $('photoInput').onchange = onPhoto;
   $('ciCaption').oninput = e=> $('ciCount').textContent = e.target.value.length;
@@ -417,9 +421,13 @@ function renderMe(){
   $('meClass').textContent = m.classCode;
   $('meStreak').textContent = m.streak;
   $('meTotal').textContent = m.total;
-  $('ciStatus').textContent = m.checkedToday
+  const open = m.phase === 'open';
+  $('ciBtn').disabled = !open;
+  if(m.phase === 'before') $('ciStatus').textContent = '活動 '+md(m.eventStart)+' 開始，'+eventText();
+  else if(m.phase === 'ended') $('ciStatus').textContent = '活動已經結束，謝謝參加！五天的得主在「開獎」頁。';
+  else $('ciStatus').textContent = m.checkedToday
     ? '今天已經有籤了，'+drawWhen(m.today)+'開獎。再多傳幾張也可以，籤還是一支。'
-    : drawWhen(m.today)+'開獎，現在打卡就能參加。';
+    : drawWhen(m.today)+'開獎，現在打卡就能參加（活動到 '+md(m.eventEnd)+'）。';
 }
 
 function switchTab(name){
@@ -429,7 +437,7 @@ function switchTab(name){
   });
   window.scrollTo(0,0);
   clearInterval(state.timer);
-  if(name==='wall') loadWall(state.wallDate || state.me.today);
+  if(name==='wall') loadWall(state.wallDate || eventDays()[0] || state.me.eventStart);
   if(name==='draw') loadDraws();
 }
 
@@ -441,6 +449,7 @@ async function onPhoto(e){
   try{
     state.photo = await compress(file);
     $('photoPreview').src = state.photo; $('photoPreview').hidden = false; $('photoHint').hidden = true;
+    setTimeout(()=> $('ciBtn').scrollIntoView({block:'nearest'}), 200);
   }catch(err){ $('ciErr').textContent = err.message; }
 }
 
@@ -463,10 +472,9 @@ function compress(file){
 async function doCheckin(){
   $('ciErr').textContent = '';
   if(!state.photo) return $('ciErr').textContent = '先拍一張讀書照';
-  if(!state.subject) return $('ciErr').textContent = '選一個科目';
   const btn = $('ciBtn'); btn.disabled = true; btn.textContent = '上傳中…';
   try{
-    state.me = await api('checkin', { image: state.photo.split(',')[1], subject: state.subject, caption: $('ciCaption').value.trim() });
+    state.me = await api('checkin', { image: state.photo.split(',')[1], caption: $('ciCaption').value.trim() });
     renderMe();
     state.photo = null; $('photoInput').value=''; $('photoPreview').hidden = true; $('photoHint').hidden = false;
     $('ciCaption').value=''; $('ciCount').textContent='0';
@@ -474,19 +482,18 @@ async function doCheckin(){
     show('stampOverlay');
     setTimeout(()=>{ show('stampOverlay', false); state.wallDate = state.me.today; switchTab('wall'); }, 1500);
   }catch(e){ $('ciErr').textContent = e.message; }
-  finally{ btn.disabled = false; btn.textContent = '打卡'; }
+  finally{ btn.disabled = state.me.phase !== 'open'; btn.textContent = '打卡'; }
 }
 
 /* ===== 打卡牆 ===== */
 function renderDayStrip(){
   const strip = $('dayStrip'); strip.replaceChildren();
-  for(let i=0;i<7;i++){
-    const key = addDays(state.me.today, -i);
+  eventDays().forEach(key=>{
     const b = el('button','chip', dayName(key));
     b.setAttribute('aria-pressed', String(key===state.wallDate));
     b.onclick = ()=> loadWall(key);
     strip.append(b);
-  }
+  });
 }
 
 async function loadWall(date){
@@ -502,16 +509,16 @@ async function loadWall(date){
     if(!w.items.length){
       const p = el('div','empty');
       p.append(el('p',null, date===state.me.today ? '還沒有人打卡，當第一個吧' : '這天沒有人打卡'));
-      if(date===state.me.today){ const b=el('button','btn ghost','去打卡'); b.onclick=()=>switchTab('checkin'); p.append(b); }
+      if(date===state.me.today && state.me.phase==='open'){ const b=el('button','btn ghost','去打卡'); b.onclick=()=>switchTab('checkin'); p.append(b); }
       grid.append(p); return;
     }
     w.items.forEach((it,i)=>{
       const f = el('figure','card'+(it.mine?' mine':''));
       f.style.transform = 'rotate('+[-1.2,.8,-.4,1.1][i%4]+'deg)';
       const img = el('img'); img.loading='lazy'; img.alt = it.nick+' 的讀書照'; setImg(img, it.fileId);
-      img.onclick = ()=>{ setImg($('lbImg'), it.fileId); $('lbCap').textContent = it.nick+'｜'+it.subject+(it.caption?'｜'+it.caption:''); show('lightbox'); };
+      img.onclick = ()=>{ setImg($('lbImg'), it.fileId); $('lbCap').textContent = it.nick+'（'+it.cls+'）'+(it.caption?'｜'+it.caption:''); show('lightbox'); };
       const meta = el('div','meta'); meta.append(el('span','nick',it.nick), el('span','time',it.time));
-      f.append(img, meta, el('div','subj',it.subject));
+      f.append(img, meta, el('div','cls',it.cls));
       if(it.caption) f.append(el('p','cap',it.caption));
       grid.append(f);
     });
@@ -534,15 +541,24 @@ async function loadDraws(){
       $('reel').replaceChildren(); show('result',false); show('replayBtn',false);
       return;
     }
-    if(!latest){ $('stageTitle').textContent = '還沒有開獎紀錄，第一次開獎在'+drawWhen(d.today); show('replayBtn',false); $('reel').replaceChildren(); return; }
+    if(!latest){ $('stageTitle').textContent = '還沒有開獎紀錄，第一次開獎在 '+md(d.eventStart)+' 晚上 '+d.drawHour+':00'; show('replayBtn',false); $('reel').replaceChildren(); return; }
     prepare(latest, true);
   }catch(e){ $('stageTitle').textContent = e.message; }
 }
 
 function renderPot(d){
-  const n = d.todayCount;
-  $('potTitle').textContent = dayName(d.today)+'的籤筒有 '+n+' 支籤';
-  $('potNote').textContent = drawWhen(d.today)+'開獎';
+  const n = d.phase === 'open' ? d.todayCount : 0;
+  clearInterval(state.timer);
+  if(d.phase === 'ended'){
+    $('potTitle').textContent = '活動結束，五天的得主都在下面';
+    $('potNote').textContent = '謝謝大家一起唸書！'; $('countdown').textContent = '';
+  }else if(d.phase === 'before'){
+    $('potTitle').textContent = '籤筒還是空的';
+    $('potNote').textContent = md(d.eventStart)+' 開始打卡'; $('countdown').textContent = '';
+  }else{
+    $('potTitle').textContent = dayName(d.today)+'的籤筒有 '+n+' 支籤';
+    $('potNote').textContent = drawWhen(d.today)+'開獎';
+  }
   const box = $('cupSticks'); box.replaceChildren();
   const shown = Math.min(n, 14), rnd = seeded(hash(d.today+n));
   for(let i=0;i<shown;i++){
@@ -558,7 +574,7 @@ function renderPot(d){
     const h=Math.floor(ms/3600e3), m=Math.floor(ms%3600e3/6e4), s=Math.floor(ms%6e4/1e3);
     $('countdown').textContent = '還有 '+h+' 小時 '+String(m).padStart(2,'0')+' 分 '+String(s).padStart(2,'0')+' 秒';
   };
-  tickClock(); clearInterval(state.timer); state.timer = setInterval(tickClock, 1000);
+  if(d.phase === 'open'){ tickClock(); state.timer = setInterval(tickClock, 1000); }
 }
 
 function renderHistory(list){
@@ -567,7 +583,7 @@ function renderHistory(list){
   list.forEach(dr=>{
     const b = el('button');
     b.append(el('span','d',md(dr.date)));
-    const w = el('span','w',dr.winner); if(dr.isMe) w.append(el('span','me','你'));
+    const w = el('span','w',dr.winner+(dr.winnerClass?'（'+dr.winnerClass+'）':'')); if(dr.isMe) w.append(el('span','me','你'));
     b.append(w, el('span','n', dr.entrants.length ? dr.entrants.length+' 人參加' : ''));
     b.onclick = ()=>{ if(state.playing) return; prepare(dr, false); play(dr); $('reelWindow').scrollIntoView({behavior:'smooth', block:'center'}); };
     const li = el('li'); li.append(b); ul.append(li);
@@ -640,7 +656,7 @@ function finish(dr, stick){
     const pol = el('div','polaroid pop');
     if(dr.fileId){ const img=el('img'); img.alt=dr.winner+' 的讀書照'; setImg(img, dr.fileId); pol.append(img); }
     pol.append(el('div','seal','中籤'));
-    r.append(pol, el('p','winner-name mark',dr.winner), el('p','winner-note', dr.entrants.length+' 位同學打卡，抽出這一支'));
+    r.append(pol, el('p','winner-name mark',dr.winner), el('p','winner-note', (dr.winnerClass?dr.winnerClass+'｜':'')+dr.entrants.length+' 位同學打卡，抽出這一支'));
     if(dr.isMe) r.append(el('p','winner-me','是你！上課時找老師領禮物'));
     show('result');
     confetti();
@@ -658,6 +674,7 @@ function shuffle(arr,rnd){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(r
 function confetti(){
   if(reduceMotion) return;
   const c = $('confetti'), ctx = c.getContext('2d'), dpr = devicePixelRatio||1;
+  c.style.display = 'block';
   c.width = innerWidth*dpr; c.height = innerHeight*dpr; ctx.scale(dpr,dpr);
   const colors = ['#FFE14D','#FF7AA2','#4D7CFE','#1D2B53','#D7263D'];
   const bits = Array.from({length:150}, ()=>({
@@ -670,7 +687,7 @@ function confetti(){
     ctx.clearRect(0,0,innerWidth,innerHeight);
     bits.forEach(b=>{ b.vy+=.35; b.vx*=.99; b.x+=b.vx; b.y+=b.vy; b.r+=b.vr;
       ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.r); ctx.fillStyle=b.c; ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h*Math.abs(Math.cos(b.r))); ctx.restore(); });
-    if(t-t0 < 3200) requestAnimationFrame(step); else ctx.clearRect(0,0,innerWidth,innerHeight);
+    if(t-t0 < 3200) requestAnimationFrame(step); else { ctx.clearRect(0,0,innerWidth,innerHeight); c.style.display = 'none'; }
   };
   requestAnimationFrame(step);
 }
@@ -678,21 +695,22 @@ function confetti(){
 /* ===== 示範模式：網址加上 ?demo=1 就能在電腦上預覽 ===== */
 const demoApi = (()=>{
   const names = ['借貸平衡','早八戰士','咖啡續命','折讓大師','期中必過','阿凱不睡','豆花','分錄機器','統測衝衝衝','會計魂','小熊軟糖'];
-  const subjects = ['會計學','會計資訊','商業概論','其他科目'];
+  const classes = ['商二乙','貿二丙'];
   const pic = (bg,t)=>'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="'+bg+'"/><text x="300" y="360" font-size="200" text-anchor="middle">'+t+'</text></svg>');
-  const pics = [pic('#D6E4FF','📒'),pic('#FFF0A8','✏️'),pic('#FFD6E2','🧮'),pic('#D8F5E4','📚')];
+  const pics = [pic('#D6E4FF','🧮'),pic('#FFF0A8','🍖'),pic('#FFD6E2','✈️'),pic('#D8F5E4','📚')];
   const now = new Date(), H = 21;
   const tpeHour = new Date(now.getTime()+8*3600e3).getUTCHours();
   const today = tpeKey(new Date(now.getTime() + (tpeHour >= H ? 864e5 : 0)));
+  const eventStart = addDays(today,-3), eventEnd = addDays(today,1);   // 示範用：活動進行到第 4 天
   const rnd = seeded(7);
-  const me = { registered:true, nickname:'小熊軟糖', classCode:'商二乙', streak:3, total:12, checkedToday:false,
-               classes:['商二乙','貿二丙'], subjects, drawHour:H, today };
+  const me = { registered:true, nickname:'小熊軟糖', classCode:'商二乙', streak:3, total:3, checkedToday:false,
+               classes, drawHour:H, today, eventStart, eventEnd, scope:'all', phase:'open' };
   const wall = {}, draws = [];
-  for(let i=0;i<7;i++){
+  for(let i=0;i<4;i++){
     const key = addDays(today,-i), who = shuffle(names.slice(0,10), rnd).slice(0, i===0 ? 4 : 5+Math.floor(rnd()*5));
-    wall[key] = who.map((n,j)=>({ nick:n, subject:subjects[j%4], caption:['第三章分錄寫完了','複利公式終於懂了','','錯題訂正三遍'][j%4],
+    wall[key] = who.map((n,j)=>({ nick:n, cls:classes[n.length%2], caption:['計算機陪我去烤肉','在機場也要算一題','','書桌前第三章'][j%4],
       time:String(18+j%4).padStart(2,'0')+':'+String(10+j*7%50).padStart(2,'0'), fileId:pics[j%4], mine:false }));
-    if(i>0){ const w = who[Math.floor(rnd()*who.length)]; draws.push({ date:key, entrants:who, winner:w, fileId:pics[who.indexOf(w)%4], isMe:false }); }
+    if(i>0){ const w = who[Math.floor(rnd()*who.length)]; draws.push({ date:key, entrants:who, winner:w, winnerClass:classes[w.length%2], fileId:pics[who.indexOf(w)%4], isMe:false }); }
   }
   const sleep = ms=>new Promise(r=>setTimeout(r,ms));
   return async (action, p)=>{
@@ -700,12 +718,12 @@ const demoApi = (()=>{
     if(action==='me') return Object.assign({}, me);
     if(action==='register'){ Object.assign(me,{registered:true,nickname:p.nickname,classCode:p.classCode}); return Object.assign({},me); }
     if(action==='checkin'){
-      wall[today].unshift({ nick:me.nickname, subject:p.subject, caption:p.caption, time:'現在', fileId:'data:image/jpeg;base64,'+p.image, mine:true });
+      wall[today].unshift({ nick:me.nickname, cls:me.classCode, caption:p.caption, time:'現在', fileId:'data:image/jpeg;base64,'+p.image, mine:true });
       if(!me.checkedToday){ me.checkedToday=true; me.streak++; me.total++; }
       return Object.assign({},me);
     }
     if(action==='wall'){ const items = wall[p.date]||[]; return { date:p.date, people:new Set(items.map(i=>i.nick)).size, items }; }
-    if(action==='draws') return { today, drawHour:H, todayCount:new Set((wall[today]||[]).map(i=>i.nick)).size, draws };
+    if(action==='draws') return { today, drawHour:H, todayCount:new Set((wall[today]||[]).map(i=>i.nick)).size, draws, phase:'open', eventStart, eventEnd };
   };
 })();
 
