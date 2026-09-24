@@ -114,8 +114,8 @@ body.proj .stat div b{font-size:34px}
 .chip.s1{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
 .chip.s1 i{background:var(--ok);color:#fff}
 .chip.s2{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
-.chip.s3{background:var(--accent);border-color:var(--accent);color:#fff}
-.chip.s3 i{background:rgba(255,255,255,.25);color:#fff}
+.chip.s4{background:var(--gold-soft);border-color:var(--gold);color:var(--gold)}
+.chip.s4 i{background:var(--gold);color:#fff}
 .chip .cn{display:block;text-align:left;min-width:0}
 .chip .cn em{display:block;font-style:normal;font-family:var(--mono);font-size:10.5px;font-weight:500;opacity:.7;margin-top:1px}
 .chip.s2 i{background:var(--accent);color:#fff}
@@ -309,7 +309,7 @@ body.proj .vsc .nm{font-size:26px}
   <b>怎麼用：</b>點任何一列可以展開那一組的完整答案。<b>創意</b>那欄可以直接在表上打，也可以按上面的「創意評分」一組一組看。所有你打的分數只存在這台電腦，不會傳給學生，重新整理不會消失。<br>
   <b>密碼卡：</b>按「列印密碼卡」會印出 16 張任務卡（A4 一頁 8 張，裁開），上面有班級、組別、四位數通行碼、<b>可以直接掃的 QR Code</b>，還有五條寫組員名字的線。建議印在稍微厚一點的紙上。<br>
   <b>行前檢查：</b>通行碼那一區上面有一條「已上線 X / 16」。<b>學生一連上系統，他那一組的號碼卡就會變綠色打勾</b>——行前講座當場就看得出來哪一組還沒設定好。<br>
-  <b>集合點名：</b>學生在自己手機上按「全組到齊」，這裡就自動變綠，底下會寫「自報」和時間——<b>你什麼都不用做</b>。要改判就點那一格（一下到齊、兩下遲到、三下清除），你點的一定蓋過學生回報。橘色的「缺」是學生按了「有人沒到」，那一組的組長正在找你。扣分只看你標的「遲到」：第一次 −3、第二次 −5、第三次 −10。<br>
+  <b>集合點名：</b>學生一到集合點按「還沒到齊」，這裡就亮<b>黃色的「集」</b>——代表他們在集合了；人到齊按「全員到齊」就變<b>綠色的「到」</b>。兩個都自動同步，<b>你什麼都不用做</b>。要改判就點那一格（一下到齊、兩下遲到、三下清除），你點的一定蓋過學生回報。扣分只看你標的「遲到」：第一次 −3、第二次 −5、第三次 −10。<br>
   <b>投影模式</b>放大字體、隱藏控制列，回程車上投影用；<b>列印總表</b>可以直接印成成績底稿；<b>匯出 CSV</b> 會把所有答案一起倒出來（Excel 開啟請選 UTF-8）。<br>
   <b>配分</b>：魔菇 40＋三井 40＋術語 5＋打卡 5 ＝ <b>任務 90</b>，加上你打的創意 10，<b>滿分 100</b>；遲到再扣。任務滿分欄請維持 <code>90</code>。<br>
   <b>打卡</b>四個點：大門 1、古拉爵 1、特斯拉充電站 1、摩天輪 2。大門到摩天輪約 600 公尺，四個都到代表繞完全場。<br>
@@ -460,19 +460,19 @@ function paintRoll(){
   ROLL.forEach(function(t,i){
     var ok=list.filter(function(r){return rollState(r.tok,i)===1;}).length;
     var late=list.filter(function(r){return rollState(r.tok,i)===2;}).length;
-    var miss=list.filter(function(r){return rollState(r.tok,i)===3;}).length;
+    var wait=list.filter(function(r){return rollState(r.tok,i)===4;}).length;
     h.push('<button class="btn'+(rollOpen===i?" on":"")+'" data-roll="'+i+'">'+t+
-      '<span class="cnt">'+(ok+late+miss)+' / '+list.length+
-      (late?'　遲到 '+late:'')+(miss?'　⚠ 缺人 '+miss:'')+'</span></button>');
+      '<span class="cnt">到齊 '+(ok+late)+' / '+list.length+
+      (wait?'　集合中 '+wait:'')+(late?'　遲到 '+late:'')+'</span></button>');
   });
   h.push('</div><div class="chipgrid">');
   list.forEach(function(r){
     var stt=rollState(r.tok,rollOpen), rep=repOf(r.tok,rollOpen);
-    var lab=stt===1?"到":stt===2?"遲":stt===3?"缺":"—";
+    var lab=stt===1?"到":stt===2?"遲":stt===4?"集":"—";
     h.push('<button class="chip s'+stt+'" data-rk="'+esc(r.tok)+'" data-ri="'+rollOpen+'">'+
       '<span class="cn">'+esc(r.cls)+' '+esc(r.grp)+(rep?'<em>'+hhmm(Math.abs(rep))+' 自報</em>':'')+'</span><i>'+lab+'</i></button>');
   });
-  h.push('</div><p class="rollnote"><b>學生自己按的回報會自動變綠</b>（底下標「自報」和時間），你不用動。要改判就點那一格：一下 <b>到齊</b>、兩下 <b>遲到</b>、三下回到未報到——<b>你點過的一定蓋過學生回報</b>。<br>橘色的「缺」是學生自己按「有人沒到」，那一組的組長應該正在找你。<br>扣分只看你標的「遲到」，學生回報再晚都不會自動扣分。第一次 −3、第二次 −5、第三次 −10。</p></div>');
+  h.push('</div><p class="rollnote"><b>黃色的「集」</b>＝這一組已經到集合點了，還在等人（學生按了「還沒到齊」）。<b>綠色的「到」</b>＝全員到齊。兩個都是學生自己按的，底下會標時間，<b>你不用動</b>。<br>要改判就點那一格：一下 <b>到齊</b>、兩下 <b>遲到</b>、三下清除——<b>你點過的一定蓋過學生回報</b>。<br>扣分只看你標的「遲到」，學生回報再晚都不會自動扣分。第一次 −3、第二次 −5、第三次 −10。</p></div>');
   el.innerHTML=h.join("");
 }
 
@@ -561,7 +561,7 @@ function rollState(k,i){
   var m=((manual[k]&&manual[k].r)||[0,0,0])[i]||0;
   if(m) return m;                 /* 老師點過的，老師說了算 */
   var r=repOf(k,i);
-  return r>0?1:(r<0?3:0);         /* 3 = 學生回報缺人 */
+  return r>0?1:(r<0?4:0);         /* 4 = 學生回報「還沒到齊，集合中」 */
 }
 function setRoll(k,i,v){
   manual[k]=manual[k]||{};
@@ -732,7 +732,7 @@ function csv(){
   var lines=[head];
   rows().forEach(function(r){
     var A=ansMap[r.k]||{};
-    var RS=["未報到","到齊","遲到","缺人"];
+    var RS=["未報到","到齊","遲到","","集合中"];
     var line=[r.cls,r.grp,(tokMap[r.k]?"✓":"未認證"),r.mem||"",r.mo||0,r.mi||0,r.te||0,r.gp||0,r.total||0,
               r.bo||0,man(r.k,"c"),RS[rollState(r.k,0)],RS[rollState(r.k,1)],RS[rollState(r.k,2)],
               -lateOf(r.k),grand(r),(manual[r.k]&&manual[r.k].n)||"",A.picked||"",A.terms||"",hhmm(r.at)];
