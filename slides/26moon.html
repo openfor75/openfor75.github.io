@@ -366,7 +366,7 @@ async function api(action, payload={}, tries=2){
   try{
     const res = await fetch(API_URL, {
       method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body: JSON.stringify(Object.assign({action, idToken: liff.getIDToken()}, payload))
+      body: JSON.stringify(Object.assign({action, accessToken: liff.getAccessToken()}, payload))
     });
     text = await res.text();
   }catch(e){
@@ -379,8 +379,23 @@ async function api(action, payload={}, tries=2){
     if(retry) return api(action, payload, tries-1);
     throw bad('伺服器回應異常，請再試一次');
   }
-  if(!j.ok) throw new Error(j.error);
+  if(!j.ok){
+    if(j.code === 'LOGIN_EXPIRED' && relogin()) return new Promise(()=>{});   // 自動重新登入，頁面會重新載入
+    throw new Error(j.error);
+  }
   return j.data;
+}
+
+// 登入逾時：登出後重新登入；一分鐘內只自動試一次，避免無限循環
+function relogin(){
+  let last = 0; try{ last = Number(sessionStorage.getItem('relogin')) || 0; }catch(e){}
+  if(Date.now() - last < 60000) return false;
+  try{ sessionStorage.setItem('relogin', String(Date.now())); }catch(e){}
+  $('bootMsg').textContent = '重新登入 LINE 中…'; show('boot'); show('app', false); show('register', false);
+  liff.logout();
+  if(liff.isInClient()) location.reload();
+  else liff.login({ redirectUri: location.href.split('#')[0] });
+  return true;
 }
 
 /* ===== 啟動 ===== */
@@ -394,7 +409,7 @@ async function boot(){
     show('boot', false);
     state.me.registered ? startApp() : startRegister();
   }catch(e){
-    $('bootMsg').textContent = e.message || '頁面打不開，請關掉再從 LINE 重新開啟';
+    $('bootMsg').textContent = (e.message || '頁面打不開') + '（請關掉頁面，從 LINE 班群的連結重新開啟）';
   }
 }
 
