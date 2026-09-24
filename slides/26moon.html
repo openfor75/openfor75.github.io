@@ -546,7 +546,7 @@ async function loadWall(date){
     const w = await api('wall', { date });
     const changed = JSON.stringify(w) !== JSON.stringify(state.wallCache[date]);
     state.wallCache[date] = w;
-    if(state.wallDate === date && changed) renderWall(date, w);
+    if(state.wallDate === date && (changed || !cached)) renderWall(date, w);   // 沒畫過就一定要畫
   }catch(e){ if(!cached) $('wallGrid').replaceChildren(el('p','empty',e.message)); }
 }
 
@@ -576,12 +576,13 @@ function renderWall(date, w){
 /* ===== 開獎 ===== */
 async function loadDraws(){
   if(state.playing) return;
-  if(state.draws) renderDraws(state.draws); else $('stageTitle').textContent = '載入中…';
+  const shown = state.draws;
+  if(shown) renderDraws(shown); else $('stageTitle').textContent = '載入中…';
   try{
     const d = await api('draws');
     const changed = JSON.stringify(d) !== JSON.stringify(state.draws);
     state.draws = d;
-    if(changed && !state.playing && !$('tab-draw').classList.contains('hidden')) renderDraws(d);
+    if((changed || !shown) && !state.playing && !$('tab-draw').classList.contains('hidden')) renderDraws(d);
   }catch(e){ if(!state.draws) $('stageTitle').textContent = e.message; }
 }
 
