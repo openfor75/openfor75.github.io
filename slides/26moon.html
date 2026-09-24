@@ -19,7 +19,8 @@
   color-scheme:light;
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:auto;min-height:100%;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
+html,body{margin:0;height:100%}
+body{overflow-x:hidden;overflow-y:auto}
 body{
   font-family:var(--f-body); color:var(--ink); font-size:16px; line-height:1.6;
   background-color:var(--paper);
@@ -64,8 +65,9 @@ textarea{resize:none}
 .err{color:var(--stamp);min-height:1.6em;margin:10px 0 0;font-size:15px}
 
 /* 頂部 */
+#app{height:100%;display:flex;flex-direction:column}
 .top{
-  position:sticky;top:0;z-index:5;background:rgba(246,248,252,.94);backdrop-filter:blur(6px);
+  flex:none;background:var(--paper);
   border-bottom:2px solid var(--ink);padding-top:env(safe-area-inset-top,0px);
 }
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;padding-bottom:10px}
@@ -76,7 +78,10 @@ textarea{resize:none}
 .stats b{display:block;font-family:var(--f-display);font-weight:400;font-size:22px;line-height:1.1}
 .stats small{font-size:12px;color:var(--ink-2)}
 
-main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--tabs-h) + 24px)}
+main{ /* 只有這一塊會捲動，上方名牌和下方分頁列固定不動 */
+  flex:1;min-height:0;width:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;padding-bottom:24px;
+}
 .tab{padding-top:20px}
 .tab h2{font-size:26px}
 .status{color:var(--ink-2);margin:6px 0 16px}
@@ -92,11 +97,13 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--tabs-h) + 24px)
 .rule{font-size:15px;background:var(--card);border-left:4px solid var(--pink);padding:8px 12px;margin:0 0 14px;border-radius:0 8px 8px 0}
 .rule b{background:linear-gradient(transparent 55%,var(--hl) 55%);font-weight:600}
 .submit-bar{ /* 固定在分頁列上方，畫面滑不動也按得到 */
-  position:sticky;bottom:calc(var(--tabs-h) + env(safe-area-inset-bottom,0px));z-index:4;
+  position:sticky;bottom:0;z-index:4;
   background:var(--paper);padding:10px 0 6px;margin-top:8px;
 }
 .submit-bar .btn{margin-top:0}
 .submit-bar .err{margin-top:6px;min-height:0}
+body.typing .tabs{display:none}           /* 打字時收起分頁列，讓出空間給鍵盤 */
+body.typing .submit-bar{position:static}
 
 /* 打卡牆 */
 .day-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
@@ -199,7 +206,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--tabs-h) + 24px)
 
 /* 底部分頁 */
 .tabs{
-  position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:2px solid var(--ink);
+  flex:none;background:var(--card);border-top:2px solid var(--ink);
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
 .tabs .wrap{display:grid;grid-template-columns:repeat(3,1fr)}
@@ -263,7 +270,7 @@ main{padding-bottom:calc(env(safe-area-inset-bottom,0px) + var(--tabs-h) + 24px)
     <section id="tab-checkin" class="tab">
       <h2>你在哪裡唸書？</h2>
       <p id="ciStatus" class="status"></p>
-      <p class="rule"><b>計算機一定要入鏡</b>，其他隨你拍：書桌前、烤肉旁、出國玩都算，分享你唸書的樣子。畫面裡不要出現姓名和學號。</p>
+      <p class="rule"><b>計算機一定要入鏡</b>！書桌前、烤肉旁、出國玩都算，放假也讓計算機陪著你。</p>
       <label class="photo-drop" for="photoInput">
         <input id="photoInput" type="file" accept="image/*" hidden>
         <img id="photoPreview" alt="準備上傳的照片" hidden>
@@ -330,7 +337,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxDvkhG0Oq9Uov74JSLsRnp
 /* ===== 基本工具 ===== */
 const DEMO = new URLSearchParams(location.search).has('demo');
 const $ = id => document.getElementById(id);
-const state = { me:null, photo:null, wallDate:null, draws:null, playing:false, timer:null };
+const state = { me:null, photo:null, wallCache:{}, wallDate:null, draws:null, playing:false, timer:null };
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
@@ -344,20 +351,34 @@ function eventText(){ const m=state.me; return md(m.eventStart)+'～'+md(m.event
 function eventDays(){ const out=[]; const last = state.me.today < state.me.eventEnd ? state.me.today : state.me.eventEnd;
   for(let k=last; k>=state.me.eventStart; k=addDays(k,-1)) out.push(k); return out; }
 function drawWhen(key){ return (key===tpeKey(new Date()) ? '今晚 ' : '明晚 ') + state.me.drawHour + ':00'; }
-function imgUrl(id){ return id.startsWith('data:') ? id : 'https://lh3.googleusercontent.com/d/'+id+'=w900'; }
-function setImg(img,id){
-  img.src=imgUrl(id);
-  img.onerror=()=>{ img.onerror=null; img.src='https://drive.google.com/thumbnail?id='+id+'&sz=w900'; };
+function imgUrl(id,w){ return id.startsWith('data:') ? id : 'https://lh3.googleusercontent.com/d/'+id+'=w'+w; }
+function setImg(img,id,w=500){
+  img.src=imgUrl(id,w);
+  img.onerror=()=>{ img.onerror=null; img.src='https://drive.google.com/thumbnail?id='+id+'&sz=w'+w; };
 }
 function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v); }catch(e){ return null; } }
 
-async function api(action, payload={}){
+async function api(action, payload={}, tries=2){
   if(DEMO) return demoApi(action, payload);
-  const res = await fetch(API_URL, {
-    method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
-    body: JSON.stringify(Object.assign({action, idToken: liff.getIDToken()}, payload))
-  });
-  const j = await res.json();
+  const retry = tries>1 && action!=='checkin' && action!=='register';
+  const bad = msg=>{ const e=new Error(msg); e.bad=true; return e; };
+  let text;
+  try{
+    const res = await fetch(API_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify(Object.assign({action, idToken: liff.getIDToken()}, payload))
+    });
+    text = await res.text();
+  }catch(e){
+    if(retry) return api(action, payload, tries-1);
+    throw bad('網路不太穩，請再試一次');
+  }
+  let j;
+  try{ j = JSON.parse(text); }
+  catch(e){
+    if(retry) return api(action, payload, tries-1);
+    throw bad('伺服器回應異常，請再試一次');
+  }
   if(!j.ok) throw new Error(j.error);
   return j.data;
 }
@@ -412,7 +433,15 @@ function startApp(){
   $('ciBtn').onclick = doCheckin;
   $('lightbox').onclick = ()=> show('lightbox', false);
   $('replayBtn').onclick = ()=> state.current && play(state.current);
+  const ta = $('ciCaption');
+  ta.addEventListener('focus', ()=>{ document.body.classList.add('typing'); setTimeout(()=>ta.scrollIntoView({block:'center'}), 350); });
+  ta.addEventListener('blur', ()=> document.body.classList.remove('typing'));
   if(location.hash==='#draw') switchTab('draw');
+  const first = eventDays()[0];
+  setTimeout(()=>{
+    if(first) api('wall',{date:first}).then(w=>{ if(!state.wallCache[first]) state.wallCache[first]=w; }).catch(()=>{});
+    api('draws').then(d=>{ if(!state.draws) state.draws=d; }).catch(()=>{});
+  }, 300);
 }
 
 function renderMe(){
@@ -435,7 +464,7 @@ function switchTab(name){
     show('tab-'+t, t===name);
     document.querySelector('[data-tab="'+t+'"]').setAttribute('aria-current', t===name ? 'page' : 'false');
   });
-  window.scrollTo(0,0);
+  document.querySelector('main').scrollTop = 0;
   clearInterval(state.timer);
   if(name==='wall') loadWall(state.wallDate || eventDays()[0] || state.me.eventStart);
   if(name==='draw') loadDraws();
@@ -457,12 +486,12 @@ function compress(file){
   return new Promise((ok,no)=>{
     const url = URL.createObjectURL(file), img = new Image();
     img.onload = ()=>{
-      const s = Math.min(1, 1280/Math.max(img.naturalWidth, img.naturalHeight));
+      const s = Math.min(1, 1080/Math.max(img.naturalWidth, img.naturalHeight));
       const c = document.createElement('canvas');
       c.width = Math.round(img.naturalWidth*s); c.height = Math.round(img.naturalHeight*s);
       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
       URL.revokeObjectURL(url);
-      ok(c.toDataURL('image/jpeg',0.82));
+      ok(c.toDataURL('image/jpeg',0.78));
     };
     img.onerror = ()=> no(new Error('這張照片讀不出來，換一張試試'));
     img.src = url;
@@ -473,15 +502,26 @@ async function doCheckin(){
   $('ciErr').textContent = '';
   if(!state.photo) return $('ciErr').textContent = '先拍一張讀書照';
   const btn = $('ciBtn'); btn.disabled = true; btn.textContent = '上傳中…';
-  try{
-    state.me = await api('checkin', { image: state.photo.split(',')[1], caption: $('ciCaption').value.trim() });
-    renderMe();
+  const before = state.me.postsToday || 0;
+  const caption = $('ciCaption').value.trim(), photo = state.photo;
+  const done = me=>{
+    state.me = me; renderMe();
+    const key = me.today, cache = state.wallCache[key];   // 先把自己的照片放上牆，不用等重新載入
+    if(cache) cache.items.unshift({ nick:me.nickname, cls:me.classCode, caption, time:'剛剛', fileId:photo, mine:true });
     state.photo = null; $('photoInput').value=''; $('photoPreview').hidden = true; $('photoHint').hidden = false;
     $('ciCaption').value=''; $('ciCount').textContent='0';
-    $('stampDate').textContent = md(state.me.today);
+    $('stampDate').textContent = md(key);
     show('stampOverlay');
-    setTimeout(()=>{ show('stampOverlay', false); state.wallDate = state.me.today; switchTab('wall'); }, 1500);
-  }catch(e){ $('ciErr').textContent = e.message; }
+    setTimeout(()=>{ show('stampOverlay', false); state.wallDate = key; switchTab('wall'); }, 1500);
+  };
+  try{
+    done(await api('checkin', { image: photo.split(',')[1], caption }));
+  }catch(e){
+    if(e.bad){
+      try{ const me = await api('me'); if((me.postsToday||0) > before){ done(me); return; } }catch(_){}
+    }
+    $('ciErr').textContent = e.message;
+  }
   finally{ btn.disabled = state.me.phase !== 'open'; btn.textContent = '打卡'; }
 }
 
@@ -499,11 +539,19 @@ function renderDayStrip(){
 async function loadWall(date){
   state.wallDate = date;
   renderDayStrip();
-  $('wallSummary').textContent = '';
-  $('wallGrid').replaceChildren(el('p','empty','載入中…'));
+  const cached = state.wallCache[date];
+  if(cached) renderWall(date, cached);
+  else { $('wallSummary').textContent = ''; $('wallGrid').replaceChildren(el('p','empty','載入中…')); }
   try{
     const w = await api('wall', { date });
-    if(state.wallDate !== date) return;
+    const changed = JSON.stringify(w) !== JSON.stringify(state.wallCache[date]);
+    state.wallCache[date] = w;
+    if(state.wallDate === date && changed) renderWall(date, w);
+  }catch(e){ if(!cached) $('wallGrid').replaceChildren(el('p','empty',e.message)); }
+}
+
+function renderWall(date, w){
+  {
     const grid = $('wallGrid'); grid.replaceChildren();
     $('wallSummary').textContent = w.items.length ? dayName(date)+'有 '+w.people+' 位同學打卡，共 '+w.items.length+' 張' : '';
     if(!w.items.length){
@@ -516,21 +564,29 @@ async function loadWall(date){
       const f = el('figure','card'+(it.mine?' mine':''));
       f.style.transform = 'rotate('+[-1.2,.8,-.4,1.1][i%4]+'deg)';
       const img = el('img'); img.loading='lazy'; img.alt = it.nick+' 的讀書照'; setImg(img, it.fileId);
-      img.onclick = ()=>{ setImg($('lbImg'), it.fileId); $('lbCap').textContent = it.nick+'（'+it.cls+'）'+(it.caption?'｜'+it.caption:''); show('lightbox'); };
+      img.onclick = ()=>{ setImg($('lbImg'), it.fileId, 1400); $('lbCap').textContent = it.nick+'（'+it.cls+'）'+(it.caption?'｜'+it.caption:''); show('lightbox'); };
       const meta = el('div','meta'); meta.append(el('span','nick',it.nick), el('span','time',it.time));
       f.append(img, meta, el('div','cls',it.cls));
       if(it.caption) f.append(el('p','cap',it.caption));
       grid.append(f);
     });
-  }catch(e){ $('wallGrid').replaceChildren(el('p','empty',e.message)); }
+  }
 }
 
 /* ===== 開獎 ===== */
 async function loadDraws(){
-  $('stageTitle').textContent = '載入中…';
+  if(state.playing) return;
+  if(state.draws) renderDraws(state.draws); else $('stageTitle').textContent = '載入中…';
   try{
     const d = await api('draws');
+    const changed = JSON.stringify(d) !== JSON.stringify(state.draws);
     state.draws = d;
+    if(changed && !state.playing && !$('tab-draw').classList.contains('hidden')) renderDraws(d);
+  }catch(e){ if(!state.draws) $('stageTitle').textContent = e.message; }
+}
+
+function renderDraws(d){
+  {
     renderPot(d);
     renderHistory(d.draws);
     const prevKey = addDays(d.today,-1);
@@ -543,7 +599,7 @@ async function loadDraws(){
     }
     if(!latest){ $('stageTitle').textContent = '還沒有開獎紀錄，第一次開獎在 '+md(d.eventStart)+' 晚上 '+d.drawHour+':00'; show('replayBtn',false); $('reel').replaceChildren(); return; }
     prepare(latest, true);
-  }catch(e){ $('stageTitle').textContent = e.message; }
+  }
 }
 
 function renderPot(d){
@@ -722,7 +778,7 @@ const demoApi = (()=>{
       if(!me.checkedToday){ me.checkedToday=true; me.streak++; me.total++; }
       return Object.assign({},me);
     }
-    if(action==='wall'){ const items = wall[p.date]||[]; return { date:p.date, people:new Set(items.map(i=>i.nick)).size, items }; }
+    if(action==='wall'){ const items = (wall[p.date]||[]).slice(); return { date:p.date, people:new Set(items.map(i=>i.nick)).size, items }; }
     if(action==='draws') return { today, drawHour:H, todayCount:new Set((wall[today]||[]).map(i=>i.nick)).size, draws, phase:'open', eventStart, eventEnd };
   };
 })();
