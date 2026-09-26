@@ -190,6 +190,17 @@ body.typing .submit-bar{position:static}
 .winner-name{font-family:var(--f-display);font-size:34px;margin:18px 0 0;line-height:1.2}
 .winner-note{color:var(--ink-2);margin:4px 0 0}
 .winner-me{display:inline-block;margin-top:10px;background:var(--hl);padding:4px 12px;border-radius:8px;font-weight:600}
+.winners{display:flex;justify-content:center;gap:14px;flex-wrap:wrap}
+.winner-card{flex:1 1 0;min-width:0;max-width:260px}
+.winner-card .polaroid{max-width:100%}
+.winner-card .polaroid img{width:100%}
+.winners.many .seal{width:46px;height:46px;font-size:15px;right:-8px;top:-10px;border-width:3px}
+.winners.many .winner-name{font-size:22px;margin-top:12px;word-break:break-all}
+.winners.many{gap:10px}
+.winners.many .winner-card{max-width:32%}
+.winners.many .polaroid{padding:6px 6px 8px}
+.winners.many .winner-me{font-size:13px;padding:2px 6px}
+.prize-tag{display:inline-block;margin:0 0 10px;padding:2px 10px;border-radius:999px;background:var(--pink);color:#fff;font-family:var(--f-display);font-size:15px}
 .pop{animation:pop .55s cubic-bezier(.2,1.4,.4,1)}
 @keyframes pop{from{transform:scale(.6) rotate(-6deg);opacity:0}}
 
@@ -347,7 +358,23 @@ function addDays(key,n){ const d=new Date(key+'T12:00:00+08:00'); return tpeKey(
 function md(key){ const p=key.split('-'); return (+p[1])+'/'+(+p[2]); }
 function dayName(key){ const t=tpeKey(new Date()); if(key===t) return '今天'; if(key===addDays(t,-1)) return '昨天'; if(key===addDays(t,1)) return '明天'; return md(key); }
 function drawAt(key){ return new Date(key+'T'+String(state.me.drawHour).padStart(2,'0')+':00:00+08:00'); }
-function eventText(){ const m=state.me; return md(m.eventStart)+'～'+md(m.eventEnd)+' 每天 '+m.drawHour+':00 抽出一位送小禮物，當天有打卡就有一支籤。'; }
+function eventText(){ const m=state.me; return md(m.eventStart)+'～'+md(m.eventEnd)+' 每天 '+m.drawHour+':00 開獎送小禮物，當天有打卡就有一支籤。'; }
+function prizeSummary(list){   // ['霜淇淋','霜淇淋','巧克力棒'] → 霜淇淋 ×2、巧克力棒 ×1
+  const c = {}; (list||[]).forEach(x=> c[x]=(c[x]||0)+1);
+  return Object.keys(c).map(k=>k+' ×'+c[k]).join('、');
+}
+// 相容舊版後端（一筆一位得主）：整理成「每天一組、多位得主」
+function normalizeDraws(list){
+  if(!list.length || list[0].winners) return list;
+  const by = {};
+  list.forEach(d=>{
+    const g = by[d.date] || (by[d.date] = { date:d.date, entrants:d.entrants||[], winners:[], note:'' });
+    if(d.entrants && d.entrants.length > g.entrants.length) g.entrants = d.entrants;
+    if(d.entrants && d.entrants.length) g.winners.push({ nick:d.winner, cls:d.winnerClass||'', fileId:d.fileId||'', isMe:!!d.isMe, prize:'' });
+    else g.note = d.winner;
+  });
+  return Object.keys(by).sort().reverse().map(k=>by[k]);
+}
 function eventDays(){ const out=[]; const last = state.me.today < state.me.eventEnd ? state.me.today : state.me.eventEnd;
   for(let k=last; k>=state.me.eventStart; k=addDays(k,-1)) out.push(k); return out; }
 function drawWhen(key){ return (key===tpeKey(new Date()) ? '今晚 ' : '明晚 ') + state.me.drawHour + ':00'; }
@@ -595,6 +622,7 @@ async function loadDraws(){
   if(shown) renderDraws(shown); else $('stageTitle').textContent = '載入中…';
   try{
     const d = await api('draws');
+    d.draws = normalizeDraws(d.draws || []);
     const changed = JSON.stringify(d) !== JSON.stringify(state.draws);
     state.draws = d;
     if((changed || !shown) && !state.playing && !$('tab-draw').classList.contains('hidden')) renderDraws(d);
@@ -629,7 +657,7 @@ function renderPot(d){
     $('potNote').textContent = md(d.eventStart)+' 開始打卡'; $('countdown').textContent = '';
   }else{
     $('potTitle').textContent = dayName(d.today)+'的籤筒有 '+n+' 支籤';
-    $('potNote').textContent = drawWhen(d.today)+'開獎';
+    $('potNote').textContent = drawWhen(d.today)+'開獎' + (d.todayPrizes && d.todayPrizes.length ? '：'+prizeSummary(d.todayPrizes) : '');
   }
   const box = $('cupSticks'); box.replaceChildren();
   const shown = Math.min(n, 14), rnd = seeded(hash(d.today+n));
@@ -655,7 +683,8 @@ function renderHistory(list){
   list.forEach(dr=>{
     const b = el('button');
     b.append(el('span','d',md(dr.date)));
-    const w = el('span','w',dr.winner+(dr.winnerClass?'（'+dr.winnerClass+'）':'')); if(dr.isMe) w.append(el('span','me','你'));
+    const w = el('span','w', dr.winners.length ? dr.winners.map(x=>x.nick).join('、') : (dr.note||'—'));
+    if(dr.winners.some(x=>x.isMe)) w.append(el('span','me','你'));
     b.append(w, el('span','n', dr.entrants.length ? dr.entrants.length+' 人參加' : ''));
     b.onclick = ()=>{ if(state.playing) return; prepare(dr, false); play(dr); $('reelWindow').scrollIntoView({behavior:'smooth', block:'center'}); };
     const li = el('li'); li.append(b); ul.append(li);
@@ -666,25 +695,29 @@ function prepare(dr, autoplay){
   state.current = dr;
   $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）的開獎';
   show('result', false);
-  if(!dr.entrants.length){
+  if(!dr.winners.length){
     $('reel').replaceChildren(); show('replayBtn', false);
-    const r = $('result'); r.replaceChildren(el('p','winner-note',dr.winner)); show('result');
+    $('result').replaceChildren(el('p','winner-note', dr.note || '這天沒有人打卡')); show('result');
     return;
   }
   show('replayBtn');
-  const { seq } = buildSeq(dr);
-  renderReel(seq, 2);
-  const seenKey = 'seen_'+state.me.classCode+'_'+dr.date;
+  renderReel(buildSeq(dr, 0).seq, 2);
+  const seenKey = 'seen2_'+state.me.classCode+'_'+dr.date;
   if(autoplay && !store(seenKey)) setTimeout(()=>play(dr), 500);
 }
 
-function buildSeq(dr){
-  const E = dr.entrants, rnd = seeded(hash(dr.date+dr.winner));
+// 第 i 支籤：已經抽中的人不再出現在籤條上
+function buildSeq(dr, i){
+  const W = dr.winners[i].nick;
+  const taken = dr.winners.slice(0,i).map(x=>x.nick);
+  let E = dr.entrants.filter(n=>!taken.includes(n));
+  if(!E.includes(W)) E = E.concat(W);
+  const rnd = seeded(hash(dr.date+W+i));
   let seq = [];
   while(seq.length < 44) seq = seq.concat(shuffle(E.slice(), rnd));
   const P = seq.length;
-  seq.push(dr.winner);
-  const others = E.filter(n=>n!==dr.winner), pool = others.length ? others : E;
+  seq.push(W);
+  const others = E.filter(n=>n!==W), pool = others.length ? others : E;
   let tail = [];
   while(tail.length < 5) tail = tail.concat(shuffle(pool.slice(), rnd));
   seq.push(...tail.slice(0,5));
@@ -698,43 +731,57 @@ function renderReel(seq, centerIdx){
 }
 function stepW(){ const cs=getComputedStyle(document.documentElement); return parseFloat(cs.getPropertyValue('--stick-w'))+parseFloat(cs.getPropertyValue('--stick-gap')); }
 function posOf(i){ const w=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--stick-w')); return -(i*stepW() + w/2) + $('reelWindow').clientWidth/2; }
+const wait = ms=>new Promise(r=>setTimeout(r, reduceMotion ? 0 : ms));
 
-function play(dr){
-  if(state.playing || !dr.entrants.length) return;
-  state.playing = true;
-  show('result', false); $('replayBtn').disabled = true;
-  const { seq, P } = buildSeq(dr);
-  renderReel(seq, 2);
-  const reel = $('reel'), from = posOf(2), rnd = seeded(hash(dr.date));
-  const to = posOf(P) + (rnd()-.5)*20;
-  const dur = reduceMotion ? 0 : 7000, t0 = performance.now(), sw = stepW(), half = $('reelWindow').clientWidth/2;
-  let last = -1;
-  const frame = t=>{
-    const k = dur ? Math.min(1,(t-t0)/dur) : 1;
-    const e = 1 - Math.pow(1-k, 4);
-    const x = from + (to-from)*e;
-    reel.style.transform = 'translateX('+x+'px)';
-    const idx = Math.round((half - x)/sw - .5);
-    if(idx !== last){ last = idx; const p=$('pointer'); p.classList.remove('tick'); void p.offsetWidth; p.classList.add('tick'); }
-    if(k < 1) requestAnimationFrame(frame); else finish(dr, reel.children[P]);
-  };
-  requestAnimationFrame(frame);
+function spin(dr, i){
+  return new Promise(resolve=>{
+    const { seq, P } = buildSeq(dr, i);
+    renderReel(seq, 2);
+    const reel = $('reel'), from = posOf(2), rnd = seeded(hash(dr.date+i));
+    const to = posOf(P) + (rnd()-.5)*20;
+    const dur = reduceMotion ? 0 : (i===0 ? 6500 : 5000), t0 = performance.now(), sw = stepW(), half = $('reelWindow').clientWidth/2;
+    let last = -1;
+    const frame = t=>{
+      const k = dur ? Math.min(1,(t-t0)/dur) : 1;
+      const e = 1 - Math.pow(1-k, 4);
+      const x = from + (to-from)*e;
+      reel.style.transform = 'translateX('+x+'px)';
+      const idx = Math.round((half - x)/sw - .5);
+      if(idx !== last){ last = idx; const p=$('pointer'); p.classList.remove('tick'); void p.offsetWidth; p.classList.add('tick'); }
+      if(k < 1) requestAnimationFrame(frame);
+      else { reel.children[P].classList.add('won'); resolve(); }
+    };
+    requestAnimationFrame(frame);
+  });
 }
 
-function finish(dr, stick){
-  stick.classList.add('won');
-  setTimeout(()=>{
-    const r = $('result'); r.replaceChildren();
-    const pol = el('div','polaroid pop');
-    if(dr.fileId){ const img=el('img'); img.alt=dr.winner+' 的讀書照'; setImg(img, dr.fileId); pol.append(img); }
+async function play(dr){
+  if(state.playing || !dr.winners.length) return;
+  state.playing = true; $('replayBtn').disabled = true;
+  const n = dr.winners.length;
+  const r = $('result'); r.replaceChildren();
+  const box = el('div','winners'+(n>1?' many':''));
+  r.append(box); show('result');
+  for(let i=0;i<n;i++){
+    const pz = dr.winners[i].prize;
+    $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）'+(n>1 ? '第 '+(i+1)+' 支籤' : '開獎') + (pz ? '：'+pz+'…' : '…');
+    await spin(dr, i);
+    await wait(500);
+    const w = dr.winners[i];
+    const card = el('div','winner-card pop');
+    const pol = el('div','polaroid');
+    if(w.fileId){ const img=el('img'); img.alt=w.nick+' 的讀書照'; setImg(img, w.fileId); pol.append(img); }
     pol.append(el('div','seal','中籤'));
-    r.append(pol, el('p','winner-name mark',dr.winner), el('p','winner-note', (dr.winnerClass?dr.winnerClass+'｜':'')+dr.entrants.length+' 位同學打卡，抽出這一支'));
-    if(dr.isMe) r.append(el('p','winner-me','是你！上課時找老師領禮物'));
-    show('result');
+    if(w.prize) card.append(el('p','prize-tag', w.prize));
+    card.append(pol, el('p','winner-name mark',w.nick), el('p','winner-note', w.cls));
+    if(w.isMe) card.append(el('p','winner-me','是你！找老師領禮物'));
+    box.append(card);
     confetti();
-    store('seen_'+state.me.classCode+'_'+dr.date, '1');
-    state.playing = false; $('replayBtn').disabled = false;
-  }, reduceMotion ? 0 : 550);
+    if(i < n-1) await wait(1600);
+  }
+  $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）的得主｜'+dr.entrants.length+' 位同學參加';
+  store('seen2_'+state.me.classCode+'_'+dr.date, '1');
+  state.playing = false; $('replayBtn').disabled = false;
 }
 
 /* ===== 亂數與洗牌（同一天大家看到的重播一模一樣） ===== */
@@ -776,13 +823,16 @@ const demoApi = (()=>{
   const eventStart = addDays(today,-3), eventEnd = addDays(today,1);   // 示範用：活動進行到第 4 天
   const rnd = seeded(7);
   const me = { registered:true, nickname:'小熊軟糖', classCode:'商二乙', streak:3, total:3, checkedToday:false,
-               classes, drawHour:H, today, eventStart, eventEnd, scope:'all', phase:'open' };
+               classes, drawHour:H, today, eventStart, eventEnd, scope:'all', phase:'open', todayPrizes:['霜淇淋','霜淇淋','巧克力棒'] };
   const wall = {}, draws = [];
   for(let i=0;i<4;i++){
     const key = addDays(today,-i), who = shuffle(names.slice(0,10), rnd).slice(0, i===0 ? 4 : 5+Math.floor(rnd()*5));
     wall[key] = who.map((n,j)=>({ nick:n, cls:classes[n.length%2], caption:['計算機陪我去烤肉','在機場也要算一題','','書桌前第三章'][j%4],
       time:String(18+j%4).padStart(2,'0')+':'+String(10+j*7%50).padStart(2,'0'), fileId:pics[j%4], mine:false }));
-    if(i>0){ const w = who[Math.floor(rnd()*who.length)]; draws.push({ date:key, entrants:who, winner:w, winnerClass:classes[w.length%2], fileId:pics[who.indexOf(w)%4], isMe:false }); }
+    if(i>0){ const ws = shuffle(who.slice(), rnd).slice(0,2);
+      const pzs = i===1 ? ['霜淇淋','霜淇淋','巧克力棒'] : ['小禮物'];
+      const wz = shuffle(who.slice(), rnd).slice(0, pzs.length);
+      draws.push({ date:key, entrants:who, note:'', winners: wz.map((w,j)=>({ prize:pzs[j], nick:w, cls:classes[w.length%2], fileId:pics[who.indexOf(w)%4], isMe:false })) }); }
   }
   const sleep = ms=>new Promise(r=>setTimeout(r,ms));
   return async (action, p)=>{
@@ -795,7 +845,7 @@ const demoApi = (()=>{
       return Object.assign({},me);
     }
     if(action==='wall'){ const items = (wall[p.date]||[]).slice(); return { date:p.date, people:new Set(items.map(i=>i.nick)).size, items }; }
-    if(action==='draws') return { today, drawHour:H, todayCount:new Set((wall[today]||[]).map(i=>i.nick)).size, draws, phase:'open', eventStart, eventEnd };
+    if(action==='draws') return { today, drawHour:H, todayCount:new Set((wall[today]||[]).map(i=>i.nick)).size, draws, phase:'open', eventStart, eventEnd, todayPrizes:['霜淇淋','霜淇淋','巧克力棒'] };
   };
 })();
 
