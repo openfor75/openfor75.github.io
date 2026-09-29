@@ -250,7 +250,7 @@ body.proj .vsc .nm{font-size:26px}
   <button class="btn" data-sort="name">依班級組別</button>
   <button class="btn" data-sort="at">依更新時間</button>
   <span class="sp"></span>
-  <span class="mini">預計組數</span><input class="numin" id="expN" type="number" value="16" min="1" max="40">
+  <span class="mini">預計組數</span><input class="numin" id="expN" type="number" value="14" min="1" max="40">
   <span class="mini">任務滿分</span><input class="numin" id="maxN" type="number" value="90" min="10" max="200">
   <button class="btn go" id="bProj">投影模式</button>
   <button class="btn" id="bPrint">列印總表</button>
@@ -289,9 +289,9 @@ body.proj .vsc .nm{font-size:26px}
   <div class="pwrow">
     <div class="pwf"><label>主密語</label><input class="w" id="mw" placeholder="例如 魔菇2026"></div>
     <div class="pwf"><label>班級一</label><input class="w" id="cA" value="商二甲"></div>
-    <div class="pwf"><label>組數</label><input class="s" id="nA" type="number" value="8" min="1" max="20"></div>
+    <div class="pwf"><label>組數</label><input class="s" id="nA" type="number" value="7" min="1" max="20"></div>
     <div class="pwf"><label>班級二</label><input class="w" id="cB" value="商二乙"></div>
-    <div class="pwf"><label>組數</label><input class="s" id="nB" type="number" value="8" min="1" max="20"></div>
+    <div class="pwf"><label>組數</label><input class="s" id="nB" type="number" value="7" min="1" max="20"></div>
     <div class="pwf"><label>學生網址</label><input class="w" id="su" placeholder="https://openfor75.github.io/261001/"></div>
     <button class="btn" id="bSlip">列印密碼卡</button>
   </div>
@@ -355,7 +355,7 @@ var TITLE = {
 
 var board=[], ansMap={}, picMap={}, feed=[], manual={}, filt="", sortBy="total", openKey=null, lastAt=0;
 var roster=[], tokMap={};
-var pw={mw:"",cA:"商二甲",nA:8,cB:"商二乙",nB:8,su:"https://openfor75.github.io/261001/"};
+var pw={mw:"",cA:"商二甲",nA:7,cB:"商二乙",nB:7,su:"https://openfor75.github.io/261001/"};
 try{ pw=Object.assign(pw,JSON.parse(localStorage.getItem(PKEY)||"{}")||{}); }catch(e){}
 if(!pw.su) pw.su="https://openfor75.github.io/261001/";
 function savePw(){ try{ localStorage.setItem(PKEY,JSON.stringify(pw)); }catch(e){} }
