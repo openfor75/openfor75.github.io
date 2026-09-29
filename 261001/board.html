@@ -10,6 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="students.js?v=20260930"></script>
 <style>
 :root{
   --paper:#fbfaf7;--surface:#fff;--surface-2:#f2efe9;--line:#ddd7cc;--line-soft:#eae5db;
@@ -294,6 +295,7 @@ body.proj .vsc .nm{font-size:26px}
     <div class="pwf"><label>組數</label><input class="s" id="nB" type="number" value="7" min="1" max="20"></div>
     <div class="pwf"><label>學生網址</label><input class="w" id="su" placeholder="https://openfor75.github.io/261001/"></div>
     <button class="btn" id="bSlip">列印密碼卡</button>
+    <button class="btn go" id="bSvg">下載任務卡 SVG</button>
   </div>
   <div id="codes"></div>
 </div></div>
@@ -307,7 +309,8 @@ body.proj .vsc .nm{font-size:26px}
 
 <div class="note">
   <b>怎麼用：</b>點任何一列可以展開那一組的完整答案。<b>創意</b>那欄可以直接在表上打，也可以按上面的「創意評分」一組一組看。所有你打的分數只存在這台電腦，不會傳給學生，重新整理不會消失。<br>
-  <b>密碼卡：</b>按「列印密碼卡」會印出 16 張任務卡（A4 一頁 8 張，裁開），上面有班級、組別、四位數通行碼、<b>可以直接掃的 QR Code</b>，還有五條寫組員名字的線。建議印在稍微厚一點的紙上。<br>
+  <b>任務卡 SVG：</b>按「下載任務卡 SVG」會一次下載三個檔——兩個班各一張正面（一班 7 張卡），加一張<b>共用的背面</b>。背面每一張都一樣，所以雙面列印<b>不用管翻頁方向</b>，怎麼翻都對得上。正面印一張、背面印兩張（一班一張）。A4 一頁 8 張，沿虛線裁開。檔案是真的 SVG，Illustrator 或 Inkscape 打開就能改字。<br>
+  <b>密碼卡（舊的直接列印）：</b>按「列印密碼卡」會印出 16 張任務卡（A4 一頁 8 張，裁開），上面有班級、組別、四位數通行碼、<b>可以直接掃的 QR Code</b>，還有五條寫組員名字的線。建議印在稍微厚一點的紙上。<br>
   <b>行前檢查：</b>通行碼那一區上面有一條「已上線 X / 16」。<b>學生一連上系統，他那一組的號碼卡就會變綠色打勾</b>——行前講座當場就看得出來哪一組還沒設定好。<br>
   <b>集合點名：</b>學生一到集合點按「還沒到齊」，這裡就亮<b>黃色的「集」</b>——代表他們在集合了；人到齊按「全員到齊」就變<b>綠色的「到」</b>。兩個都自動同步，<b>你什麼都不用做</b>。要改判就點那一格（一下到齊、兩下遲到、三下清除），你點的一定蓋過學生回報。扣分只看你標的「遲到」：第一次 −3、第二次 −5、第三次 −10。<br>
   <b>投影模式</b>放大字體、隱藏控制列，回程車上投影用；<b>列印總表</b>可以直接印成成績底稿；<b>匯出 CSV</b> 會把所有答案一起倒出來（Excel 開啟請選 UTF-8）。<br>
@@ -448,6 +451,136 @@ function paintCodes(){
       '<div class="sf">這張卡請收好　·　通行碼填錯不會進排行榜</div>'+
       '</div>';
   }).join("");
+}
+
+/* ---------- 任務卡 SVG ---------- */
+var CW=105, CH=74.25, COLS=2, ROWS=4;          /* A4 210×297，2×4 = 8 張 */
+var C_DARK="#15181D", C_ACC="#DD4F1F", C_SEA="#14566B", C_GOLD="#9A6C00",
+    C_SOFT="#F7F4EE", C_LINE="#DDD7CC", C_WARM="#FFF3EC", C_MUTE="#8A8F96";
+var FONT="'Microsoft JhengHei','PingFang TC','Noto Sans TC',sans-serif";
+
+function sx(t){ return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function tx(x,y,t,size,fill,weight,anchor,ls){
+  return '<text x="'+x+'" y="'+y+'" font-size="'+size+'" fill="'+fill+'"'+
+    (weight?' font-weight="'+weight+'"':'')+(anchor?' text-anchor="'+anchor+'"':'')+
+    (ls?' letter-spacing="'+ls+'"':'')+'>'+sx(t)+'</text>';
+}
+function rc(x,y,w,h,fill,rx){ return '<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+fill+'"'+(rx?' rx="'+rx+'"':'')+'/>'; }
+
+function qrSymbol(url){
+  if(!url||typeof qrcode==="undefined") return {def:"",n:0};
+  try{
+    var q=qrcode(0,"M"); q.addData(url); q.make();
+    var n=q.getModuleCount(), d="";
+    for(var r=0;r<n;r++) for(var c=0;c<n;c++) if(q.isDark(r,c)) d+="M"+c+" "+r+"h1v1h-1z";
+    return {def:'<symbol id="qr" viewBox="0 0 '+n+' '+n+'"><path d="'+d+'" fill="#000"/></symbol>', n:n};
+  }catch(e){ return {def:"",n:0}; }
+}
+
+function memberNames(cls,grp){
+  try{
+    if(typeof STUDENTS!=="object"||!STUDENTS||!STUDENTS[cls]) return "";
+    var g=String(grp).replace(/[^0-9]/g,"");
+    return STUDENTS[cls].filter(function(x){return String(x.grp)===g;})
+      .map(function(x){ return (x.lead?"★":"")+x.name; }).join("、");
+  }catch(e){ return ""; }
+}
+function cardFront(r,url,hasQR){
+  var names=memberNames(r.cls,r.grp);
+  var g=[];
+  g.push(rc(0,0,CW,CH,"#FFFFFF"));
+  g.push(rc(0,0,CW,11,C_DARK));
+  g.push(tx(6,7.3,"職場體驗　偵察任務",3.6,"#FFFFFF",700,null,"1.4"));
+  g.push(tx(CW-6,7.3,"10.01",3.6,"#FFB38A",700,"end","0.6"));
+  g.push(tx(6,19.5,r.cls,4.2,C_MUTE,500));
+  g.push(tx(6,30,r.grp,11,C_DARK,900));
+  g.push(tx(6,38.5,"組別通行碼",2.9,C_SEA,600,null,"1.6"));
+  g.push(tx(6,50.5,String(r.code).split("").join(" "),14,C_ACC,900));
+  if(hasQR){
+    g.push(rc(72.5,14,27,27,"#FFFFFF"));
+    g.push('<use href="#qr" xlink:href="#qr" x="73.5" y="15" width="25" height="25"/>');
+    g.push(tx(86,44.5,"掃我進任務",2.5,C_MUTE,600,"middle","0.6"));
+  } else {
+    g.push('<rect x="73.5" y="15" width="25" height="25" fill="none" stroke="'+C_LINE+'" stroke-width="0.4" stroke-dasharray="1.2 1.2"/>');
+    g.push(tx(86,28,"QR",3,C_LINE,700,"middle"));
+  }
+  g.push(rc(0,54,CW,CH-54,C_SOFT));
+  g.push('<line x1="0" y1="54" x2="'+CW+'" y2="54" stroke="'+C_LINE+'" stroke-width="0.3"/>');
+  g.push(tx(6,60,names?"組員　★為組長":"組員（請自己寫上）",2.6,C_MUTE,600,null,"1.1"));
+  if(names) g.push(tx(6,66.5,names,3.4,C_DARK,600));
+  else g.push('<line x1="6" y1="67" x2="'+(CW-6)+'" y2="67" stroke="'+C_LINE+'" stroke-width="0.35"/>');
+  g.push(tx(6,71.5,url||"",2.3,C_MUTE,500));
+  g.push(tx(CW-6,71.5,"這張卡請收好",2.3,C_ACC,600,"end"));
+  return g.join("");
+}
+
+function cardBack(url){
+  var g=[];
+  g.push(rc(0,0,CW,CH,"#FFFFFF"));
+  g.push(rc(0,0,CW,9.5,C_SEA));
+  g.push(tx(6,6.4,"10 / 01　這一天怎麼走",3.5,"#FFFFFF",700,null,"1.2"));
+  var rows=[["08:50","中廊集合",0],["09:10","出發",1],["09:30","魔菇部落",0],["12:00","上車用餐",1],
+            ["13:00","三井簡報",0],["13:15","任務開始",0],["14:50","集合點名",1],["16:05","返校",0]];
+  rows.forEach(function(r,i){
+    var cx=6+(i%2)*51, cy=16+Math.floor(i/2)*5.6;
+    g.push(tx(cx,cy,r[0],3.1,r[2]?C_ACC:C_DARK,700));
+    g.push(tx(cx+14,cy,r[1],3.1,r[2]?C_ACC:C_MUTE,r[2]?700:500));
+  });
+  g.push(rc(6,39.5,CW-12,1.2,C_WARM,0.6));
+  g.push(tx(6,38,"★ 三次集合：到了先按「還沒到齊」，人齊再按「全員到齊」",2.5,C_ACC,600));
+  var laws=["小組行動，不落單、不離開園區","講師簡報時不使用手機","拍照盡量不拍到路人","當天穿制服"];
+  g.push(tx(6,46.5,"四個鐵則",2.9,C_GOLD,700,null,"1.4"));
+  laws.forEach(function(t,i){
+    g.push(tx(6,52+i*4.4,(i+1)+".",2.9,C_GOLD,700));
+    g.push(tx(11,52+i*4.4,t,2.9,C_DARK,500));
+  });
+  g.push(rc(0,CH-8,CW,8,C_DARK));
+  g.push(tx(CW/2,CH-3,url||"",2.8,"#FFB38A",600,"middle","0.4"));
+  return g.join("");
+}
+
+function sheet(cards,defs,title){
+  var o=['<?xml version="1.0" encoding="UTF-8"?>',
+    '<!-- '+title+' ｜ A4 210×297mm ｜ 1 單位 = 1mm ｜ 可用 Illustrator / Inkscape 直接改 -->',
+    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '+
+    'width="210mm" height="297mm" viewBox="0 0 210 297" font-family="'+FONT+'">',
+    '<defs>'+(defs||"")+'</defs>',
+    '<rect width="210" height="297" fill="#FFFFFF"/>'];
+  var K=0.94;                                   /* 縮一點，留印表機吃不到的邊 */
+  var w=CW*K, h=CH*K;
+  var ox=(210-COLS*w)/2, oy=(297-ROWS*h)/2;
+  cards.forEach(function(inner,i){
+    if(i>=COLS*ROWS) return;
+    var x=ox+(i%COLS)*w, y=oy+Math.floor(i/COLS)*h;
+    o.push('<g transform="translate('+x.toFixed(2)+','+y.toFixed(2)+') scale('+K+')">'+inner+
+      '<rect x="0" y="0" width="'+CW+'" height="'+CH+'" fill="none" stroke="#B9B9B9" stroke-width="0.3" stroke-dasharray="2 2"/></g>');
+  });
+  o.push('</svg>');
+  return o.join("\n");
+}
+
+function dl(name,text){
+  var b=new Blob([text],{type:"image/svg+xml;charset=utf-8"});
+  var u=URL.createObjectURL(b), a=document.createElement("a");
+  a.href=u; a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },400);
+}
+
+function exportCards(btn){
+  var url=(pw.su||"").trim();
+  var qr=qrSymbol(url);
+  var byCls={};
+  roster.forEach(function(r){ (byCls[r.cls]=byCls[r.cls]||[]).push(r); });
+  var jobs=[];
+  Object.keys(byCls).forEach(function(c){
+    jobs.push(["任務卡_"+c+"_正面.svg",
+      sheet(byCls[c].map(function(r){return cardFront(r,url,!!qr.def);}),qr.def,"任務卡．"+c+"．正面")]);
+  });
+  var backs=[]; for(var i=0;i<COLS*ROWS;i++) backs.push(cardBack(url));
+  jobs.push(["任務卡_背面_共用.svg", sheet(backs,"","任務卡．背面（每一張都一樣）")]);
+  btn.textContent="產生中⋯";
+  jobs.forEach(function(j,i){ setTimeout(function(){ dl(j[0],j[1]); },i*450); });
+  setTimeout(function(){ btn.textContent="下載了 "+jobs.length+" 個檔"; setTimeout(function(){btn.textContent="下載任務卡 SVG";},2600); }, jobs.length*450+200);
 }
 
 /* ---------- 集合點名 ---------- */
@@ -669,6 +802,10 @@ document.addEventListener("click",function(e){
   }
   if(b&&b.id==="bProj"){ document.body.classList.toggle("proj"); b.classList.toggle("on"); return; }
   if(b&&b.id==="bPrint"){ document.body.classList.remove("slips"); window.print(); return; }
+  if(b&&b.id==="bSvg"){
+    if(!roster.length){ b.textContent="要先填主密語"; setTimeout(function(){b.textContent="下載任務卡 SVG";},1800); return; }
+    exportCards(b); return;
+  }
   if(b&&b.id==="bSlip"){
     if(!roster.length){ alert("先填主密語。"); return; }
     document.body.classList.add("slips");
