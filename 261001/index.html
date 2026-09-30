@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
-<script src="students.js"></script>
+<script src="students.js?v=20260930"></script>
 
 <style>
 :root{
@@ -127,6 +127,14 @@ h1 em{font-style:normal;color:var(--accent)}
 .mdone.bad{color:var(--accent)}
 .mdone i{font-style:normal;font-family:var(--mono);font-size:12px;font-weight:500;opacity:.8}
 .mnote{font-size:12.5px;color:var(--ink-3);line-height:1.6;margin:2px 0 0}
+.drawn h2{color:var(--ok)}
+.syncing{display:flex;align-items:center;gap:5px;justify-content:center;background:var(--ok-soft);color:var(--ok);border-radius:11px;padding:13px;font-weight:700;font-size:14.5px}
+.syncing i{width:7px;height:7px;border-radius:99px;background:var(--ok);animation:bip 1.1s infinite}
+.syncing i:nth-child(2){animation-delay:.18s}
+.syncing i:nth-child(3){animation-delay:.36s}
+@keyframes bip{0%,100%{opacity:.25}50%{opacity:1}}
+.autonote{font-size:13.5px;line-height:1.7;opacity:.75;margin:2px 0 14px}
+.btns button.wide{flex:1;min-width:100%;font-size:18px;padding:16px}
 .laws{background:var(--accent-soft);border-radius:14px;padding:15px 17px;margin-top:9px}
 .laws h3{margin:0 0 7px;font-size:15.5px;font-weight:700;color:var(--accent)}
 .laws ol{margin:0;padding-left:19px;font-size:14.5px;color:var(--ink-2)}
@@ -535,6 +543,64 @@ function cleanD(){
   });
   return o;
 }
+/* ---------- 同組同步：訂閱自己這一組的紀錄，把組員填的補進來 ---------- */
+var mineRef=null, mineKey="", pendingMerge=false;
+function watchMine(){
+  if(!db||PREVIEW) return;
+  var k=gkey();
+  if(!k) return;
+  if(k===mineKey) return;
+  if(mineRef){ try{ mineRef.off(); }catch(e){} }
+  mineKey=k;
+  mineRef=db.ref("e/"+EVENT_ID+"/ans/"+k);
+  mineRef.on("value",function(s){ mergeRemote(s.val()); });
+}
+var remotePicked="";
+function mergeRemote(R){
+  if(!R||PREVIEW) return;
+  var ch=false;
+  if(R.picked&&String(R.picked).split(",").filter(Boolean).length===4) remotePicked=String(R.picked);
+
+  /* 抽到的四關：自己還沒填任何東西時，以雲端那份為準，全組才會一樣 */
+  if(R.picked){
+    var p=String(R.picked).split(",").filter(Boolean);
+    if(p.length===4){
+      var same=st.picked&&st.picked.join(",")===p.join(",");
+      var blank=!st.picked||st.picked.every(function(id){return qScore(id)===0;});
+      if(!same&&blank){ st.picked=p; st.open=p[0]; ch=true; }
+    }
+  }
+  /* 答案：只補「自己還沒填」的格子，絕不覆蓋自己打過的字 */
+  if(R.d){
+    for(var qid in R.d){
+      if(!Q(qid)) continue;
+      st.d[qid]=st.d[qid]||{};
+      for(var k in R.d[qid]){
+        var rv=String(R.d[qid][k]==null?"":R.d[qid][k]).trim();
+        var lv=String(st.d[qid][k]==null?"":st.d[qid][k]).trim();
+        if(rv&&!lv){ st.d[qid][k]=rv; ch=true; }
+      }
+    }
+  }
+  if(R.ph) String(R.ph).split(",").filter(Boolean).forEach(function(k){
+    if(k.charAt(0)!=="m"&&!st.photo[k]){ st.photo[k]=1; ch=true; } });
+  if(R.sp) String(R.sp).split("、").filter(Boolean).forEach(function(n){
+    if(!st.spots[n]){ st.spots[n]=1; ch=true; } });
+  if(R.roll){
+    var rr=String(R.roll).split(",");
+    for(var i=0;i<3;i++){ var v2=+rr[i]||0; if(!st.roll[i]&&v2){ st.roll[i]=v2; ch=true; } }
+  }
+
+  if(!ch) return;
+  save();
+  var ae=document.activeElement;
+  if(ae&&(ae.tagName==="INPUT"||ae.tagName==="TEXTAREA")) pendingMerge=true;  /* 正在打字就先不重畫 */
+  else render();
+}
+document.addEventListener("focusout",function(){
+  if(pendingMerge){ pendingMerge=false; setTimeout(render,120); }
+});
+
 var pushT=null;
 function push(ev){
   if(PREVIEW||!db||!st.cls||!st.grp||!okCode())return;
@@ -546,6 +612,7 @@ function push(ev){
     });
   }
   st.pushedKey=myKey; save();
+  watchMine();
   var T=tot();
   clearTimeout(pushT);
   pushT=setTimeout(function(){
@@ -558,6 +625,8 @@ function push(ev){
       cls:st.cls,grp:st.grp,mem:st.mem,
       picked:(st.picked||[]).join(","),
       ph:Object.keys(st.photo).filter(function(k){return st.photo[k];}).join(","),
+      sp:Object.keys(st.spots).filter(function(k){return st.spots[k];}).join("、"),
+      roll:(st.roll||[0,0,0]).join(","),
       terms:hits().join("、"),
       d:cleanD(),
       at:firebase.database.ServerValue.TIMESTAMP
@@ -682,9 +751,9 @@ function render(){
   if(PREVIEW) h.push('<div class="prev"><b>預覽模式</b>　八關全部打開，分數不會上傳，也不會影響學生的紀錄。網址拿掉 <code>?preview=1</code> 就回到正常模式。</div>');
   h.push('<header class="mast"><p class="eyebrow">員林家商　商經科　10/1 職場體驗</p>');
   h.push('<h1>職場體驗<br><em>偵察任務</em></h1>');
-  h.push('<p class="lede">早上在魔菇部落，下午在三井 OUTLET。一整天，兩個完全不同的企業，你們的任務是看懂這些企業怎麼賺錢。</p>');
+  h.push('<p class="lede">早上在魔菇部落，下午在三井 OUTLET。一整天，兩個完全不同的生意。你們的工作是看懂它們怎麼賺錢。</p>');
   h.push('<div class="rules"><h3>怎麼玩</h3><ol>');
-  h.push('<li><b>一組一份紀錄</b>，同組的人填的東西會互相同步。</li>');
+  h.push('<li><b>一組一份紀錄</b>：你填的會上傳，組員填的會自動補進你的手機——<b>你打過的字不會被蓋掉</b>，只會把你還沒填的補齊。</li>');
   h.push('<li>魔菇 5 題全班一樣，三井 4 關<b>每組抽的不同</b>，每一關都要拍照。</li>');
   h.push('<li>答案裡用對<b>商業名詞</b>會加分，走到四個定點會自己加分。</li>');
   h.push('<li>任務 90 分，<b>創意分 10 分老師評</b>，合計 100。加碼關 5 分另計。</li>');
@@ -696,7 +765,7 @@ function render(){
   h.push('<li><b>拍照盡量不要拍到路人。</b>店員、顧客、小朋友的臉都避開。</li>');
   h.push('<li><b>當天穿制服。</b></li>');
   h.push('</ol></div>');
-  h.push('<div class="tip"><b>建議：不要用打字的，用語音輸入的。</b>鍵盤上有一個麥克風的圖示，按下去直接講，比打字快三倍，也不用一直低頭。講完看一眼再送出——語音輸入常常把「坪效」聽成「平效」。</div>');
+  h.push('<div class="tip"><b>建議：不要用打的，用說的。</b>鍵盤上有一個麥克風的圖示，按下去直接講，比打字快三倍，也不用一直低頭。講完看一眼再送出——語音輸入常常把「坪效」聽成「平效」。</div>');
   h.push('</header>');
 
   h.push(classCard());
@@ -729,8 +798,14 @@ function render(){
       h.push('<div class="unlocked">★　加碼關</div>');
       h.push(card(BONUS,"★"));
     } else if(!st.picked){
-      h.push('<div class="panel"><h2>抽任務</h2><p class="sub">8 關裡抽 4 關，每組抽到的組合不一樣。抽完就不能重抽。'+(ready?"":"<br><b>要先填完班級、組別、組員和通行碼。</b>")+'</p>');
-      h.push('<button class="big" id="draw"'+(ready?"":" disabled")+'>抽 4 個任務</button></div>');
+      if(remotePicked){
+        h.push('<div class="panel drawn"><h2>你們這組已經抽好了</h2>');
+        h.push('<p class="sub">同組的人按過抽籤了，四個關卡正在同步到你的手機，<b>幾秒鐘就會出現</b>。不用再按，也不能重抽。</p>');
+        h.push('<div class="syncing"><i></i><i></i><i></i>　同步中</div></div>');
+      } else {
+        h.push('<div class="panel"><h2>抽任務</h2><p class="sub"><b>一組只要一個人按就好</b>，按完全組會自動同步成一樣的四關。8 關裡抽 4 關，每組抽到的不一樣，抽完不能重抽。'+(ready?"":"<br><b>要先選好班級、座號並輸入通行碼。</b>")+'</p>');
+        h.push('<button class="big" id="draw"'+(ready?"":" disabled")+'>抽 4 個任務（一組只按一次）</button></div>');
+      }
     } else {
       h.push(gpsPanel());
       st.picked.forEach(function(id,i){ h.push(card(Q(id),i+1)); });
@@ -753,13 +828,13 @@ function render(){
     h.push('</div></div>');
   }
 
-  h.push('<div class="res"><h2>戰績</h2><p>填完按一下，貼到班級群組。</p>');
+  h.push('<div class="res"><h2>目前成績</h2><p>即時計算，同組共用。</p>');
   h.push('<div class="bigscore">'+T.all+'<small> / '+MAX+'</small></div>');
   h.push('<div class="bd"><div><b>'+T.mo+'</b><span>魔菇 40</span></div><div><b>'+T.mi+'</b><span>三井 40</span></div><div><b>'+T.te+'</b><span>名詞 5</span></div>'+(GPS_ON?'<div><b>'+T.gp+'</b><span>打卡 '+GPS_MAX+'</span></div>':'')+'</div>');
   h.push('<p class="teach">創意分 10 分由老師另計，加起來滿分 100。三次集合遲到會扣分：第一次 −3、第二次 −5、第三次 −10。</p>');
   h.push('<div class="bonusline" id="bl"'+(T.bo?'':' hidden')+'>★　加碼關　'+T.bo+' / 10　（另計）</div>');
-  h.push('<textarea id="out" readonly placeholder="按下面的「產生戰績」"></textarea>');
-  h.push('<div class="btns"><button class="copy" id="gen">產生戰績</button><button class="pr" id="cp">複製</button><button class="pr" id="prt">列印學習單</button></div>');
+  h.push('<p class="autonote">分數和答案<b>全部自動上傳</b>給老師，你不用做任何事。<br>唯一要按的就是下面這顆——它會把任務紀錄、你的心得和照片排成可以交的學習單。</p>');
+  h.push('<div class="btns"><button class="copy wide" id="prt">列印學習單</button></div>');
   h.push('<div class="sync" id="sy"></div></div>');
 
   h.push('<details class="tn"><summary>老師用：計分方式</summary>');
@@ -773,7 +848,7 @@ function render(){
   h.push('<tr><td>遲到扣分</td><td>−18</td><td>三次集合，第一次 −3、第二次 −5、第三次 −10</td></tr></table>');
   h.push('<p><b>備案：</b>現場沒網路照樣能填，資料存在手機裡，有網路時才同步。照片也一樣。</p>');
   h.push('</details>');
-  h.push('<footer>115 學年度第 1 學期　商業經營科 職場體驗</footer>');
+  h.push('<footer>115 學年度第 1 學期　商業經營科職場體驗</footer>');
 
   document.getElementById("app").innerHTML=h.join("");
   paintTicker(); paintSync(); paintGPS(); buildSheet();
@@ -1114,6 +1189,10 @@ document.addEventListener("click",function(e){
     return;
   }
   if(t.id==="draw"){
+    if(remotePicked){                       /* 同組已經抽過，直接沿用，不要再抽一次 */
+      st.picked=remotePicked.split(",").filter(Boolean);
+      st.open=st.picked[0]; save(); render(); return;
+    }
     var pool=MITSUI.map(function(x){return x.id;});
     for(var i=pool.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),k=pool[i];pool[i]=pool[j];pool[j]=k;}
     st.picked=pool.slice(0,4); st.open=st.picked[0]; save(); push("抽到了任務"); render(); return;
@@ -1155,7 +1234,7 @@ function gen(){
 }
 
 lastUnlocked=unlocked();
-initFB(); render(); startGPS();
+initFB(); watchMine(); render(); startGPS();
 setInterval(function(){var el=document.getElementById("clk");if(!el)return;var c=clk();el.textContent=c.t;el.className="clock"+(c.w?" warn":"");},1000);
 })();
 </script>
