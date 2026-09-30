@@ -82,6 +82,15 @@ tr.det td{background:var(--surface-2);padding:0}
 .qa .q{font-size:12.5px;color:var(--ink-3);font-family:var(--mono)}
 .qa .a{font-size:14.5px;white-space:pre-wrap;word-break:break-word}
 .tags span{display:inline-block;font-size:12px;background:var(--gold-soft);color:var(--gold);padding:1px 8px;border-radius:20px;margin:0 5px 5px 0;font-weight:600}
+.rf{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0 0 9px;background:var(--surface-2)}
+.rf .who{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.rf .who i{font-style:normal;font-size:11.5px;font-family:var(--mono);font-weight:600;padding:1px 7px;border-radius:20px;background:var(--surface);border:1px solid var(--line);color:var(--ink-3)}
+.rf .who i.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.rf .who i.low{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.rf dl{margin:0}
+.rf dt{font-size:11.5px;color:var(--ink-3);font-family:var(--mono);margin-top:6px}
+.rf dd{margin:1px 0 0;font-size:14.5px;white-space:pre-wrap;word-break:break-word}
+.rf dd.none{color:var(--ink-3)}
 .empty{padding:34px 18px;text-align:center;color:var(--ink-3)}
 
 /* 動態牆 */
@@ -257,6 +266,7 @@ body.proj .vsc .nm{font-size:26px}
   <button class="btn" id="bPrint">列印總表</button>
   <button class="btn go" id="bGrade">創意評分</button>
   <button class="btn" id="bCsv">匯出 CSV</button>
+  <button class="btn" id="bRefl">匯出心得 CSV</button>
 </div>
 
 <div id="grade"></div>
@@ -725,6 +735,8 @@ function paint(){
     var badge=!pw.mw.trim()?"":(vf?' <span class="tick">✓</span>':' <span class="bad">⚠ 未認證</span>');
     h.push('<td class="who"><b>'+esc(r.cls)+'　'+esc(r.grp)+'</b>'+badge+
            (ansMap[r.k]&&ansMap[r.k].picked?'<span class="pill">'+esc(ansMap[r.k].picked.split(",").length)+' 關</span>':'')+
+           (function(){ var n=reflOf(r.k).length, e=mateCount(r.cls,r.grp);
+             return n?'<span class="pill">心得 '+n+(e?'/'+e:'')+'</span>':''; })()+
            '<small>'+esc(r.mem||"（未填組員）")+'</small>'+
            '<div class="bar-mini"><i style="width:'+pct+'%"></i></div></td>');
     h.push('<td class="n hidesm">'+(r.mo||0)+'</td><td class="n hidesm">'+(r.mi||0)+'</td>');
@@ -768,7 +780,41 @@ function detail(r){
   }
   h.push('<h4>抓到的商業術語</h4>');
   h.push(A.terms?'<div class="tags">'+A.terms.split("、").map(function(t){return '<span>'+esc(t)+'</span>';}).join("")+'</div>':'<div class="qa"><div class="a" style="color:var(--ink-3)">（沒有出現關鍵字）</div></div>');
+  h.push(reflBlock(r));
   return h.join("");
+}
+/* ---------- 各自的心得（每個學生一份，直接從手機上傳） ---------- */
+function reflOf(k){
+  var A=ansMap[k]||{}, R=A.rf||{}, out=[];
+  for(var id in R){
+    var x=R[id]||{};
+    out.push({ id:id, no:String(x.no||""), nm:String(x.nm||""),
+               a:String(x.a||""), b:String(x.b||""), c:String(x.c||""), at:x.at||0 });
+  }
+  out.sort(function(p,q){ return (p.no||"zz").localeCompare(q.no||"zz"); });
+  return out;
+}
+function reflBlock(r){
+  var L=reflOf(r.k), h=[];
+  var exp=(mateCount(r.cls,r.grp)||0);
+  h.push('<h4>各自的心得　'+L.length+(exp?' / '+exp:'')+' 人已上傳</h4>');
+  if(!L.length) return h.join("")+'<div class="qa"><div class="a" style="color:var(--ink-3)">還沒有人送出心得。（學生在手機上打字就會自動上傳，不用寄信）</div></div>';
+  L.forEach(function(s){
+    var n=s.b.replace(/\s/g,"").length;
+    h.push('<div class="rf"><div class="who">'+esc(s.no?s.no+'　':'')+esc(s.nm||s.id)+
+      '<i class="'+(n>=400?"ok":"low")+'">心得 '+n+' 字</i>'+
+      (s.at?'<i>'+hhmm(s.at)+'</i>':'')+'</div><dl>');
+    h.push('<dt>印象最深的一件事</dt><dd'+(s.a?'':' class="none"')+'>'+esc(s.a||"（空白）")+'</dd>');
+    h.push('<dt>參訪心得</dt><dd'+(s.b?'':' class="none"')+'>'+esc(s.b||"（空白）")+'</dd>');
+    h.push('<dt>給活動的建議</dt><dd'+(s.c?'':' class="none"')+'>'+esc(s.c||"（空白）")+'</dd>');
+    h.push('</dl></div>');
+  });
+  return h.join("");
+}
+function mateCount(cls,grp){
+  var g=String(grp||"").replace(/\D/g,"");
+  if(!g||typeof STUDENTS!=="object"||!STUDENTS||!STUDENTS[cls]) return 0;
+  return STUDENTS[cls].filter(function(x){ return String(x.grp)===g; }).length;
 }
 function qa(id,row,photo){
   var h=['<div class="qa"><div class="q">'+esc(TITLE[id]||id)+(photo?'　📷 已拍':'')+'</div>'];
@@ -813,6 +859,7 @@ document.addEventListener("click",function(e){
     return;
   }
   if(b&&b.id==="bCsv"){ csv(); return; }
+  if(b&&b.id==="bRefl"){ csvRefl(); return; }
   if(b&&b.id==="bGrade"){ openGrade(0); return; }
   if(b&&b.dataset.roll!==undefined){ rollOpen=+b.dataset.roll; paintRoll(); return; }
   if(b&&b.dataset.rk!==undefined){
@@ -882,11 +929,41 @@ function csv(){
   var out=lines.map(function(L){
     return L.map(function(c){ return '"'+String(c==null?"":c).replace(/"/g,'""')+'"'; }).join(",");
   }).join("\r\n");
+  dl(out,"職場體驗任務成績_"+EVENT_ID+".csv");
+}
+function dl(out,name){
   var blob=new Blob(["﻿"+out],{type:"text/csv;charset=utf-8"});
   var a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download="職場體驗任務成績_"+EVENT_ID+".csv";
-  document.body.appendChild(a); a.click(); a.remove();
+  a.download=name;
+  a.style.display="none";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{ a.remove(); URL.revokeObjectURL(a.href); }catch(e){} },1500);
+}
+/* ---------- 心得 CSV：一個學生一列 ---------- */
+function csvRefl(){
+  var head=["班級","座號","姓名","組別","印象最深的一件事","參訪心得","給活動的建議","心得字數","上傳時間"];
+  var lines=[head], seen={}, n=0;
+  board.slice().sort(function(a,b){
+    return String(a.cls+a.grp).localeCompare(String(b.cls+b.grp));
+  }).forEach(function(r){
+    reflOf(r.k).forEach(function(s){
+      seen[r.cls+"|"+s.no]=1; n++;
+      lines.push([r.cls,s.no,s.nm,r.grp,s.a,s.b,s.c,s.b.replace(/\s/g,"").length,hhmm(s.at)]);
+    });
+  });
+  /* 沒交的也列出來，方便催繳 */
+  if(typeof STUDENTS==="object"&&STUDENTS){
+    for(var c in STUDENTS) STUDENTS[c].forEach(function(x){
+      if(!seen[c+"|"+String(x.no)]) lines.push([c,x.no,x.name,"第"+x.grp+"組","","","",0,"未上傳"]);
+    });
+  }
+  var out=lines.map(function(L){
+    return L.map(function(c){ return '"'+String(c==null?"":c).replace(/"/g,'""')+'"'; }).join(",");
+  }).join("\r\n");
+  dl(out,"職場體驗學習心得_"+EVENT_ID+".csv");
+  var el=document.getElementById("bRefl");
+  if(el){ var o=el.textContent; el.textContent="已匯出 "+n+" 份"; setTimeout(function(){ el.textContent=o; },2200); }
 }
 
 ["mw","cA","nA","cB","nB","su"].forEach(function(k){
