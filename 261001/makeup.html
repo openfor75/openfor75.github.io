@@ -86,6 +86,32 @@ h2{margin:0 0 4px;font-size:17px}
 .big{width:100%;font-family:inherit;font-size:17px;font-weight:700;padding:14px;border-radius:12px;
   border:0;background:var(--accent);color:#fff;cursor:pointer}
 .big[disabled]{background:var(--surface-2);color:var(--ink-3);cursor:default}
+/* 我的照片 */
+.myp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.slot{background:var(--surface-2);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.slot .where{font-size:12px;color:var(--ink-3);font-weight:600}
+.slot img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;display:block}
+.slot input:not([type=file]){width:100%;font-family:inherit;font-size:14.5px;padding:7px 9px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.slot input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.slot .empty{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;border:2px dashed var(--line);border-radius:9px;
+  font-weight:700;color:var(--ink-2);cursor:pointer;font-size:15px;position:relative}
+.slot .sa{display:flex;gap:6px}
+.mini{flex:1;font-family:inherit;font-size:13px;font-weight:600;padding:6px;border-radius:8px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink-2);text-align:center;cursor:pointer;position:relative}
+.gpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px}
+.gpick button{padding:0;border:2px solid transparent;border-radius:9px;overflow:hidden;background:none;cursor:pointer}
+.gpick button:active{border-color:var(--accent)}
+.gpick img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+/* 預覽 */
+#pvw{position:fixed;inset:0;z-index:60;background:#6b7078;display:none;flex-direction:column}
+#pvw.on{display:flex}
+#pvw .pvtop{flex:none;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--ink);color:var(--paper)}
+#pvw .pvtop button{font-family:inherit;font-size:15px;font-weight:700;padding:8px 16px;border-radius:10px;border:0;background:rgba(255,255,255,.16);color:#fff}
+#pvw .pvtop button.dl{background:var(--accent)}
+#pvw .pvtop button:disabled,.big:disabled{opacity:.75}
+#pvw .pvbody{flex:1;overflow:auto;padding:10px 0}
+#pvw .zoomer{transform-origin:top left}
+#pvw .page{margin:0 0 12px;box-shadow:0 4px 16px rgba(0,0,0,.35)}
 .link{background:none;border:0;color:var(--ink-3);font-family:inherit;font-size:13.5px;
   text-decoration:underline;cursor:pointer;padding:4px 0}
 </style>
@@ -99,6 +125,7 @@ h2{margin:0 0 4px;font-size:17px}
 
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+<script src="sheet.js"></script>
 <script>
 /* ============================================================
    學生名冊　students.js　　115-1 職場體驗（115/10/01）
@@ -303,7 +330,7 @@ function connect(){
     });
     /* 心得：同一個人可能散在好幾筆，每一格取「最新、而且不是空的」那份 */
     rfs.sort(function(a,b){ return (+b.at||0)-(+a.at||0); });
-    ["a","b","c"].forEach(function(z){
+    ["a","b","c","p1","p2","p3","p4"].forEach(function(z){
       if(String(st.refl[z]||"").trim()) return;
       for(var i=0;i<rfs.length;i++) if(String(rfs[i][z]||"").trim()){ st.refl[z]=String(rfs[i][z]); break; }
     });
@@ -357,9 +384,12 @@ function queue(path,v){
 }
 function pushRefl(){
   if(!wref()) return;
-  var o={}; o["rf/"+myId()]={ no:String(st.no), nm:String(st.name),
-    a:String(st.refl.a||"").slice(0,3000), b:String(st.refl.b||"").slice(0,3000),
-    c:String(st.refl.c||"").slice(0,3000), at:firebase.database.ServerValue.TIMESTAMP };
+  /* 一格一格寫，不要整包覆蓋（不然照片說明 p1~p4 會被洗掉） */
+  var o={}, b="rf/"+myId()+"/";
+  o[b+"no"]=String(st.no); o[b+"nm"]=String(st.name);
+  ["a","b","c"].forEach(function(z){ o[b+z]=String(st.refl[z]||"").slice(0,3000); });
+  for(var i=1;i<=4;i++) o[b+"p"+i]=String(st.refl["p"+i]||"").slice(0,30);
+  o[b+"at"]=firebase.database.ServerValue.TIMESTAMP;
   o.cls=st.cls; o.grp=st.grp;
   wref().update(o).then(function(){ flash("心得已上傳"); }).catch(function(){ flash("心得上傳失敗，再打一個字重試","bad"); });
 }
@@ -520,15 +550,110 @@ function render(){
     h.push('<div class="f"><label for="r-b">參訪心得（至少 400 字）</label><textarea id="r-b" data-r="b" style="min-height:230px">'+esc(st.refl.b)+'</textarea><div class="cnt" data-cr="b"></div></div>');
     h.push('<div class="f"><label for="r-c">給這次活動的建議</label><textarea id="r-c" data-r="c">'+esc(st.refl.c)+'</textarea><div class="cnt" data-cr="c"></div></div>');
     h.push('</div>');
+    h.push(myPicPanel());
+    h.push('<button class="big" id="pvbtn" style="background:var(--ink)">看看我的學習歷程長怎樣</button>');
+    h.push('<button class="big" data-dl="1" style="margin-top:8px">下載 PDF</button>');
+    h.push('<p class="sub" style="text-align:center;margin:6px 0 0;font-size:13px;color:var(--ink-3)">A4 四頁、4MB 以內，可以直接上傳學習歷程。改完心得或照片要重新下載。'+(IN_APP?'<br><b style="color:var(--accent)">在 LINE 裡面開的話，請先改用 Safari／Chrome 開啟再下載。</b>':'')+'</p>');
   }
   h.push('<div class="sync" id="sync"></div>');
+  h.push('<p style="text-align:center;margin:14px 0 0"><a href="status.html" style="color:var(--sea);font-weight:600;font-size:14.5px">看我還差什麼 →</a></p>');
   document.getElementById("app").innerHTML=h.join("");
   var el=document.getElementById("sc"); if(el) el.innerHTML=T.task+'<i>/85</i>';
   if(st.stage==="refl") ["a","b","c"].forEach(cntR);
   paintSync();
 }
+
+/* ---------- 我的照片：最多 4 張，前 2 張放學習歷程第 1 頁，後 2 張放第 2 頁（心得下面） ---------- */
+function myPicKey(i){ return SHEET.picKey(st.cls,st.no,i); }
+function myPicPanel(){
+  var h=['<div class="panel"><h2>我的照片</h2><p class="sub">挑最多 4 張放進你的學習歷程。<b>第 1、2 張</b>放在第 1 頁，<b>第 3、4 張</b>放在心得那一頁。沒選的話，第 1 頁會用小組的代表照片。</p>'];
+  h.push('<div class="myp">');
+  for(var i=1;i<=SHEET.NPHOTO;i++){
+    var src=PIC[myPicKey(i)];
+    h.push('<div class="slot'+(src?" has":"")+'"><div class="where">第 '+i+' 張　·　放第 '+(i<=2?1:2)+' 頁</div>');
+    if(src){
+      h.push('<img src="'+src+'" alt="我的第 '+i+' 張照片">');
+      h.push('<input data-r="p'+i+'" maxlength="30" placeholder="照片說明（選填）" value="'+esc(st.refl["p"+i]||"")+'">');
+      h.push('<div class="sa"><label class="mini" for="mp-'+i+'">換一張<input type="file" accept="image/*" id="mp-'+i+'" data-mypic="'+i+'"></label><button class="mini" data-mydel="'+i+'">移除</button></div>');
+    } else {
+      h.push('<label class="empty" for="mp-'+i+'">＋ 上傳照片<input type="file" accept="image/*" id="mp-'+i+'" data-mypic="'+i+'"></label>');
+    }
+    h.push('<div class="up" data-up="my'+i+'"></div></div>');
+  }
+  h.push('</div>');
+  var gp=Object.keys(PIC).filter(function(z){ return z.indexOf("sheetP-")!==0; }).sort();
+  if(gp.length){
+    h.push('<p class="sub" style="margin:14px 0 6px"><b>或從你們這組拍的照片挑</b>：點一下就會放進下一個空格。</p><div class="gpick">');
+    gp.forEach(function(z){ h.push('<button data-pick="'+esc(z)+'" aria-label="選這張"><img src="'+PIC[z]+'" alt=""></button>'); });
+    h.push('</div>');
+  }
+  h.push('</div>');
+  return h.join("");
+}
+function sendMyPic(i,url){
+  if(!db||!myKey){ setUp("my"+i,"還沒選好身分",'bad'); return; }
+  setUp("my"+i,"上傳中⋯",'go');
+  /* 不要加進 ph（那是三井計分用的，而且有長度上限） */
+  db.ref("e/"+EVENT_ID+"/pic/"+myKey+"/"+myPicKey(i)).set(url)
+    .then(function(){ PIC[myPicKey(i)]=url; softRender(); flash("照片已上傳"); })
+    .catch(function(e){ setUp("my"+i,"上傳失敗："+(e&&e.message?e.message:"請檢查網路"),'bad'); });
+}
+function delMyPic(i){
+  if(!db) return;
+  /* 同組可能有好幾筆紀錄，每一筆都清掉，才不會又冒出來 */
+  picOrder.forEach(function(k){ db.ref("e/"+EVENT_ID+"/pic/"+k+"/"+myPicKey(i)).remove().catch(function(){}); });
+  st.refl["p"+i]=""; save(); pushRefl();
+}
+
+/* ---------- 預覽：跟老師輸出的 PDF 同一份版面，但不放分數 ---------- */
+function myD(){
+  var me=meRow(); if(!me) return null;
+  var g=SHEET.score({d:D,ph:PH,pics:PIC},false);
+  return {cls:st.cls,s:{no:st.no,name:st.name,grp:me.grp},mem:st.mem,g:g,r:st.refl};
+}
+var IN_APP=/\bLine\/|FBAN|FBAV|Instagram|MicroMessenger/i.test(navigator.userAgent);
+var dlBusy=false;
+function downloadPdf(btn){
+  if(dlBusy) return;
+  var DD=myD(); if(!DD) return;
+  if(IN_APP&&!confirm("你現在是在 LINE／IG 裡面開這個網頁，下載常常會失敗。\n\n建議按右上角「⋯」→「用預設瀏覽器開啟」（Safari 或 Chrome）再下載。\n\n還是要在這裡試試看嗎？")) return;
+  dlBusy=true;
+  var all=document.querySelectorAll("[data-dl]");
+  function label(t){ all.forEach(function(b){ b.textContent=t; b.disabled=true; }); }
+  label("準備中⋯");
+  /* 手機記憶體小：畫質從 1.6 倍開始，太大再降 */
+  SHEET.makePdf(DD,{score:false,tries:[{s:1.6,q:0.8},{s:1.3,q:0.7},{s:1.1,q:0.6}],
+    onPage:function(i,n){ label("產生中⋯ 第 "+i+" / "+n+" 頁"); }})
+    .then(function(blob){
+      SHEET.save(blob,SHEET.fname(DD));
+      label("✓ 已下載（"+(blob.size/1048576).toFixed(1)+" MB）");
+    })
+    .catch(function(e){ label("下載失敗，再按一次"); alert("產生 PDF 失敗："+(e&&e.message?e.message:e)+"\n\n關掉其他 App 再試一次，或換一台手機／電腦。"); })
+    .then(function(){
+      dlBusy=false;
+      setTimeout(function(){ all.forEach(function(b){ b.disabled=false; b.textContent="下載 PDF"; }); },3000);
+    });
+}
+function openPreview(){
+  var DD=myD(); if(!DD) return;
+  var w=document.getElementById("pvw");
+  if(!w){ w=document.createElement("div"); w.id="pvw"; document.body.appendChild(w); }
+  w.innerHTML='<div class="pvtop"><b>學習歷程預覽</b><span><button data-dl="1" class="dl">下載 PDF</button> <button id="pvx">關閉</button></span></div><div class="pvbody"><div class="zoomer">'+SHEET.pagesHTML(DD,{score:false}).join("")+'</div></div>';
+  w.classList.add("on"); document.body.style.overflow="hidden";
+  var z=w.querySelector(".zoomer");
+  SHEET.settle(z).then(function(){
+    SHEET.fit(z);
+    var pg=z.querySelector(".page"), body=w.querySelector(".pvbody");
+    var s=Math.min(1,(body.clientWidth-20)/pg.offsetWidth);
+    z.style.transform="scale("+s+")"; z.style.width=pg.offsetWidth+"px";
+    z.style.marginLeft=Math.max(0,(body.clientWidth-pg.offsetWidth*s)/2)+"px";
+    z.style.height=(z.scrollHeight*s)+"px";
+  });
+}
+function closePreview(){ var w=document.getElementById("pvw"); if(w){ w.classList.remove("on"); w.innerHTML=""; } document.body.style.overflow=""; }
 function cntR(k){
-  var mn=k==="b"?400:(k==="a"?50:30), n=String(st.refl[k]||"").trim().length;
+  /* 字數不算空白和換行，跟 status.html／portfolio.html 算法一致 */
+  var mn=k==="b"?400:(k==="a"?50:30), n=String(st.refl[k]||"").replace(/\s/g,"").length;
   var el=document.querySelector('[data-cr="'+k+'"]');
   if(el){ el.textContent=n+" / "+mn+" 字"; el.className="cnt"+(n>=mn?" ok":(n?" bad":"")); }
 }
@@ -545,6 +670,14 @@ document.addEventListener("change",function(e){
     shrink(el.files[0],function(url,err){
       if(!url){ setUp(k,"✗ "+err,'bad'); return; }
       sendPic(k,url);
+    });
+  }
+  if(el.dataset && el.dataset.mypic && el.files && el.files[0]){
+    var i=+el.dataset.mypic;
+    setUp("my"+i,"處理中⋯",'go');
+    shrink(el.files[0],function(url,err){
+      if(!url){ setUp("my"+i,"✗ "+err,'bad'); return; }
+      sendMyPic(i,url);
     });
   }
 });
@@ -574,8 +707,19 @@ document.addEventListener("click",function(e){
   if(sb){ st.stage=sb.dataset.stage; st.open=null; save(); render(); return; }
   var qh=t.closest&&t.closest("[data-open]");
   if(qh){ var id=qh.dataset.open; st.open=(st.open===id)?null:id; save(); render(); return; }
+  var b=t.closest&&t.closest("button"); if(!b) return;
+  if(b.dataset.mydel){ delMyPic(+b.dataset.mydel); return; }
+  if(b.dataset.pick){
+    for(var i=1;i<=SHEET.NPHOTO;i++) if(!PIC[myPicKey(i)]){ sendMyPic(i,PIC[b.dataset.pick]); return; }
+    flash("四格都滿了，先移除一張再選","bad"); return;
+  }
+  if(b.id==="pvbtn"){ openPreview(); return; }
+  if(b.dataset.dl){ downloadPdf(b); return; }
+  if(b.id==="pvx"){ closePreview(); return; }
 });
+document.addEventListener("keydown",function(e){ if(e.key==="Escape") closePreview(); });
 
+SHEET.injectCss();
 if(st.cls&&st.no) fromRoster();
 render();
 connect();
