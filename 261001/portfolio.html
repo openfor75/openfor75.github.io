@@ -66,6 +66,8 @@ table.l tr.cur{background:var(--accent-soft)}
 #pv .zoomer{transform-origin:top left}
 #pv .page{margin:0 auto 14px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
 #pv .empty{color:#fff;text-align:center;padding:60px 16px;font-size:14px}
+body:not(.edit) .ed{display:none!important}
+body.edit .vw{display:none!important}
 #stage{position:absolute;left:-30000px;top:0;width:210mm}
 #printbox{display:none}
 .prog{height:6px;background:var(--surface-2);border-radius:9px;overflow:hidden;flex:1;min-width:120px;display:none}
@@ -85,44 +87,45 @@ table.l tr.cur{background:var(--accent-soft)}
 <body>
 <div class="wrap">
   <h1 class="t">學習歷程輸出</h1>
-  <p class="sub">每位學生一份 A4、固定 4 頁的 PDF：成績總覽＋照片、個人心得、魔菇任務紀錄、三井任務紀錄。資料直接從雲端讀，同組重複紀錄會自動合併。</p>
+  <p class="sub">每位學生一份 A4、固定 4 頁：<span class="ed">成績總覽＋</span>照片、個人心得、魔菇任務紀錄、三井任務紀錄。資料直接從雲端讀，同組重複紀錄會自動合併。</p>
 
-  <div class="note" id="rule"></div>
+  <div class="note vw"><b>檢視模式</b>　這裡只能看學生的學習成果。成績由負責老師統一評定，所以這裡不顯示分數。</div>
+  <div class="note ed" id="rule"></div>
 
   <div class="bar">
     <button class="on" data-cls="">全部</button>
     <button data-cls="商二甲">商二甲</button>
     <button data-cls="商二乙">商二乙</button>
-    <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;margin-left:6px">
+    <label class="ed" style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;margin-left:6px">
       <input type="checkbox" id="pf">照片分一律給</label>
-    <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600">
+    <label class="ed" style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600">
       <input type="checkbox" id="showsc" checked>PDF 印出分數</label>
     <span style="flex:1"></span>
     <button id="reload">重新讀取</button>
-    <button class="acc" id="zip" disabled>批次下載（ZIP）</button>
-    <div class="prog" id="prog"><i></i></div>
+    <button class="acc ed" id="zip" disabled>批次下載（ZIP）</button>
+    <div class="prog ed" id="prog"><i></i></div>
     <span id="st">連線中⋯</span>
   </div>
 
   <div class="grid">
     <div>
       <div class="card">
-        <h3>小組成績 <small>創意分／GPS 補分在這裡或 score.html 輸入都可以（同一台電腦同一個瀏覽器會共用）</small></h3>
+        <h3><span class="ed">小組成績</span><span class="vw">小組概況</span> <small class="ed">創意分／GPS 補分只存在這台電腦的瀏覽器（和 score.html、grade.html 共用）</small></h3>
         <div class="scroll" style="max-height:34vh"><table class="l"><thead><tr>
-          <th>組別</th><th class="n">任務/85</th><th class="n">創意/10</th><th class="n">GPS/5</th><th class="n">小組/100</th><th class="n">照片</th>
+          <th>組別</th><th class="n ed">任務/85</th><th class="n ed">創意/10</th><th class="n ed">GPS/5</th><th class="n ed">小組/100</th><th class="n">照片</th>
         </tr></thead><tbody id="gt"></tbody></table></div>
       </div>
       <div class="card">
         <h3>學生 <small id="cnt"></small></h3>
         <div class="scroll"><table class="l"><thead><tr>
-          <th>座號 姓名</th><th>組別</th><th class="n">心得字數</th><th class="n">心得/30</th><th class="n">總分</th><th></th>
+          <th>座號 姓名</th><th>組別</th><th class="n">心得字數</th><th class="n ed">心得/30</th><th class="n ed">總分</th><th class="ed"></th>
         </tr></thead><tbody id="tb"><tr><td colspan="6" style="color:var(--ink-3)">讀取中⋯</td></tr></tbody></table></div>
       </div>
     </div>
     <div class="card" style="margin-bottom:0">
       <div class="pvbar"><b id="pvt">預覽</b>
-        <button id="pdf1" disabled>下載這位的 PDF</button>
-        <button id="prt1" disabled>列印／另存 PDF（文字向量）</button></div>
+        <button class="ed" id="pdf1" disabled>下載這位的 PDF</button>
+        <button class="ed" id="prt1" disabled>列印／另存 PDF（文字向量）</button></div>
       <div id="pv"><div class="empty">在左邊點一位學生就會出現預覽</div></div>
     </div>
   </div>
@@ -197,6 +200,9 @@ var ANS={}, PIC={}, G={}, manual={}, PF=false, SHOWSC=true, filt="", cur=null, b
 try{ manual=JSON.parse(localStorage.getItem(MKEY)||"{}")||{}; }catch(e){ manual={}; }
 try{ PF=localStorage.getItem("ylhc-photofree")==="1"; }catch(e){}
 try{ SHOWSC=localStorage.getItem("ylhc-pf-showsc")!=="0"; }catch(e){}
+/* 預設只能看；網址加 ?edit=1 才會出現分數、評分欄位和下載（給負責評分的老師自己用） */
+var EDIT=/[?&]edit=1/.test(location.search);
+if(EDIT) document.body.classList.add("edit"); else SHOWSC=false;
 function saveMan(){ try{ localStorage.setItem(MKEY,JSON.stringify(manual)); }catch(e){} }
 function man(id,f){ return (manual[id]&&+manual[id][f])||0; }
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -307,10 +313,10 @@ function paintGroups(){
     for(var n=1;n<=7;n++){
       var g=grp(c,n), id=g.id;
       h.push('<tr><td>'+esc(c+" 第"+n+"組")+(g.keys.length>1?'<span class="pill">合併 '+g.keys.length+'</span>':'')+(!g.keys.length?'<span class="pill warn">無紀錄</span>':'')+'</td>');
-      h.push('<td class="n">'+g.task+'</td>');
-      h.push('<td class="n"><input class="numin" data-id="'+esc(id)+'" data-f="c" type="number" min="0" max="10" value="'+man(id,"c")+'"></td>');
-      h.push('<td class="n"><input class="numin" data-id="'+esc(id)+'" data-f="g" type="number" min="0" max="5" value="'+man(id,"g")+'"></td>');
-      h.push('<td class="n"><b>'+(g.task+man(id,"c")+man(id,"g"))+'</b></td>');
+      h.push('<td class="n ed">'+g.task+'</td>');
+      if(EDIT) h.push('<td class="n ed"><input class="numin" data-id="'+esc(id)+'" data-f="c" type="number" min="0" max="10" value="'+man(id,"c")+'"></td>');
+      if(EDIT) h.push('<td class="n ed"><input class="numin" data-id="'+esc(id)+'" data-f="g" type="number" min="0" max="5" value="'+man(id,"g")+'"></td>');
+      h.push('<td class="n ed"><b>'+(g.task+man(id,"c")+man(id,"g"))+'</b></td>');
       h.push('<td class="n">'+(g.nreal<g.nq?'<span class="pill warn" title="學生手機上有拍，但沒有傳上雲端">'+g.nreal+'/'+g.nq+'</span>':g.nreal)+'</td></tr>');
     }
   });
@@ -325,8 +331,8 @@ function paintList(){
     else if(D.rs.lb<CFG.REFL.b.min) warn.push('<span class="pill warn">心得不足</span>');
     h.push('<tr class="s'+(cur===k?" cur":"")+'" data-k="'+esc(k)+'"><td>'+esc(D.s.no+"　"+D.s.name)+warn.join("")+'</td>');
     h.push('<td>'+esc((filt?"":D.cls.slice(-1)+" ")+"第"+D.s.grp+"組")+'</td>');
-    h.push('<td class="n">'+D.rs.lb+'</td><td class="n">'+D.rs.sum+'</td><td class="n"><b>'+D.fin+'</b></td>');
-    h.push('<td class="n"><button class="dl" data-pdf="'+esc(k)+'">PDF</button></td></tr>');
+    h.push('<td class="n">'+D.rs.lb+'</td><td class="n ed">'+D.rs.sum+'</td><td class="n ed"><b>'+D.fin+'</b></td>');
+    h.push('<td class="n ed"><button class="dl" data-pdf="'+esc(k)+'">PDF</button></td></tr>');
   });
   $("tb").innerHTML=h.join("")||'<tr><td colspan="6">沒有資料</td></tr>';
   $("cnt").textContent=L.length+" 人，"+wrote+" 人有寫心得";
@@ -337,7 +343,7 @@ async function preview(k){
   var D=find(k); if(!D) return;
   cur=k;
   document.querySelectorAll("tr.s").forEach(function(tr){ tr.classList.toggle("cur",tr.dataset.k===k); });
-  $("pvt").textContent=D.cls+"　"+D.s.no+"　"+D.s.name+"　個人總分 "+D.fin;
+  $("pvt").textContent=D.cls+"　"+D.s.no+"　"+D.s.name+(EDIT?"　個人總分 "+D.fin:"");
   $("pdf1").disabled=false; $("prt1").disabled=false;
   var pv=$("pv");
   pv.innerHTML='<div class="zoomer">'+pagesHTML(D).join("")+'</div>';
@@ -406,7 +412,7 @@ document.addEventListener("change",function(e){
   if(e.target.id==="pf"){ PF=e.target.checked; try{ localStorage.setItem("ylhc-photofree",PF?"1":"0"); }catch(x){} buildGroups(); paint(); }
   if(e.target.id==="showsc"){ SHOWSC=e.target.checked; try{ localStorage.setItem("ylhc-pf-showsc",SHOWSC?"1":"0"); }catch(x){} if(cur) preview(cur); }
   var el=e.target;
-  if(el.classList&&el.classList.contains("numin")){
+  if(EDIT&&el.classList&&el.classList.contains("numin")){
     var mx=el.dataset.f==="c"?10:5, v=Math.max(0,Math.min(mx,+el.value||0));
     el.value=v; manual[el.dataset.id]=manual[el.dataset.id]||{}; manual[el.dataset.id][el.dataset.f]=v; saveMan(); paint();
   }
