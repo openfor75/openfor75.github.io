@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>真實成績重算</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --paper:#fbfaf7;--surface:#fff;--surface-2:#f2efe9;--line:#ddd7cc;
+  --ink:#15181d;--ink-2:#4a5059;--ink-3:#7b828c;
+  --accent:#dd4f1f;--accent-soft:#fdeee7;--ok:#1d6b45;--ok-soft:#e1f0e8;
+  --gold:#9a6c00;--gold-soft:#fbf1d8;--sea:#14566b;--sea-soft:#e4eff3;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --shadow:0 1px 2px rgba(21,24,29,.06),0 6px 20px rgba(21,24,29,.08);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--ok:#6fc79b;--ok-soft:#16281f;
+  --gold:#e5b458;--gold-soft:#2e2718;--sea:#79b9cf;--sea-soft:#182a31;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 6px 20px rgba(0,0,0,.4);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:23px;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--ink-2);font-size:14.5px;margin:0 0 18px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 16px}
+button{font-family:inherit;font-size:14.5px;font-weight:600;padding:9px 14px;border-radius:10px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.on,button.go{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;font-size:14.5px;vertical-align:top}
+th{background:var(--surface-2);font-size:12px;font-weight:600;color:var(--ink-3);letter-spacing:.06em;white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--mono);white-space:nowrap}
+tr.g{cursor:pointer}
+tr.g:hover{background:var(--surface-2)}
+.who b{font-size:15.5px}
+.who small{display:block;color:var(--ink-3);font-size:12px;line-height:1.5;margin-top:1px}
+.pill{display:inline-block;font-size:11px;font-family:var(--mono);padding:1px 7px;border-radius:20px;
+  background:var(--surface-2);border:1px solid var(--line);color:var(--ink-3);margin-left:6px}
+.pill.ok{background:var(--ok-soft);border-color:transparent;color:var(--ok)}
+.pill.warn{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.pill.gold{background:var(--gold-soft);border-color:transparent;color:var(--gold)}
+.numin{width:58px;font-family:var(--mono);font-size:14px;padding:5px 7px;border-radius:8px;
+  border:1px solid var(--line);background:var(--surface-2);color:var(--ink);text-align:center}
+.det td{background:var(--surface-2)}
+.qa{border-left:3px solid var(--line);padding:2px 0 2px 11px;margin:0 0 9px}
+.qa .q{font-size:12px;color:var(--ink-3);font-family:var(--mono)}
+.qa .a{font-size:14px;white-space:pre-wrap;word-break:break-word}
+.qa.full{border-left-color:var(--ok)}
+.qa.part{border-left-color:var(--accent)}
+h4{margin:14px 0 7px;font-size:13px;color:var(--ink-3);letter-spacing:.08em;font-weight:700}
+h4:first-child{margin-top:2px}
+.vs{display:flex;gap:14px;flex-wrap:wrap}
+.vs>div{flex:1 1 220px;background:var(--surface-2);border-radius:12px;padding:13px 15px}
+.vs b{display:block;font-size:30px;font-family:var(--mono);line-height:1.1}
+.vs span{font-size:12.5px;color:var(--ink-3);letter-spacing:.06em}
+.note{font-size:13.5px;color:var(--ink-2);background:var(--sea-soft);border-radius:12px;padding:12px 15px;margin-bottom:16px}
+.note b{color:var(--sea)}
+.shots{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:9px;margin:4px 0 6px}
+.shots figure{margin:0}
+.shots img{width:100%;border-radius:9px;border:1px solid var(--line);display:block}
+.shots figcaption{font-size:11px;color:var(--ink-3);margin-top:3px;line-height:1.4}
+#st{font-size:13.5px;color:var(--ink-3);font-family:var(--mono)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>真實成績重算</h1>
+<p class="sub">不看壞掉的「總分」欄，直接從每一組實際寫下的答案重新算一次。同班同組的重複紀錄會自動合併。</p>
+
+<div class="note">
+<b>計分方式</b>　魔菇五題每題 8 分（填滿 4＋字數夠 4）共 40；三井取<b>得分最高的四關</b>每關 10 分（照片 3＋填滿 4＋字數夠 3）共 40；商業術語最多 5 分；加碼關另計最多 5 分。<br>
+<b>GPS 5 分因座標設定錯誤全組無法取得，已從計分中移除</b>，請用右邊「GPS補分」欄人工給分。
+</div>
+
+<div class="bar">
+  <button class="on" data-cls="">全部</button>
+  <button data-cls="商二甲">商二甲</button>
+  <button data-cls="商二乙">商二乙</button>
+  <span style="flex:1"></span>
+  <label style="display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;
+    background:var(--gold-soft);color:var(--gold);padding:8px 13px;border-radius:10px;cursor:pointer">
+    <input type="checkbox" id="pf" style="width:17px;height:17px;accent-color:var(--gold)">照片分一律給（系統故障補償）</label>
+  <button id="bCsv">匯出成績 CSV</button>
+  <button id="bRefl">匯出心得 CSV</button>
+  <span id="st">連線中⋯</span>
+</div>
+
+<div class="card" id="vs"></div>
+
+<div class="card">
+<table>
+<thead><tr>
+<th class="n">#</th><th>班級／組別</th>
+<th class="n">魔菇<br>/40</th><th class="n">三井<br>/40</th><th class="n">術語<br>/5</th>
+<th class="n">任務<br>/85</th><th class="n">加碼</th>
+<th class="n">創意<br>/10</th><th class="n">GPS<br>補分</th><th class="n">總評</th>
+</tr></thead>
+<tbody id="tb"><tr><td colspan="10" style="color:var(--ink-3)">讀取中⋯</td></tr></tbody>
+</table>
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+<script>
+/* ============================================================
+   學生名冊　students.js　　115-1 職場體驗（115/10/01）
+   ============================================================
+   姓名：依「115年10月1日商經科職場體驗　保險名單」（正式文件）
+   組別：依「114學年度第1學期校外參觀分組名單」（導師簽章版）
+   每班 7 組。商二乙 10 號 蕭禾佳已取消，未列入。
+
+   格式： { no:"座號", name:"姓名", grp:組別, lead:1 }
+          lead:1 ＝ 該組組長（分組名單上每組第一位），程式不會用到。
+
+   學生在手機上只要：選班級 → 選自己的座號 → 輸入通行碼。
+   組別和組員名單會自動帶出來，全程不用打字。
+   ============================================================ */
+
+var STUDENTS = {
+
+  "商二甲": [
+    { no:"01", name:"池安筳", grp:4 },
+    { no:"02", name:"李承昱", grp:2, lead:1 },
+    { no:"03", name:"李諺承", grp:1 },
+    { no:"04", name:"林庠宇", grp:1, lead:1 },
+    { no:"05", name:"林彥岑", grp:3 },
+    { no:"06", name:"林瑞勝", grp:5, lead:1 },
+    { no:"07", name:"張宏陽", grp:7, lead:1 },
+    { no:"08", name:"許哲瑀", grp:7 },
+    { no:"09", name:"陳泊均", grp:5 },
+    { no:"10", name:"黃士楷", grp:6 },
+    { no:"11", name:"楊冠程", grp:4 },
+    { no:"12", name:"潘尚育", grp:3 },
+    { no:"13", name:"蔣昕佑", grp:2 },
+    { no:"14", name:"王怡璇", grp:3 },
+    { no:"15", name:"王姵媞", grp:6, lead:1 },
+    { no:"16", name:"林玉秝", grp:4, lead:1 },
+    { no:"17", name:"林宥靜", grp:2 },
+    { no:"18", name:"林瑄婕", grp:7 },
+    { no:"19", name:"施律羽", grp:5 },
+    { no:"20", name:"施霈樺", grp:1 },
+    { no:"21", name:"洪依晨", grp:7 },
+    { no:"22", name:"胡芸甄", grp:2 },
+    { no:"23", name:"徐采瑄", grp:4 },
+    { no:"24", name:"許筑珺", grp:6 },
+    { no:"25", name:"陳宣蓉", grp:1 },
+    { no:"26", name:"陳浿綺", grp:5 },
+    { no:"27", name:"曾意晴", grp:5 },
+    { no:"28", name:"黃沛恩", grp:6 },
+    { no:"29", name:"黃靖雯", grp:4 },
+    { no:"30", name:"詹令憶", grp:6 },
+    { no:"31", name:"劉芯彤", grp:2 },
+    { no:"32", name:"鄭沛菉", grp:3, lead:1 },
+    { no:"33", name:"簡彤恩", grp:3 },
+    { no:"34", name:"王姿雅", grp:1 }
+  ],
+
+  "商二乙": [
+    { no:"01", name:"李利明", grp:3 },
+    { no:"02", name:"林尚勳", grp:5 },
+    { no:"04", name:"張鼎", grp:3 },
+    { no:"05", name:"陳科菉", grp:7, lead:1 },
+    { no:"06", name:"陳駿璿", grp:2 },
+    { no:"07", name:"游凱崴", grp:4 },
+    { no:"08", name:"黃新儒", grp:4 },
+    { no:"09", name:"楊垠枰", grp:5 },
+    { no:"11", name:"蕭嘉成", grp:6 },
+    { no:"12", name:"賴宥玗", grp:1, lead:1 },
+    { no:"13", name:"尤鈺文", grp:6, lead:1 },
+    { no:"14", name:"吳亞萱", grp:5 },
+    { no:"15", name:"吳承臻", grp:6 },
+    { no:"16", name:"林睿湘", grp:6 },
+    { no:"17", name:"邱以蓁", grp:3 },
+    { no:"18", name:"范湘甯", grp:4 },
+    { no:"19", name:"唐嘉婕", grp:1 },
+    { no:"20", name:"康鈺欣", grp:5, lead:1 },
+    { no:"21", name:"張心瑜", grp:5 },
+    { no:"22", name:"許巧潔", grp:2, lead:1 },
+    { no:"23", name:"郭采璇", grp:3, lead:1 },
+    { no:"24", name:"陳芊妤", grp:7 },
+    { no:"25", name:"游忻璇", grp:1 },
+    { no:"26", name:"黃纁慧", grp:2 },
+    { no:"27", name:"劉佳昕", grp:7 },
+    { no:"28", name:"蔡依恬", grp:7 },
+    { no:"30", name:"鄭晴曼", grp:6 },
+    { no:"31", name:"蕭予晴", grp:2 },
+    { no:"32", name:"賴允菡", grp:4, lead:1 },
+    { no:"33", name:"謝恣菱", grp:4 },
+    { no:"34", name:"蘇苡妮", grp:7 },
+    { no:"36", name:"林庭伃", grp:3 }
+  ]
+
+};
+var QDEF={"m1": [{"k": "a", "min": 40}], "m2": [{"k": "a"}, {"k": "b"}, {"k": "c"}], "m3": [{"k": "a"}, {"k": "b", "min": 30}], "m4": [{"k": "a", "min": 50}], "m5": [{"k": "a", "min": 40}, {"k": "b", "min": 30}], "q1": [{"k": "a"}, {"k": "b", "min": 30}, {"k": "c"}, {"k": "d", "min": 30}], "q2": [{"k": "a"}, {"k": "b"}, {"k": "c"}, {"k": "d"}, {"k": "e", "min": 30}], "q3": [{"k": "a"}, {"k": "b"}, {"k": "c", "min": 40}], "q4": [{"k": "a", "min": 30}, {"k": "b", "min": 40}], "q5": [{"k": "a1"}, {"k": "a2"}, {"k": "a3"}, {"k": "b1"}, {"k": "b2"}, {"k": "b3"}, {"k": "c1"}, {"k": "c2"}, {"k": "c3"}], "q6": [{"k": "a"}, {"k": "b"}, {"k": "c"}, {"k": "d", "min": 30}], "q7": [{"k": "a"}, {"k": "b", "min": 30}, {"k": "c", "min": 40}], "q8": [{"k": "a"}, {"k": "b"}, {"k": "c"}, {"k": "d"}], "x1": [{"k": "a"}, {"k": "b", "min": 40}, {"k": "c", "min": 40}, {"k": "d", "min": 40}, {"k": "e", "min": 30}]};
+var TERMS=["4P", "STP", "動線", "坪效", "客單價", "目標客群", "品牌定位", "市場區隔", "差異化", "陳列", "客層", "人流", "定價", "促銷", "通路", "體驗行銷", "集客", "附加價值", "產業升級"];
+var TITLE={"m1": "魔菇①　它到底在賣什麼", "m2": "魔菇②　簡報裡的三個數字", "m3": "魔菇③　六星級廠區裡的技術", "m4": "魔菇④　為什麼要開觀光農場", "m5": "魔菇⑤　250 元買到什麼", "q1": "三井①　黃金店面爭奪戰", "q2": "三井②　折扣的數學", "q3": "三井③　一期 vs 二期", "q4": "三井④　海景值多少錢", "q5": "三井⑤　品牌偵探", "q6": "三井⑥　動線實驗", "q7": "三井⑦　為什麼有遊樂設施", "q8": "三井⑧　最冷清的那一家", "x1": "★加碼　總經理的位子"};
+
+var FB_CONFIG={apiKey:"AIzaSyAmEGKtYxq7ao9G0IWdHrmWeThdshIIALI",
+  authDomain:"moguoutlet.firebaseapp.com",
+  databaseURL:"https://moguoutlet-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"moguoutlet"};
+var EVENT_ID="115-1-1001", MKEY="ylhc-score-manual";
+</script>
+<script>
+(function(){
+"use strict";
+var ansMap={},picMap={},boardMap={},filt="",openKey=null,manual={};
+var PHOTOFREE=false;
+try{ PHOTOFREE=localStorage.getItem("ylhc-photofree")==="1"; }catch(e){}
+try{ manual=JSON.parse(localStorage.getItem(MKEY)||"{}")||{}; }catch(e){ manual={}; }
+function saveMan(){ try{ localStorage.setItem(MKEY,JSON.stringify(manual)); }catch(e){} }
+function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function man(id,f){ return (manual[id]&&+manual[id][f])||0; }
+/* 「第3組」「第 3 組」「3」都當同一組 */
+function ng(s){ var m=String(s||"").match(/\d+/); return m?"第"+(+m[0])+"組":String(s||"").trim(); }
+
+/* ---------- 合併同班同組 ---------- */
+function groups(){
+  var by={};
+  for(var k in ansMap){
+    var A=ansMap[k]||{};
+    var cls=String(A.cls||"").trim(), grp=ng(A.grp);
+    if(!cls||!grp) continue;
+    var id=cls+"|"+grp;
+    if(!by[id]) by[id]={id:id,cls:cls,grp:grp,keys:[],d:{},ph:{},real:{},mem:"",at:0};
+    var g=by[id];
+    g.keys.push(k);
+    if((A.mem||"").length>g.mem.length) g.mem=A.mem||"";
+    if((+A.at||0)>g.at) g.at=+A.at||0;
+    var D=A.d||{};
+    for(var q in D){
+      g.d[q]=g.d[q]||{};
+      for(var f in D[q]){
+        var t=String(D[q][f]==null?"":D[q][f]);
+        if(t.trim().length>String(g.d[q][f]||"").trim().length) g.d[q][f]=t;   /* 取較完整的那一份 */
+      }
+    }
+    String(A.ph||"").split(",").filter(Boolean).forEach(function(x){ g.ph[x]=1; });
+    var P=picMap[k]||{};
+    for(var z in P) if(z.indexOf("sheet")!==0){ g.ph[z]=1; g.real[z]=1; }
+  }
+  var out=[];
+  for(var id in by){ var g=by[id]; out.push(score(g)); }
+  return out;
+}
+
+/* ---------- 重算 ---------- */
+function score(g){
+  function val(q,f){ return String(((g.d[q]||{})[f])||"").trim(); }
+  function sc(qid){
+    var fs=QDEF[qid]; if(!fs) return 0;
+    if(qid.charAt(0)==="x"){
+      var s=0;
+      fs.forEach(function(f){ var t=val(qid,f.k); if(f.min? t.length>=f.min : t.length>0) s+=1; });
+      return Math.min(5,s);
+    }
+    var filled=fs.every(function(f){ return val(qid,f.k).length>0; });
+    var mins=fs.filter(function(f){ return f.min; });
+    var longEnough=mins.length?mins.every(function(f){ return val(qid,f.k).length>=f.min; }):filled;
+    var s2=0;
+    if(qid.charAt(0)==="m"){ if(filled)s2+=4; if(longEnough)s2+=4; }
+    else { if(PHOTOFREE||g.ph[qid])s2+=3; if(filled)s2+=4; if(longEnough)s2+=3; }
+    return s2;
+  }
+  g.sc=sc;
+  var mo=0, mdet=[];
+  ["m1","m2","m3","m4","m5"].forEach(function(id){ var s=sc(id); mo+=s; mdet.push({id:id,s:s,max:8}); });
+  var qs=[];
+  for(var z in g.d) if(z.charAt(0)==="q") qs.push({id:z,s:sc(z),max:10});
+  qs.sort(function(a,b){ return b.s-a.s || a.id.localeCompare(b.id); });
+  var top=qs.slice(0,4), mi=0;
+  top.forEach(function(x){ mi+=x.s; });
+  var bo=g.d.x1?sc("x1"):0;
+  var txt="";
+  for(var q in g.d) for(var f in g.d[q]) txt+=String(g.d[q][f]||"")+" ";
+  var te=Math.min(5,TERMS.filter(function(w){ return txt.indexOf(w)>=0; }).length);
+  g.mo=mo; g.mi=mi; g.te=te; g.bo=bo;
+  g.mdet=mdet; g.qdet=qs; g.qtop=top.map(function(x){return x.id;});
+  g.task=mo+mi+te;
+  g.terms=TERMS.filter(function(w){ return txt.indexOf(w)>=0; });
+  g.nphoto=Object.keys(g.ph).length;
+  g.nq=Object.keys(g.ph).filter(function(z){ return z.charAt(0)==="q"; }).length;
+  g.nreal=Object.keys(g.real).filter(function(z){ return z.charAt(0)==="q"; }).length;
+  return g;
+}
+function grand(g){ return g.task + man(g.id,"c") + man(g.id,"g"); }
+
+function rows(){
+  var a=groups();
+  if(filt) a=a.filter(function(g){ return g.cls===filt; });
+  a.sort(function(x,y){ return grand(y)-grand(x); });
+  return a;
+}
+
+/* ---------- 畫面 ---------- */
+function paint(){
+  var a=rows(), h=[];
+  if(!a.length){ document.getElementById("tb").innerHTML='<tr><td colspan="10" style="color:var(--ink-3)">沒有資料</td></tr>'; return; }
+  a.forEach(function(g,i){
+    var dup=g.keys.length>1;
+    h.push('<tr class="g" data-id="'+esc(g.id)+'">');
+    h.push('<td class="n">'+(i+1)+'</td>');
+    h.push('<td class="who"><b>'+esc(g.cls)+'　'+esc(g.grp)+'</b>'+
+      (dup?'<span class="pill warn">合併 '+g.keys.length+' 筆</span>':'')+
+      (g.qtop.length>=4?'<span class="pill ok">四關完成</span>':'<span class="pill">三井 '+g.qtop.length+' 關</span>')+
+      (g.nphoto?'<span class="pill'+(g.nreal<g.nq?' warn':'')+'">照片 '+g.nreal+(g.nreal<g.nq?'／標記 '+g.nq+'（有照片沒傳上來）':'')+'</span>':'')+
+      (g.bo?'<span class="pill gold">★加碼 '+g.bo+'</span>':'')+
+      '<small>'+esc(g.mem||"（未填組員）")+'</small></td>');
+    h.push('<td class="n">'+g.mo+'</td><td class="n">'+g.mi+'</td><td class="n">'+g.te+'</td>');
+    h.push('<td class="n"><b>'+g.task+'</b></td>');
+    h.push('<td class="n">'+(g.bo?'<b style="color:var(--gold)">'+g.bo+'</b>':'—')+'</td>');
+    h.push('<td class="n"><input class="numin" data-id="'+esc(g.id)+'" data-f="c" type="number" min="0" max="10" value="'+man(g.id,"c")+'"></td>');
+    h.push('<td class="n"><input class="numin" data-id="'+esc(g.id)+'" data-f="g" type="number" min="0" max="5" value="'+man(g.id,"g")+'"></td>');
+    h.push('<td class="n"><b style="font-size:16px">'+grand(g)+'</b></td>');
+    h.push('</tr>');
+    if(openKey===g.id) h.push('<tr class="det"><td colspan="10">'+detail(g)+'</td></tr>');
+  });
+  document.getElementById("tb").innerHTML=h.join("");
+  paintVS(groups());
+}
+function qa(g,id,inTop){
+  var row=g.d[id], fs=QDEF[id]||[], s=g.sc(id), mx=id.charAt(0)==="m"?8:(id.charAt(0)==="x"?5:10);
+  var cls=s===mx?"full":(s>0?"part":"");
+  var h=['<div class="qa '+cls+'"><div class="q">'+esc(TITLE[id]||id)+'　'+s+' / '+mx+
+         (g.ph[id]?'　📷':(PHOTOFREE&&id.charAt(0)==="q"?'　📷補':''))+
+         (inTop===false?'　（未計入，只取最高四關）':'')+'</div>'];
+  if(!row){ h.push('<div class="a" style="color:var(--ink-3)">（未作答）</div></div>'); return h.join(""); }
+  fs.forEach(function(f){
+    var t=String(row[f.k]||"");
+    if(t.trim()) h.push('<div class="a">'+esc(t)+'</div>');
+  });
+  h.push('</div>');
+  return h.join("");
+}
+function detail(g){
+  var h=[];
+  h.push('<h4>魔菇部落　'+g.mo+' / 40</h4>');
+  ["m1","m2","m3","m4","m5"].forEach(function(id){ h.push(qa(g,id)); });
+  h.push('<h4>三井 OUTLET　'+g.mi+' / 40　（實際作答 '+g.qdet.length+' 關，取最高四關計分）</h4>');
+  if(!g.qdet.length) h.push('<div class="qa"><div class="a" style="color:var(--ink-3)">這一組沒有三井的作答紀錄。</div></div>');
+  g.qdet.forEach(function(x,i){ h.push(qa(g,x.id,i<4)); });
+  if(g.d.x1){ h.push('<h4>★ 加碼關　'+g.bo+' / 5</h4>'); h.push(qa(g,"x1")); }
+  var pics=[];
+  g.keys.forEach(function(k){ var P=picMap[k]||{}; for(var z in P) if(z.indexOf("sheet")!==0) pics.push({id:z,src:P[z]}); });
+  if(pics.length){
+    h.push('<h4>現場照片　'+pics.length+' 張</h4><div class="shots">');
+    pics.forEach(function(p){ h.push('<figure><img src="'+p.src+'" alt=""><figcaption>'+esc(TITLE[p.id]||p.id)+'</figcaption></figure>'); });
+    h.push('</div>');
+  }
+  h.push('<h4>抓到的商業術語　'+g.te+' / 5</h4>');
+  h.push('<div class="a" style="font-size:13.5px">'+(g.terms.length?esc(g.terms.join("、")):'<span style="color:var(--ink-3)">（沒有出現關鍵字）</span>')+'</div>');
+  return h.join("");
+}
+function paintVS(all){
+  var by={};
+  all.forEach(function(g){ (by[g.cls]=by[g.cls]||[]).push(grand(g)); });
+  var h=['<div class="vs" style="padding:15px">'];
+  Object.keys(by).sort().forEach(function(c){
+    var arr=by[c], sum=arr.reduce(function(a,b){return a+b;},0);
+    h.push('<div><span>'+esc(c)+'　班級平均</span><b>'+(sum/arr.length).toFixed(1)+'</b>'+
+           '<span>'+arr.length+' 組　總分 '+sum+'</span></div>');
+  });
+  h.push('</div>');
+  document.getElementById("vs").innerHTML=h.join("");
+}
+
+/* ---------- 匯出 ---------- */
+function dl(out,name){
+  var b=new Blob(["\ufeff"+out],{type:"text/csv;charset=utf-8"});
+  var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name;
+  a.style.display="none"; document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{a.remove();URL.revokeObjectURL(a.href);}catch(e){} },1500);
+}
+function q(c){ return '"'+String(c==null?"":c).replace(/"/g,'""')+'"'; }
+function csv(){
+  var ids=["m1","m2","m3","m4","m5","q1","q2","q3","q4","q5","q6","q7","q8","x1"];
+  var head=["班級","組別","組員","魔菇","三井","術語","任務小計","加碼","創意","GPS補分","總評","計分的四關","術語清單","照片數","合併筆數"];
+  ids.forEach(function(id){ head.push(TITLE[id]||id); });
+  var L=[head];
+  rows().forEach(function(g){
+    var r=[g.cls,g.grp,g.mem,g.mo,g.mi,g.te,g.task,g.bo,man(g.id,"c"),man(g.id,"g"),grand(g),
+           g.qtop.join("、"),g.terms.join("、"),g.nphoto,g.keys.length];
+    ids.forEach(function(id){
+      var row=g.d[id];
+      r.push(row?(QDEF[id]||[]).map(function(f){return String(row[f.k]||"");}).filter(Boolean).join(" ／ "):"");
+    });
+    L.push(r);
+  });
+  dl(L.map(function(x){return x.map(q).join(",");}).join("\r\n"),"職場體驗真實成績_"+EVENT_ID+".csv");
+}
+function csvRefl(){
+  var head=["班級","座號","姓名","組別","印象最深的一件事","參訪心得","給活動的建議","心得字數","上傳時間"];
+  /* 同一個學生可能在好幾筆紀錄裡都有心得（當天＋補強），合併成一列：每格取最新且非空的 */
+  var L=[head], seen={}, n=0, per={};
+  for(var k in ansMap){
+    var A=ansMap[k]||{}, R=A.rf||{};
+    for(var id in R){
+      var x=R[id]||{}, sid=String(A.cls||"").trim()+"|"+String(x.no||x.nm||id);
+      (per[sid]=per[sid]||{cls:String(A.cls||"").trim(),grp:ng(A.grp),list:[]}).list.push(x);
+    }
+  }
+  for(var sid in per){
+    var P=per[sid]; P.list.sort(function(a,b){ return (+b.at||0)-(+a.at||0); });
+    var o={};
+    ["a","b","c","no","nm"].forEach(function(z){
+      o[z]="";
+      for(var i=0;i<P.list.length;i++) if(String(P.list[i][z]||"").trim()){ o[z]=String(P.list[i][z]); break; }
+    });
+    if(!o.a.trim()&&!o.b.trim()&&!o.c.trim()) continue;
+    seen[P.cls+"|"+o.no]=1; n++;
+    var at=+P.list[0].at||0;
+    L.push([P.cls,o.no,o.nm,P.grp,o.a,o.b,o.c,o.b.replace(/\s/g,"").length,
+            at?new Date(at).toLocaleString("zh-TW"):""]);
+  }
+  for(var c in STUDENTS) STUDENTS[c].forEach(function(s){
+    if(!seen[c+"|"+String(s.no)]) L.push([c,s.no,s.name,"第"+s.grp+"組","","","",0,"未上傳"]);
+  });
+  dl(L.map(function(x){return x.map(q).join(",");}).join("\r\n"),"職場體驗學習心得_"+EVENT_ID+".csv");
+  var e=document.getElementById("bRefl"), o=e.textContent;
+  e.textContent="已匯出 "+n+" 份"; setTimeout(function(){ e.textContent=o; },2400);
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener("click",function(e){
+  var b=e.target.closest("button");
+  if(b&&b.dataset.cls!==undefined){
+    filt=b.dataset.cls;
+    document.querySelectorAll("[data-cls]").forEach(function(x){ x.classList.toggle("on",x===b); });
+    paint(); return;
+  }
+  if(b&&b.id==="bCsv"){ csv(); return; }
+  if(e.target&&e.target.id==="pf"){
+    PHOTOFREE=!!e.target.checked;
+    try{ localStorage.setItem("ylhc-photofree",PHOTOFREE?"1":"0"); }catch(x){}
+    paint(); return;
+  }
+  if(b&&b.id==="bRefl"){ csvRefl(); return; }
+  var tr=e.target.closest("tr.g");
+  if(tr&&!e.target.closest("input")){
+    openKey=(openKey===tr.dataset.id)?null:tr.dataset.id;
+    paint();
+  }
+},false);
+document.addEventListener("input",function(e){
+  var el=e.target;
+  if(!el.classList||!el.classList.contains("numin")) return;
+  var id=el.dataset.id, f=el.dataset.f;
+  var mx=f==="c"?10:5, v=Math.max(0,Math.min(mx,+el.value||0));
+  manual[id]=manual[id]||{}; manual[id][f]=v; saveMan();
+  var tr=el.closest("tr"), cell=tr&&tr.lastElementChild;
+  var g=groups().filter(function(x){return x.id===id;})[0];
+  if(cell&&g) cell.innerHTML='<b style="font-size:16px">'+grand(g)+'</b>';
+  paintVS(groups());
+});
+
+/* ---------- 連線（只讀） ---------- */
+var st=document.getElementById("st");
+try{
+  firebase.initializeApp(FB_CONFIG);
+  var db=firebase.database();
+  var got=0;
+  function ready(){ got++; st.textContent="已讀取　"+Object.keys(ansMap).length+" 筆紀錄";
+    var cb=document.getElementById("pf"); if(cb) cb.checked=PHOTOFREE;
+    paint(); }
+  db.ref("e/"+EVENT_ID+"/ans").on("value",function(s){ ansMap=s.val()||{}; ready(); });
+  db.ref("e/"+EVENT_ID+"/pic").on("value",function(s){ picMap=s.val()||{}; ready(); });
+}catch(e){ st.textContent="連線失敗："+e.message; }
+})();
+</script>
+</body>
+</html>
