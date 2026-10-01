@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>創意分評分</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --paper:#fbfaf7;--surface:#fff;--surface-2:#f2efe9;--line:#ddd7cc;
+  --ink:#15181d;--ink-2:#4a5059;--ink-3:#7b828c;
+  --accent:#dd4f1f;--accent-soft:#fdeee7;--ok:#1d6b45;--ok-soft:#e1f0e8;
+  --gold:#9a6c00;--gold-soft:#fbf1d8;--sea:#14566b;--sea-soft:#e4eff3;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:ui-monospace,Consolas,monospace;
+  --shadow:0 1px 2px rgba(21,24,29,.06),0 6px 20px rgba(21,24,29,.08);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--ok:#6fc79b;--ok-soft:#16281f;
+  --gold:#e5b458;--gold-soft:#2e2718;--sea:#79b9cf;--sea-soft:#182a31;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 6px 20px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--ok:#6fc79b;--ok-soft:#16281f;
+  --gold:#e5b458;--gold-soft:#2e2718;--sea:#79b9cf;--sea-soft:#182a31;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.7}
+button{font-family:inherit;cursor:pointer}
+
+/* 頂部 */
+header{position:sticky;top:0;z-index:20;background:var(--ink);color:var(--paper);box-shadow:var(--shadow)}
+header .in{max-width:1280px;margin:0 auto;padding:10px 16px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+header h1{margin:0;font-size:18px;font-weight:900;white-space:nowrap}
+.prog{flex:1;min-width:180px;display:flex;align-items:center;gap:10px;font-size:13.5px}
+.prog .bar{flex:1;height:8px;border-radius:9px;background:rgba(255,255,255,.18);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:#6fc79b;transition:width .3s}
+header .tools{display:flex;gap:6px}
+header .tools button,header .tools a{font-size:13px;font-weight:600;padding:6px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.25);
+  background:transparent;color:var(--paper);text-decoration:none}
+.chips{max-width:1280px;margin:0 auto;padding:0 16px 10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chips span{font-size:12px;opacity:.6;margin:0 2px 0 8px}
+.chips span:first-child{margin-left:0}
+.chip{font-size:13px;font-weight:700;padding:3px 10px;border-radius:99px;border:1.5px solid rgba(255,255,255,.3);
+  background:transparent;color:var(--paper);min-width:44px}
+.chip.done{background:#6fc79b;border-color:#6fc79b;color:#14161a}
+.chip.cur{outline:2.5px solid #ffb38a;outline-offset:1px}
+
+.wrap{max-width:1280px;margin:0 auto;padding:18px 16px 80px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:20px;align-items:start}
+@media (max-width:900px){.wrap{grid-template-columns:1fr}.side{position:static!important}}
+
+/* 左：答案 */
+.ghead h2{margin:0;font-size:26px;font-weight:900}
+.ghead p{margin:2px 0 0;color:var(--ink-2);font-size:14.5px}
+.ghead .ctx{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tag{font-size:12.5px;padding:2px 10px;border-radius:99px;background:var(--surface-2);color:var(--ink-2)}
+.tag b{color:var(--ink)}
+.tag.gold{background:var(--gold-soft);color:var(--gold)}
+h3.sec{font-size:14px;color:var(--ink-3);letter-spacing:.08em;margin:24px 0 10px;font-weight:700}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:var(--shadow)}
+.q .qt{font-weight:900;font-size:16.5px}
+.q .qt i{font-style:normal;color:var(--accent);margin-right:6px}
+.q .mi{font-size:13px;color:var(--ink-3);margin:1px 0 8px;line-height:1.55}
+.q .row{display:flex;gap:14px;align-items:flex-start}
+.q .tx{flex:1;min-width:0}
+.q .an{margin:0 0 4px;word-break:break-word}
+.q .an .lb{display:inline-block;font-size:12.5px;font-weight:700;color:var(--sea);margin-right:8px}
+.q .none{color:var(--ink-3)}
+.q img{flex:none;width:200px;max-width:42%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:zoom-in}
+@media (max-width:560px){.q .row{flex-direction:column}.q img{width:100%;max-width:100%}}
+mark{background:var(--gold-soft);color:var(--gold);font-weight:700;padding:0 2px;border-radius:3px}
+details.more summary{cursor:pointer;color:var(--ink-3);font-size:14px;margin:6px 0 10px}
+
+/* 右：評分 */
+.side{position:sticky;top:120px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:16px}
+.total{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:10px;margin-bottom:6px}
+.total span{font-size:14px;color:var(--ink-2);font-weight:700}
+.total b{font-size:42px;font-weight:900;line-height:1}
+.total b small{font-size:16px;color:var(--ink-3);font-weight:500}
+.crit{margin:14px 0 4px}
+.crit .h{display:flex;justify-content:space-between;font-weight:700;font-size:15px}
+.crit .h small{color:var(--ink-3);font-weight:500;font-size:12.5px}
+.crit .ask{font-size:12.5px;color:var(--ink-3);margin:0 0 6px;line-height:1.5}
+.lv{display:flex;gap:5px}
+.lv button{flex:1;font-size:17px;font-weight:900;padding:8px 0;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink-2)}
+.lv button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.desc{font-size:13px;min-height:2.6em;margin-top:5px;padding:5px 9px;border-radius:8px;background:var(--surface-2);color:var(--ink-2);line-height:1.5}
+.desc.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.gps{display:flex;align-items:center;gap:8px;margin-top:16px;padding-top:12px;border-top:1px dashed var(--line);font-size:14px}
+.gps span{flex:1;color:var(--ink-2)}
+.gps span small{display:block;font-size:12px;color:var(--ink-3)}
+.step{display:flex;align-items:center;gap:4px}
+.step button{width:32px;height:32px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink);font-size:18px;font-weight:700}
+.step b{width:28px;text-align:center;font-size:18px}
+textarea{width:100%;margin-top:12px;font-family:inherit;font-size:14px;min-height:62px;padding:8px 10px;border-radius:10px;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink);resize:vertical}
+.nav{display:flex;gap:8px;margin-top:12px}
+.nav button{font-size:15px;font-weight:700;padding:12px;border-radius:12px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
+.nav button.next{flex:1;background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.saved{font-size:12.5px;color:var(--ok);text-align:center;margin-top:8px;min-height:1.4em}
+.hint{font-size:12px;color:var(--ink-3);text-align:center;margin-top:2px}
+.alldone{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:12px;font-weight:700;text-align:center;margin-bottom:10px;font-size:14.5px}
+
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:50;cursor:zoom-out;padding:16px}
+#lb.on{display:flex}
+#lb img{max-width:100%;max-height:100%;border-radius:8px}
+#msg{text-align:center;color:var(--ink-3);padding:60px 16px}
+</style>
+</head>
+<body>
+<header>
+  <div class="in">
+    <h1>創意分評分</h1>
+    <div class="prog"><span id="pt">讀取中⋯</span><div class="bar"><i id="pb" style="width:0"></i></div></div>
+    <div class="tools">
+      <button id="bk" title="把評好的分數存成一個檔案，換電腦或清瀏覽器資料前一定要按">備份分數</button>
+      <button id="im">匯入備份</button>
+      <a href="score.html">成績總表 →</a>
+    </div>
+  </div>
+  <div class="chips" id="chips"></div>
+</header>
+<div id="msg">讀取資料中，照片比較大，請等幾秒⋯</div>
+<div class="wrap" id="wrap" hidden>
+  <main id="main"></main>
+  <aside class="side" id="side"></aside>
+</div>
+<div id="lb"><img alt=""></div>
+<input type="file" id="imf" accept=".json,application/json" hidden>
+
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+<script>
+/* ============================================================
+   評分規準：要改級距說明就改這裡（三項加起來 = 創意分 10 分）
+   ============================================================ */
+var RUBRIC = [
+  { k:"d", t:"觀察深度", max:4,
+    ask:"他們有沒有看到表面以外的東西？",
+    lv:["幾乎沒寫，或只是照抄題目",
+        "只描述看到什麼，沒有說為什麼",
+        "有說原因，但比較籠統",
+        "原因具體，有舉出現場的例子或數字",
+        "看到別人沒注意到的，有自己的推論"] },
+  { k:"b", t:"商業概念", max:3,
+    ask:"有沒有用課堂學過的概念解釋現象？（答案裡的商業名詞會用黃色標出來）",
+    lv:["完全沒有用到",
+        "提到名詞，但沒有真的拿來解釋",
+        "用概念正確解釋了一個現象",
+        "多處正確運用，而且串得起來"] },
+  { k:"p", t:"紀錄品質", max:3,
+    ask:"照片和文字能不能互相佐證？",
+    lv:["缺很多題，或照片跟題目無關",
+        "大致完成，但照片和答案關係不大",
+        "照片能佐證答案",
+        "照片和文字互相呼應，紀錄完整用心"] }
+];
+var GPS_MAX = 5;   /* GPS 座標設錯，定點分改由老師補登 */
+</script>
+<script>
+/* ---------- 名冊（與 score.html 相同） ---------- */
+var STUDENTS = {
+  "商二甲": [
+    { no:"01", name:"池安筳", grp:4 },{ no:"02", name:"李承昱", grp:2 },{ no:"03", name:"李諺承", grp:1 },
+    { no:"04", name:"林庠宇", grp:1 },{ no:"05", name:"林彥岑", grp:3 },{ no:"06", name:"林瑞勝", grp:5 },
+    { no:"07", name:"張宏陽", grp:7 },{ no:"08", name:"許哲瑀", grp:7 },{ no:"09", name:"陳泊均", grp:5 },
+    { no:"10", name:"黃士楷", grp:6 },{ no:"11", name:"楊冠程", grp:4 },{ no:"12", name:"潘尚育", grp:3 },
+    { no:"13", name:"蔣昕佑", grp:2 },{ no:"14", name:"王怡璇", grp:3 },{ no:"15", name:"王姵媞", grp:6 },
+    { no:"16", name:"林玉秝", grp:4 },{ no:"17", name:"林宥靜", grp:2 },{ no:"18", name:"林瑄婕", grp:7 },
+    { no:"19", name:"施律羽", grp:5 },{ no:"20", name:"施霈樺", grp:1 },{ no:"21", name:"洪依晨", grp:7 },
+    { no:"22", name:"胡芸甄", grp:2 },{ no:"23", name:"徐采瑄", grp:4 },{ no:"24", name:"許筑珺", grp:6 },
+    { no:"25", name:"陳宣蓉", grp:1 },{ no:"26", name:"陳浿綺", grp:5 },{ no:"27", name:"曾意晴", grp:5 },
+    { no:"28", name:"黃沛恩", grp:6 },{ no:"29", name:"黃靖雯", grp:4 },{ no:"30", name:"詹令憶", grp:6 },
+    { no:"31", name:"劉芯彤", grp:2 },{ no:"32", name:"鄭沛菉", grp:3 },{ no:"33", name:"簡彤恩", grp:3 },
+    { no:"34", name:"王姿雅", grp:1 }
+  ],
+  "商二乙": [
+    { no:"01", name:"李利明", grp:3 },{ no:"02", name:"林尚勳", grp:5 },{ no:"04", name:"張鼎", grp:3 },
+    { no:"05", name:"陳科菉", grp:7 },{ no:"06", name:"陳駿璿", grp:2 },{ no:"07", name:"游凱崴", grp:4 },
+    { no:"08", name:"黃新儒", grp:4 },{ no:"09", name:"楊垠枰", grp:5 },{ no:"11", name:"蕭嘉成", grp:6 },
+    { no:"12", name:"賴宥玗", grp:1 },{ no:"13", name:"尤鈺文", grp:6 },{ no:"14", name:"吳亞萱", grp:5 },
+    { no:"15", name:"吳承臻", grp:6 },{ no:"16", name:"林睿湘", grp:6 },{ no:"17", name:"邱以蓁", grp:3 },
+    { no:"18", name:"范湘甯", grp:4 },{ no:"19", name:"唐嘉婕", grp:1 },{ no:"20", name:"康鈺欣", grp:5 },
+    { no:"21", name:"張心瑜", grp:5 },{ no:"22", name:"許巧潔", grp:2 },{ no:"23", name:"郭采璇", grp:3 },
+    { no:"24", name:"陳芊妤", grp:7 },{ no:"25", name:"游忻璇", grp:1 },{ no:"26", name:"黃纁慧", grp:2 },
+    { no:"27", name:"劉佳昕", grp:7 },{ no:"28", name:"蔡依恬", grp:7 },{ no:"30", name:"鄭晴曼", grp:6 },
+    { no:"31", name:"蕭予晴", grp:2 },{ no:"32", name:"賴允菡", grp:4 },{ no:"33", name:"謝恣菱", grp:4 },
+    { no:"34", name:"蘇苡妮", grp:7 },{ no:"36", name:"林庭伃", grp:3 }
+  ]
+};
+
+/* ---------- 題庫（與 makeup.html 相同） ---------- */
+var MOGU=[{"id": "m1", "t": "它到底在賣什麼", "m": "這家公司的產品線不只一種。把你看到、聽到的全部列出來。", "f": [{"k": "a", "l": "產品線盤點", "min": 40}]}, {"id": "m2", "t": "簡報裡的三個數字", "m": "簡報裡的數字——成立幾年、幾座廠、一天出貨多少、市占多少，抓三個記下來。", "f": [{"k": "a", "l": "數字一"}, {"k": "b", "l": "數字二"}, {"k": "c", "l": "數字三"}]}, {"id": "m3", "t": "六星級廠區裡的技術", "m": "智慧蕈菇生產廠區裡，找出一個最厲害的技術或設備，想想它取代了什麼人工。", "f": [{"k": "a", "l": "技術／設備"}, {"k": "b", "l": "取代了什麼、為什麼自動化", "min": 30}]}, {"id": "m4", "t": "為什麼要開觀光農場", "m": "一家種香菇、做生技的公司，為什麼要花錢蓋園區、種落羽松、開小火車、讓學生來 DIY？", "f": [{"k": "a", "l": "推論", "min": 50}]}, {"id": "m5", "t": "250 元買到什麼", "m": "拆解這 250 元裡，實際上買到的是哪些東西？材料？時間？體驗？回憶？", "f": [{"k": "a", "l": "拆解 250 元", "min": 40}, {"k": "b", "l": "漲到 400 元還會來嗎", "min": 30}]}];
+var MITSUI=[{"id": "q1", "t": "黃金店面爭奪戰", "m": "220 家店裡，找出位置最好與位置最吃虧的店，比較差別。", "f": [{"k": "a", "l": "位置最好"}, {"k": "b", "l": "好在哪", "min": 30}, {"k": "c", "l": "位置最吃虧"}, {"k": "d", "l": "為什麼吃虧", "min": 30}]}, {"id": "q2", "t": "折扣的數學", "m": "找一個看得到原價和售價的商品，計算實際折數並分析定價手法。", "f": [{"k": "a", "l": "品牌"}, {"k": "b", "l": "原價"}, {"k": "c", "l": "售價"}, {"k": "d", "l": "實際折數"}, {"k": "e", "l": "讓人覺得便宜的手法", "min": 30}], "inline": 4}, {"id": "q3", "t": "一期 vs 二期", "m": "一期 2018 年開幕、二期 2021 年底開幕，比較兩區業種與設計方向。", "f": [{"k": "a", "l": "一期業種"}, {"k": "b", "l": "二期業種"}, {"k": "c", "l": "二期為什麼換方向", "min": 40}]}, {"id": "q4", "t": "海景值多少錢", "m": "全台第一座海港型 OUTLET——風景也是商品。", "f": [{"k": "a", "l": "在「賣風景」的設施", "min": 30}, {"k": "b", "l": "海景對生意的幫助", "min": 40}]}, {"id": "q5", "t": "品牌偵探", "m": "找三個沒聽過的品牌，判斷它賣什麼、賣給誰。", "f": [{"k": "a1", "l": "品牌一"}, {"k": "a2", "l": "賣什麼"}, {"k": "a3", "l": "賣給誰"}, {"k": "b1", "l": "品牌二"}, {"k": "b2", "l": "賣什麼"}, {"k": "b3", "l": "賣給誰"}, {"k": "c1", "l": "品牌三"}, {"k": "c2", "l": "賣什麼"}, {"k": "c3", "l": "賣給誰"}], "grid": 3}, {"id": "q6", "t": "動線實驗", "m": "二期是ㄇ字型的路。從起點走到終點，數一路經過幾家店。", "f": [{"k": "a", "l": "起點"}, {"k": "b", "l": "終點"}, {"k": "c", "l": "經過店數"}, {"k": "d", "l": "為什麼這樣設計", "min": 30}], "inline": 3}, {"id": "q7", "t": "為什麼有遊樂設施", "m": "一個賣衣服的地方，為什麼要花錢蓋摩天輪、雪樂地、遊樂場？", "f": [{"k": "a", "l": "選擇的設施"}, {"k": "b", "l": "在玩的人／等待的人", "min": 30}, {"k": "c", "l": "設施幫商場賺到什麼", "min": 40}]}, {"id": "q8", "t": "最冷清的那一家", "m": "找一家客人最少的店，推測可能的原因。", "f": [{"k": "a", "l": "店名"}, {"k": "b", "l": "原因一"}, {"k": "c", "l": "原因二"}, {"k": "d", "l": "原因三"}]}];
+var BONUS={"id": "x1", "t": "★ 加碼關　總經理的位子", "m": "如果台中港明年只能留下一家店，留哪一家？說服一個只看數字的人。", "f": [{"k": "a", "l": "要留的店"}, {"k": "b", "l": "理由一（位置／動線）", "min": 40}, {"k": "c", "l": "理由二（客群／定價）", "min": 40}, {"k": "d", "l": "理由三（親眼所見）", "min": 40}, {"k": "e", "l": "最大的弱點", "min": 30}]};
+var TERMS=["4P", "STP", "動線", "坪效", "客單價", "目標客群", "品牌定位", "市場區隔", "差異化", "陳列", "客層", "人流", "定價", "促銷", "通路", "體驗行銷", "集客", "附加價值", "產業升級"];
+
+var FB_CONFIG={apiKey:"AIzaSyAmEGKtYxq7ao9G0IWdHrmWeThdshIIALI",
+  authDomain:"moguoutlet.firebaseapp.com",
+  databaseURL:"https://moguoutlet-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"moguoutlet"};
+var EVENT_ID="115-1-1001", MKEY="ylhc-score-manual";
+</script>
+<script>
+(function(){
+"use strict";
+var ANS={}, PIC={}, G={}, ORDER=[], cur=0, manual={};
+try{ manual=JSON.parse(localStorage.getItem(MKEY)||"{}")||{}; }catch(e){ manual={}; }
+function saveMan(){ try{ localStorage.setItem(MKEY,JSON.stringify(manual)); }catch(e){} }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function ng(s){ var m=String(s||"").match(/\d+/); return m?"第"+(+m[0])+"組":String(s||"").trim(); }
+function $(id){ return document.getElementById(id); }
+function ALL(){ return MOGU.concat(MITSUI).concat([BONUS]); }
+function Q(id){ return ALL().filter(function(x){ return x.id===id; })[0]; }
+/* 把商業名詞標黃，評「商業概念」時一眼就看到 */
+var TRE=new RegExp("("+TERMS.slice().sort(function(a,b){ return b.length-a.length; }).map(function(w){ return w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"); }).join("|")+")","g");
+function hi(s){ return esc(String(s||"").trim()).replace(TRE,"<mark>$1</mark>").replace(/\r?\n/g,"<br>"); }
+
+/* ---------- 合併同班同組 ---------- */
+function build(){
+  G={};
+  for(var k in ANS){
+    var A=ANS[k]||{}, cls=String(A.cls||"").trim(), grp=ng(A.grp);
+    if(!cls||!grp) continue;
+    var id=cls+"|"+grp, g=G[id]||(G[id]={id:id,d:{},ph:{},pics:{}});
+    var D=A.d||{};
+    for(var q in D){
+      g.d[q]=g.d[q]||{};
+      for(var f in D[q]){
+        var t=String(D[q][f]==null?"":D[q][f]);
+        if(t.trim().length>String(g.d[q][f]||"").trim().length) g.d[q][f]=t;
+      }
+    }
+    var P=PIC[k]||{};
+    for(var z in P) if(!g.pics[z]) g.pics[z]=P[z];
+  }
+  ORDER=[];
+  Object.keys(STUDENTS).forEach(function(c){
+    for(var n=1;n<=7;n++){
+      var id=c+"|第"+n+"組";
+      if(!G[id]) G[id]={id:id,d:{},ph:{},pics:{}};
+      G[id].cls=c; G[id].n=n;
+      G[id].mem=STUDENTS[c].filter(function(s){ return s.grp===n; }).map(function(s){ return s.name; }).join("、");
+      ORDER.push(id);
+    }
+  });
+}
+function filledQ(g,q){ return q.f.some(function(f){ return String((g.d[q.id]||{})[f.k]||"").trim(); }); }
+function fullness(g,q){ return q.f.filter(function(f){ return String((g.d[q.id]||{})[f.k]||"").trim(); }).length+(g.pics[q.id]?1:0); }
+
+/* ---------- 分數 ---------- */
+function rec(id){ return manual[id]||{}; }
+function graded(id){ var r=rec(id); return !!(r.r&&RUBRIC.every(function(c){ return r.r[c.k]!=null; })) || (r.c!=null&&!r.r&&+r.c>0); }
+function setLv(id,k,v){
+  var r=manual[id]=manual[id]||{};
+  r.r=r.r||{};
+  r.r[k]=(r.r[k]===v)?null:v;          /* 再點一次同一個 = 取消 */
+  r.c=RUBRIC.reduce(function(a,c){ return a+(+r.r[c.k]||0); },0);
+  r.at=Date.now(); saveMan(); flash();
+}
+function setG(id,d){
+  var r=manual[id]=manual[id]||{};
+  r.g=Math.max(0,Math.min(GPS_MAX,(+r.g||0)+d)); r.at=Date.now(); saveMan(); flash();
+}
+var ft=null;
+function flash(){ var el=$("sv"); if(!el) return; el.textContent="✓ 已自動儲存"; clearTimeout(ft); ft=setTimeout(function(){ if($("sv")) $("sv").textContent=""; },1600); }
+
+/* ---------- 畫面 ---------- */
+function paintTop(){
+  var n=ORDER.filter(graded).length;
+  $("pt").textContent="已評 "+n+" / "+ORDER.length+" 組";
+  $("pb").style.width=(n/ORDER.length*100)+"%";
+  var h=[], last="";
+  ORDER.forEach(function(id,i){
+    var g=G[id];
+    if(g.cls!==last){ h.push('<span>'+esc(g.cls)+'</span>'); last=g.cls; }
+    var r=rec(id);
+    h.push('<button class="chip'+(graded(id)?" done":"")+(i===cur?" cur":"")+'" data-go="'+i+'" title="'+esc(g.mem)+'">'+g.n+(graded(id)?'・'+(+r.c||0):'')+'</button>');
+  });
+  $("chips").innerHTML=h.join("");
+}
+function answers(g,q){
+  var row=g.d[q.id]||{}, h=[];
+  if(q.grid===3){
+    ["a","b","c"].forEach(function(p,i){
+      var v=[1,2,3].map(function(j){ return String(row[p+j]||"").trim(); });
+      if(v.join("")) h.push('<p class="an"><span class="lb">品牌'+"一二三".charAt(i)+'</span>'+hi(v[0]||"—")+'　｜　賣 '+hi(v[1]||"—")+'　｜　給 '+hi(v[2]||"—")+'</p>');
+    });
+  } else {
+    q.f.forEach(function(f){ var t=String(row[f.k]||"").trim(); if(t) h.push('<p class="an"><span class="lb">'+esc(f.l)+'</span>'+hi(t)+'</p>'); });
+  }
+  return h.length?h.join(""):'<p class="an none">（沒有作答）</p>';
+}
+function card(g,q,num){
+  var src=g.pics[q.id];
+  return '<div class="q"><div class="qt"><i>'+esc(num)+'</i>'+esc(q.t)+'</div><p class="mi">'+esc(q.m)+'</p>'
+    +'<div class="row"><div class="tx">'+answers(g,q)+'</div>'+(src?'<img src="'+src+'" alt="'+esc(q.t)+'的照片" data-zoom="1">':'')+'</div></div>';
+}
+function paintMain(){
+  var g=G[ORDER[cur]], h=[];
+  var txt=""; for(var q in g.d) for(var f in g.d[q]) txt+=String(g.d[q][f]||"")+" ";
+  var terms=TERMS.filter(function(w){ return txt.indexOf(w)>=0; });
+  var tried=MITSUI.filter(function(q){ return filledQ(g,q)||g.pics[q.id]; });
+  tried.sort(function(a,b){ return fullness(g,b)-fullness(g,a) || a.id.localeCompare(b.id); });
+  var nph=Object.keys(g.pics).filter(function(z){ return z.indexOf("sheet")!==0; }).length;
+
+  h.push('<div class="ghead"><h2>'+esc(g.cls+"　第 "+g.n+" 組")+'</h2><p>'+esc(g.mem)+'</p><div class="ctx">');
+  h.push('<span class="tag">三井做了 <b>'+tried.length+'</b> 關</span>');
+  h.push('<span class="tag">照片 <b>'+nph+'</b> 張</span>');
+  h.push('<span class="tag gold">商業名詞 <b>'+terms.length+'</b> 個'+(terms.length?'：'+esc(terms.join("、")):'')+'</span>');
+  if(g.d.x1) h.push('<span class="tag gold">★ 有挑戰加碼關</span>');
+  h.push('</div></div>');
+
+  h.push('<h3 class="sec">上午　魔菇部落</h3>');
+  MOGU.forEach(function(q,i){ h.push(card(g,q,"①②③④⑤".charAt(i))); });
+  h.push('<h3 class="sec">下午　三井 OUTLET</h3>');
+  if(!tried.length) h.push('<div class="q"><p class="an none">這一組沒有三井的作答紀錄。</p></div>');
+  tried.slice(0,4).forEach(function(q){ h.push(card(g,q,"①②③④⑤⑥⑦⑧".charAt(+q.id.slice(1)-1))); });
+  if(tried.length>4){
+    h.push('<details class="more"><summary>另外還做了 '+(tried.length-4)+' 關（點開看）</summary>');
+    tried.slice(4).forEach(function(q){ h.push(card(g,q,"①②③④⑤⑥⑦⑧".charAt(+q.id.slice(1)-1))); });
+    h.push('</details>');
+  }
+  if(g.d.x1){ h.push('<h3 class="sec">★ 加碼關</h3>'); h.push(card(g,BONUS,"★")); }
+  var sm=g.pics.sheetM, st=g.pics.sheetT;
+  if(sm||st){
+    h.push('<h3 class="sec">學習單代表照片</h3><div class="q"><div class="row">');
+    if(sm) h.push('<img src="'+sm+'" alt="魔菇代表照片" data-zoom="1" style="max-width:48%">');
+    if(st) h.push('<img src="'+st+'" alt="三井代表照片" data-zoom="1" style="max-width:48%">');
+    h.push('</div></div>');
+  }
+  $("main").innerHTML=h.join("");
+}
+function paintSide(){
+  var id=ORDER[cur], g=G[id], r=rec(id), rr=r.r||{}, h=[];
+  var total=RUBRIC.reduce(function(a,c){ return a+(+rr[c.k]||0); },0);
+  var legacy=(r.c!=null&&!r.r);
+  if(ORDER.every(graded)) h.push('<div class="alldone">14 組全部評完了 🎉　記得按上面的「備份分數」</div>');
+  h.push('<div class="total"><span>'+esc(g.cls+" 第"+g.n+"組")+'　創意分</span><b>'+(legacy?(+r.c||0):total)+'<small> / 10</small></b></div>');
+  if(legacy) h.push('<p class="ask" style="font-size:12.5px;color:var(--ink-3)">這組之前在成績總表直接打過 '+(+r.c||0)+' 分。在下面點選規準就會改成用規準計分。</p>');
+  RUBRIC.forEach(function(c){
+    var v=rr[c.k];
+    h.push('<div class="crit"><div class="h">'+esc(c.t)+'<small>0 – '+c.max+' 分</small></div><p class="ask">'+esc(c.ask)+'</p><div class="lv">');
+    for(var i=0;i<=c.max;i++) h.push('<button data-k="'+c.k+'" data-v="'+i+'" class="'+(v===i?"on":"")+'" title="'+esc(c.lv[i])+'">'+i+'</button>');
+    h.push('</div><div class="desc'+(v!=null?" on":"")+'">'+(v!=null?esc(c.lv[v]):"點一個分數，這裡會出現該級的說明")+'</div></div>');
+  });
+  h.push('<div class="gps"><span>定點補分<small>GPS 座標設錯，有走到定點就補給</small></span><div class="step"><button data-gps="-1" aria-label="減一">−</button><b>'+(+r.g||0)+'</b><button data-gps="1" aria-label="加一">＋</button></div><span style="flex:none;color:var(--ink-3);font-size:13px">/ '+GPS_MAX+'</span></div>');
+  h.push('<textarea id="note" placeholder="備註（只有你看得到，例如：q3 照片很用心）">'+esc(r.note||"")+'</textarea>');
+  h.push('<div class="nav"><button id="prev"'+(cur?"":" disabled")+'>←</button><button class="next" id="next">'+(cur<ORDER.length-1?"下一組 →":"回到第一組")+'</button></div>');
+  h.push('<div class="saved" id="sv"></div><div class="hint">點分數就會自動儲存。鍵盤 ← → 可以換組。</div>');
+  $("side").innerHTML=h.join("");
+}
+function go(i){
+  cur=(i+ORDER.length)%ORDER.length;
+  try{ localStorage.setItem("ylhc-grade-cur",String(cur)); }catch(e){}
+  paintTop(); paintMain(); paintSide();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener("click",function(e){
+  var t=e.target;
+  if(t.dataset&&t.dataset.zoom){ var lb=$("lb"); lb.firstElementChild.src=t.src; lb.classList.add("on"); return; }
+  if(t.closest("#lb")){ $("lb").classList.remove("on"); return; }
+  var b=t.closest("button"); if(!b) return;
+  if(b.dataset.go!=null){ go(+b.dataset.go); return; }
+  if(b.dataset.k){ setLv(ORDER[cur],b.dataset.k,+b.dataset.v); paintSide(); paintTop(); flash(); return; }
+  if(b.dataset.gps){ setG(ORDER[cur],+b.dataset.gps); paintSide(); flash(); return; }
+  if(b.id==="next"){ go(cur+1); return; }
+  if(b.id==="prev"){ go(cur-1); return; }
+  if(b.id==="bk"){
+    var blob=new Blob([JSON.stringify({type:"ylhc-score-manual",event:EVENT_ID,at:new Date().toISOString(),manual:manual},null,1)],{type:"application/json"});
+    var a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+    a.download="創意分備份_"+new Date().toISOString().slice(0,16).replace(/[-:T]/g,"")+".json";
+    document.body.appendChild(a); a.click(); setTimeout(function(){ a.remove(); },1000); return;
+  }
+  if(b.id==="im"){ $("imf").click(); return; }
+});
+document.addEventListener("input",function(e){
+  if(e.target.id==="note"){ var id=ORDER[cur]; manual[id]=manual[id]||{}; manual[id].note=e.target.value; saveMan(); }
+});
+$("imf").addEventListener("change",function(){
+  var f=this.files&&this.files[0]; if(!f) return;
+  var fr=new FileReader();
+  fr.onload=function(){
+    try{
+      var o=JSON.parse(fr.result), m=o.manual||o;
+      if(!confirm("要用備份檔裡的 "+Object.keys(m).length+" 組分數，覆蓋目前這台電腦上的分數嗎？")) return;
+      manual=m; saveMan(); go(cur);
+    }catch(x){ alert("這個檔案讀不懂，請確認是「備份分數」存下來的檔案。"); }
+  };
+  fr.readAsText(f); this.value="";
+});
+document.addEventListener("keydown",function(e){
+  if(/^(INPUT|TEXTAREA)$/.test((document.activeElement||{}).tagName||"")) return;
+  if(e.key==="Escape") $("lb").classList.remove("on");
+  if(e.key==="ArrowRight") go(cur+1);
+  if(e.key==="ArrowLeft") go(cur-1);
+});
+
+/* ---------- 讀資料 ---------- */
+try{
+  firebase.initializeApp(FB_CONFIG);
+  var db=firebase.database();
+  db.ref("e/"+EVENT_ID+"/ans").once("value").then(function(s){
+    ANS=s.val()||{};
+    return db.ref("e/"+EVENT_ID+"/pic").once("value");
+  }).then(function(s){
+    PIC=s.val()||{};
+    build();
+    var saved=0; try{ saved=+localStorage.getItem("ylhc-grade-cur")||0; }catch(e){}
+    var firstTodo=ORDER.findIndex(function(id){ return !graded(id); });
+    $("msg").hidden=true; $("wrap").hidden=false;
+    go(firstTodo>=0?firstTodo:saved);
+  }).catch(function(e){ $("msg").textContent="讀取失敗："+e.message; });
+}catch(e){ $("msg").textContent="連線失敗："+e.message; }
+})();
+</script>
+</body>
+</html>
