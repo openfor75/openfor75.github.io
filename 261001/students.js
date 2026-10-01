@@ -255,3 +255,95 @@ var STUDENTS = {
   if(orig.ServerValue&&!wrapped.ServerValue) wrapped.ServerValue=orig.ServerValue;
   firebase.database=wrapped;
 })();
+
+/* ============================================================
+   【組內同步補丁 v2】115-1 職場體驗
+   貼在 students.js 的最後面。
+   v2 修正：抽到的關卡只在「自己完全沒抽過」時才跟著組員，
+            而且整個分頁最多只重載一次，不會再互搶造成狂跳。
+   ============================================================ */
+(function(){
+  "use strict";
+  if(/[?&]preview=1/.test(location.search)) return;
+  var EVENT_ID="115-1-1001", KEY="ylhc-questday", RK="ylhc-reloaded";
+  var T0=Date.now();
+
+  function fnv(s){
+    var h=0x811c9dc5;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=(h*0x01000193)>>>0; }
+    return ("0000000"+h.toString(16)).slice(-8);
+  }
+  function readSt(){ try{ return JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){ return null; } }
+  function typing(){
+    var a=document.activeElement;
+    return !!(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"));
+  }
+  /* 重載次數：讀不到 sessionStorage 就當成已經載過，寧可不同步也不要狂跳 */
+  function reloads(){ try{ return +(sessionStorage.getItem(RK)||0)||0; }catch(e){ return 99; } }
+  function bump(){ try{ sessionStorage.setItem(RK,String(reloads()+1)); }catch(e){} }
+
+  var ref=null, path="", remote=null, sig="", filled={};
+
+  function connect(){
+    if(typeof firebase==="undefined") return;
+    var db=null; try{ db=firebase.database(); }catch(e){ return; }
+    if(!db) return;
+    var st=readSt();
+    if(!st||!st.locked||!st.cls||!st.grp) return;
+    if(!/^\d{4}$/.test(String(st.code||""))) return;
+    var p="e/"+EVENT_ID+"/ans/"+fnv(st.cls+"|"+st.grp+"|"+st.code);
+    if(p===path) return;
+    if(ref){ try{ ref.off(); }catch(e){} }
+    path=p; ref=db.ref(p);
+    ref.on("value",function(sn){ remote=sn.val(); apply(); });
+  }
+
+  function apply(){
+    var R=remote; if(!R) return;
+    var st=readSt(); if(!st) return;
+
+    /* ① 抽到的四關：只有「自己一關都沒抽過」才跟著組員，而且整個分頁只重載一次。
+          已經抽過的人絕對不動，避免兩支手機互相搶、無限重載。 */
+    var rp=String(R.picked||"").split(",").filter(Boolean);
+    var mine=(st.picked||[]).filter(Boolean);
+    if(rp.length===4 && !mine.length && reloads()<1 && Date.now()-T0>4000 && !typing()){
+      try{
+        st.picked=rp; st.open=rp[0];
+        localStorage.setItem(KEY,JSON.stringify(st));
+        bump();
+      }catch(e){ return; }
+      location.reload();
+      return;
+    }
+
+    /* ② 組員填的答案：只在雲端真的變動時才動手，而且同一格只補一次，
+          補完就記起來，不會反覆塞造成畫面一直重畫。 */
+    if(!R.d) return;
+    var s2=JSON.stringify(R.d);
+    if(s2===sig) return;
+    sig=s2;
+    for(var qid in R.d){
+      var row=R.d[qid]; if(!row) continue;
+      for(var k in row){
+        var tag=qid+"."+k;
+        if(filled[tag]) continue;
+        var v=String(row[k]==null?"":row[k]);
+        if(!v.trim()) continue;
+        var el=document.getElementById("f-"+qid+"-"+k);
+        if(!el||el===document.activeElement) continue;
+        if(String(el.value||"").trim()){ filled[tag]=1; continue; }
+        el.value=v; filled[tag]=1;
+        try{ el.dispatchEvent(new Event("input",{bubbles:true})); }
+        catch(e){
+          var ev=document.createEvent("Event");
+          ev.initEvent("input",true,true);
+          el.dispatchEvent(ev);
+        }
+      }
+    }
+  }
+
+  setInterval(function(){ connect(); apply(); },3000);
+  document.addEventListener("click",function(){ setTimeout(function(){ sig=""; apply(); },400); },true);
+  connect();
+})();
