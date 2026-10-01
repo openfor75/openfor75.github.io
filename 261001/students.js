@@ -87,3 +87,68 @@ var STUDENTS = {
   ]
 
 };
+
+/* ========== 【心得上傳補丁】115-1 職場體驗 ========== */
+(function(){
+  "use strict";
+  if(/[?&]preview=1/.test(location.search)) return;
+  var EVENT_ID="115-1-1001", KEY="ylhc-questday";
+
+  function fnv(s){
+    var h=0x811c9dc5;
+    for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=(h*0x01000193)>>>0; }
+    return ("0000000"+h.toString(16)).slice(-8);
+  }
+  var lastSig="", lastAt=0, watching="", lastForce=0;
+
+  function watch(db,path){
+    if(watching===path) return;
+    watching=path;
+    try{
+      db.ref(path).on("value",function(sn){
+        var v=sn.val();
+        if(v&&(v.a||v.b||v.c)) return;
+        if(Date.now()-lastForce<3000) return;
+        lastForce=Date.now(); lastSig=""; lastAt=0;
+        setTimeout(tick,250);
+      });
+    }catch(e){}
+  }
+
+  function tick(){
+    if(typeof firebase==="undefined") return;
+    var db=null;
+    try{ db=firebase.database(); }catch(e){ return; }
+    if(!db) return;
+    var st=null;
+    try{ st=JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){ return; }
+    if(!st||!st.locked||!st.cls||!st.grp) return;
+    if(!/^\d{4}$/.test(String(st.code||""))) return;
+
+    var r=st.refl||{};
+    var a=String(r.a||""), b=String(r.b||""), c=String(r.c||"");
+    if(!a&&!b&&!c) return;
+
+    var id=(String(st.cls||"")+"-"+String(st.no||st.name||"")).replace(/[.#$\[\]\/\s]/g,"");
+    if(id.length<2) return;
+
+    var key=fnv(st.cls+"|"+st.grp+"|"+st.code);
+    watch(db,"e/"+EVENT_ID+"/ans/"+key+"/rf/"+id);
+
+    var sig=id+"\u0001"+a+"\u0001"+b+"\u0001"+c;
+    if(sig===lastSig && Date.now()-lastAt<15000) return;
+
+    var o={ cls:String(st.cls), grp:String(st.grp) };
+    if(st.mem) o.mem=String(st.mem).slice(0,300);
+    o["rf/"+id]={ no:String(st.no||""), nm:String(st.name||""),
+                  a:a.slice(0,3000), b:b.slice(0,3000), c:c.slice(0,3000),
+                  at:firebase.database.ServerValue.TIMESTAMP };
+    try{
+      db.ref("e/"+EVENT_ID+"/ans/"+key).update(o)
+        .then(function(){ lastSig=sig; lastAt=Date.now(); })
+        .catch(function(){});
+    }catch(e){}
+  }
+  setInterval(tick,4000);
+  document.addEventListener("visibilitychange",function(){ if(!document.hidden) tick(); });
+})();
