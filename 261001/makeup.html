@@ -208,6 +208,18 @@ try{ var r=localStorage.getItem(KEY); if(r) st=Object.assign(st,JSON.parse(r)||{
 function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} }
 
 var db=null, myKey="", D={}, PH={}, PIC={}, RF={}, online=false, ready=false;
+var ansRef=null, picRef=null, picKey="", pendingRender=false;
+function typing(){ var a=document.activeElement; return !!(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)); }
+/* 有人正在打字就絕對不重畫，只更新分數；等他離開欄位再補畫 */
+function softRender(){
+  if(typing()){ pendingRender=true; paintScore(); return; }
+  render();
+}
+document.addEventListener("focusout",function(){
+  if(!pendingRender) return;
+  pendingRender=false;
+  setTimeout(function(){ if(!typing()) render(); },160);
+});
 function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function ALL(){ return MOGU.concat(MITSUI).concat([BONUS]); }
 function Q(id){ return ALL().filter(function(x){return x.id===id;})[0]; }
@@ -260,7 +272,9 @@ function connect(){
     if(!db){ firebase.initializeApp(FB_CONFIG); db=firebase.database();
       db.ref(".info/connected").on("value",function(s){ online=!!s.val(); paintSync(); }); }
   }catch(e){ db=null; return; }
-  db.ref("e/"+EVENT_ID+"/ans").on("value",function(sn){
+  if(ansRef){ try{ ansRef.off(); }catch(e){} }
+  ansRef=db.ref("e/"+EVENT_ID+"/ans");
+  ansRef.on("value",function(sn){
     var all=sn.val()||{}, best=null, bestN=-1;
     D={}; PH={};
     for(var k in all){
@@ -283,16 +297,21 @@ function connect(){
     }
     myKey=best||"";
     ready=!!myKey;
-    if(myKey){
-      db.ref("e/"+EVENT_ID+"/pic/"+myKey).on("value",function(p){
-        PIC=p.val()||{};
-        for(var z in PIC) if(z.indexOf("sheet")!==0) PH[z]=1;
-        render();
-      });
-    }
+    watchPic(myKey);
     save();
-    if(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) paintScore();
-    else render();
+    softRender();
+  });
+}
+/* 照片監聽器整個分頁只掛一次，換組才換；掛太多次就是打字會跳的原因 */
+function watchPic(k){
+  if(!db||!k||k===picKey) return;
+  if(picRef){ try{ picRef.off(); }catch(e){} }
+  picKey=k;
+  picRef=db.ref("e/"+EVENT_ID+"/pic/"+k);
+  picRef.on("value",function(p){
+    PIC=p.val()||{};
+    for(var z in PIC) if(z.indexOf("sheet")!==0) PH[z]=1;
+    softRender();
   });
 }
 function wref(){ return db&&myKey? db.ref("e/"+EVENT_ID+"/ans/"+myKey) : null; }
@@ -373,7 +392,7 @@ function sendPic(k,url){
     .then(function(){
       PH[k]=1; PIC[k]=url;
       queue("ph",Object.keys(PH).filter(function(z){return PH[z];}).join(","));
-      setUp(k,"✓ 已上傳",'ok'); render();
+      setUp(k,"✓ 已上傳",'ok'); softRender();
     })
     .catch(function(e){ setUp(k,"上傳失敗："+(e&&e.message?e.message:"請檢查網路"),'bad'); });
 }
