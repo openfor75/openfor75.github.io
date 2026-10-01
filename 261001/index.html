@@ -4,12 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>職場體驗偵察任務</title>
-</head>
-<body>
-<title>職場體驗偵察任務</title>
-</head>
-<body>
-<title>職場體驗偵察任務</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=IBM+Plex+Mono:wght@500;600&family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
@@ -336,6 +330,8 @@ footer{margin-top:20px;color:var(--ink-3);font-size:12px;font-family:var(--mono)
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+</head>
+<body>
 
 <div id="app"></div>
 <div id="sheet"></div>
@@ -541,7 +537,7 @@ function initFB(){
   try{
     firebase.initializeApp(FB_CONFIG);
     db=firebase.database();
-    db.ref(".info/connected").on("value",function(s){ online=!!s.val(); paintSync(); });
+    db.ref(".info/connected").on("value",function(s){ online=!!s.val(); paintSync(); if(online) retryPics(); });
     db.ref("e/"+EVENT_ID+"/board").on("value",function(s){
       var o=s.val()||{},arr=[];
       for(var k in o){ arr.push(Object.assign({k:k},o[k])); }
@@ -636,11 +632,10 @@ var pushT=null;
 function push(ev){
   if(PREVIEW||!db||!st.cls||!st.grp||!okCode())return;
   myKey=gkey();
+  /* 原本這裡會把「舊的 key」整筆刪掉——但舊 key 是全組共用的，
+     任何一個人改組別／改通行碼，就會把整組的答案和照片一起刪光。絕對不要刪，交給老師端合併。 */
   if(st.pushedKey&&st.pushedKey!==myKey){
-    var oldK=st.pushedKey;
-    ["board","ans","pic"].forEach(function(n){
-      try{ db.ref("e/"+EVENT_ID+"/"+n+"/"+oldK).remove(); }catch(e){}
-    });
+    try{ db.ref("e/"+EVENT_ID+"/board/"+st.pushedKey).remove(); }catch(e){}   /* 只清排行榜，避免重複列名 */
   }
   st.pushedKey=myKey; save();
   watchMine();
@@ -653,16 +648,20 @@ function push(ev){
       at:firebase.database.ServerValue.TIMESTAMP
     }).catch(function(){});
     var ansRef=db.ref("e/"+EVENT_ID+"/ans/"+myKey);
-    ansRef.update({
+    /* 原本是 d:cleanD() 整包覆寫——誰最後按到鍵盤，誰手機上的版本就把全組的 d 蓋掉，
+       組員剛打的字會不見。改成一格一格寫（d/q1/a），只動自己有填的格子。 */
+    var up={
       cls:st.cls,grp:st.grp,mem:st.mem,
       picked:(st.picked||[]).join(","),
       ph:Object.keys(st.photo).filter(function(k){return st.photo[k];}).join(","),
       sp:Object.keys(st.spots).filter(function(k){return st.spots[k];}).join("、"),
       roll:(st.roll||[0,0,0]).join(","),
       terms:hits().join("、"),
-      d:cleanD(),
       at:firebase.database.ServerValue.TIMESTAMP
-    }).then(function(){
+    };
+    var cd=cleanD();
+    for(var q in cd) for(var f in cd[q]) up["d/"+q+"/"+f]=cd[q][f];
+    ansRef.update(up).then(function(){
       var me=myId(); if(!me) return;
       return ansRef.child("rf").child(me).set({
         no:String(st.no||""), nm:String(st.name||""),
@@ -701,9 +700,19 @@ function pushPic(k,url){
   if(url.length>250000){ upState[k]="too-big"; paintUp(k); return; }
   upState[k]="up";
   paintUp(k);
+  st.upOk=st.upOk||{}; st.upOk[k]=0; save();
   db.ref("e/"+EVENT_ID+"/pic/"+gkey()+"/"+k).set(url)
-    .then(function(){ upState[k]="ok"; paintUp(k); })
+    .then(function(){ upState[k]="ok"; st.upOk[k]=1; save(); paintUp(k); })
     .catch(function(){ upState[k]="fail"; paintUp(k); });
+}
+/* 照片補傳：Firebase 的離線佇列只存在記憶體，手機一開相機把分頁殺掉、或重新整理，
+   還沒傳完的照片就永遠留在手機裡。所以每次連上線就把「手機有、但沒確認傳成功」的照片重送一次。 */
+function retryPics(){
+  if(PREVIEW||!db||!okCode()||!st.locked) return;
+  st.upOk=st.upOk||{};
+  Object.keys(pics).forEach(function(k){
+    if(pics[k]&&!st.upOk[k]&&upState[k]!=="up") pushPic(k,pics[k]);
+  });
 }
 function upText(k){
   if(!pics[k]) return "";
@@ -885,7 +894,7 @@ function render(){
   h.push('<div class="bigscore">'+T.all+'<small> / '+MAX+'</small></div>');
   h.push('<div class="bd"><div><b>'+T.mo+'</b><span>魔菇 40</span></div><div><b>'+T.mi+'</b><span>三井 40</span></div><div><b>'+T.te+'</b><span>名詞 5</span></div>'+(GPS_ON?'<div><b>'+T.gp+'</b><span>打卡 '+GPS_MAX+'</span></div>':'')+'</div>');
   h.push('<p class="teach">創意分 10 分由老師另計，加起來滿分 100。三次集合遲到會扣分：第一次 −3、第二次 −5、第三次 −10。</p>');
-  h.push('<div class="bonusline" id="bl"'+(T.bo?'':' hidden')+'>★　加碼關　'+T.bo+' / 10　（另計）</div>');
+  h.push('<div class="bonusline" id="bl"'+(T.bo?'':' hidden')+'>★　加碼關　'+T.bo+' / 5　（另計）</div>');
   h.push('<p class="autonote">分數和答案<b>全部自動上傳</b>給老師，你不用做任何事。<br>唯一要按的就是下面這顆——它會把任務紀錄、你的心得和照片排成可以交的學習單。</p>');
   h.push('<div class="btns"><button class="copy wide" id="prt">列印學習單</button>');
   if(SUBMIT_MAIL) h.push('<button class="pr wide" id="mail">寄一份給老師（備份）</button>');
