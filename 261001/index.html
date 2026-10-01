@@ -663,7 +663,7 @@ function push(ev){
     for(var q in cd) for(var f in cd[q]) up["d/"+q+"/"+f]=cd[q][f];
     ansRef.update(up).then(function(){
       var me=myId(); if(!me) return;
-      return ansRef.child("rf").child(me).set({
+      return ansRef.child("rf").child(me).update({   /* update 不是 set：保留補強頁加的照片說明 p1~p4 */
         no:String(st.no||""), nm:String(st.name||""),
         a:String(st.refl.a||"").slice(0,3000),
         b:String(st.refl.b||"").slice(0,3000),
