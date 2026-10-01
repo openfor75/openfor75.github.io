@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>學習歷程輸出</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --paper:#fbfaf7;--surface:#fff;--surface-2:#f2efe9;--line:#ddd7cc;
+  --ink:#15181d;--ink-2:#4a5059;--ink-3:#7b828c;
+  --accent:#dd4f1f;--accent-soft:#fdeee7;--ok:#1d6b45;--ok-soft:#e1f0e8;
+  --gold:#9a6c00;--gold-soft:#fbf1d8;--sea:#14566b;--sea-soft:#e4eff3;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:ui-monospace,Consolas,monospace;
+  --shadow:0 1px 2px rgba(21,24,29,.06),0 6px 20px rgba(21,24,29,.08);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--ok:#6fc79b;--ok-soft:#16281f;
+  --gold:#e5b458;--gold-soft:#2e2718;--sea:#79b9cf;--sea-soft:#182a31;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 6px 20px rgba(0,0,0,.4);
+}}
+:root[data-theme="dark"]{
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--ok:#6fc79b;--ok-soft:#16281f;
+  --gold:#e5b458;--gold-soft:#2e2718;--sea:#79b9cf;--sea-soft:#182a31;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
+.wrap{max-width:1400px;margin:0 auto;padding:18px 16px 60px}
+h1.t{font-size:22px;margin:0 0 2px}
+.sub{color:var(--ink-2);font-size:14px;margin:0 0 14px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+button{font-family:inherit;font-size:14px;font-weight:600;padding:8px 13px;border-radius:10px;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+button.on,button.go{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+button.acc{background:var(--accent);border-color:var(--accent);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+#st{font-size:13px;color:var(--ink-3);font-family:var(--mono)}
+.grid{display:grid;grid-template-columns:minmax(0,470px) minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:980px){.grid{grid-template-columns:1fr}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:14px}
+.card h3{margin:0;padding:11px 14px;font-size:14px;background:var(--surface-2);display:flex;justify-content:space-between;gap:8px;align-items:center}
+.card h3 small{font-weight:500;color:var(--ink-3);font-size:12px}
+.scroll{max-height:62vh;overflow:auto}
+table.l{width:100%;border-collapse:collapse}
+table.l th,table.l td{padding:6px 8px;border-bottom:1px solid var(--line);font-size:13.5px;text-align:left;vertical-align:middle}
+table.l th{font-size:11.5px;color:var(--ink-3);font-weight:600;position:sticky;top:0;background:var(--surface)}
+table.l td.n,table.l th.n{text-align:right;font-family:var(--mono);white-space:nowrap}
+table.l tr.s{cursor:pointer}
+table.l tr.s:hover{background:var(--surface-2)}
+table.l tr.cur{background:var(--accent-soft)}
+.numin{width:48px;font-family:var(--mono);font-size:13px;padding:3px 5px;border-radius:7px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);text-align:center}
+.pill{display:inline-block;font-size:11px;padding:0 6px;border-radius:20px;margin-left:4px;background:var(--surface-2);color:var(--ink-3);border:1px solid var(--line)}
+.pill.warn{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.pill.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.dl{padding:3px 8px;font-size:12px;border-radius:7px}
+.note{font-size:13px;color:var(--ink-2);background:var(--sea-soft);border-radius:12px;padding:11px 14px;margin-bottom:14px}
+.note b{color:var(--sea)}
+.pvbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.pvbar b{flex:1;min-width:140px}
+#pv{background:#8a8f96;padding:14px 0;overflow:hidden}
+#pv .zoomer{transform-origin:top left}
+#pv .page{margin:0 auto 14px;box-shadow:0 4px 18px rgba(0,0,0,.35)}
+#pv .empty{color:#fff;text-align:center;padding:60px 16px;font-size:14px}
+#stage{position:absolute;left:-30000px;top:0;width:210mm}
+#printbox{display:none}
+.prog{height:6px;background:var(--surface-2);border-radius:9px;overflow:hidden;flex:1;min-width:120px;display:none}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+
+/* ===================== A4 頁面（固定淺色，給列印與 PDF 用） ===================== */
+.page{width:210mm;height:297mm;background:#fff;color:#1a1d22;display:flex;flex-direction:column;
+  padding:12mm 15mm 9mm;overflow:hidden;position:relative;font-family:var(--sans);
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page .hd{display:flex;justify-content:space-between;font-size:8pt;color:#6b7280;
+  border-bottom:0.35mm solid #1a1d22;padding-bottom:1.6mm;margin-bottom:5mm;flex:none}
+.page .hd b{color:#1a1d22}
+.page .ft{display:flex;justify-content:space-between;font-size:7.5pt;color:#8a9199;
+  border-top:0.2mm solid #d0d4da;padding-top:1.6mm;margin-top:3mm;flex:none}
+.page .body{flex:1;min-height:0;overflow:hidden;font-size:10.5pt;line-height:1.72}
+.page p{margin:0}
+.page .kick{font-size:.78em;color:#dd4f1f;font-weight:700}
+.page h1{font-size:2.5em;font-weight:900;margin:.1em 0 .1em;line-height:1.15;color:#15181d}
+.page .lead{font-size:1.05em;color:#4a5059;font-weight:500}
+.page h2{font-size:1.16em;font-weight:900;margin:1.05em 0 .5em;padding-left:.55em;
+  border-left:.3em solid #dd4f1f;line-height:1.3;color:#15181d}
+.page h2.first{margin-top:0}
+.page h2 small{font-weight:500;color:#7b828c;font-size:.72em;margin-left:.5em}
+.page table.info{width:100%;border-collapse:collapse;font-size:.9em;margin-top:1.1em}
+.page table.info th{background:#f1f2f4;font-weight:700;text-align:left;width:5.2em;padding:.32em .6em;
+  border:0.2mm solid #c9ced6;white-space:nowrap;color:#33383f}
+.page table.info td{padding:.32em .6em;border:0.2mm solid #c9ced6}
+.page .intro{font-size:.93em;color:#33383f;text-align:justify}
+.page .scorebox{display:flex;gap:1.1em;align-items:stretch}
+.page .big{flex:none;width:8.6em;background:#15181d;color:#fff;border-radius:.6em;padding:.7em .5em;
+  text-align:center;display:flex;flex-direction:column;justify-content:center}
+.page .big b{font-size:3.3em;line-height:1.05;font-weight:900}
+.page .big span{font-size:.78em;color:#c9ced6}
+.page table.sc{flex:1;border-collapse:collapse;font-size:.86em}
+.page table.sc td{padding:.22em .5em;border-bottom:0.2mm solid #e1e4e8}
+.page table.sc td.n{text-align:right;white-space:nowrap}
+.page table.sc td.d{color:#7b828c;font-size:.9em}
+.page table.sc tr.mid td{font-weight:700;background:#f6f7f8}
+.page table.sc tr.tot td{font-weight:900;border-top:0.45mm solid #15181d;border-bottom:none;font-size:1.08em}
+.page .duo{display:flex;gap:4mm;margin-top:.4em}
+.page .duo figure{flex:1;margin:0;min-width:0}
+.page .pic{background-size:cover;background-position:center;background-repeat:no-repeat;
+  border-radius:1.6mm;border:0.2mm solid #c9ced6;background-color:#f1f2f4}
+.page .duo .pic{height:64mm}
+.page .duo.one .pic{height:80mm}
+.page figcaption{font-size:.78em;color:#4a5059;margin-top:.25em;text-align:center}
+.page .free{text-align:justify;word-break:break-word}
+.page .none{color:#9aa0a8}
+.page .meta{font-size:.76em;color:#7b828c;margin-top:.2em}
+.page .chips{margin-top:.3em}
+.page .chips span{display:inline-block;border:0.25mm solid #9a6c00;color:#7a5600;border-radius:99px;
+  padding:0 .65em;margin:0 .3em .3em 0;font-size:.8em;line-height:1.7}
+.page .qa{display:flex;gap:.9em;margin:0 0 .85em;padding-bottom:.75em;border-bottom:0.2mm dashed #d0d4da}
+.page .qa:last-child{border-bottom:none}
+.page .qa .tx{flex:1;min-width:0}
+.page .qa .qt{font-weight:900;font-size:1.02em;color:#15181d}
+.page .qa .qt i{font-style:normal;color:#dd4f1f;margin-right:.35em}
+.page .qa .mi{font-size:.78em;color:#7b828c;margin:.1em 0 .3em;line-height:1.55}
+.page .qa .an{margin:0 0 .12em;word-break:break-word}
+.page .qa .an .lb{color:#14566b;font-weight:700;margin-right:.45em;font-size:.86em}
+.page .qa .pic{flex:none;width:12.5em;height:9.2em}
+.page .grpnote{font-size:.82em;color:#4a5059;background:#f4f5f7;border-radius:1.4mm;padding:.45em .8em;margin-bottom:.9em}
+
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  body > *:not(#printbox){display:none!important}
+  #printbox{display:block!important}
+  #printbox .page{margin:0;box-shadow:none;break-after:page;page-break-after:always}
+  #printbox .page:last-child{break-after:auto;page-break-after:auto}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="t">學習歷程輸出</h1>
+  <p class="sub">每位學生一份 A4、固定 4 頁的 PDF：成績總覽＋照片、個人心得、魔菇任務紀錄、三井任務紀錄。資料直接從雲端讀，同組重複紀錄會自動合併。</p>
+
+  <div class="note" id="rule"></div>
+
+  <div class="bar">
+    <button class="on" data-cls="">全部</button>
+    <button data-cls="商二甲">商二甲</button>
+    <button data-cls="商二乙">商二乙</button>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600;margin-left:6px">
+      <input type="checkbox" id="pf">照片分一律給</label>
+    <label style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:600">
+      <input type="checkbox" id="showsc" checked>PDF 印出分數</label>
+    <span style="flex:1"></span>
+    <button id="reload">重新讀取</button>
+    <button class="acc" id="zip" disabled>批次下載（ZIP）</button>
+    <div class="prog" id="prog"><i></i></div>
+    <span id="st">連線中⋯</span>
+  </div>
+
+  <div class="grid">
+    <div>
+      <div class="card">
+        <h3>小組成績 <small>創意分／GPS 補分在這裡或 score.html 輸入都可以（同一台電腦同一個瀏覽器會共用）</small></h3>
+        <div class="scroll" style="max-height:34vh"><table class="l"><thead><tr>
+          <th>組別</th><th class="n">任務/85</th><th class="n">創意/10</th><th class="n">GPS/5</th><th class="n">小組/100</th><th class="n">照片</th>
+        </tr></thead><tbody id="gt"></tbody></table></div>
+      </div>
+      <div class="card">
+        <h3>學生 <small id="cnt"></small></h3>
+        <div class="scroll"><table class="l"><thead><tr>
+          <th>座號 姓名</th><th>組別</th><th class="n">心得字數</th><th class="n">心得/30</th><th class="n">總分</th><th></th>
+        </tr></thead><tbody id="tb"><tr><td colspan="6" style="color:var(--ink-3)">讀取中⋯</td></tr></tbody></table></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="pvbar"><b id="pvt">預覽</b>
+        <button id="pdf1" disabled>下載這位的 PDF</button>
+        <button id="prt1" disabled>列印／另存 PDF（文字向量）</button></div>
+      <div id="pv"><div class="empty">在左邊點一位學生就會出現預覽</div></div>
+    </div>
+  </div>
+</div>
+<div id="stage"></div>
+<div id="printbox"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+<script>
+/* ============================================================
+   設定區：計分權重、文字，要改都在這裡
+   ============================================================ */
+var CFG = {
+  GROUP_WEIGHT: 0.7,          /* 個人總分 = 小組成績(滿分100) × 0.7 ＋ 個人心得(滿分30) ＋ 加碼 */
+  REFL: {                     /* 個人心得 30 分 */
+    a: { min: 50,  pts: 5  }, /* 印象最深的一件事：滿 50 字得 5 分，不足按比例 */
+    b: { min: 400, pts: 15 }, /* 參訪心得：滿 400 字得 15 分，不足按比例 */
+    terms: 5,                 /* 心得裡用到商業名詞，每個 +1，最多 5 */
+    c: { min: 30,  pts: 5  }  /* 給活動的建議：滿 30 字得 5 分 */
+  },
+  BONUS_ADD: true,            /* 加碼關分數加進個人總分（總分上限 100） */
+  MAX_BYTES: 3.8 * 1024 * 1024, /* 學習歷程上傳單檔 4MB，留一點餘裕 */
+  FS: 10.5, FS_MIN: 7.5,      /* 內文字級（pt）；內容太多會自動縮小，保證 4 頁 */
+  SCHOOL: "國立員林家商　商業經營科",
+  TERM: "115 學年度第 1 學期",
+  DATE: "115 年 10 月 1 日（四）",
+  COURSE: "專題製作－職場體驗",
+  PLACES: "魔菇部落生態休閒農場　×　三井 OUTLET PARK 台中港",
+  INTRO: "上午參訪魔菇部落，聽取企業簡報並參觀智慧蕈菇生產廠區，觀察一家種植蕈菇、發展生技產品的公司，如何以觀光農場、DIY 體驗與門票收入延伸產品線。下午前往三井 OUTLET PARK 台中港，以小組任務的方式實地調查店面位置、折扣定價、動線設計、海景與遊樂設施等集客策略，並運用課堂所學的商業概念分析觀察結果。"
+};
+
+/* ---------- 名冊（與 score.html 相同） ---------- */
+var STUDENTS = {
+  "商二甲": [
+    { no:"01", name:"池安筳", grp:4 },{ no:"02", name:"李承昱", grp:2 },{ no:"03", name:"李諺承", grp:1 },
+    { no:"04", name:"林庠宇", grp:1 },{ no:"05", name:"林彥岑", grp:3 },{ no:"06", name:"林瑞勝", grp:5 },
+    { no:"07", name:"張宏陽", grp:7 },{ no:"08", name:"許哲瑀", grp:7 },{ no:"09", name:"陳泊均", grp:5 },
+    { no:"10", name:"黃士楷", grp:6 },{ no:"11", name:"楊冠程", grp:4 },{ no:"12", name:"潘尚育", grp:3 },
+    { no:"13", name:"蔣昕佑", grp:2 },{ no:"14", name:"王怡璇", grp:3 },{ no:"15", name:"王姵媞", grp:6 },
+    { no:"16", name:"林玉秝", grp:4 },{ no:"17", name:"林宥靜", grp:2 },{ no:"18", name:"林瑄婕", grp:7 },
+    { no:"19", name:"施律羽", grp:5 },{ no:"20", name:"施霈樺", grp:1 },{ no:"21", name:"洪依晨", grp:7 },
+    { no:"22", name:"胡芸甄", grp:2 },{ no:"23", name:"徐采瑄", grp:4 },{ no:"24", name:"許筑珺", grp:6 },
+    { no:"25", name:"陳宣蓉", grp:1 },{ no:"26", name:"陳浿綺", grp:5 },{ no:"27", name:"曾意晴", grp:5 },
+    { no:"28", name:"黃沛恩", grp:6 },{ no:"29", name:"黃靖雯", grp:4 },{ no:"30", name:"詹令憶", grp:6 },
+    { no:"31", name:"劉芯彤", grp:2 },{ no:"32", name:"鄭沛菉", grp:3 },{ no:"33", name:"簡彤恩", grp:3 },
+    { no:"34", name:"王姿雅", grp:1 }
+  ],
+  "商二乙": [
+    { no:"01", name:"李利明", grp:3 },{ no:"02", name:"林尚勳", grp:5 },{ no:"04", name:"張鼎", grp:3 },
+    { no:"05", name:"陳科菉", grp:7 },{ no:"06", name:"陳駿璿", grp:2 },{ no:"07", name:"游凱崴", grp:4 },
+    { no:"08", name:"黃新儒", grp:4 },{ no:"09", name:"楊垠枰", grp:5 },{ no:"11", name:"蕭嘉成", grp:6 },
+    { no:"12", name:"賴宥玗", grp:1 },{ no:"13", name:"尤鈺文", grp:6 },{ no:"14", name:"吳亞萱", grp:5 },
+    { no:"15", name:"吳承臻", grp:6 },{ no:"16", name:"林睿湘", grp:6 },{ no:"17", name:"邱以蓁", grp:3 },
+    { no:"18", name:"范湘甯", grp:4 },{ no:"19", name:"唐嘉婕", grp:1 },{ no:"20", name:"康鈺欣", grp:5 },
+    { no:"21", name:"張心瑜", grp:5 },{ no:"22", name:"許巧潔", grp:2 },{ no:"23", name:"郭采璇", grp:3 },
+    { no:"24", name:"陳芊妤", grp:7 },{ no:"25", name:"游忻璇", grp:1 },{ no:"26", name:"黃纁慧", grp:2 },
+    { no:"27", name:"劉佳昕", grp:7 },{ no:"28", name:"蔡依恬", grp:7 },{ no:"30", name:"鄭晴曼", grp:6 },
+    { no:"31", name:"蕭予晴", grp:2 },{ no:"32", name:"賴允菡", grp:4 },{ no:"33", name:"謝恣菱", grp:4 },
+    { no:"34", name:"蘇苡妮", grp:7 },{ no:"36", name:"林庭伃", grp:3 }
+  ]
+};
+
+/* ---------- 題庫（與 makeup.html 相同） ---------- */
+var MOGU=[{"id": "m1", "t": "它到底在賣什麼", "m": "這家公司的產品線不只一種。把你看到、聽到的全部列出來。", "f": [{"k": "a", "l": "產品線盤點", "min": 40}]}, {"id": "m2", "t": "簡報裡的三個數字", "m": "簡報裡的數字——成立幾年、幾座廠、一天出貨多少、市占多少，抓三個記下來。", "f": [{"k": "a", "l": "數字一"}, {"k": "b", "l": "數字二"}, {"k": "c", "l": "數字三"}]}, {"id": "m3", "t": "六星級廠區裡的技術", "m": "智慧蕈菇生產廠區裡，找出一個最厲害的技術或設備，想想它取代了什麼人工。", "f": [{"k": "a", "l": "技術／設備"}, {"k": "b", "l": "取代了什麼、為什麼自動化", "min": 30}]}, {"id": "m4", "t": "為什麼要開觀光農場", "m": "一家種香菇、做生技的公司，為什麼要花錢蓋園區、種落羽松、開小火車、讓學生來 DIY？", "f": [{"k": "a", "l": "推論", "min": 50}]}, {"id": "m5", "t": "250 元買到什麼", "m": "拆解這 250 元裡，實際上買到的是哪些東西？材料？時間？體驗？回憶？", "f": [{"k": "a", "l": "拆解 250 元", "min": 40}, {"k": "b", "l": "漲到 400 元還會來嗎", "min": 30}]}];
+var MITSUI=[{"id": "q1", "t": "黃金店面爭奪戰", "m": "220 家店裡，找出位置最好與位置最吃虧的店，比較差別。", "f": [{"k": "a", "l": "位置最好"}, {"k": "b", "l": "好在哪", "min": 30}, {"k": "c", "l": "位置最吃虧"}, {"k": "d", "l": "為什麼吃虧", "min": 30}]}, {"id": "q2", "t": "折扣的數學", "m": "找一個看得到原價和售價的商品，計算實際折數並分析定價手法。", "f": [{"k": "a", "l": "品牌"}, {"k": "b", "l": "原價"}, {"k": "c", "l": "售價"}, {"k": "d", "l": "實際折數"}, {"k": "e", "l": "讓人覺得便宜的手法", "min": 30}], "inline": 4}, {"id": "q3", "t": "一期 vs 二期", "m": "一期 2018 年開幕、二期 2021 年底開幕，比較兩區業種與設計方向。", "f": [{"k": "a", "l": "一期業種"}, {"k": "b", "l": "二期業種"}, {"k": "c", "l": "二期為什麼換方向", "min": 40}]}, {"id": "q4", "t": "海景值多少錢", "m": "全台第一座海港型 OUTLET——風景也是商品。", "f": [{"k": "a", "l": "在「賣風景」的設施", "min": 30}, {"k": "b", "l": "海景對生意的幫助", "min": 40}]}, {"id": "q5", "t": "品牌偵探", "m": "找三個沒聽過的品牌，判斷它賣什麼、賣給誰。", "f": [{"k": "a1", "l": "品牌一"}, {"k": "a2", "l": "賣什麼"}, {"k": "a3", "l": "賣給誰"}, {"k": "b1", "l": "品牌二"}, {"k": "b2", "l": "賣什麼"}, {"k": "b3", "l": "賣給誰"}, {"k": "c1", "l": "品牌三"}, {"k": "c2", "l": "賣什麼"}, {"k": "c3", "l": "賣給誰"}], "grid": 3}, {"id": "q6", "t": "動線實驗", "m": "二期是ㄇ字型的路。從起點走到終點，數一路經過幾家店。", "f": [{"k": "a", "l": "起點"}, {"k": "b", "l": "終點"}, {"k": "c", "l": "經過店數"}, {"k": "d", "l": "為什麼這樣設計", "min": 30}], "inline": 3}, {"id": "q7", "t": "為什麼有遊樂設施", "m": "一個賣衣服的地方，為什麼要花錢蓋摩天輪、雪樂地、遊樂場？", "f": [{"k": "a", "l": "選擇的設施"}, {"k": "b", "l": "在玩的人／等待的人", "min": 30}, {"k": "c", "l": "設施幫商場賺到什麼", "min": 40}]}, {"id": "q8", "t": "最冷清的那一家", "m": "找一家客人最少的店，推測可能的原因。", "f": [{"k": "a", "l": "店名"}, {"k": "b", "l": "原因一"}, {"k": "c", "l": "原因二"}, {"k": "d", "l": "原因三"}]}];
+var BONUS={"id": "x1", "t": "★ 加碼關　總經理的位子", "m": "如果台中港明年只能留下一家店，留哪一家？說服一個只看數字的人。", "f": [{"k": "a", "l": "要留的店"}, {"k": "b", "l": "理由一（位置／動線）", "min": 40}, {"k": "c", "l": "理由二（客群／定價）", "min": 40}, {"k": "d", "l": "理由三（親眼所見）", "min": 40}, {"k": "e", "l": "最大的弱點", "min": 30}]};
+var TERMS=["4P", "STP", "動線", "坪效", "客單價", "目標客群", "品牌定位", "市場區隔", "差異化", "陳列", "客層", "人流", "定價", "促銷", "通路", "體驗行銷", "集客", "附加價值", "產業升級"];
+
+var FB_CONFIG={apiKey:"AIzaSyAmEGKtYxq7ao9G0IWdHrmWeThdshIIALI",
+  authDomain:"moguoutlet.firebaseapp.com",
+  databaseURL:"https://moguoutlet-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"moguoutlet"};
+var EVENT_ID="115-1-1001", MKEY="ylhc-score-manual";
+</script>
+<script>
+(function(){
+"use strict";
+var ANS={}, PIC={}, G={}, manual={}, PF=false, SHOWSC=true, filt="", cur=null, busy=false;
+try{ manual=JSON.parse(localStorage.getItem(MKEY)||"{}")||{}; }catch(e){ manual={}; }
+try{ PF=localStorage.getItem("ylhc-photofree")==="1"; }catch(e){}
+try{ SHOWSC=localStorage.getItem("ylhc-pf-showsc")!=="0"; }catch(e){}
+function saveMan(){ try{ localStorage.setItem(MKEY,JSON.stringify(manual)); }catch(e){} }
+function man(id,f){ return (manual[id]&&+manual[id][f])||0; }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function br(s){ return esc(String(s||"").trim()).replace(/\r?\n/g,"<br>"); }
+function ng(s){ var m=String(s||"").match(/\d+/); return m?"第"+(+m[0])+"組":String(s||"").trim(); }
+function len(s){ return String(s||"").replace(/\s/g,"").length; }
+function ALL(){ return MOGU.concat(MITSUI).concat([BONUS]); }
+function Q(id){ return ALL().filter(function(x){ return x.id===id; })[0]; }
+function $(id){ return document.getElementById(id); }
+
+/* ---------- 合併同班同組（同 score.html，另外把照片本體也收進來） ---------- */
+function newGroup(cls,grp){ return {id:cls+"|"+grp,cls:cls,grp:grp,keys:[],d:{},ph:{},pics:{}}; }
+function buildGroups(){
+  G={};
+  for(var k in ANS){
+    var A=ANS[k]||{}, cls=String(A.cls||"").trim(), grp=ng(A.grp);
+    if(!cls||!grp) continue;
+    var id=cls+"|"+grp, g=G[id]||(G[id]=newGroup(cls,grp));
+    g.keys.push(k);
+    var D=A.d||{};
+    for(var q in D){
+      g.d[q]=g.d[q]||{};
+      for(var f in D[q]){
+        var t=String(D[q][f]==null?"":D[q][f]);
+        if(t.trim().length>String(g.d[q][f]||"").trim().length) g.d[q][f]=t;
+      }
+    }
+    String(A.ph||"").split(",").filter(Boolean).forEach(function(x){ g.ph[x]=1; });
+    var P=PIC[k]||{};
+    for(var z in P){ if(!g.pics[z]) g.pics[z]=P[z]; if(z.indexOf("sheet")!==0) g.ph[z]=1; }
+  }
+  for(var id2 in G) score(G[id2]);
+}
+function score(g){
+  function val(q,f){ return String(((g.d[q]||{})[f])||"").trim(); }
+  function sc(qid){
+    var q=Q(qid); if(!q) return 0;
+    if(qid.charAt(0)==="x"){
+      var s=0; q.f.forEach(function(f){ var t=val(qid,f.k); if(f.min? t.length>=f.min : t.length>0) s+=1; });
+      return Math.min(5,s);
+    }
+    var filled=q.f.every(function(f){ return val(qid,f.k).length>0; });
+    var mins=q.f.filter(function(f){ return f.min; });
+    var lng=mins.length?mins.every(function(f){ return val(qid,f.k).length>=f.min; }):filled;
+    var s2=0;
+    if(qid.charAt(0)==="m"){ if(filled)s2+=4; if(lng)s2+=4; }
+    else { if(PF||g.ph[qid])s2+=3; if(filled)s2+=4; if(lng)s2+=3; }
+    return s2;
+  }
+  g.sc=sc;
+  g.mo=0; MOGU.forEach(function(q){ g.mo+=sc(q.id); });
+  var qs=[]; for(var z in g.d) if(z.charAt(0)==="q") qs.push({id:z,s:sc(z)});
+  qs.sort(function(a,b){ return b.s-a.s || a.id.localeCompare(b.id); });
+  g.qtop=qs.slice(0,4).map(function(x){ return x.id; });
+  g.mi=qs.slice(0,4).reduce(function(a,x){ return a+x.s; },0);
+  g.bo=g.d.x1?sc("x1"):0;
+  var txt=""; for(var q in g.d) for(var f in g.d[q]) txt+=String(g.d[q][f]||"")+" ";
+  g.terms=TERMS.filter(function(w){ return txt.indexOf(w)>=0; });
+  g.te=Math.min(5,g.terms.length);
+  g.task=g.mo+g.mi+g.te;
+  g.nq=Object.keys(g.ph).filter(function(z){ return z.charAt(0)==="q"; }).length;
+  g.nreal=Object.keys(g.pics).filter(function(z){ return z.charAt(0)==="q"; }).length;
+  return g;
+}
+function grp(cls,n){ var id=cls+"|第"+n+"組"; return G[id]||score(newGroup(cls,"第"+n+"組")); }
+
+/* ---------- 個人心得：同一人可能散在好幾筆，每格取最新且非空 ---------- */
+function refl(cls,s){
+  var me=(cls+"-"+s.no).replace(/[.#$\[\]\/\s]/g,""), list=[];
+  for(var k in ANS){
+    var A=ANS[k]||{}; if(String(A.cls||"").trim()!==cls) continue;
+    var R=A.rf||{};
+    for(var rid in R){ var x=R[rid]||{}; if(rid===me||String(x.nm||"").trim()===s.name) list.push(x); }
+  }
+  list.sort(function(a,b){ return (+b.at||0)-(+a.at||0); });
+  var o={a:"",b:"",c:"",n:list.length};
+  ["a","b","c"].forEach(function(z){
+    for(var i=0;i<list.length;i++) if(String(list[i][z]||"").trim()){ o[z]=String(list[i][z]); break; }
+  });
+  return o;
+}
+function reflScore(r){
+  var R=CFG.REFL, la=len(r.a), lb=len(r.b), lc=len(r.c);
+  function part(n,x){ return Math.min(x.pts,Math.floor(n/x.min*x.pts)); }
+  var all=r.a+" "+r.b+" "+r.c;
+  var terms=TERMS.filter(function(w){ return all.indexOf(w)>=0; });
+  var o={a:part(la,R.a),b:part(lb,R.b),t:Math.min(R.terms,terms.length),c:part(lc,R.c),terms:terms,la:la,lb:lb,lc:lc};
+  o.sum=o.a+o.b+o.t+o.c;
+  return o;
+}
+function student(cls,s){
+  var g=grp(cls,s.grp), r=refl(cls,s), rs=reflScore(r);
+  var gc=man(g.id,"c"), gg=man(g.id,"g"), grand=g.task+gc+gg;
+  var gp=Math.round(grand*CFG.GROUP_WEIGHT*10)/10;
+  var fin=Math.min(100,Math.round(gp+rs.sum+(CFG.BONUS_ADD?g.bo:0)));
+  var mem=STUDENTS[cls].filter(function(x){ return x.grp===s.grp; }).map(function(x){ return x.name; }).join("、");
+  return {cls:cls,s:s,g:g,r:r,rs:rs,gc:gc,gg:gg,grand:grand,gp:gp,fin:fin,mem:mem};
+}
+function fname(D){ return D.cls+"_"+D.s.no+"_"+D.s.name+"_職場體驗學習成果.pdf"; }
+
+/* ---------- A4 頁面 ---------- */
+function picDiv(src,cls){ return '<div class="pic'+(cls?" "+cls:"")+'" style="background-image:url(\''+src+'\')"></div>'; }
+function hd(D){ return '<div class="hd"><span>職場體驗學習成果　'+esc(CFG.TERM)+'</span><span><b>'+esc(D.cls+"　"+D.s.no+" 號　"+D.s.name)+'</b></span></div>'; }
+function ft(n){ return '<div class="ft"><span>'+esc(CFG.SCHOOL)+'</span><span>'+n+' / 4</span></div>'; }
+function page(D,n,body){ return '<section class="page">'+hd(D)+'<div class="body">'+body+'</div>'+ft(n)+'</section>'; }
+function firstPic(g,pref){
+  var ks=Object.keys(g.pics).filter(function(z){ return z.charAt(0)===pref; }).sort();
+  if(pref==="q") ks.sort(function(a,b){ return (g.qtop.indexOf(a)<0)-(g.qtop.indexOf(b)<0) || a.localeCompare(b); });
+  return ks.length?g.pics[ks[0]]:"";
+}
+function answers(q,row){
+  row=row||{};
+  var h=[];
+  if(q.grid===3){
+    ["a","b","c"].forEach(function(p,i){
+      var v=[1,2,3].map(function(j){ return String(row[p+j]||"").trim(); });
+      if(!v.join("")) return;
+      h.push('<p class="an"><span class="lb">品牌'+"一二三".charAt(i)+'</span>'+esc(v[0]||"—")+'　｜　賣：'+esc(v[1]||"—")+'　｜　客群：'+esc(v[2]||"—")+'</p>');
+    });
+  } else if(q.inline){
+    var head=q.f.slice(0,q.inline).map(function(f){ var t=String(row[f.k]||"").trim(); return t?'<span class="lb">'+esc(f.l)+'</span>'+esc(t):""; }).filter(Boolean);
+    if(head.length) h.push('<p class="an">'+head.join("　　")+'</p>');
+    q.f.slice(q.inline).forEach(function(f){ var t=String(row[f.k]||"").trim(); if(t) h.push('<p class="an"><span class="lb">'+esc(f.l)+'</span>'+br(t)+'</p>'); });
+  } else {
+    q.f.forEach(function(f){ var t=String(row[f.k]||"").trim(); if(t) h.push('<p class="an"><span class="lb">'+esc(f.l)+'</span>'+br(t)+'</p>'); });
+  }
+  return h.length?h.join(""):'<p class="an none">（本組未作答）</p>';
+}
+function qa(D,q,num){
+  var g=D.g, src=g.pics[q.id];
+  return '<div class="qa"><div class="tx"><div class="qt"><i>'+esc(num)+'</i>'+esc(q.t)+'</div>'
+    +'<p class="mi">'+esc(q.m)+'</p>'+answers(q,g.d[q.id])+'</div>'+(src?picDiv(src):"")+'</div>';
+}
+function pagesHTML(D){
+  var g=D.g, rs=D.rs, P=[];
+  /* 第 1 頁：封面＋成績＋代表照片 */
+  var h=[];
+  h.push('<div class="kick">CAREER EXPLORATION　·　2026.10.01</div>');
+  h.push('<h1>職場體驗學習成果</h1>');
+  h.push('<p class="lead">'+esc(CFG.PLACES)+'</p>');
+  h.push('<table class="info"><tr><th>班級</th><td>'+esc(D.cls)+'</td><th>座號</th><td>'+esc(D.s.no)+'</td><th>姓名</th><td>'+esc(D.s.name)+'</td></tr>'
+    +'<tr><th>組別</th><td>第 '+D.s.grp+' 組</td><th>日期</th><td colspan="3">'+esc(CFG.DATE)+'</td></tr>'
+    +'<tr><th>課程</th><td colspan="5">'+esc(CFG.COURSE)+'　／　'+esc(CFG.SCHOOL)+'　'+esc(CFG.TERM)+'</td></tr>'
+    +'<tr><th>組員</th><td colspan="5">'+esc(D.mem)+'</td></tr></table>');
+  h.push('<h2>活動概述</h2><p class="intro">'+esc(CFG.INTRO)+'</p>');
+  if(SHOWSC){
+    h.push('<h2>成績總覽</h2><div class="scorebox"><div class="big"><b>'+D.fin+'</b><span>個人總分 / 100</span></div><table class="sc">');
+    h.push('<tr><td>小組任務<span class="d">　魔菇 '+g.mo+'/40・三井 '+g.mi+'/40・商業名詞 '+g.te+'/5</span></td><td class="n">'+g.task+' / 85</td></tr>');
+    h.push('<tr><td>創意分<span class="d">　教師評分</span></td><td class="n">'+D.gc+' / 10</td></tr>');
+    h.push('<tr><td>定點任務<span class="d">　教師補登</span></td><td class="n">'+D.gg+' / 5</td></tr>');
+    h.push('<tr class="mid"><td>小組成績 × '+Math.round(CFG.GROUP_WEIGHT*100)+'%</td><td class="n">'+D.grand+' → '+D.gp+'</td></tr>');
+    h.push('<tr><td>個人心得<span class="d">　印象 '+rs.a+'/'+CFG.REFL.a.pts+'・心得 '+rs.b+'/'+CFG.REFL.b.pts+'・名詞 '+rs.t+'/'+CFG.REFL.terms+'・建議 '+rs.c+'/'+CFG.REFL.c.pts+'</span></td><td class="n">'+rs.sum+' / 30</td></tr>');
+    if(CFG.BONUS_ADD&&g.bo) h.push('<tr><td>★ 加碼關<span class="d">　總經理的位子</span></td><td class="n">+'+g.bo+'</td></tr>');
+    h.push('<tr class="tot"><td>個人總分</td><td class="n">'+D.fin+' / 100</td></tr></table></div>');
+  }
+  var pm=g.pics.sheetM||firstPic(g,"m"), pt=g.pics.sheetT||firstPic(g,"q");
+  var two=[]; if(pm) two.push([pm,"上午　魔菇部落生態休閒農場"]); if(pt) two.push([pt,"下午　三井 OUTLET PARK 台中港"]);
+  if(two.length){
+    h.push('<h2>活動照片</h2><div class="duo'+(two.length===1?" one":"")+'">');
+    two.forEach(function(x){ h.push('<figure>'+picDiv(x[0])+'<figcaption>'+esc(x[1])+'</figcaption></figure>'); });
+    h.push('</div>');
+  }
+  P.push(page(D,1,h.join("")));
+
+  /* 第 2 頁：個人心得 */
+  h=[];
+  h.push('<h2 class="first">今天印象最深的一件事</h2><p class="free">'+(D.r.a.trim()?br(D.r.a):'<span class="none">（未填寫）</span>')+'</p>');
+  h.push('<h2>參訪心得<small>'+rs.lb+' 字</small></h2><p class="free">'+(D.r.b.trim()?br(D.r.b):'<span class="none">（未填寫）</span>')+'</p>');
+  h.push('<h2>給這次活動的建議</h2><p class="free">'+(D.r.c.trim()?br(D.r.c):'<span class="none">（未填寫）</span>')+'</p>');
+  if(rs.terms.length) h.push('<h2>心得中運用的商業概念</h2><div class="chips">'+rs.terms.map(function(w){ return '<span>'+esc(w)+'</span>'; }).join("")+'</div>');
+  P.push(page(D,2,h.join("")));
+
+  /* 第 3 頁：魔菇 */
+  h=[];
+  h.push('<h2 class="first">小組任務紀錄（一）上午　魔菇部落</h2>');
+  h.push('<p class="grpnote">以下為第 '+D.s.grp+' 組現場共同完成的任務紀錄（組員：'+esc(D.mem)+'）。</p>');
+  MOGU.forEach(function(q,i){ h.push(qa(D,q,"①②③④⑤".charAt(i))); });
+  P.push(page(D,3,h.join("")));
+
+  /* 第 4 頁：三井 */
+  h=[];
+  h.push('<h2 class="first">小組任務紀錄（二）下午　三井 OUTLET PARK</h2>');
+  if(!g.qtop.length) h.push('<p class="grpnote">本組沒有三井任務的雲端紀錄。</p>');
+  g.qtop.forEach(function(id,i){ h.push(qa(D,Q(id),"①②③④".charAt(i))); });
+  if(g.d.x1&&g.bo) h.push(qa(D,BONUS,"★"));
+  if(g.terms.length) h.push('<h2>任務中運用的商業概念</h2><div class="chips">'+g.terms.map(function(w){ return '<span>'+esc(w)+'</span>'; }).join("")+'</div>');
+  P.push(page(D,4,h.join("")));
+  return P;
+}
+/* 內容太多就逐步縮小字級，保證每頁塞得下，整份永遠 4 頁 */
+function fit(root){
+  root.querySelectorAll(".page").forEach(function(p){
+    var b=p.querySelector(".body"), fs=CFG.FS;
+    b.style.fontSize=fs+"pt";
+    while(b.scrollHeight>b.clientHeight+1&&fs>CFG.FS_MIN){ fs=Math.round((fs-0.25)*100)/100; b.style.fontSize=fs+"pt"; }
+  });
+}
+function settle(root){
+  var ps=[];
+  if(document.fonts&&document.fonts.ready) ps.push(document.fonts.ready);
+  root.querySelectorAll(".pic").forEach(function(el){
+    var m=/url\('(.*)'\)/.exec(el.getAttribute("style")||""); if(!m) return;
+    ps.push(new Promise(function(res){ var i=new Image(); i.onload=i.onerror=function(){ res(); }; i.src=m[1]; }));
+  });
+  return Promise.all(ps).then(function(){ return new Promise(function(r){ requestAnimationFrame(function(){ r(); }); }); });
+}
+
+/* ---------- PDF ---------- */
+async function makePdf(D){
+  var st=$("stage");
+  st.innerHTML=pagesHTML(D).join("");
+  await settle(st);
+  fit(st);
+  var pages=st.querySelectorAll(".page"), blob=null;
+  var tries=[{s:2,q:0.82},{s:1.6,q:0.72},{s:1.3,q:0.6}];
+  for(var t=0;t<tries.length;t++){
+    var pdf=new jspdf.jsPDF({unit:"mm",format:"a4",compress:true});
+    pdf.setProperties({title:D.cls+" "+D.s.no+" "+D.s.name+" 職場體驗學習成果",author:CFG.SCHOOL});
+    for(var i=0;i<pages.length;i++){
+      var cv=await html2canvas(pages[i],{scale:tries[t].s,backgroundColor:"#ffffff",logging:false,useCORS:true});
+      if(i) pdf.addPage();
+      pdf.addImage(cv.toDataURL("image/jpeg",tries[t].q),"JPEG",0,0,210,297,undefined,"FAST");
+    }
+    blob=pdf.output("blob");
+    if(blob.size<=CFG.MAX_BYTES) break;
+  }
+  st.innerHTML="";
+  return blob;
+}
+function save(blob,name){
+  var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name;
+  a.style.display="none"; document.body.appendChild(a); a.click();
+  setTimeout(function(){ try{ a.remove(); URL.revokeObjectURL(a.href); }catch(e){} },2000);
+}
+
+/* ---------- 畫面 ---------- */
+function list(){
+  var out=[];
+  Object.keys(STUDENTS).forEach(function(c){
+    if(filt&&c!==filt) return;
+    STUDENTS[c].forEach(function(s){ out.push(student(c,s)); });
+  });
+  return out;
+}
+function paintRule(){
+  var R=CFG.REFL;
+  $("rule").innerHTML='<b>個人總分</b> ＝ 小組成績（任務 85＋創意 10＋GPS 補分 5，滿分 100）× '+Math.round(CFG.GROUP_WEIGHT*100)+'%'
+    +'　＋　<b>個人心得 30</b>（印象最深 '+R.a.min+' 字 '+R.a.pts+' 分、參訪心得 '+R.b.min+' 字 '+R.b.pts+' 分、心得中用到商業名詞每個 1 分最多 '+R.terms+' 分、建議 '+R.c.min+' 字 '+R.c.pts+' 分，字數不足按比例）'
+    +(CFG.BONUS_ADD?'　＋　加碼關（上限 100）':'')+'。權重在檔案最上面的 CFG 可以改。';
+}
+function paintGroups(){
+  var h=[];
+  Object.keys(STUDENTS).forEach(function(c){
+    if(filt&&c!==filt) return;
+    for(var n=1;n<=7;n++){
+      var g=grp(c,n), id=g.id;
+      h.push('<tr><td>'+esc(c+" 第"+n+"組")+(g.keys.length>1?'<span class="pill">合併 '+g.keys.length+'</span>':'')+(!g.keys.length?'<span class="pill warn">無紀錄</span>':'')+'</td>');
+      h.push('<td class="n">'+g.task+'</td>');
+      h.push('<td class="n"><input class="numin" data-id="'+esc(id)+'" data-f="c" type="number" min="0" max="10" value="'+man(id,"c")+'"></td>');
+      h.push('<td class="n"><input class="numin" data-id="'+esc(id)+'" data-f="g" type="number" min="0" max="5" value="'+man(id,"g")+'"></td>');
+      h.push('<td class="n"><b>'+(g.task+man(id,"c")+man(id,"g"))+'</b></td>');
+      h.push('<td class="n">'+(g.nreal<g.nq?'<span class="pill warn" title="學生手機上有拍，但沒有傳上雲端">'+g.nreal+'/'+g.nq+'</span>':g.nreal)+'</td></tr>');
+    }
+  });
+  $("gt").innerHTML=h.join("");
+}
+function paintList(){
+  var L=list(), h=[], wrote=0;
+  L.forEach(function(D){
+    var k=D.cls+"|"+D.s.no, warn=[];
+    if(D.rs.lb>0) wrote++;
+    if(!D.r.n) warn.push('<span class="pill warn">心得未上傳</span>');
+    else if(D.rs.lb<CFG.REFL.b.min) warn.push('<span class="pill warn">心得不足</span>');
+    h.push('<tr class="s'+(cur===k?" cur":"")+'" data-k="'+esc(k)+'"><td>'+esc(D.s.no+"　"+D.s.name)+warn.join("")+'</td>');
+    h.push('<td>'+esc((filt?"":D.cls.slice(-1)+" ")+"第"+D.s.grp+"組")+'</td>');
+    h.push('<td class="n">'+D.rs.lb+'</td><td class="n">'+D.rs.sum+'</td><td class="n"><b>'+D.fin+'</b></td>');
+    h.push('<td class="n"><button class="dl" data-pdf="'+esc(k)+'">PDF</button></td></tr>');
+  });
+  $("tb").innerHTML=h.join("")||'<tr><td colspan="6">沒有資料</td></tr>';
+  $("cnt").textContent=L.length+" 人，"+wrote+" 人有寫心得";
+}
+function paint(){ paintGroups(); paintList(); if(cur) preview(cur); }
+function find(k){ var p=k.split("|"); var s=(STUDENTS[p[0]]||[]).filter(function(x){ return x.no===p[1]; })[0]; return s?student(p[0],s):null; }
+async function preview(k){
+  var D=find(k); if(!D) return;
+  cur=k;
+  document.querySelectorAll("tr.s").forEach(function(tr){ tr.classList.toggle("cur",tr.dataset.k===k); });
+  $("pvt").textContent=D.cls+"　"+D.s.no+"　"+D.s.name+"　個人總分 "+D.fin;
+  $("pdf1").disabled=false; $("prt1").disabled=false;
+  var pv=$("pv");
+  pv.innerHTML='<div class="zoomer">'+pagesHTML(D).join("")+'</div>';
+  var z=pv.firstChild;
+  await settle(z); fit(z); zoom();
+}
+function zoom(){
+  var pv=$("pv"), z=pv.firstChild; if(!z||!z.classList||!z.classList.contains("zoomer")) return;
+  var pw=z.querySelector(".page"); if(!pw) return;
+  var w=pw.offsetWidth, s=Math.min(1,(pv.clientWidth-24)/w);
+  z.style.transform="scale("+s+")";
+  z.style.width=(pv.clientWidth/s)+"px";
+  pv.style.height=(z.scrollHeight*s+28)+"px";
+}
+window.addEventListener("resize",zoom);
+
+function setProg(p,txt){
+  var b=$("prog"); b.style.display=p==null?"none":"block"; if(p!=null) b.firstChild.style.width=Math.round(p*100)+"%";
+  if(txt!=null) $("st").textContent=txt;
+}
+async function one(k){
+  if(busy) return; busy=true;
+  var D=find(k);
+  setProg(0.3,"產生中⋯ "+D.s.name);
+  try{ var b=await makePdf(D); save(b,fname(D)); setProg(null,"已下載 "+fname(D)+"（"+(b.size/1048576).toFixed(1)+" MB）"); }
+  catch(e){ setProg(null,"失敗："+e.message); }
+  busy=false;
+}
+async function batch(){
+  if(busy) return; busy=true;
+  var L=list(), zip=new JSZip(), big=0;
+  $("zip").disabled=true;
+  for(var i=0;i<L.length;i++){
+    setProg(i/L.length,"產生中 "+(i+1)+" / "+L.length+"　"+L[i].cls+" "+L[i].s.name);
+    try{ var b=await makePdf(L[i]); if(b.size>CFG.MAX_BYTES) big++; zip.file(fname(L[i]),b); }
+    catch(e){ console.error(e); }
+  }
+  setProg(1,"壓縮中⋯");
+  var z=await zip.generateAsync({type:"blob"});
+  save(z,"職場體驗學習成果_"+(filt||"全部")+".zip");
+  setProg(null,"完成 "+L.length+" 份"+(big?"（有 "+big+" 份超過 4MB）":""));
+  $("zip").disabled=false; busy=false;
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener("click",function(e){
+  var b=e.target.closest("button");
+  if(b&&b.dataset.cls!==undefined){
+    filt=b.dataset.cls;
+    document.querySelectorAll("[data-cls]").forEach(function(x){ x.classList.toggle("on",x===b); });
+    paint(); return;
+  }
+  if(b&&b.dataset.pdf){ one(b.dataset.pdf); return; }
+  if(b&&b.id==="pdf1"&&cur){ one(cur); return; }
+  if(b&&b.id==="prt1"&&cur){
+    var z=$("pv").querySelector(".zoomer"); if(!z) return;
+    $("printbox").innerHTML=z.innerHTML;
+    setTimeout(function(){ window.print(); },80); return;
+  }
+  if(b&&b.id==="zip"){ batch(); return; }
+  if(b&&b.id==="reload"){ load(); return; }
+  var tr=e.target.closest("tr.s");
+  if(tr){ preview(tr.dataset.k); }
+});
+document.addEventListener("change",function(e){
+  if(e.target.id==="pf"){ PF=e.target.checked; try{ localStorage.setItem("ylhc-photofree",PF?"1":"0"); }catch(x){} buildGroups(); paint(); }
+  if(e.target.id==="showsc"){ SHOWSC=e.target.checked; try{ localStorage.setItem("ylhc-pf-showsc",SHOWSC?"1":"0"); }catch(x){} if(cur) preview(cur); }
+  var el=e.target;
+  if(el.classList&&el.classList.contains("numin")){
+    var mx=el.dataset.f==="c"?10:5, v=Math.max(0,Math.min(mx,+el.value||0));
+    el.value=v; manual[el.dataset.id]=manual[el.dataset.id]||{}; manual[el.dataset.id][el.dataset.f]=v; saveMan(); paint();
+  }
+});
+
+/* ---------- 讀資料（一次讀完，不掛即時監聽） ---------- */
+var db=null;
+function load(){
+  try{
+    if(!db){ firebase.initializeApp(FB_CONFIG); db=firebase.database(); }
+    $("st").textContent="讀取答案⋯";
+    db.ref("e/"+EVENT_ID+"/ans").once("value").then(function(s){
+      ANS=s.val()||{};
+      $("st").textContent="讀取照片⋯（照片比較大，要等一下）";
+      return db.ref("e/"+EVENT_ID+"/pic").once("value");
+    }).then(function(s){
+      PIC=s.val()||{};
+      buildGroups(); paint();
+      $("st").textContent="已讀取 "+Object.keys(ANS).length+" 筆紀錄";
+      $("zip").disabled=false;
+    }).catch(function(e){ $("st").textContent="讀取失敗："+e.message; });
+  }catch(e){ $("st").textContent="連線失敗："+e.message; }
+}
+$("pf").checked=PF; $("showsc").checked=SHOWSC;
+paintRule();
+load();
+})();
+</script>
+</body>
+</html>
