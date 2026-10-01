@@ -275,44 +275,71 @@ function connect(){
   if(ansRef){ try{ ansRef.off(); }catch(e){} }
   ansRef=db.ref("e/"+EVENT_ID+"/ans");
   ansRef.on("value",function(sn){
-    var all=sn.val()||{}, best=null, bestN=-1;
+    var all=sn.val()||{}, best=null, bestN=-1, keys=[], rfs=[];
     D={}; PH={};
     for(var k in all){
       var A=all[k]||{};
-      if(String(A.cls)!==st.cls||String(A.grp)!==st.grp) continue;
+      if(String(A.cls||"").trim()!==st.cls||ng(A.grp)!==ng(st.grp)) continue;
+      keys.push(k);
       var n=0, dd=A.d||{};
       for(var q in dd) for(var f in dd[q]) n+=String(dd[q][f]||"").length;
       if(n>bestN){ bestN=n; best=k; }
+      String(A.ph||"").split(",").filter(Boolean).forEach(function(x){ PH[x]=1; });
+      var mine=(A.rf||{})[myId()];
+      if(mine) rfs.push(mine);
+    }
+    /* 這一組完全沒有紀錄（當天通行碼打錯、沒連上線）→ 開一筆新的，補強才進得來 */
+    if(!best) best="mk-"+myGid();
+    /* 先放「要寫入的那一筆」，其他筆只補空格：這樣學生改短、改正的字才不會被別筆較長的舊答案蓋回去 */
+    [best].concat(keys.filter(function(x){ return x!==best; })).forEach(function(k){
+      var dd=(all[k]||{}).d||{};
       for(var q2 in dd){
         D[q2]=D[q2]||{};
         for(var f2 in dd[q2]){
           var t=String(dd[q2][f2]||"");
-          if(t.trim().length>String(D[q2][f2]||"").trim().length) D[q2][f2]=t;
+          if(t.trim()&&!String(D[q2][f2]||"").trim()) D[q2][f2]=t;
         }
       }
-      String(A.ph||"").split(",").filter(Boolean).forEach(function(x){ PH[x]=1; });
-      var mine=(A.rf||{})[myId()];
-      if(mine){ ["a","b","c"].forEach(function(z){
-        if(String(mine[z]||"").trim() && !String(st.refl[z]||"").trim()) st.refl[z]=String(mine[z]); }); }
-    }
-    myKey=best||"";
-    ready=!!myKey;
-    watchPic(myKey);
+    });
+    /* 心得：同一個人可能散在好幾筆，每一格取「最新、而且不是空的」那份 */
+    rfs.sort(function(a,b){ return (+b.at||0)-(+a.at||0); });
+    ["a","b","c"].forEach(function(z){
+      if(String(st.refl[z]||"").trim()) return;
+      for(var i=0;i<rfs.length;i++) if(String(rfs[i][z]||"").trim()){ st.refl[z]=String(rfs[i][z]); break; }
+    });
+    myKey=best;
+    ready=true;
+    watchPics([best].concat(keys.filter(function(x){ return x!==best; })));
+    for(var z in PIC) if(z.indexOf("sheet")!==0) PH[z]=1;
     save();
     softRender();
   });
 }
-/* 照片監聽器整個分頁只掛一次，換組才換；掛太多次就是打字會跳的原因 */
-function watchPic(k){
-  if(!db||!k||k===picKey) return;
-  if(picRef){ try{ picRef.off(); }catch(e){} }
-  picKey=k;
-  picRef=db.ref("e/"+EVENT_ID+"/pic/"+k);
-  picRef.on("value",function(p){
-    PIC=p.val()||{};
-    for(var z in PIC) if(z.indexOf("sheet")!==0) PH[z]=1;
-    softRender();
+function ng(s){ var m=String(s||"").match(/\d+/); return m?"第"+(+m[0])+"組":String(s||"").trim(); }
+function myGid(){ return (st.cls+"-"+ng(st.grp)).replace(/[.#$\[\]\/\s]/g,""); }
+/* 同組每一筆紀錄的照片都要看得到（不只寫入的那一筆）；每筆只掛一次監聽器 */
+var picRefs={}, PICS={}, picOrder=[];
+function watchPics(ks){
+  if(!db) return;
+  picOrder=ks;
+  Object.keys(picRefs).forEach(function(k){
+    if(ks.indexOf(k)<0){ try{ picRefs[k].off(); }catch(e){} delete picRefs[k]; delete PICS[k]; }
   });
+  ks.forEach(function(k){
+    if(picRefs[k]) return;
+    picRefs[k]=db.ref("e/"+EVENT_ID+"/pic/"+k);
+    picRefs[k].on("value",function(p){
+      PICS[k]=p.val()||{};
+      mergePics();
+      softRender();
+    });
+  });
+  mergePics();
+}
+function mergePics(){
+  PIC={};
+  picOrder.forEach(function(k){ var P=PICS[k]||{}; for(var z in P) if(!PIC[z]) PIC[z]=P[z]; });
+  for(var z in PIC) if(z.indexOf("sheet")!==0) PH[z]=1;
 }
 function wref(){ return db&&myKey? db.ref("e/"+EVENT_ID+"/ans/"+myKey) : null; }
 
@@ -334,7 +361,7 @@ function pushRefl(){
     a:String(st.refl.a||"").slice(0,3000), b:String(st.refl.b||"").slice(0,3000),
     c:String(st.refl.c||"").slice(0,3000), at:firebase.database.ServerValue.TIMESTAMP };
   o.cls=st.cls; o.grp=st.grp;
-  wref().update(o).then(function(){ flash("心得已上傳"); }).catch(function(){});
+  wref().update(o).then(function(){ flash("心得已上傳"); }).catch(function(){ flash("心得上傳失敗，再打一個字重試","bad"); });
 }
 var flashT=null;
 function flash(msg,kind){
@@ -509,8 +536,9 @@ function cntR(k){
 /* ---------- 事件 ---------- */
 document.addEventListener("change",function(e){
   var el=e.target;
-  if(el.id==="i-cls"){ st.cls=el.value; st.no=""; st.grp=""; st.mem=""; st.name=""; ready=false; save(); render(); connect(); return; }
-  if(el.id==="i-no"){ st.no=el.value; fromRoster(); ready=false; save(); render(); connect(); return; }
+  /* 換人就清掉上一個人的心得，不然借手機的同學會把別人的心得傳成自己的 */
+  if(el.id==="i-cls"){ st.cls=el.value; st.no=""; st.grp=""; st.mem=""; st.name=""; st.refl={a:"",b:"",c:""}; ready=false; save(); render(); connect(); return; }
+  if(el.id==="i-no"){ st.no=el.value; fromRoster(); st.refl={a:"",b:"",c:""}; ready=false; save(); render(); connect(); return; }
   if(el.dataset && el.dataset.pic!==undefined && el.files && el.files[0]){
     var k=el.dataset.pic;
     setUp(k,"處理中⋯",'go');
