@@ -152,3 +152,35 @@ var STUDENTS = {
   setInterval(tick,4000);
   document.addEventListener("visibilitychange",function(){ if(!document.hidden) tick(); });
 })();
+
+/* ========== 【相簿上傳補丁】115-1 職場體驗 ========== */
+(function(){
+  "use strict";
+  function strip(node){
+    if(!node||node.nodeType!==1) return;
+    if(node.tagName==="INPUT"&&node.type==="file") node.removeAttribute("capture");
+    if(!node.querySelectorAll) return;
+    var l=node.querySelectorAll('input[type="file"]');
+    for(var i=0;i<l.length;i++) l[i].removeAttribute("capture");
+    var s=node.querySelectorAll(".ph label span");
+    for(var j=0;j<s.length;j++){
+      var t=s[j].textContent||"";
+      if(t.indexOf("拍照")>=0&&t.indexOf("相簿")<0&&t.indexOf("已拍")<0)
+        s[j].textContent=t.replace("拍照","拍照或從相簿選");
+    }
+  }
+  function boot(){
+    strip(document.body);
+    try{
+      new MutationObserver(function(ms){
+        for(var i=0;i<ms.length;i++){
+          var a=ms[i].addedNodes;
+          for(var j=0;j<a.length;j++) strip(a[j]);
+        }
+      }).observe(document.body,{childList:true,subtree:true});
+    }catch(e){}
+    setInterval(function(){ strip(document.body); },3000);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot);
+  else boot();
+})();
