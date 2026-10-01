@@ -65,15 +65,18 @@ h4:first-child{margin-top:2px}
 .shots figure{margin:0}
 .shots img{width:100%;border-radius:9px;border:1px solid var(--line);display:block}
 .shots figcaption{font-size:11px;color:var(--ink-3);margin-top:3px;line-height:1.4}
+body:not(.edit) .ed{display:none!important}
+body.edit .vw{display:none!important}
 #st{font-size:13.5px;color:var(--ink-3);font-family:var(--mono)}
 </style>
 </head>
 <body>
 <div class="wrap">
-<h1>真實成績重算</h1>
-<p class="sub">不看壞掉的「總分」欄，直接從每一組實際寫下的答案重新算一次。同班同組的重複紀錄會自動合併。</p>
+<h1 class="ed">真實成績重算</h1><h1 class="vw">各組作答與照片</h1>
+<p class="sub ed">不看壞掉的「總分」欄，直接從每一組實際寫下的答案重新算一次。同班同組的重複紀錄會自動合併。</p>
+<p class="sub vw">點任一組就會展開該組全部的答案和現場照片。這裡只能看，成績由負責老師統一評定。</p>
 
-<div class="note">
+<div class="note ed">
 <b>計分方式</b>　魔菇五題每題 8 分（填滿 4＋字數夠 4）共 40；三井取<b>得分最高的四關</b>每關 10 分（照片 3＋填滿 4＋字數夠 3）共 40；商業術語最多 5 分；加碼關另計最多 5 分。<br>
 <b>GPS 5 分因座標設定錯誤全組無法取得，已從計分中移除</b>，請用右邊「GPS補分」欄人工給分。
 </div>
@@ -83,23 +86,23 @@ h4:first-child{margin-top:2px}
   <button data-cls="商二甲">商二甲</button>
   <button data-cls="商二乙">商二乙</button>
   <span style="flex:1"></span>
-  <label style="display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;
+  <label class="ed" style="display:flex;align-items:center;gap:7px;font-size:14px;font-weight:600;
     background:var(--gold-soft);color:var(--gold);padding:8px 13px;border-radius:10px;cursor:pointer">
     <input type="checkbox" id="pf" style="width:17px;height:17px;accent-color:var(--gold)">照片分一律給（系統故障補償）</label>
-  <button id="bCsv">匯出成績 CSV</button>
+  <button class="ed" id="bCsv">匯出成績 CSV</button>
   <button id="bRefl">匯出心得 CSV</button>
   <span id="st">連線中⋯</span>
 </div>
 
-<div class="card" id="vs"></div>
+<div class="card ed" id="vs"></div>
 
 <div class="card">
 <table>
 <thead><tr>
 <th class="n">#</th><th>班級／組別</th>
-<th class="n">魔菇<br>/40</th><th class="n">三井<br>/40</th><th class="n">術語<br>/5</th>
-<th class="n">任務<br>/85</th><th class="n">加碼</th>
-<th class="n">創意<br>/10</th><th class="n">GPS<br>補分</th><th class="n">總評</th>
+<th class="n ed">魔菇<br>/40</th><th class="n ed">三井<br>/40</th><th class="n ed">術語<br>/5</th>
+<th class="n ed">任務<br>/85</th><th class="n ed">加碼</th>
+<th class="n ed">創意<br>/10</th><th class="n ed">GPS<br>補分</th><th class="n ed">總評</th>
 </tr></thead>
 <tbody id="tb"><tr><td colspan="10" style="color:var(--ink-3)">讀取中⋯</td></tr></tbody>
 </table>
@@ -217,6 +220,9 @@ try{ PHOTOFREE=localStorage.getItem("ylhc-photofree")==="1"; }catch(e){}
 try{ manual=JSON.parse(localStorage.getItem(MKEY)||"{}")||{}; }catch(e){ manual={}; }
 function saveMan(){ try{ localStorage.setItem(MKEY,JSON.stringify(manual)); }catch(e){} }
 function esc(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+/* 預設只能看；網址加 ?edit=1 才會出現分數和評分欄位（給負責評分的老師自己用） */
+var EDIT=/[?&]edit=1/.test(location.search);
+if(EDIT) document.body.classList.add("edit"); else document.title="各組作答與照片";
 function man(id,f){ return (manual[id]&&+manual[id][f])||0; }
 /* 「第3組」「第 3 組」「3」都當同一組 */
 function ng(s){ var m=String(s||"").match(/\d+/); return m?"第"+(+m[0])+"組":String(s||"").trim(); }
@@ -295,7 +301,8 @@ function grand(g){ return g.task + man(g.id,"c") + man(g.id,"g"); }
 function rows(){
   var a=groups();
   if(filt) a=a.filter(function(g){ return g.cls===filt; });
-  a.sort(function(x,y){ return grand(y)-grand(x); });
+  a.sort(EDIT?function(x,y){ return grand(y)-grand(x); }
+             :function(x,y){ return x.cls.localeCompare(y.cls) || (parseInt(x.grp.replace(/\D/g,""))||0)-(parseInt(y.grp.replace(/\D/g,""))||0); });
   return a;
 }
 
@@ -311,14 +318,14 @@ function paint(){
       (dup?'<span class="pill warn">合併 '+g.keys.length+' 筆</span>':'')+
       (g.qtop.length>=4?'<span class="pill ok">四關完成</span>':'<span class="pill">三井 '+g.qtop.length+' 關</span>')+
       (g.nphoto?'<span class="pill'+(g.nreal<g.nq?' warn':'')+'">照片 '+g.nreal+(g.nreal<g.nq?'／標記 '+g.nq+'（有照片沒傳上來）':'')+'</span>':'')+
-      (g.bo?'<span class="pill gold">★加碼 '+g.bo+'</span>':'')+
+      (g.bo?'<span class="pill gold">★加碼'+(EDIT?" "+g.bo:"")+'</span>':'')+
       '<small>'+esc(g.mem||"（未填組員）")+'</small></td>');
-    h.push('<td class="n">'+g.mo+'</td><td class="n">'+g.mi+'</td><td class="n">'+g.te+'</td>');
-    h.push('<td class="n"><b>'+g.task+'</b></td>');
-    h.push('<td class="n">'+(g.bo?'<b style="color:var(--gold)">'+g.bo+'</b>':'—')+'</td>');
-    h.push('<td class="n"><input class="numin" data-id="'+esc(g.id)+'" data-f="c" type="number" min="0" max="10" value="'+man(g.id,"c")+'"></td>');
-    h.push('<td class="n"><input class="numin" data-id="'+esc(g.id)+'" data-f="g" type="number" min="0" max="5" value="'+man(g.id,"g")+'"></td>');
-    h.push('<td class="n"><b style="font-size:16px">'+grand(g)+'</b></td>');
+    h.push('<td class="n ed">'+g.mo+'</td><td class="n ed">'+g.mi+'</td><td class="n ed">'+g.te+'</td>');
+    h.push('<td class="n ed"><b>'+g.task+'</b></td>');
+    h.push('<td class="n ed">'+(g.bo?'<b style="color:var(--gold)">'+g.bo+'</b>':'—')+'</td>');
+    if(EDIT) h.push('<td class="n ed"><input class="numin" data-id="'+esc(g.id)+'" data-f="c" type="number" min="0" max="10" value="'+man(g.id,"c")+'"></td>');
+    if(EDIT) h.push('<td class="n ed"><input class="numin" data-id="'+esc(g.id)+'" data-f="g" type="number" min="0" max="5" value="'+man(g.id,"g")+'"></td>');
+    if(EDIT) h.push('<td class="n ed"><b style="font-size:16px">'+grand(g)+'</b></td>');
     h.push('</tr>');
     if(openKey===g.id) h.push('<tr class="det"><td colspan="10">'+detail(g)+'</td></tr>');
   });
@@ -328,9 +335,10 @@ function paint(){
 function qa(g,id,inTop){
   var row=g.d[id], fs=QDEF[id]||[], s=g.sc(id), mx=id.charAt(0)==="m"?8:(id.charAt(0)==="x"?5:10);
   var cls=s===mx?"full":(s>0?"part":"");
-  var h=['<div class="qa '+cls+'"><div class="q">'+esc(TITLE[id]||id)+'　'+s+' / '+mx+
+  if(!EDIT) cls="";
+  var h=['<div class="qa '+cls+'"><div class="q">'+esc(TITLE[id]||id)+(EDIT?'　'+s+' / '+mx:"")+
          (g.ph[id]?'　📷':(PHOTOFREE&&id.charAt(0)==="q"?'　📷補':''))+
-         (inTop===false?'　（未計入，只取最高四關）':'')+'</div>'];
+         (EDIT&&inTop===false?'　（未計入，只取最高四關）':'')+'</div>'];
   if(!row){ h.push('<div class="a" style="color:var(--ink-3)">（未作答）</div></div>'); return h.join(""); }
   fs.forEach(function(f){
     var t=String(row[f.k]||"");
@@ -341,12 +349,12 @@ function qa(g,id,inTop){
 }
 function detail(g){
   var h=[];
-  h.push('<h4>魔菇部落　'+g.mo+' / 40</h4>');
+  h.push('<h4>魔菇部落'+(EDIT?'　'+g.mo+' / 40':"")+'</h4>');
   ["m1","m2","m3","m4","m5"].forEach(function(id){ h.push(qa(g,id)); });
-  h.push('<h4>三井 OUTLET　'+g.mi+' / 40　（實際作答 '+g.qdet.length+' 關，取最高四關計分）</h4>');
+  h.push('<h4>三井 OUTLET'+(EDIT?'　'+g.mi+' / 40　（實際作答 '+g.qdet.length+' 關，取最高四關計分）':'　（共 '+g.qdet.length+' 關）')+'</h4>');
   if(!g.qdet.length) h.push('<div class="qa"><div class="a" style="color:var(--ink-3)">這一組沒有三井的作答紀錄。</div></div>');
   g.qdet.forEach(function(x,i){ h.push(qa(g,x.id,i<4)); });
-  if(g.d.x1){ h.push('<h4>★ 加碼關　'+g.bo+' / 5</h4>'); h.push(qa(g,"x1")); }
+  if(g.d.x1){ h.push('<h4>★ 加碼關'+(EDIT?'　'+g.bo+' / 5':"")+'</h4>'); h.push(qa(g,"x1")); }
   var pics=[];
   g.keys.forEach(function(k){ var P=picMap[k]||{}; for(var z in P) if(z.indexOf("sheet")!==0) pics.push({id:z,src:P[z]}); });
   if(pics.length){
@@ -354,7 +362,7 @@ function detail(g){
     pics.forEach(function(p){ h.push('<figure><img src="'+p.src+'" alt=""><figcaption>'+esc(TITLE[p.id]||p.id)+'</figcaption></figure>'); });
     h.push('</div>');
   }
-  h.push('<h4>抓到的商業術語　'+g.te+' / 5</h4>');
+  h.push('<h4>抓到的商業術語'+(EDIT?'　'+g.te+' / 5':"")+'</h4>');
   h.push('<div class="a" style="font-size:13.5px">'+(g.terms.length?esc(g.terms.join("、")):'<span style="color:var(--ink-3)">（沒有出現關鍵字）</span>')+'</div>');
   return h.join("");
 }
@@ -450,7 +458,7 @@ document.addEventListener("click",function(e){
 },false);
 document.addEventListener("input",function(e){
   var el=e.target;
-  if(!el.classList||!el.classList.contains("numin")) return;
+  if(!EDIT||!el.classList||!el.classList.contains("numin")) return;
   var id=el.dataset.id, f=el.dataset.f;
   var mx=f==="c"?10:5, v=Math.max(0,Math.min(mx,+el.value||0));
   manual[id]=manual[id]||{}; manual[id][f]=v; saveMan();
