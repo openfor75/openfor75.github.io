@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>職場體驗　補強</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --paper:#fbfaf7;--surface:#fff;--surface-2:#f2efe9;--line:#ddd7cc;
+  --ink:#15181d;--ink-2:#4a5059;--ink-3:#7b828c;
+  --accent:#dd4f1f;--accent-soft:#fdeee7;--ok:#1d6b45;--ok-soft:#e1f0e8;
+  --gold:#9a6c00;--gold-soft:#fbf1d8;--sea:#14566b;--sea-soft:#e4eff3;
+  --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --mono:ui-monospace,Consolas,monospace;
+  --shadow:0 1px 2px rgba(21,24,29,.06),0 6px 20px rgba(21,24,29,.08);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#14161a;--surface:#1d2026;--surface-2:#252930;--line:#353a43;
+  --ink:#eef0f3;--ink-2:#b3bac2;--ink-3:#8a9199;
+  --accent:#ff8154;--accent-soft:#33201a;--ok:#6fc79b;--ok-soft:#16281f;
+  --gold:#e5b458;--gold-soft:#2e2718;--sea:#79b9cf;--sea-soft:#182a31;
+  --shadow:0 1px 2px rgba(0,0,0,.5),0 6px 20px rgba(0,0,0,.4);
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.65;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px 80px}
+header{background:var(--ink);color:var(--paper);padding:16px 0 15px;margin-bottom:16px}
+header .in{max-width:720px;margin:0 auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+header b{font-size:18px;letter-spacing:-.01em}
+header small{display:block;font-size:12px;opacity:.72;font-weight:400;letter-spacing:.04em}
+.score{font-family:var(--mono);font-size:26px;font-weight:700;white-space:nowrap}
+.score i{font-style:normal;font-size:13px;opacity:.65}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:16px;margin:0 0 14px;box-shadow:var(--shadow)}
+h2{margin:0 0 4px;font-size:17px}
+.sub{margin:0 0 12px;color:var(--ink-2);font-size:14px}
+.f{margin-bottom:12px}
+.f label{display:block;font-size:13.5px;font-weight:600;color:var(--ink-2);margin-bottom:5px}
+.f input,.f textarea,.f select{width:100%;font-family:inherit;font-size:16.5px;line-height:1.6;
+  color:var(--ink);background:var(--surface-2);border:2px solid transparent;border-radius:10px;padding:10px 12px}
+.f textarea{min-height:92px;resize:vertical}
+.f input:focus,.f textarea:focus,.f select:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+.f select{appearance:none;padding-right:34px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8'><path d='M1 1l5 5 5-5' stroke='%237b828c' stroke-width='2' fill='none'/></svg>");
+  background-repeat:no-repeat;background-position:right 13px center}
+.cnt{font-size:12px;font-family:var(--mono);color:var(--ink-3);margin-top:3px;text-align:right}
+.cnt.ok{color:var(--ok)}
+.cnt.bad{color:var(--accent)}
+.auto{background:var(--sea-soft);border-radius:11px;padding:11px 13px;font-size:14px;color:var(--sea)}
+.auto b{display:block;font-size:15.5px;color:var(--ink)}
+.quest{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  margin:0 0 12px;box-shadow:var(--shadow);overflow:hidden}
+.quest.done{border-color:var(--ok)}
+.qh{display:flex;align-items:center;gap:11px;padding:13px 15px;cursor:pointer;background:var(--surface)}
+.qh .n{width:27px;height:27px;flex:none;border-radius:8px;background:var(--surface-2);
+  display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:13px;font-weight:700}
+.quest.done .qh .n{background:var(--ok);color:#fff}
+.qh .t{flex:1;min-width:0}
+.qh .t b{display:block;font-size:15.5px;line-height:1.35}
+.qh .t span{display:block;font-size:12.5px;color:var(--ink-3)}
+.qh .p{font-family:var(--mono);font-size:13px;color:var(--ink-3);white-space:nowrap}
+.quest.done .qh .p{color:var(--ok);font-weight:700}
+.qb{padding:0 15px 15px;display:none}
+.quest.open .qb{display:block}
+.mission{background:var(--surface-2);border-radius:11px;padding:12px 14px;font-size:14.5px;margin-bottom:13px}
+.ph{margin-bottom:13px}
+.ph label.pick{display:flex;align-items:center;justify-content:center;gap:9px;
+  background:var(--surface-2);border:2px dashed var(--line);border-radius:11px;padding:13px;
+  cursor:pointer;font-size:15px;font-weight:600;color:var(--ink-2)}
+.ph input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
+.ph img{width:100%;border-radius:11px;display:block;margin-bottom:7px;border:1px solid var(--line)}
+.up{font-size:12.5px;font-family:var(--mono);margin-top:5px;color:var(--ink-3)}
+.up.ok{color:var(--ok)} .up.bad{color:var(--accent)} .up.go{color:var(--sea)}
+.tabs{display:flex;gap:7px;margin:0 0 13px}
+.tabs button{flex:1;font-family:inherit;font-size:14.5px;font-weight:600;padding:11px 6px;
+  border-radius:12px;border:2px solid var(--line);background:var(--surface);color:var(--ink-3);cursor:pointer}
+.tabs button.on{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.tabs button b{display:block;font-family:var(--mono);font-size:11px;font-weight:500;opacity:.8}
+.note{background:var(--gold-soft);color:var(--gold);border-radius:12px;padding:12px 14px;
+  font-size:14px;margin:0 0 14px;font-weight:500}
+.sync{font-size:12.5px;font-family:var(--mono);color:var(--ink-3);text-align:center;padding:6px 0 2px}
+.sync.ok{color:var(--ok)}
+.gate{border:2px dashed var(--line);background:var(--surface-2);box-shadow:none}
+.big{width:100%;font-family:inherit;font-size:17px;font-weight:700;padding:14px;border-radius:12px;
+  border:0;background:var(--accent);color:#fff;cursor:pointer}
+.big[disabled]{background:var(--surface-2);color:var(--ink-3);cursor:default}
+.link{background:none;border:0;color:var(--ink-3);font-family:inherit;font-size:13.5px;
+  text-decoration:underline;cursor:pointer;padding:4px 0}
+</style>
+</head>
+<body>
+<header><div class="in">
+  <div><b>職場體驗　補強</b><small>115-1　商經科　10/01</small></div>
+  <div class="score" id="sc">0<i>/85</i></div>
+</div></header>
+<div class="wrap"><div id="app"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@10.12.2/firebase-database-compat.js"></script>
+<script>
+/* ============================================================
+   學生名冊　students.js　　115-1 職場體驗（115/10/01）
+   ============================================================
+   姓名：依「115年10月1日商經科職場體驗　保險名單」（正式文件）
+   組別：依「114學年度第1學期校外參觀分組名單」（導師簽章版）
+   每班 7 組。商二乙 10 號 蕭禾佳已取消，未列入。
+
+   格式： { no:"座號", name:"姓名", grp:組別, lead:1 }
+          lead:1 ＝ 該組組長（分組名單上每組第一位），程式不會用到。
+
+   學生在手機上只要：選班級 → 選自己的座號 → 輸入通行碼。
+   組別和組員名單會自動帶出來，全程不用打字。
+   ============================================================ */
+
+var STUDENTS = {
+
+  "商二甲": [
+    { no:"01", name:"池安筳", grp:4 },
+    { no:"02", name:"李承昱", grp:2, lead:1 },
+    { no:"03", name:"李諺承", grp:1 },
+    { no:"04", name:"林庠宇", grp:1, lead:1 },
+    { no:"05", name:"林彥岑", grp:3 },
+    { no:"06", name:"林瑞勝", grp:5, lead:1 },
+    { no:"07", name:"張宏陽", grp:7, lead:1 },
+    { no:"08", name:"許哲瑀", grp:7 },
+    { no:"09", name:"陳泊均", grp:5 },
+    { no:"10", name:"黃士楷", grp:6 },
+    { no:"11", name:"楊冠程", grp:4 },
+    { no:"12", name:"潘尚育", grp:3 },
+    { no:"13", name:"蔣昕佑", grp:2 },
+    { no:"14", name:"王怡璇", grp:3 },
+    { no:"15", name:"王姵媞", grp:6, lead:1 },
+    { no:"16", name:"林玉秝", grp:4, lead:1 },
+    { no:"17", name:"林宥靜", grp:2 },
+    { no:"18", name:"林瑄婕", grp:7 },
+    { no:"19", name:"施律羽", grp:5 },
+    { no:"20", name:"施霈樺", grp:1 },
+    { no:"21", name:"洪依晨", grp:7 },
+    { no:"22", name:"胡芸甄", grp:2 },
+    { no:"23", name:"徐采瑄", grp:4 },
+    { no:"24", name:"許筑珺", grp:6 },
+    { no:"25", name:"陳宣蓉", grp:1 },
+    { no:"26", name:"陳浿綺", grp:5 },
+    { no:"27", name:"曾意晴", grp:5 },
+    { no:"28", name:"黃沛恩", grp:6 },
+    { no:"29", name:"黃靖雯", grp:4 },
+    { no:"30", name:"詹令憶", grp:6 },
+    { no:"31", name:"劉芯彤", grp:2 },
+    { no:"32", name:"鄭沛菉", grp:3, lead:1 },
+    { no:"33", name:"簡彤恩", grp:3 },
+    { no:"34", name:"王姿雅", grp:1 }
+  ],
+
+  "商二乙": [
+    { no:"01", name:"李利明", grp:3 },
+    { no:"02", name:"林尚勳", grp:5 },
+    { no:"04", name:"張鼎", grp:3 },
+    { no:"05", name:"陳科菉", grp:7, lead:1 },
+    { no:"06", name:"陳駿璿", grp:2 },
+    { no:"07", name:"游凱崴", grp:4 },
+    { no:"08", name:"黃新儒", grp:4 },
+    { no:"09", name:"楊垠枰", grp:5 },
+    { no:"11", name:"蕭嘉成", grp:6 },
+    { no:"12", name:"賴宥玗", grp:1, lead:1 },
+    { no:"13", name:"尤鈺文", grp:6, lead:1 },
+    { no:"14", name:"吳亞萱", grp:5 },
+    { no:"15", name:"吳承臻", grp:6 },
+    { no:"16", name:"林睿湘", grp:6 },
+    { no:"17", name:"邱以蓁", grp:3 },
+    { no:"18", name:"范湘甯", grp:4 },
+    { no:"19", name:"唐嘉婕", grp:1 },
+    { no:"20", name:"康鈺欣", grp:5, lead:1 },
+    { no:"21", name:"張心瑜", grp:5 },
+    { no:"22", name:"許巧潔", grp:2, lead:1 },
+    { no:"23", name:"郭采璇", grp:3, lead:1 },
+    { no:"24", name:"陳芊妤", grp:7 },
+    { no:"25", name:"游忻璇", grp:1 },
+    { no:"26", name:"黃纁慧", grp:2 },
+    { no:"27", name:"劉佳昕", grp:7 },
+    { no:"28", name:"蔡依恬", grp:7 },
+    { no:"30", name:"鄭晴曼", grp:6 },
+    { no:"31", name:"蕭予晴", grp:2 },
+    { no:"32", name:"賴允菡", grp:4, lead:1 },
+    { no:"33", name:"謝恣菱", grp:4 },
+    { no:"34", name:"蘇苡妮", grp:7 },
+    { no:"36", name:"林庭伃", grp:3 }
+  ]
+
+};
+var MOGU=[{"id": "m1", "t": "它到底在賣什麼", "s": "不只是香菇", "m": "這家公司的產品線不只一種。<b>把你看到、聽到的全部列出來</b>——新鮮菇、加工食品、保健品、門票、DIY、料理課⋯⋯還有嗎？", "f": [{"k": "a", "l": "產品線盤點（越多越好）", "t": "ta", "min": 40}]}, {"id": "m2", "t": "簡報裡的三個數字", "s": "數字不會說謊", "m": "方先生的簡報裡一定會出現數字——成立幾年、幾座廠、一天出貨多少、市占多少。<b>抓三個記下來。</b>", "f": [{"k": "a", "l": "數字一（是什麼＋多少）", "t": "in"}, {"k": "b", "l": "數字二", "t": "in"}, {"k": "c", "l": "數字三", "t": "in"}]}, {"id": "m3", "t": "六星級廠區裡的技術", "s": "種菇也是科技業", "m": "智慧蕈菇生產廠區裡，<b>找出一個你覺得最厲害的技術或設備</b>，想想它取代了什麼人工。", "f": [{"k": "a", "l": "看到什麼技術／設備", "t": "in"}, {"k": "b", "l": "它取代了什麼？為什麼要自動化？", "t": "ta", "min": 30}]}, {"id": "m4", "t": "為什麼要開觀光農場", "s": "這題最重要", "m": "一家<b>種香菇、做生技的公司</b>，為什麼要花錢蓋園區、種落羽松、開小火車、讓學生來 DIY？", "f": [{"k": "a", "l": "你的推論（從賺錢的角度想）", "t": "ta", "min": 50}]}, {"id": "m5", "t": "250 元買到什麼", "s": "你自己就是消費者", "m": "今天你付了 250 元。<b>拆解看看這筆錢裡面，你實際上買到的是哪些東西？</b>材料？時間？體驗？回憶？", "f": [{"k": "a", "l": "拆解這 250 元", "t": "ta", "min": 40}, {"k": "b", "l": "如果漲到 400 元，你還會來嗎？為什麼", "t": "ta", "min": 30}]}];
+var MITSUI=[{"id": "q1", "t": "黃金店面爭奪戰", "s": "位置就是錢", "m": "這裡有 220 家店。找出你認為<b>位置最好</b>的一家，再找一家<b>位置最吃虧</b>的。<b>拍一張能看出位置差別的照片。</b>", "f": [{"k": "a", "l": "位置最好的店名", "t": "in"}, {"k": "b", "l": "好在哪？", "t": "ta", "min": 30}, {"k": "c", "l": "位置最吃虧的店名", "t": "in"}, {"k": "d", "l": "為什麼吃虧？", "t": "ta", "min": 30}]}, {"id": "q2", "t": "折扣的數學", "s": "它想讓你覺得賺到", "m": "OUTLET 靠折扣做生意。找一個<b>看得到原價和售價</b>的商品，拍下吊牌或價標。", "f": [{"k": "a", "l": "品牌", "t": "in"}, {"k": "b", "l": "原價", "t": "in"}, {"k": "c", "l": "售價", "t": "in"}, {"k": "d", "l": "實際打幾折（自己算）", "t": "in"}, {"k": "e", "l": "它用哪種手法讓你覺得便宜？", "t": "ta", "min": 30}]}, {"id": "q3", "t": "一期 vs 二期", "s": "隔了三年的兩個商場", "m": "一期 2018 年開幕，二期 2021 年底才開，多了五十家店。<b>一期有室內美食街和二樓餐廳，二期是全戶外的。</b>兩邊各走一趟，拍一張最能代表那一區的照片。", "f": [{"k": "a", "l": "一期你看到哪些業種", "t": "in"}, {"k": "b", "l": "二期你看到哪些業種", "t": "in"}, {"k": "c", "l": "隔了三年，為什麼二期要換方向？", "t": "ta", "min": 40}]}, {"id": "q4", "t": "海景值多少錢", "s": "風景也是商品", "m": "這裡是全台第一座<b>海港型</b> OUTLET，摩天輪 60 公尺，是全台唯一看得到海的。找一個看得到海的角度拍下來。", "f": [{"k": "a", "l": "這裡有哪些設施在「賣風景」？", "t": "ta", "min": 30}, {"k": "b", "l": "購物中心為什麼要花錢買海景？對生意有什麼幫助？", "t": "ta", "min": 40}]}, {"id": "q5", "t": "品牌偵探", "s": "220 家店裡的陌生人", "m": "找<b>三個你沒聽過</b>的品牌，拍一張有招牌的照片。", "f": [{"k": "a1", "l": "品牌一", "t": "in"}, {"k": "a2", "l": "賣什麼", "t": "in"}, {"k": "a3", "l": "賣給誰", "t": "in"}, {"k": "b1", "l": "品牌二", "t": "in"}, {"k": "b2", "l": "賣什麼", "t": "in"}, {"k": "b3", "l": "賣給誰", "t": "in"}, {"k": "c1", "l": "品牌三", "t": "in"}, {"k": "c2", "l": "賣什麼", "t": "in"}, {"k": "c3", "l": "賣給誰", "t": "in"}], "grid": 3}, {"id": "q6", "t": "動線實驗", "s": "你被帶著走", "m": "二期是<b>ㄇ字型</b>的路。選一個起點走到一個終點，<b>一路數你經過幾家店</b>，拍一張路的照片。", "f": [{"k": "a", "l": "起點", "t": "in"}, {"k": "b", "l": "終點", "t": "in"}, {"k": "c", "l": "經過幾家店", "t": "in"}, {"k": "d", "l": "這條路為什麼設計成這樣？", "t": "ta", "min": 30}]}, {"id": "q7", "t": "為什麼有遊樂設施", "s": "不是來買東西的人", "m": "摩天輪、雪樂地、Asobi Square、湯姆熊——<b>一個賣衣服的地方，為什麼要花錢蓋這些？</b>挑一個拍下來，順便看看：在玩的是誰，在旁邊等的又是誰。", "f": [{"k": "a", "l": "你選哪一個設施", "t": "in"}, {"k": "b", "l": "在玩的人是誰？在旁邊等的人是誰？", "t": "ta", "min": 30}, {"k": "c", "l": "這些設施幫商場賺到什麼？（提示：那些人等著等著會做什麼）", "t": "ta", "min": 40}]}, {"id": "q8", "t": "最冷清的那一家", "s": "人少的店在想什麼", "m": "找一家<b>客人最少</b>的店，拍店門口。<b>不要拍到店員和客人的臉，不要站在門口指指點點——人家在做生意。</b>", "f": [{"k": "a", "l": "店名（或賣什麼）", "t": "in"}, {"k": "b", "l": "可能原因一", "t": "in"}, {"k": "c", "l": "可能原因二", "t": "in"}, {"k": "d", "l": "可能原因三", "t": "in"}]}];
+var BONUS={"id": "x1", "t": "總經理的位子", "s": "只能留一家", "m": "三井總公司丟了一個問題給你們：<b>如果台中港這個場子明年只能留下一家店，你們留哪一家？</b><br>不是留你最喜歡的，是留<b>最該留的</b>。你得說服一個只看數字的人。", "f": [{"k": "a", "l": "你們要留的那一家店", "t": "in"}, {"k": "b", "l": "理由一：從位置或動線說", "t": "ta", "min": 40}, {"k": "c", "l": "理由二：從客群或定價說", "t": "ta", "min": 40}, {"k": "d", "l": "理由三：從你今天親眼看到的東西說（人潮、排隊、提袋⋯⋯）", "t": "ta", "min": 40}, {"k": "e", "l": "最後一題：這家店最大的弱點是什麼？", "t": "ta", "min": 30}]};
+var TERMS=["4P", "STP", "動線", "坪效", "客單價", "目標客群", "品牌定位", "市場區隔", "差異化", "陳列", "客層", "人流", "定價", "促銷", "通路", "體驗行銷", "集客", "附加價值", "產業升級"];
+
+var FB_CONFIG={apiKey:"AIzaSyAmEGKtYxq7ao9G0IWdHrmWeThdshIIALI",
+  authDomain:"moguoutlet.firebaseapp.com",
+  databaseURL:"https://moguoutlet-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId:"moguoutlet"};
+</script>
+<script>
+(function(){
+"use strict";
+var EVENT_ID="115-1-1001", KEY="ylhc-makeup";
+var st={cls:"",no:"",name:"",grp:"",mem:"",stage:"mogu",open:null,refl:{a:"",b:"",c:""}};
+try{ var r=localStorage.getItem(KEY); if(r) st=Object.assign(st,JSON.parse(r)||{}); }catch(e){}
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(st)); }catch(e){} }
+
+var db=null, myKey="", D={}, PH={}, PIC={}, RF={}, online=false, ready=false;
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function ALL(){ return MOGU.concat(MITSUI).concat([BONUS]); }
+function Q(id){ return ALL().filter(function(x){return x.id===id;})[0]; }
+function val(q,k){ return String(((D[q]||{})[k])||"").trim(); }
+
+/* ---------- 名冊 ---------- */
+function rowsOf(c){ return (STUDENTS[c]||[]); }
+function meRow(){ if(!st.cls||!st.no) return null;
+  return rowsOf(st.cls).filter(function(x){ return String(x.no)===String(st.no); })[0]||null; }
+function mates(){ var m=meRow(); if(!m) return [];
+  return rowsOf(st.cls).filter(function(x){ return String(x.grp)===String(m.grp); }); }
+function fromRoster(){ var m=meRow(); if(!m) return;
+  st.name=m.name; st.grp="第"+m.grp+"組"; st.mem=mates().map(function(x){return x.name;}).join("、"); }
+function myId(){ return (st.cls+"-"+st.no).replace(/[.#$\[\]\/\s]/g,""); }
+
+/* ---------- 計分（跟老師端完全一致）---------- */
+function qScore(id){
+  var q=Q(id); if(!q) return 0;
+  if(id.charAt(0)==="x"){
+    var s=0; q.f.forEach(function(f){ var t=val(id,f.k); if(f.min? t.length>=f.min : t.length>0) s+=1; });
+    return Math.min(5,s);
+  }
+  var filled=q.f.every(function(f){ return val(id,f.k).length>0; });
+  var mins=q.f.filter(function(f){ return f.min; });
+  var lng=mins.length?mins.every(function(f){ return val(id,f.k).length>=f.min; }):filled;
+  var s2=0;
+  if(id.charAt(0)==="m"){ if(filled)s2+=4; if(lng)s2+=4; }
+  else { if(PH[id])s2+=3; if(filled)s2+=4; if(lng)s2+=3; }
+  return s2;
+}
+function qMax(id){ return id.charAt(0)==="m"?8:(id.charAt(0)==="x"?5:10); }
+function topFour(){
+  var a=MITSUI.map(function(q){ return {id:q.id,s:qScore(q.id)}; });
+  a.sort(function(x,y){ return y.s-x.s || x.id.localeCompare(y.id); });
+  return a.slice(0,4);
+}
+function tot(){
+  var mo=0; MOGU.forEach(function(q){ mo+=qScore(q.id); });
+  var mi=0; topFour().forEach(function(x){ mi+=x.s; });
+  var txt=""; for(var q in D) for(var f in D[q]) txt+=String(D[q][f]||"")+" ";
+  var te=Math.min(5,TERMS.filter(function(w){ return txt.indexOf(w)>=0; }).length);
+  var bo=D.x1?qScore("x1"):0;
+  return {mo:mo,mi:mi,te:te,bo:bo,task:mo+mi+te};
+}
+
+/* ---------- Firebase（讀寫都只用 班級+組別 定位，不需要通行碼）---------- */
+function connect(){
+  if(!st.cls||!st.grp){ ready=false; return; }
+  try{
+    if(!db){ firebase.initializeApp(FB_CONFIG); db=firebase.database();
+      db.ref(".info/connected").on("value",function(s){ online=!!s.val(); paintSync(); }); }
+  }catch(e){ db=null; return; }
+  db.ref("e/"+EVENT_ID+"/ans").on("value",function(sn){
+    var all=sn.val()||{}, best=null, bestN=-1;
+    D={}; PH={};
+    for(var k in all){
+      var A=all[k]||{};
+      if(String(A.cls)!==st.cls||String(A.grp)!==st.grp) continue;
+      var n=0, dd=A.d||{};
+      for(var q in dd) for(var f in dd[q]) n+=String(dd[q][f]||"").length;
+      if(n>bestN){ bestN=n; best=k; }
+      for(var q2 in dd){
+        D[q2]=D[q2]||{};
+        for(var f2 in dd[q2]){
+          var t=String(dd[q2][f2]||"");
+          if(t.trim().length>String(D[q2][f2]||"").trim().length) D[q2][f2]=t;
+        }
+      }
+      String(A.ph||"").split(",").filter(Boolean).forEach(function(x){ PH[x]=1; });
+      var mine=(A.rf||{})[myId()];
+      if(mine){ ["a","b","c"].forEach(function(z){
+        if(String(mine[z]||"").trim() && !String(st.refl[z]||"").trim()) st.refl[z]=String(mine[z]); }); }
+    }
+    myKey=best||"";
+    ready=!!myKey;
+    if(myKey){
+      db.ref("e/"+EVENT_ID+"/pic/"+myKey).on("value",function(p){
+        PIC=p.val()||{};
+        for(var z in PIC) if(z.indexOf("sheet")!==0) PH[z]=1;
+        render();
+      });
+    }
+    save();
+    if(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) paintScore();
+    else render();
+  });
+}
+function wref(){ return db&&myKey? db.ref("e/"+EVENT_ID+"/ans/"+myKey) : null; }
+
+var tQ={}, tT=null;
+function queue(path,v){
+  if(!wref()) return;
+  tQ[path]=v;
+  clearTimeout(tT);
+  tT=setTimeout(function(){
+    var o=tQ; tQ={};
+    o.cls=st.cls; o.grp=st.grp; o.mem=st.mem;
+    o.at=firebase.database.ServerValue.TIMESTAMP;
+    wref().update(o).then(function(){ flash("已存檔"); }).catch(function(){ flash("存檔失敗，再打一個字重試","bad"); });
+  },700);
+}
+function pushRefl(){
+  if(!wref()) return;
+  var o={}; o["rf/"+myId()]={ no:String(st.no), nm:String(st.name),
+    a:String(st.refl.a||"").slice(0,3000), b:String(st.refl.b||"").slice(0,3000),
+    c:String(st.refl.c||"").slice(0,3000), at:firebase.database.ServerValue.TIMESTAMP };
+  o.cls=st.cls; o.grp=st.grp;
+  wref().update(o).then(function(){ flash("心得已上傳"); }).catch(function(){});
+}
+var flashT=null;
+function flash(msg,kind){
+  var el=document.getElementById("sync"); if(!el) return;
+  el.textContent=msg; el.className="sync"+(kind==="bad"?"":" ok");
+  clearTimeout(flashT);
+  flashT=setTimeout(paintSync,2200);
+}
+function paintSync(){
+  var el=document.getElementById("sync"); if(!el) return;
+  el.className="sync";
+  el.textContent=!ready?"":(online?"已連線　全組即時同步":"離線中　連上網路會自動補傳");
+}
+
+/* ---------- 照片 ---------- */
+function shrink(file,cb){
+  var fr=new FileReader();
+  fr.onerror=function(){ cb(null,"讀不到這個檔案"); };
+  fr.onload=function(){
+    var img=new Image();
+    img.onerror=function(){ cb(null,"這張圖手機打不開（HEIC 格式請改用『拍照』或先存成 JPG）"); };
+    img.onload=function(){
+      try{
+        var m=1000,w=img.width||m,h=img.height||m,sc=Math.min(1,m/Math.max(w,h));
+        var c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(w*sc)); c.height=Math.max(1,Math.round(h*sc));
+        c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+        var url="", qy=0.62;
+        for(var i=0;i<6;i++){
+          url=c.toDataURL("image/jpeg",qy);
+          if(url.length<=200000) break;
+          qy-=0.1;
+          if(qy<0.25){
+            c.width=Math.round(c.width*0.72); c.height=Math.round(c.height*0.72);
+            c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+            qy=0.5;
+          }
+        }
+        if(url.length>280000) return cb(null,"壓縮後還是太大，換一張試試");
+        cb(url,null);
+      }catch(err){ cb(null,"手機記憶體不足，關掉其他 App 再試"); }
+    };
+    img.src=fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+function setUp(k,txt,kind){
+  var el=document.querySelector('[data-up="'+k+'"]');
+  if(el){ el.textContent=txt; el.className="up"+(kind?" "+kind:""); }
+}
+function sendPic(k,url){
+  if(!db||!myKey){ setUp(k,"還沒選好身分",'bad'); return; }
+  setUp(k,"上傳中⋯ "+Math.round(url.length/1024)+" KB",'go');
+  db.ref("e/"+EVENT_ID+"/pic/"+myKey+"/"+k).set(url)
+    .then(function(){
+      PH[k]=1; PIC[k]=url;
+      queue("ph",Object.keys(PH).filter(function(z){return PH[z];}).join(","));
+      setUp(k,"✓ 已上傳",'ok'); render();
+    })
+    .catch(function(e){ setUp(k,"上傳失敗："+(e&&e.message?e.message:"請檢查網路"),'bad'); });
+}
+
+/* ---------- 畫面 ---------- */
+function fld(q,f){
+  var id="f-"+q.id+"-"+f.k, v=val(q.id,f.k), n=v.length;
+  var h='<div class="f"><label for="'+id+'">'+esc(f.l)+(f.min?'　<span style="font-weight:400;color:var(--ink-3)">至少 '+f.min+' 字</span>':'')+'</label>';
+  h+= f.t==="ta"
+    ? '<textarea id="'+id+'" data-q="'+q.id+'" data-k="'+f.k+'">'+esc(v)+'</textarea>'
+    : '<input id="'+id+'" data-q="'+q.id+'" data-k="'+f.k+'" value="'+esc(v)+'">';
+  if(f.min) h+='<div class="cnt '+(n>=f.min?"ok":(n?"bad":""))+'" data-c="'+q.id+'-'+f.k+'">'+n+' / '+f.min+' 字</div>';
+  h+='</div>';
+  return h;
+}
+function card(q,label){
+  var s=qScore(q.id), mx=qMax(q.id), op=st.open===q.id;
+  var h=['<section class="quest'+(s===mx?" done":"")+(op?" open":"")+'">'];
+  h.push('<div class="qh" data-open="'+q.id+'"><span class="n">'+label+'</span>');
+  h.push('<span class="t"><b>'+esc(q.t)+'</b><span>'+esc(q.s)+'</span></span>');
+  h.push('<span class="p">'+s+' / '+mx+'</span></div>');
+  h.push('<div class="qb">');
+  h.push('<div class="mission">'+q.m+'</div>');
+  if(q.id.charAt(0)==="q"||q.id.charAt(0)==="m"){
+    var has=PIC[q.id];
+    h.push('<div class="ph">');
+    if(has) h.push('<img src="'+has+'" alt="">');
+    h.push('<label class="pick" for="pic-'+q.id+'"><input type="file" accept="image/*" id="pic-'+q.id+'" data-pic="'+q.id+'">');
+    h.push('<span>'+(has?"✓ 已有照片　點這裡換一張":(q.id.charAt(0)==="q"?"從相簿選或拍照　＋3 分":"配一張照片（選填，不計分）"))+'</span></label>');
+    h.push('<div class="up" data-up="'+q.id+'">'+(has?"✓ 已上傳":"")+'</div>');
+    h.push('</div>');
+  }
+  q.f.forEach(function(f){ h.push(fld(q,f)); });
+  h.push('</div></section>');
+  return h.join("");
+}
+function paintScore(){
+  var T=tot(), el=document.getElementById("sc");
+  if(el) el.innerHTML=T.task+'<i>/85</i>';
+  MOGU.concat(MITSUI).concat([BONUS]).forEach(function(q){
+    var sec=document.querySelector('[data-open="'+q.id+'"]');
+    if(!sec) return;
+    var p=sec.querySelector(".p"), s=qScore(q.id), mx=qMax(q.id);
+    if(p) p.textContent=s+" / "+mx;
+    sec.parentNode.classList.toggle("done",s===mx);
+  });
+  var t4=topFour(), bt=document.querySelector('[data-stage="mitsui"] b');
+  if(bt) bt.textContent=t4.reduce(function(a,x){return a+x.s;},0)+" / 40";
+  var bm=document.querySelector('[data-stage="mogu"] b');
+  if(bm) bm.textContent=tot().mo+" / 40";
+}
+function render(){
+  var h=[], T=tot();
+  var picked=!!(st.cls&&st.no);
+  /* 身分 */
+  h.push('<div class="panel'+(picked?'':' gate')+'">');
+  h.push('<h2>你是誰</h2>');
+  h.push('<p class="sub">選好就會自動帶出你這一組目前的所有資料。<b>不用通行碼了。</b></p>');
+  h.push('<div class="f"><label for="i-cls">班級</label><select id="i-cls"><option value="">請選擇⋯</option>');
+  Object.keys(STUDENTS).forEach(function(c){ h.push('<option value="'+esc(c)+'"'+(st.cls===c?" selected":"")+'>'+esc(c)+'</option>'); });
+  h.push('</select></div>');
+  h.push('<div class="f"><label for="i-no">座號　姓名</label><select id="i-no"'+(st.cls?"":" disabled")+'><option value="">'+(st.cls?"請選擇⋯":"請先選班級")+'</option>');
+  rowsOf(st.cls).forEach(function(x){ h.push('<option value="'+esc(x.no)+'"'+(String(st.no)===String(x.no)?" selected":"")+'>'+esc(x.no)+'　'+esc(x.name)+'　（第'+x.grp+'組）</option>'); });
+  h.push('</select></div>');
+  if(picked) h.push('<div class="auto"><b>'+esc(st.cls+"　"+st.grp)+'</b>'+esc(st.mem)+'</div>');
+  h.push('</div>');
+
+  if(!picked){ document.getElementById("app").innerHTML=h.join(""); paintSync(); return; }
+  if(!ready){
+    h.push('<div class="panel gate"><h2>讀取中⋯</h2><p class="sub">正在把你這一組的資料抓下來。如果一直停在這裡，表示這一組今天沒有任何紀錄，請跟老師說。</p></div>');
+    document.getElementById("app").innerHTML=h.join(""); paintSync(); return;
+  }
+
+  h.push('<div class="tabs">');
+  h.push('<button data-stage="mogu" class="'+(st.stage==="mogu"?"on":"")+'">魔菇部落<b>'+T.mo+' / 40</b></button>');
+  h.push('<button data-stage="mitsui" class="'+(st.stage==="mitsui"?"on":"")+'">三井 OUTLET<b>'+T.mi+' / 40</b></button>');
+  h.push('<button data-stage="refl" class="'+(st.stage==="refl"?"on":"")+'">我的心得<b>各自寫</b></button>');
+  h.push('</div>');
+
+  if(st.stage==="mogu"){
+    h.push('<div class="note">這裡是<b>全組共用</b>的。你打的字組員會看到，他們打的你也會看到，不會互相蓋掉。</div>');
+    MOGU.forEach(function(q,i){ h.push(card(q,i+1)); });
+  } else if(st.stage==="mitsui"){
+    var t4=topFour();
+    h.push('<div class="note">八關全部開放，<b>做滿四關就夠了</b>。系統自動取你們分數最高的四關計分，所以多做不會吃虧，做錯關也不會白做。</div>');
+    MITSUI.forEach(function(q,i){
+      var inTop=t4.some(function(x){ return x.id===q.id&&x.s>0; });
+      h.push(card(q,inTop?"✓":(i+1)));
+    });
+    h.push('<div style="margin-top:18px">');
+    h.push('<div class="note" style="background:var(--surface-2);color:var(--ink-2)">★ 加碼關（另計 5 分，四關做滿才建議挑戰）</div>');
+    h.push(card(BONUS,"★"));
+    h.push('</div>');
+  } else {
+    h.push('<div class="note">心得是<b>你自己的</b>，組員看不到，只有老師看得到。打字就會自動上傳。</div>');
+    h.push('<div class="panel">');
+    h.push('<div class="f"><label for="r-a">今天印象最深的一件事</label><textarea id="r-a" data-r="a">'+esc(st.refl.a)+'</textarea><div class="cnt" data-cr="a"></div></div>');
+    h.push('<div class="f"><label for="r-b">參訪心得（至少 400 字）</label><textarea id="r-b" data-r="b" style="min-height:230px">'+esc(st.refl.b)+'</textarea><div class="cnt" data-cr="b"></div></div>');
+    h.push('<div class="f"><label for="r-c">給這次活動的建議</label><textarea id="r-c" data-r="c">'+esc(st.refl.c)+'</textarea><div class="cnt" data-cr="c"></div></div>');
+    h.push('</div>');
+  }
+  h.push('<div class="sync" id="sync"></div>');
+  document.getElementById("app").innerHTML=h.join("");
+  var el=document.getElementById("sc"); if(el) el.innerHTML=T.task+'<i>/85</i>';
+  if(st.stage==="refl") ["a","b","c"].forEach(cntR);
+  paintSync();
+}
+function cntR(k){
+  var mn=k==="b"?400:(k==="a"?50:30), n=String(st.refl[k]||"").trim().length;
+  var el=document.querySelector('[data-cr="'+k+'"]');
+  if(el){ el.textContent=n+" / "+mn+" 字"; el.className="cnt"+(n>=mn?" ok":(n?" bad":"")); }
+}
+
+/* ---------- 事件 ---------- */
+document.addEventListener("change",function(e){
+  var el=e.target;
+  if(el.id==="i-cls"){ st.cls=el.value; st.no=""; st.grp=""; st.mem=""; st.name=""; ready=false; save(); render(); connect(); return; }
+  if(el.id==="i-no"){ st.no=el.value; fromRoster(); ready=false; save(); render(); connect(); return; }
+  if(el.dataset && el.dataset.pic!==undefined && el.files && el.files[0]){
+    var k=el.dataset.pic;
+    setUp(k,"處理中⋯",'go');
+    shrink(el.files[0],function(url,err){
+      if(!url){ setUp(k,"✗ "+err,'bad'); return; }
+      sendPic(k,url);
+    });
+  }
+});
+document.addEventListener("input",function(e){
+  var el=e.target;
+  if(el.dataset && el.dataset.q && el.dataset.k){
+    var q=el.dataset.q,k=el.dataset.k,v=el.value;
+    D[q]=D[q]||{}; D[q][k]=v;
+    queue("d/"+q+"/"+k, v);
+    var f=(Q(q).f.filter(function(x){return x.k===k;})[0])||{};
+    if(f.min){
+      var c=document.querySelector('[data-c="'+q+'-'+k+'"]');
+      if(c){ c.textContent=v.trim().length+" / "+f.min+" 字";
+             c.className="cnt"+(v.trim().length>=f.min?" ok":(v.length?" bad":"")); }
+    }
+    paintScore();
+    return;
+  }
+  if(el.dataset && el.dataset.r){
+    st.refl[el.dataset.r]=el.value; save(); cntR(el.dataset.r);
+    clearTimeout(window.__rt); window.__rt=setTimeout(pushRefl,900);
+  }
+});
+document.addEventListener("click",function(e){
+  var t=e.target;
+  var sb=t.closest&&t.closest("[data-stage]");
+  if(sb){ st.stage=sb.dataset.stage; st.open=null; save(); render(); return; }
+  var qh=t.closest&&t.closest("[data-open]");
+  if(qh){ var id=qh.dataset.open; st.open=(st.open===id)?null:id; save(); render(); return; }
+});
+
+if(st.cls&&st.no) fromRoster();
+render();
+connect();
+})();
+
+</script>
+</body>
+</html>
