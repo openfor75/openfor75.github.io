@@ -257,10 +257,11 @@ var STUDENTS = {
 })();
 
 /* ============================================================
-   【組內同步補丁 v2】115-1 職場體驗
+   【組內同步補丁 v3】115-1 職場體驗
    貼在 students.js 的最後面。
-   v2 修正：抽到的關卡只在「自己完全沒抽過」時才跟著組員，
-            而且整個分頁最多只重載一次，不會再互搶造成狂跳。
+   v3 修正：攔下舊版「整包覆蓋」的存檔方式，改成逐格合併，
+            組員填的內容不會再被後存檔的人洗掉。
+   v2 修正：抽到的關卡只在「自己沒抽過」時才跟組員，整個分頁最多重載一次。
    ============================================================ */
 (function(){
   "use strict";
@@ -281,6 +282,62 @@ var STUDENTS = {
   /* 重載次數：讀不到 sessionStorage 就當成已經載過，寧可不同步也不要狂跳 */
   function reloads(){ try{ return +(sessionStorage.getItem(RK)||0)||0; }catch(e){ return 99; } }
   function bump(){ try{ sessionStorage.setItem(RK,String(reloads()+1)); }catch(e){} }
+
+
+  /* ==========================================================
+     ★ 最關鍵的一段 ★
+     舊版 index.html 存檔時是「整包覆蓋」(set)，
+     誰最後存檔，全組紀錄就被換成他一個人的，組員填的全被洗掉。
+     這裡把它攔下來改成「逐格合併」(update)，
+     而且空字串一律不送，沒填的人就不會把別人填的清掉。
+     ========================================================== */
+  (function hookWrite(){
+    if(typeof firebase==="undefined"||typeof firebase.database!=="function") return;
+    var orig=firebase.database;
+    if(orig.__ylhcMerge) return;
+    function wrapped(){
+      var d=orig.apply(firebase,arguments);
+      if(d&&!d.__ylhcMergeWrap){
+        d.__ylhcMergeWrap=true;
+        var oref=d.ref;
+        d.ref=function(p){
+          var r=oref.apply(d,arguments);
+          if(typeof p==="string"&&/\/ans\/[^\/]+$/.test(p)&&r&&r.set&&r.update){
+            var oset=r.set;
+            r.set=function(o){
+              if(!o||typeof o!=="object") return oset.apply(r,arguments);
+              var flat={},k,q,f;
+              for(k in o){
+                var v=o[k];
+                if(k==="d"&&v&&typeof v==="object"){
+                  for(q in v){
+                    var row=v[q]; if(!row||typeof row!=="object") continue;
+                    for(f in row){
+                      var t=String(row[f]==null?"":row[f]);
+                      if(t!=="") flat["d/"+q+"/"+f]=t;
+                    }
+                  }
+                } else if(typeof v==="string"){ if(v!=="") flat[k]=v; }
+                else if(v!=null){ flat[k]=v; }
+              }
+              return r.update(flat);
+            };
+          }
+          return r;
+        };
+      }
+      return d;
+    }
+    try{
+      Object.getOwnPropertyNames(orig).forEach(function(k){
+        if(k==="length"||k==="name"||k==="prototype") return;
+        try{ Object.defineProperty(wrapped,k,Object.getOwnPropertyDescriptor(orig,k)); }catch(e){}
+      });
+    }catch(e){}
+    if(orig.ServerValue&&!wrapped.ServerValue) wrapped.ServerValue=orig.ServerValue;
+    wrapped.__ylhcMerge=true;
+    firebase.database=wrapped;
+  })();
 
   var ref=null, path="", remote=null, sig="", filled={};
 
