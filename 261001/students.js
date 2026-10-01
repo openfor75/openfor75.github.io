@@ -88,10 +88,15 @@ var STUDENTS = {
 
 };
 
-/* ========== 【心得上傳補丁】115-1 職場體驗 ========== */
+/* ============================================================
+   【心得上傳補丁】115-1 職場體驗
+   貼在 students.js 的最後面即可，不用動 index.html。
+   作用：把學生寫在手機裡的心得，自動送到 Firebase
+        e/115-1-1001/ans/<組別代碼>/rf/<班級-座號>
+   ============================================================ */
 (function(){
   "use strict";
-  if(/[?&]preview=1/.test(location.search)) return;
+  if(/[?&]preview=1/.test(location.search)) return;   /* 預覽模式不上傳 */
   var EVENT_ID="115-1-1001", KEY="ylhc-questday";
 
   function fnv(s){
@@ -101,6 +106,8 @@ var STUDENTS = {
   }
   var lastSig="", lastAt=0, watching="", lastForce=0;
 
+  /* 舊版主程式存答案時是整包覆蓋，會把 rf 洗掉。
+     這裡盯著自己那一格，一被洗掉就立刻補寫回去。 */
   function watch(db,path){
     if(watching===path) return;
     watching=path;
@@ -118,7 +125,7 @@ var STUDENTS = {
   function tick(){
     if(typeof firebase==="undefined") return;
     var db=null;
-    try{ db=firebase.database(); }catch(e){ return; }
+    try{ db=firebase.database(); }catch(e){ return; }      /* 等主程式初始化完 */
     if(!db) return;
     var st=null;
     try{ st=JSON.parse(localStorage.getItem(KEY)||"null"); }catch(e){ return; }
@@ -127,7 +134,7 @@ var STUDENTS = {
 
     var r=st.refl||{};
     var a=String(r.a||""), b=String(r.b||""), c=String(r.c||"");
-    if(!a&&!b&&!c) return;
+    if(!a&&!b&&!c) return;                                  /* 還沒寫就不送 */
 
     var id=(String(st.cls||"")+"-"+String(st.no||st.name||"")).replace(/[.#$\[\]\/\s]/g,"");
     if(id.length<2) return;
@@ -136,6 +143,7 @@ var STUDENTS = {
     watch(db,"e/"+EVENT_ID+"/ans/"+key+"/rf/"+id);
 
     var sig=id+"\u0001"+a+"\u0001"+b+"\u0001"+c;
+    /* 內容有變就送；沒變也每 15 秒補送一次當保險 */
     if(sig===lastSig && Date.now()-lastAt<15000) return;
 
     var o={ cls:String(st.cls), grp:String(st.grp) };
@@ -153,7 +161,12 @@ var STUDENTS = {
   document.addEventListener("visibilitychange",function(){ if(!document.hidden) tick(); });
 })();
 
-/* ========== 【相簿上傳補丁】115-1 職場體驗 ========== */
+/* ============================================================
+   【相簿上傳補丁】115-1 職場體驗
+   貼在 students.js 的最後面。
+   作用：拿掉拍照欄位的 capture 屬性，讓學生可以
+        「現場用相機拍」或「之後從相簿挑先拍好的照片」兩種都行。
+   ============================================================ */
 (function(){
   "use strict";
   function strip(node){
@@ -162,6 +175,7 @@ var STUDENTS = {
     if(!node.querySelectorAll) return;
     var l=node.querySelectorAll('input[type="file"]');
     for(var i=0;i<l.length;i++) l[i].removeAttribute("capture");
+    /* 順便把字改成看得懂的說法 */
     var s=node.querySelectorAll(".ph label span");
     for(var j=0;j<s.length;j++){
       var t=s[j].textContent||"";
@@ -183,4 +197,61 @@ var STUDENTS = {
   }
   if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",boot);
   else boot();
+})();
+
+/* ============================================================
+   【鍵盤不要縮下去】115-1 職場體驗
+   貼在 students.js 的最後面。
+   原因：排行榜是即時的，別組一有分數變動，整頁就重畫一次，
+        正在打字的欄位被重建 → 失去焦點 → 手機鍵盤收起來。
+   作法：有人正在打字時，先把排行榜的更新壓著，
+        等他點到別的地方再一次補上。資料完全不受影響。
+   ============================================================ */
+(function(){
+  "use strict";
+  if(typeof firebase==="undefined"||typeof firebase.database!=="function") return;
+
+  var queued=null;
+  function typing(){
+    var a=document.activeElement;
+    return !!(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"));
+  }
+  function flush(){
+    if(typing()||!queued) return;
+    var f=queued; queued=null;
+    try{ f(); }catch(e){}
+  }
+  document.addEventListener("focusout",function(){ setTimeout(flush,250); },true);
+  setInterval(flush,1500);
+
+  var orig=firebase.database;
+  function wrapped(){
+    var d=orig.apply(firebase,arguments);
+    if(d&&!d.__ylhcWrap){
+      d.__ylhcWrap=true;
+      var oref=d.ref;
+      d.ref=function(p){
+        var r=oref.apply(d,arguments);
+        if(typeof p==="string"&&/(^|\/)board$/.test(p)&&r&&typeof r.on==="function"){
+          var oon=r.on;
+          r.on=function(ev,cb){
+            return oon.call(r,ev,function(sn){
+              if(!typing()){ cb(sn); return; }
+              queued=function(){ cb(sn); };     /* 只留最新一筆 */
+            });
+          };
+        }
+        return r;
+      };
+    }
+    return d;
+  }
+  try{
+    Object.getOwnPropertyNames(orig).forEach(function(k){
+      if(k==="length"||k==="name"||k==="prototype") return;
+      try{ Object.defineProperty(wrapped,k,Object.getOwnPropertyDescriptor(orig,k)); }catch(e){}
+    });
+  }catch(e){}
+  if(orig.ServerValue&&!wrapped.ServerValue) wrapped.ServerValue=orig.ServerValue;
+  firebase.database=wrapped;
 })();
