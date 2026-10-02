@@ -186,8 +186,8 @@ button:focus-visible{outline:3px solid var(--sea);outline-offset:2px}
 /* 照片 */
 .ph{margin-bottom:13px}
 .ph img{display:block;width:100%;max-width:100%;border-radius:11px;margin-bottom:7px;border:1px solid var(--line)}
-.ph label{display:flex;align-items:center;justify-content:center;gap:9px;background:var(--surface-2);border:2px dashed var(--line);border-radius:11px;padding:14px;cursor:pointer;font-size:15px;font-weight:600;color:var(--ink-2)}
-.ph.has label{border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ok);padding:9px;font-size:13.5px}
+.ph .pick{width:100%;font-family:inherit;box-shadow:none;display:flex;align-items:center;justify-content:center;gap:9px;background:var(--surface-2);border:2px dashed var(--line);border-radius:11px;padding:14px;cursor:pointer;font-size:15px;font-weight:600;color:var(--ink-2)}
+.ph.has .pick{border-style:solid;border-color:var(--ok);background:var(--ok-soft);color:var(--ok);padding:9px;font-size:13.5px}
 .ph input{position:absolute;opacity:0;width:0;height:0}
 .ph .up{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);text-align:center;margin-top:5px}
 
@@ -537,12 +537,14 @@ function initFB(){
   try{
     firebase.initializeApp(FB_CONFIG);
     db=firebase.database();
+    /* 心得和答案卡在手機裡的，不在這裡自動重送（可能把組員後來改好的版本蓋回舊的），
+       改由 makeup.html 的「救援」只補雲端是空的格子 */
     db.ref(".info/connected").on("value",function(s){ online=!!s.val(); paintSync(); if(online) retryPics(); });
     db.ref("e/"+EVENT_ID+"/board").on("value",function(s){
       var o=s.val()||{},arr=[];
       for(var k in o){ arr.push(Object.assign({k:k},o[k])); }
       arr.sort(function(a,b){return (b.total||0)-(a.total||0);});
-      board=arr; render();
+      board=arr; softRender();
     });
     db.ref("e/"+EVENT_ID+"/feed").limitToLast(8).on("value",function(s){
       var o=s.val()||{},arr=[];
@@ -620,12 +622,17 @@ function mergeRemote(R){
 
   if(!ch) return;
   save();
-  var ae=document.activeElement;
-  if(ae&&(ae.tagName==="INPUT"||ae.tagName==="TEXTAREA")) pendingMerge=true;  /* 正在打字就先不重畫 */
-  else render();
+  softRender();
 }
+/* ---------- 重畫保護 ----------
+   排行榜、組員同步、GPS 都會觸發整頁重畫。正在打字、或正在相簿裡選照片的時候重畫，
+   會把輸入框或上傳元件換掉（字打到一半跳掉、選完照片毫無反應）。這兩種時候先記著，之後再補畫。 */
+var picking=false;
+function busyUI(){ var ae=document.activeElement; return picking||!!(ae&&(ae.tagName==="INPUT"||ae.tagName==="TEXTAREA")); }
+function softRender(){ if(busyUI()) pendingMerge=true; else render(); }
+function flushRender(){ if(pendingMerge&&!busyUI()){ pendingMerge=false; render(); } }
 document.addEventListener("focusout",function(){
-  if(pendingMerge){ pendingMerge=false; setTimeout(render,120); }
+  if(pendingMerge) setTimeout(flushRender,120);
 });
 
 var pushT=null;
@@ -663,13 +670,11 @@ function push(ev){
     for(var q in cd) for(var f in cd[q]) up["d/"+q+"/"+f]=cd[q][f];
     ansRef.update(up).then(function(){
       var me=myId(); if(!me) return;
-      return ansRef.child("rf").child(me).update({   /* update 不是 set：保留補強頁加的照片說明 p1~p4 */
-        no:String(st.no||""), nm:String(st.name||""),
-        a:String(st.refl.a||"").slice(0,3000),
-        b:String(st.refl.b||"").slice(0,3000),
-        c:String(st.refl.c||"").slice(0,3000),
-        at:firebase.database.ServerValue.TIMESTAMP
-      });
+      /* update 不是 set，而且空白的欄位不送：
+         學生換一支手機打開（手機裡是空的），不能把他在別處寫好的心得蓋成空白 */
+      var rf={ no:String(st.no||""), nm:String(st.name||""), at:firebase.database.ServerValue.TIMESTAMP };
+      ["a","b","c"].forEach(function(z){ var t=String(st.refl[z]||""); if(t.trim()) rf[z]=t.slice(0,3000); });
+      return ansRef.child("rf").child(me).update(rf);
     }).catch(function(){});
   },900);
   if(ev) db.ref("e/"+EVENT_ID+"/feed").push({t:Date.now(),c:st.cls,g:st.grp,x:ev}).catch(function(){});
@@ -740,7 +745,7 @@ function startGPS(){
     var slack=Math.min(pos.accuracy||0,20);
     SPOTS.forEach(function(s){
       var d=dist(pos.latitude,pos.longitude,s.lat,s.lng);
-      if(d-slack<=s.r&&!st.spots[s.name]){ st.spots[s.name]=1; save(); push("抵達「"+s.name+"」"); render(); }
+      if(d-slack<=s.r&&!st.spots[s.name]){ st.spots[s.name]=1; save(); push("抵達「"+s.name+"」"); softRender(); }
     });
     paintGPS();
   },function(){},{enableHighAccuracy:true,maximumAge:15000,timeout:20000});
@@ -1014,8 +1019,9 @@ function photoBox(k,lab){
   var has=!!pics[k];
   var h=['<div class="ph'+(has?" has":"")+'">'];
   if(has) h.push('<img src="'+pics[k]+'" alt="">');
-  h.push('<label for="pic-'+k+'"><input type="file" accept="image/*" capture="environment" id="pic-'+k+'" data-pic="'+k+'">');
-  h.push('<span>'+(has?"✓ 已拍　點這裡重拍":lab)+'</span></label>');
+  /* 不放上傳元件在這裡（重畫會被換掉），按鈕只負責呼叫全頁共用的那一個 */
+  h.push('<button type="button" class="pick" data-pickfor="'+k+'">');
+  h.push('<span>'+(has?"✓ 已拍　點這裡重拍":lab)+'</span></button>');
   if(has) h.push('<div class="up" data-up="'+k+'">'+upText(k)+'</div>');
   h.push('</div>');
   return h.join("");
@@ -1220,13 +1226,30 @@ document.addEventListener("input",function(e){
   }
 });
 
-document.addEventListener("change",function(e){
-  var t=e.target;
-  if(t.dataset.pic!==undefined&&t.files&&t.files[0]){
-    var k=t.dataset.pic;
+/* ---------- 選照片：全頁共用一個上傳元件，放在 #app 外面，重畫永遠不會碰到它 ---------- */
+var pickFor="";
+var gpick=document.createElement("input");
+gpick.type="file"; gpick.accept="image/*";
+gpick.style.cssText="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0";
+document.body.appendChild(gpick);
+function startPick(k){ pickFor=k; picking=true; gpick.value=""; gpick.click(); }
+/* 打開相簿又按取消：沒有 change 事件，回到頁面幾秒後解除 */
+window.addEventListener("focus",function(){
+  if(!picking) return;
+  setTimeout(function(){ if(picking){ picking=false; flushRender(); } },2500);
+});
+gpick.addEventListener("change",function(){
+  var f=gpick.files&&gpick.files[0], k=pickFor;
+  picking=false;
+  if(f&&k) handlePic(k,f); else flushRender();
+});
+function handlePic(k,file){
+  pendingMerge=false;
+  {
     upState[k]="up";
-    shrink(t.files[0],function(url){
-      if(!url){ upState[k]="fail"; paintUp(k); return; }
+    shrink(file,function(url){
+      /* 原本失敗時畫面上什麼都不會出現，學生以為傳好了 */
+      if(!url){ upState[k]="fail"; paintUp(k); render(); alert("這張照片手機讀不到，請換一張，或改用「拍照」直接拍。\n（iPhone 的 HEIC 格式有時會這樣）"); return; }
       pics[k]=url; savePics();
       if(k.indexOf("sheet")!==0){
         if(k.charAt(0)!=="m") st.photo[k]=1;
@@ -1240,10 +1263,12 @@ document.addEventListener("change",function(e){
       render();
     });
   }
-});
+}
 
 document.addEventListener("click",function(e){
   var t=e.target;
+  var pk=t.closest("[data-pickfor]");
+  if(pk){ startPick(pk.dataset.pickfor); return; }
   var hd=t.closest(".qhead");
   if(hd){ st.open=(st.open===hd.dataset.q)?null:hd.dataset.q; save(); render(); return; }
   var sb=t.closest("[data-stage]");
