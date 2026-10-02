@@ -66,7 +66,7 @@ h2{margin:0 0 4px;font-size:17px}
 .quest.open .qb{display:block}
 .mission{background:var(--surface-2);border-radius:11px;padding:12px 14px;font-size:14.5px;margin-bottom:13px}
 .ph{margin-bottom:13px}
-.ph label.pick{display:flex;align-items:center;justify-content:center;gap:9px;
+.ph .pick{width:100%;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:9px;
   background:var(--surface-2);border:2px dashed var(--line);border-radius:11px;padding:13px;
   cursor:pointer;font-size:15px;font-weight:600;color:var(--ink-2)}
 .ph input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
@@ -93,7 +93,7 @@ h2{margin:0 0 4px;font-size:17px}
 .slot img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:9px;display:block}
 .slot input:not([type=file]){width:100%;font-family:inherit;font-size:14.5px;padding:7px 9px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink)}
 .slot input[type=file]{position:absolute;width:1px;height:1px;opacity:0}
-.slot .empty{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;border:2px dashed var(--line);border-radius:9px;
+.slot .empty{width:100%;font-family:inherit;background:transparent;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;border:2px dashed var(--line);border-radius:9px;
   font-weight:700;color:var(--ink-2);cursor:pointer;font-size:15px;position:relative}
 .slot .sa{display:flex;gap:6px}
 .mini{flex:1;font-family:inherit;font-size:13px;font-weight:600;padding:6px;border-radius:8px;border:1px solid var(--line);
@@ -239,9 +239,43 @@ var ansRef=null, picRef=null, picKey="", pendingRender=false;
 function typing(){ var a=document.activeElement; return !!(a&&/^(INPUT|TEXTAREA)$/.test(a.tagName)); }
 /* 有人正在打字就絕對不重畫，只更新分數；等他離開欄位再補畫 */
 function softRender(){
-  if(typing()){ pendingRender=true; paintScore(); return; }
+  if(typing()||picking){ pendingRender=true; paintScore(); return; }
   render();
 }
+/* ---------- 選照片：用一個固定在畫面外、永遠不會被重畫掉的上傳元件 ----------
+   原本每張卡片各有自己的上傳元件。學生跳去相簿選照片的那幾秒，只要別的同學打了字、畫面重畫，
+   那個元件就被換掉了，選完照片「毫無反應」。現在全頁共用這一個，畫面怎麼重畫都不影響。 */
+var picking=false, pickFor="";
+var gpick=document.createElement("input");
+gpick.type="file"; gpick.accept="image/*";
+gpick.style.cssText="position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0";
+document.body.appendChild(gpick);
+function startPick(target){
+  pickFor=target; picking=true;
+  gpick.value="";
+  gpick.click();
+}
+/* 學生打開相簿又按取消：不會有 change 事件，回到頁面幾秒後解除鎖定、補畫 */
+window.addEventListener("focus",function(){
+  if(!picking) return;
+  setTimeout(function(){
+    if(!picking) return;
+    picking=false;
+    if(pendingRender&&!typing()){ pendingRender=false; render(); }
+  },2500);
+});
+gpick.addEventListener("change",function(){
+  var f=gpick.files&&gpick.files[0], k=pickFor;
+  picking=false;
+  if(pendingRender&&!typing()){ pendingRender=false; render(); }
+  if(!f||!k) return;
+  var my=k.indexOf("my")===0, i=my?+k.slice(2):0;
+  setUp(k,"處理中⋯",'go');
+  shrink(f,function(url,err){
+    if(!url){ setUp(k,"✗ "+err,'bad'); return; }
+    if(my) sendMyPic(i,url); else sendPic(k,url);
+  });
+});
 document.addEventListener("focusout",function(){
   if(!pendingRender) return;
   pendingRender=false;
@@ -293,7 +327,9 @@ function tot(){
 }
 
 /* ---------- Firebase（讀寫都只用 班級+組別 定位，不需要通行碼）---------- */
+var lastSig="";
 function connect(){
+  lastSig="";
   if(!st.cls||!st.grp){ ready=false; return; }
   try{
     if(!db){ firebase.initializeApp(FB_CONFIG); db=firebase.database();
@@ -303,6 +339,12 @@ function connect(){
   ansRef=db.ref("e/"+EVENT_ID+"/ans");
   ansRef.on("value",function(sn){
     var all=sn.val()||{}, best=null, bestN=-1, keys=[], rfs=[];
+    /* 這個監聽器會收到「全部學生」的變動。別組同學打字跟我無關，資料沒變就不要重畫 */
+    var sig=[st.cls,st.grp,st.no];
+    for(var k0 in all){ var A0=all[k0]||{}; if(String(A0.cls||"").trim()===st.cls&&ng(A0.grp)===ng(st.grp)) sig.push(k0,JSON.stringify(A0)); }
+    sig=sig.join("|");
+    if(ready&&sig===lastSig) return;
+    lastSig=sig;
     D={}; PH={};
     for(var k in all){
       var A=all[k]||{};
@@ -477,8 +519,8 @@ function card(q,label){
     var has=PIC[q.id];
     h.push('<div class="ph">');
     if(has) h.push('<img src="'+has+'" alt="">');
-    h.push('<label class="pick" for="pic-'+q.id+'"><input type="file" accept="image/*" id="pic-'+q.id+'" data-pic="'+q.id+'">');
-    h.push('<span>'+(has?"✓ 已有照片　點這裡換一張":(q.id.charAt(0)==="q"?"從相簿選或拍照　＋3 分":"配一張照片（選填，不計分）"))+'</span></label>');
+    h.push('<button type="button" class="pick" data-pickfor="'+q.id+'">');
+    h.push('<span>'+(has?"✓ 已有照片　點這裡換一張":(q.id.charAt(0)==="q"?"從相簿選或拍照　＋3 分":"配一張照片（選填，不計分）"))+'</span></button>');
     h.push('<div class="up" data-up="'+q.id+'">'+(has?"✓ 已上傳":"")+'</div>');
     h.push('</div>');
   }
@@ -523,6 +565,7 @@ function render(){
     document.getElementById("app").innerHTML=h.join(""); paintSync(); return;
   }
 
+  h.push(rescueBanner());
   h.push('<div class="tabs">');
   h.push('<button data-stage="mogu" class="'+(st.stage==="mogu"?"on":"")+'">魔菇部落<b>'+T.mo+' / 40</b></button>');
   h.push('<button data-stage="mitsui" class="'+(st.stage==="mitsui"?"on":"")+'">三井 OUTLET<b>'+T.mi+' / 40</b></button>');
@@ -563,6 +606,52 @@ function render(){
   paintSync();
 }
 
+/* ---------- 救援：10/1 當天的任務頁（index.html）會把資料存在手機瀏覽器裡。
+   沒網路時寫的心得、拍的照片，如果當時沒傳成功，就一直留在手機裡。
+   同一支手機、同一個瀏覽器打開補強頁就讀得到，一鍵補傳。 ---------- */
+function stash(){
+  var o=null, pk={};
+  try{ o=JSON.parse(localStorage.getItem("ylhc-questday")||"null"); }catch(e){}
+  if(!o||String(o.cls||"")!==st.cls) return null;
+  /* 只認同一個人（借來的手機裡是別人的資料，不能傳成自己的） */
+  if(o.no? String(o.no)!==String(st.no) : String(o.name||"")!==st.name) return null;
+  try{ pk=JSON.parse(localStorage.getItem("ylhc-questpics")||"{}")||{}; }catch(e){}
+  var L=function(s){ return String(s||"").replace(/\s/g,"").length; };
+  var out={refl:{},pics:[],d:[],pk:pk,n:0};
+  ["a","b","c"].forEach(function(z){
+    var t=String((o.refl||{})[z]||"").trim();
+    /* 雲端這格是空的（或只有零星幾個字）才補，避免把後來改好的版本蓋回舊稿 */
+    if(L(t)&&L(st.refl[z])<Math.min(10,L(t)*0.3)){ out.refl[z]=t; out.n+=L(t); }
+  });
+  Object.keys(pk).forEach(function(k){ if(pk[k]&&!PIC[k]&&k.indexOf("sheetP-")!==0) out.pics.push(k); });
+  var od=o.d||{};
+  for(var q in od) for(var f in od[q]){
+    var v=String(od[q][f]||"").trim();
+    if(v&&!val(q,f)) out.d.push([q,f,v]);
+  }
+  return (out.n||out.pics.length||out.d.length)?out:null;
+}
+function rescueBanner(){
+  var s=stash(); if(!s) return "";
+  var parts=[];
+  if(s.n) parts.push("心得 <b>"+s.n+" 字</b>");
+  if(s.pics.length) parts.push("照片 <b>"+s.pics.length+" 張</b>");
+  if(s.d.length) parts.push("任務答案 <b>"+s.d.length+" 格</b>");
+  return '<div class="panel" style="border:2px solid var(--accent);background:var(--accent-soft)">'
+    +'<h2 style="color:var(--accent)">找到你手機裡還沒上傳的資料</h2>'
+    +'<p class="sub" style="color:var(--ink)">這支手機裡有你 10/1 當天寫的 '+parts.join("、")+'，但雲端（老師那邊）沒有收到。按下面就會補傳，不會蓋掉雲端已經有的內容。</p>'
+    +'<button class="big" id="rescue">全部補傳給老師</button></div>';
+}
+function doRescue(btn){
+  var s=stash(); if(!s||!wref()) return;
+  btn.disabled=true; btn.textContent="補傳中⋯";
+  Object.keys(s.refl).forEach(function(z){ st.refl[z]=s.refl[z]; });
+  if(Object.keys(s.refl).length){ save(); pushRefl(); }
+  s.d.forEach(function(x){ D[x[0]]=D[x[0]]||{}; D[x[0]][x[1]]=x[2]; queue("d/"+x[0]+"/"+x[1],x[2]); });
+  s.pics.forEach(function(k){ sendPic(k,s.pk[k]); });
+  setTimeout(function(){ btn.textContent="✓ 已補傳"; softRender(); },1500);
+}
+
 /* ---------- 我的照片：最多 4 張，前 2 張放學習歷程第 1 頁，後 2 張放第 2 頁（心得下面） ---------- */
 function myPicKey(i){ return SHEET.picKey(st.cls,st.no,i); }
 function myPicPanel(){
@@ -574,9 +663,9 @@ function myPicPanel(){
     if(src){
       h.push('<img src="'+src+'" alt="我的第 '+i+' 張照片">');
       h.push('<input data-r="p'+i+'" maxlength="30" placeholder="照片說明（選填）" value="'+esc(st.refl["p"+i]||"")+'">');
-      h.push('<div class="sa"><label class="mini" for="mp-'+i+'">換一張<input type="file" accept="image/*" id="mp-'+i+'" data-mypic="'+i+'"></label><button class="mini" data-mydel="'+i+'">移除</button></div>');
+      h.push('<div class="sa"><button type="button" class="mini" data-pickfor="my'+i+'">換一張</button><button class="mini" data-mydel="'+i+'">移除</button></div>');
     } else {
-      h.push('<label class="empty" for="mp-'+i+'">＋ 上傳照片<input type="file" accept="image/*" id="mp-'+i+'" data-mypic="'+i+'"></label>');
+      h.push('<button type="button" class="empty" data-pickfor="my'+i+'">＋ 上傳照片</button>');
     }
     h.push('<div class="up" data-up="my'+i+'"></div></div>');
   }
@@ -638,11 +727,10 @@ function openPreview(){
   var DD=myD(); if(!DD) return;
   var w=document.getElementById("pvw");
   if(!w){ w=document.createElement("div"); w.id="pvw"; document.body.appendChild(w); }
-  w.innerHTML='<div class="pvtop"><b>學習歷程預覽</b><span><button data-dl="1" class="dl">下載 PDF</button> <button id="pvx">關閉</button></span></div><div class="pvbody"><div class="zoomer">'+SHEET.pagesHTML(DD,{score:false}).join("")+'</div></div>';
+  w.innerHTML='<div class="pvtop"><b>學習歷程預覽</b><span><button data-dl="1" class="dl">下載 PDF</button> <button id="pvx">關閉</button></span></div><div class="pvbody"><div class="zoomer"></div></div>';
   w.classList.add("on"); document.body.style.overflow="hidden";
   var z=w.querySelector(".zoomer");
-  SHEET.settle(z).then(function(){
-    SHEET.fit(z);
+  SHEET.render(z,DD,{score:false}).then(function(){
     var pg=z.querySelector(".page"), body=w.querySelector(".pvbody");
     var s=Math.min(1,(body.clientWidth-20)/pg.offsetWidth);
     z.style.transform="scale("+s+")"; z.style.width=pg.offsetWidth+"px";
@@ -708,12 +796,14 @@ document.addEventListener("click",function(e){
   var qh=t.closest&&t.closest("[data-open]");
   if(qh){ var id=qh.dataset.open; st.open=(st.open===id)?null:id; save(); render(); return; }
   var b=t.closest&&t.closest("button"); if(!b) return;
+  if(b.dataset.pickfor){ startPick(b.dataset.pickfor); return; }
   if(b.dataset.mydel){ delMyPic(+b.dataset.mydel); return; }
   if(b.dataset.pick){
     for(var i=1;i<=SHEET.NPHOTO;i++) if(!PIC[myPicKey(i)]){ sendMyPic(i,PIC[b.dataset.pick]); return; }
     flash("四格都滿了，先移除一張再選","bad"); return;
   }
   if(b.id==="pvbtn"){ openPreview(); return; }
+  if(b.id==="rescue"){ doRescue(b); return; }
   if(b.dataset.dl){ downloadPdf(b); return; }
   if(b.id==="pvx"){ closePreview(); return; }
 });
