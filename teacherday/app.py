@@ -27,7 +27,7 @@ SUBTITLE = "115學年度 教師節限定商品模擬市場｜國立員林家商 
 DATA_DIR = Path(__file__).parent / "data"
 SHEETS = {"products": "商品", "teachers": "老師", "orders": "訂單", "settings": "設定",
           "signups": "報名", "comments": "留言"}
-ORDER_COLS = ["時間", "老師", "商品ID", "售價"]
+ORDER_COLS = ["時間", "", "商品ID", "售價"]
 COMMENT_COLS = ["時間", "商品ID", "留言"]          # 刻意不存老師姓名：真正匿名
 TEACHER_COLS = ["姓名", "通行碼", "任教參賽班數", "自訂額度", "備註"]
 REVIEW_COLS = ["審查", "退件原因"]
@@ -558,7 +558,7 @@ def is_open(cfg) -> bool:
 def login_box(teachers: pd.DataFrame):
     header(show_pulse=False)
     st.markdown("#### 老師，請先登入")
-    st.write("選擇您的姓名，輸入商貿科發給您的 4 碼通行碼。")
+    st.write("目前已截止，資料已封存，無法登入。")
     c1, c2 = st.columns([2, 1])
     name = c1.selectbox("姓名", ["請選擇"] + teachers["姓名"].tolist(), label_visibility="collapsed")
     code = c2.text_input("通行碼", max_chars=8, type="password",
