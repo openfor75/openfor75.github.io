@@ -121,6 +121,27 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1.1fr 1fr 1.2fr;gap:12px}
 
+/* A 猜一猜 */
+.gq{border:1px solid var(--line2);border-radius:8px;padding:12px;background:var(--surface2)}
+.gq-head{display:flex;gap:8px;align-items:baseline;font-size:14.5px;font-weight:700;margin-bottom:8px;line-height:1.5}
+.gq-head .no{color:var(--clay);font-variant-numeric:tabular-nums}
+.tag{font-size:11px;font-weight:700;color:var(--sage);background:var(--sage-soft);border-radius:99px;padding:1px 8px;white-space:nowrap;margin-left:auto}
+.gq input.f{background:var(--surface)}
+
+/* C 一條線 */
+.chain-no{font-size:12.5px;font-weight:700;color:var(--clay);margin-bottom:6px}
+.chain{display:grid;grid-template-columns:1fr 22px 1fr 22px 1.2fr;gap:8px;align-items:end}
+.arw{font-size:18px;font-weight:700;color:var(--clay);text-align:center;padding-bottom:10px;line-height:1}
+.bank{background:var(--surface2);border:1px solid var(--line2);border-radius:8px;padding:10px 12px;margin-bottom:14px}
+.bank > b{display:block;font-size:11.5px;color:var(--muted);letter-spacing:.04em;margin-bottom:6px}
+.bank-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:5px 0}
+.bank-row .subj{font-size:12px;font-weight:700;color:var(--ink2);min-width:64px}
+.chip{
+  font-family:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--surface);
+  color:var(--ink);border-radius:99px;padding:3px 10px;cursor:pointer;
+}
+.chip:hover{border-color:var(--clay);color:var(--clay)}
+
 /* 觀察列 */
 .obs{display:grid;grid-template-columns:26px 1fr 120px;gap:10px;align-items:start}
 .obs .n{
@@ -261,6 +282,12 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
   .obs .n{padding-top:0;font-size:12pt}
   .obs .print-val{border-bottom:1px solid #999;min-height:1.5em}
   .grid2,.grid3{gap:3mm}
+  .gq{border:none;padding:0 0 1.5mm;background:#fff}
+  .gq-head{font-size:12pt;margin-bottom:.5mm}
+  .tag,.bank{display:none !important}
+  .chain{grid-template-columns:1fr 14px 1fr 14px 1.2fr;gap:2mm;align-items:start}
+  .arw{color:#000;padding:0;font-size:12pt}
+  .chain-no{color:#000;font-size:12pt;margin-bottom:1mm}
   .photos{gap:3mm;break-inside:avoid}
   .pcell{border:1px solid #000;border-radius:0;background:#fff}
   .pdrop{aspect-ratio:auto;height:50mm;background:#fff}
@@ -277,6 +304,9 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
   .idrow .btn-switch{grid-column:1/-1}
   .steps{grid-template-columns:1fr 1fr}
   .grid2,.grid3,.photos{grid-template-columns:1fr}
+  .gq .grid2{grid-template-columns:1fr 1fr}
+  .chain{grid-template-columns:1fr;gap:4px}
+  .arw{transform:rotate(90deg);padding:2px 0}
   .obs{grid-template-columns:22px 1fr;gap:8px}
   .obs .facet{grid-column:2}
   .card{padding:16px}
@@ -309,8 +339,8 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
     <h1 class="title">門市行銷研習　學習紀錄單</h1>
     <p class="meta" id="metaLine"></p>
     <div class="steps">
-      <div class="step"><b>① 出發前</b>填 A 區左欄的猜想</div>
-      <div class="step"><b>② 在現場</b>拍照、記下 B 區觀察</div>
+      <div class="step"><b>① 出發前</b>填 A 區的「我猜」</div>
+      <div class="step"><b>② 在現場</b>對 A 區答案、拍照、記 B 區觀察</div>
       <div class="step"><b>③ 回來後</b>填完其餘欄位</div>
       <div class="step"><b>④ 繳交</b>按右下角按鈕，看到「繳交成功」就完成</div>
     </div>
@@ -319,8 +349,8 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
   <div class="idrow no-print">
     <div class="fixed">班級　商二乙</div>
     <div>
-      <label class="fl" for="seat">學號</label>
-      <input class="f" id="seat" inputmode="numeric" maxlength="2" placeholder="16">
+      <label class="fl" for="seat">座號</label>
+      <input class="f" id="seat" inputmode="numeric" maxlength="2" placeholder="例：6">
     </div>
     <div>
       <label class="fl" for="sname">姓名</label>
@@ -378,10 +408,27 @@ const FACETS = [
   ["E","法規遵循"],["F","庫存訂貨"],["G","設備操作"],["H","人員管理"]
 ];
 
+/* A 區：出發前猜一猜，到現場對答案（tag＝這題對應的課本概念，C 區可直接拿來用） */
+const GUESS = [
+  {q:"這家店大約賣幾種商品？",                 tag:"商品組合",   ph:"例：大約 500 種"},
+  {q:"便當、飯糰這類鮮食，一天進貨幾次？",     tag:"存貨管理",   ph:"例：1 次"},
+  {q:"同一個時段，店裡通常有幾位店員？",       tag:"人力配置",   ph:"例：2 位"},
+  {q:"店員除了結帳，最花時間的工作是什麼？",   tag:"門市作業",   ph:"例：補貨"},
+  {q:"賣不完、快過期的鮮食，最後怎麼處理？",   tag:"即期品處理", ph:"例：丟掉"},
+  {q:"店裡最好賣的是哪一類商品？",             tag:"主力商品",   ph:"例：飲料"}
+];
+const GUESS_MIN = 4;
+
+/* C 區概念小卡 */
+const CONCEPTS = [
+  ["門市行銷", ["商品陳列","黃金陳列線","端架","動線規劃","先進先出","商品組合","主力商品","促銷活動","顧客服務","POS 系統"]],
+  ["商業概論", ["連鎖經營","加盟","物流配送","零售業","商品條碼"]],
+  ["會計學",   ["存貨","銷貨收入","銷貨成本","毛利","營業費用"]],
+  ["經濟學",   ["需求","替代品","互補品","機會成本"]]
+];
+
 const COMMON = {
-  obs:4, link:2, words:300,
-  extra:{ title:"出發前的猜想　vs　回來後的發現", kind:"predict",
-          prompt:"左欄請在出發前（集合或車上）先寫，右欄研習結束後再寫。猜錯的地方，就是你這次真正學到的東西" },
+  obs:4, link:2, words:200,
   starters:["出發前我以為……，實際看到之後我發現……",
             "這次最讓我意外的一件事是……",
             "如果沒有親自到現場，我不會知道……"]
@@ -571,23 +618,30 @@ function build(){
   const box = $("sections");
   box.innerHTML = "";
 
-  /* --- A 出發前 vs 回來後 --- */
-  const A = card("A", b.extra.title, null, "至少 2 組");
-  const p = document.createElement("p");
-  p.className = "prompt"; p.textContent = b.extra.prompt + "。";
-  A.appendChild(p);
+  /* --- A 出發前猜一猜，到現場對答案 --- */
+  const A = card("A", "出發前猜一猜，到現場對答案",
+    "出發前（集合或車上）先填左欄「我猜」，憑感覺寫就好；到了現場，問店長或自己觀察，再填右欄「實際上」。" +
+    "<b>猜錯完全沒關係，不扣分</b>——猜錯的題目，正好就是你這趟學到的東西。" +
+    "每題右邊的綠色小標籤是對應的課本概念，C 區可以直接拿來用。",
+    "至少 " + GUESS_MIN + " 題");
   const aStack = document.createElement("div");
   aStack.className = "stack";
-  for(let i=1;i<=3;i++){
-    const g = document.createElement("div");
-    g.className = "grid2";
-    g.appendChild(field("pre"+i, {label:i+"　出發前我猜，門市是……", multiline:true, rows:2,
-      required:i<=2, printLabel:i+". 出發前我猜：",
-      placeholder:i===1 ? "例：便利商店的貨是店員自己想進什麼就進什麼" : ""}));
-    g.appendChild(field("post"+i, {label:i+"　回來後我發現，實際上……", multiline:true, rows:2,
-      required:i<=2, printLabel:"　　回來後我發現："}));
-    aStack.appendChild(g);
-  }
+  aStack.id = "guessBox";
+  GUESS.forEach((g, k)=>{
+    const i = k + 1;
+    const row = document.createElement("div");
+    row.className = "gq";
+    const h = document.createElement("div");
+    h.className = "gq-head";
+    h.innerHTML = '<span class="no">' + i + '.</span><span>' + g.q + '</span><span class="tag">' + g.tag + '</span>';
+    row.appendChild(h);
+    const gg = document.createElement("div");
+    gg.className = "grid2";
+    gg.appendChild(field("guess"+i, {label:"出發前我猜", placeholder:g.ph, printLabel:"我猜："}));
+    gg.appendChild(field("fact"+i, {label:"實際上（問店長或現場看）", printLabel:"實際上："}));
+    row.appendChild(gg);
+    aStack.appendChild(row);
+  });
   A.appendChild(aStack);
   box.appendChild(A);
 
@@ -619,18 +673,48 @@ function build(){
 
   /* --- C 課本連結 --- */
   const C = card("C", "把現場接回課本",
-    "門市行銷、商業概論、會計學、經濟學課本裡學過的概念都可以。" +
-    "例：看到「鮮食一天進貨兩次」→ 概念「存貨管理」→ 理由「少量多次，可以減少報廢又不缺貨」",
-    "至少 1 組");
+    "一條線串起來：<b>我在現場看到 → 對應課本的概念 → 關聯性在於？</b><br>" +
+    "例：<code>店員把日期比較近的牛奶排到最前面</code> → <code>先進先出</code> → " +
+    "<code>先賣掉舊的，就比較不會放到過期、整批丟掉</code>",
+    "至少 1 條");
+
+  const bank = document.createElement("div");
+  bank.className = "bank";
+  bank.innerHTML = "<b>想不到概念叫什麼？點一下小卡，會自動填進「對應課本的概念」</b>";
+  CONCEPTS.forEach(([subj, list])=>{
+    const r = document.createElement("div");
+    r.className = "bank-row";
+    r.innerHTML = '<span class="subj">' + subj + '</span>';
+    list.forEach(w=>{
+      const chip = document.createElement("button");
+      chip.type = "button"; chip.className = "chip"; chip.textContent = w;
+      chip.addEventListener("click", ()=>fillConcept(w));
+      r.appendChild(chip);
+    });
+    bank.appendChild(r);
+  });
+  C.appendChild(bank);
+
   const cStack = document.createElement("div");
   cStack.className = "stack";
   for(let i=1;i<=b.link;i++){
+    const wrap = document.createElement("div");
+    const no = document.createElement("div");
+    no.className = "chain-no";
+    no.textContent = "第 " + i + " 條" + (i === 1 ? "（必填）" : "（選填）");
+    wrap.appendChild(no);
     const g = document.createElement("div");
-    g.className = "grid3";
-    g.appendChild(field("lk"+i+"a", {label:"我在現場看到的", multiline:true, rows:2, required:i===1, printLabel:"看到："}));
-    g.appendChild(field("lk"+i+"b", {label:"對應到的課本概念", multiline:true, rows:2, required:i===1, printLabel:"概念："}));
-    g.appendChild(field("lk"+i+"c", {label:"為什麼我認為有關", multiline:true, rows:2, required:i===1, printLabel:"理由："}));
-    cStack.appendChild(g);
+    g.className = "chain";
+    const arw = ()=>{ const a = document.createElement("div"); a.className = "arw"; a.textContent = "→"; return a; };
+    g.appendChild(field("lk"+i+"a", {label:"我在現場看到", multiline:true, rows:2, required:i===1}));
+    g.appendChild(arw());
+    const cf = field("lk"+i+"b", {label:"對應課本的概念", multiline:true, rows:2, required:i===1});
+    cf.querySelector("textarea").addEventListener("focus", ()=>{ lastConcept = "lk"+i+"b"; });
+    g.appendChild(cf);
+    g.appendChild(arw());
+    g.appendChild(field("lk"+i+"c", {label:"關聯性在於？", multiline:true, rows:2, required:i===1}));
+    wrap.appendChild(g);
+    cStack.appendChild(wrap);
   }
   C.appendChild(cStack);
   box.appendChild(C);
@@ -643,12 +727,14 @@ function build(){
   box.appendChild(D);
 
   /* --- E 如果我是店長 --- */
-  const E = card("E", "如果我是這家店的店長",
-    "根據今天看到的，寫一件你會做的具體改變和理由。要具體到「明天就能開始做」的程度。", "必填");
+  const E = card("E", "店長的這一招，我學起來了",
+    "從今天看到、聽到的事情裡，挑一件你覺得店長（或店員）做得很聰明的事，可以直接從 B 區挑一筆。<br>" +
+    "例：<code>下雨天，店長把雨傘移到門口</code> → <code>客人一進門就看到，不用找就會順手買</code>",
+    "必填");
   const eg = document.createElement("div");
   eg.className = "grid2";
-  eg.appendChild(field("actWhat", {label:"我會做的一件事", multiline:true, rows:2, required:true, printLabel:"我會做的一件事：\n"}));
-  eg.appendChild(field("actWhy", {label:"我這樣做的理由", multiline:true, rows:2, required:true, printLabel:"我這樣做的理由：\n"}));
+  eg.appendChild(field("actWhat", {label:"店長（店員）做了什麼", multiline:true, rows:2, required:true, printLabel:"店長做了什麼：\n"}));
+  eg.appendChild(field("actWhy", {label:"我覺得聰明，是因為", multiline:true, rows:2, required:true, printLabel:"我覺得聰明，是因為：\n"}));
   E.appendChild(eg);
   box.appendChild(E);
 
@@ -771,6 +857,34 @@ function shrink(file){
   });
 }
 
+/* C 區概念小卡：填進最後點過的概念格，沒點過就填第一個空格 */
+let lastConcept = null;
+function fillConcept(word){
+  let id = lastConcept;
+  if(!id){
+    id = "lk1b";
+    for(let i=1;i<=BATCHES[batch].link;i++){
+      if(!esc(state.fields["lk"+i+"b"]).trim()){ id = "lk"+i+"b"; break; }
+    }
+  }
+  const el = $(id);
+  if(!el) return;
+  const cur = el.value.trim();
+  if(cur.split(/[、,，\s]+/).indexOf(word) >= 0) return;
+  el.value = cur ? cur + "、" + word : word;
+  el.dispatchEvent(new Event("input"));
+  toast("已填入：" + word);
+}
+
+/* A 區：兩欄都填的題數 */
+function guessDone(){
+  let n = 0;
+  for(let i=1;i<=GUESS.length;i++){
+    if(esc(state.fields["guess"+i]).trim() && esc(state.fields["fact"+i]).trim()) n++;
+  }
+  return n;
+}
+
 /* ================= 完成度 ================= */
 function requiredList(){
   return Array.prototype.slice.call(document.querySelectorAll("[data-req]")).map(e=>e.id);
@@ -786,7 +900,8 @@ function progress(){
   const req = requiredList();
   const b = BATCHES[batch];
   let done = 0;
-  const total = req.length + 4;   // ＋學號、姓名、至少兩張照片、照片圖說
+  const total = req.length + 5;   // ＋座號、姓名、A 區題數、至少兩張照片、照片圖說
+  if(guessDone() >= GUESS_MIN) done++;
   req.forEach(id=>{
     const v = esc(state.fields[id]).trim();
     if(id === "reflect"){
@@ -805,9 +920,18 @@ function progress(){
 }
 
 function firstMissing(){
-  if(!state.seat.trim()) return {el:$("seat"), msg:"還沒填學號"};
+  if(!state.seat.trim()) return {el:$("seat"), msg:"還沒填座號"};
   if(!state.name.trim()) return {el:$("sname"), msg:"還沒填姓名"};
   const b = BATCHES[batch];
+  const gd = guessDone();
+  if(gd < GUESS_MIN){
+    let target = $("guessBox");
+    for(let i=1;i<=GUESS.length;i++){
+      if(!esc(state.fields["guess"+i]).trim()){ target = $("guess"+i); break; }
+      if(!esc(state.fields["fact"+i]).trim()){ target = $("fact"+i); break; }
+    }
+    return {el:target, msg:"A 區要完成 " + GUESS_MIN + " 題（兩欄都填），目前 " + gd + " 題"};
+  }
   for(const id of requiredList()){
     const v = esc(state.fields[id]).trim();
     if(id === "reflect"){
@@ -973,14 +1097,14 @@ function buildPrintHead(){
    '<tr><td class="k">地點</td><td>全家便利商店－正新店</td>' +
        '<td class="k">講師</td><td colspan="3">魏呈翔 先生（正新店店長）</td></tr>' +
    '<tr><td class="k">班級</td><td>' + CLASS_NAME + '</td>' +
-       '<td class="k">學號</td><td>' + escHtml(state.seat.trim()) + '</td>' +
+       '<td class="k">座號</td><td>' + escHtml(state.seat.trim()) + '</td>' +
        '<td class="k">姓名</td><td>' + escHtml(state.name.trim()) + '</td></tr>';
   $("pfoot").textContent = fileName();
 }
 
 function exportPDF(){
   if(!state.seat.trim() || !state.name.trim()){
-    flag(firstMissing() || {el:$("seat"), msg:"請先填學號和姓名"});
+    flag(firstMissing() || {el:$("seat"), msg:"請先填座號和姓名"});
     return;
   }
   buildPrintHead();
