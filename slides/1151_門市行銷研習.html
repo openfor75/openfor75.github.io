@@ -54,6 +54,7 @@ body{
 .batch-btn:hover,.batch-btn:focus-visible{border-color:var(--clay);background:var(--clay-soft);outline:none}
 .batch-btn b{font-size:15px}
 .batch-btn span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.batch-btn span.done{color:var(--sage);font-weight:700}
 .batch-btn em{font-style:normal;font-size:11.5px;color:var(--clay);font-weight:700;letter-spacing:.05em}
 .gate-note{margin-top:18px;font-size:12.5px;color:var(--muted);line-height:1.6}
 
@@ -62,11 +63,13 @@ header.top{padding:26px 0 14px;border-bottom:2px solid var(--ink);margin-bottom:
 .kicker{font-size:12px;letter-spacing:.14em;color:var(--clay);font-weight:700;margin:0 0 6px}
 h1.title{font-size:clamp(20px,4.5vw,27px);margin:0 0 4px;letter-spacing:.02em;line-height:1.3}
 .meta{font-size:13.5px;color:var(--muted);margin:0}
-.focusbar{
-  margin-top:14px;background:var(--clay-soft);border-left:3px solid var(--clay);
-  padding:11px 14px;border-radius:0 6px 6px 0;font-size:13.5px;color:var(--ink2);
+.steps{
+  margin-top:14px;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
 }
-.focusbar b{color:var(--clay)}
+.step{
+  background:var(--clay-soft);border-radius:8px;padding:9px 10px;font-size:12.5px;color:var(--ink2);line-height:1.5;
+}
+.step b{display:block;color:var(--clay);font-size:11.5px;letter-spacing:.06em}
 
 /* ---------- 身分列 ---------- */
 .idrow{
@@ -75,6 +78,13 @@ h1.title{font-size:clamp(20px,4.5vw,27px);margin:0 0 4px;letter-spacing:.02em;li
   padding:14px 16px;margin-top:14px;box-shadow:var(--shadow);
 }
 .idrow .fixed{font-size:14px;font-weight:700;padding-bottom:9px;white-space:nowrap}
+.idstatus{
+  grid-column:1/-1;font-size:12.5px;padding:7px 11px;border-radius:7px;line-height:1.55;
+  background:var(--surface2);color:var(--muted);border:1px solid var(--line2);
+}
+.idstatus:empty{display:none}
+.idstatus.ok,.idstatus.done{background:var(--sage-soft);color:var(--sage);border-color:transparent;font-weight:700}
+.idstatus.bad{background:var(--clay-soft);color:var(--clay);border-color:transparent;font-weight:700}
 label.fl{display:block;font-size:12px;color:var(--muted);font-weight:700;margin-bottom:4px;letter-spacing:.04em}
 input.f,textarea.f,select.f{
   width:100%;font-family:inherit;font-size:15px;color:var(--ink);
@@ -103,6 +113,7 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
   font-size:13px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;
   align-self:center;
 }
+.req{font-size:11.5px;font-weight:700;color:var(--clay);background:var(--clay-soft);border-radius:99px;padding:1px 8px;margin-left:auto;white-space:nowrap}
 .hint{font-size:12.5px;color:var(--muted);margin:0 0 14px;line-height:1.6}
 .prompt{font-size:13px;color:var(--ink2);margin:0 0 14px;line-height:1.6}
 .hint code{background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:12px}
@@ -124,7 +135,7 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
 .legend b{color:var(--clay);font-weight:700}
 
 /* 照片 */
-.photos{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:14px;border-radius:8px}
 .pcell{border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface2)}
 .pdrop{
   position:relative;aspect-ratio:8.38/5;display:flex;align-items:center;justify-content:center;
@@ -157,69 +168,106 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
   backdrop-filter:blur(10px);border-top:1px solid var(--line);
   padding:10px 16px calc(10px + env(safe-area-inset-bottom));
 }
-.dockin{
-  max-width:840px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-}
-.prog{flex:1;min-width:150px}
+.dockin{max-width:840px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.prog{flex:1;min-width:0}
 .prog .bar{height:6px;background:var(--line2);border-radius:99px;overflow:hidden}
 .prog .fill{height:100%;width:0;background:var(--sage);border-radius:99px;transition:width .25s}
 .prog .txt{font-size:11.5px;color:var(--muted);margin-top:4px;display:flex;justify-content:space-between;gap:8px}
 .saved{color:var(--sage)}
 .btn{
   font-family:inherit;font-size:14.5px;font-weight:700;border-radius:8px;
-  padding:11px 20px;cursor:pointer;border:1px solid transparent;white-space:nowrap;
+  padding:11px 18px;cursor:pointer;border:1px solid transparent;white-space:nowrap;
 }
 .btn-main{background:var(--clay);color:#fff}
 .btn-main:hover{filter:brightness(1.07)}
-.btn-main:disabled{opacity:.45;cursor:not-allowed;filter:none}
-.btn-ghost{background:none;border-color:var(--line);color:var(--ink2);font-weight:400;font-size:13px;padding:10px 13px}
+.btn-main:disabled{background:var(--sage);opacity:.85;cursor:default;filter:none}
+.btn-ghost{background:none;border-color:var(--line);color:var(--ink2);font-weight:400;font-size:13px;padding:10px 12px}
 .btn-ghost:hover{border-color:var(--clay);color:var(--clay)}
+.more{position:relative}
+.menu{
+  position:absolute;right:0;bottom:calc(100% + 8px);min-width:180px;
+  background:var(--surface);border:1px solid var(--line);border-radius:9px;box-shadow:var(--shadow);
+  padding:6px;display:flex;flex-direction:column;
+}
+.menu button{
+  background:none;border:none;text-align:left;padding:10px 11px;font-family:inherit;font-size:14px;
+  color:var(--ink);border-radius:6px;cursor:pointer;
+}
+.menu button:hover{background:var(--surface2)}
+.menu .danger{color:var(--clay)}
+
+.toast{
+  position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  z-index:45;background:var(--ink);color:var(--paper);font-size:13.5px;font-weight:700;
+  padding:9px 16px;border-radius:99px;box-shadow:var(--shadow);max-width:calc(100% - 32px);text-align:center;
+}
 
 .alert{
   margin-top:14px;background:var(--amber-soft);border-left:3px solid var(--amber);
   padding:11px 14px;border-radius:0 6px 6px 0;font-size:12.5px;color:var(--ink2);line-height:1.65;
 }
 .alert b{color:var(--amber)}
-.missing{border-color:var(--clay) !important;background:var(--clay-soft) !important}
+.missing{outline:2px solid var(--clay) !important;outline-offset:2px;background:var(--clay-soft) !important}
+
+/* ---------- 繳交視窗 ---------- */
+#overlay{
+  position:fixed;inset:0;z-index:60;background:rgba(20,27,33,.55);
+  display:flex;align-items:center;justify-content:center;padding:16px;
+}
+.ov-card{
+  background:var(--surface);border-radius:14px;padding:26px 22px;max-width:380px;width:100%;
+  text-align:center;box-shadow:var(--shadow);
+}
+.ov-icon{font-size:34px;line-height:1;margin-bottom:10px}
+.spin{
+  width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--clay);border-radius:50%;
+  animation:sp .9s linear infinite;margin:0 auto 14px;
+}
+@keyframes sp{to{transform:rotate(360deg)}}
+.ov-card h3{margin:0 0 8px;font-size:18px}
+.ov-card p{margin:0 0 14px;font-size:14px;color:var(--ink2);line-height:1.65}
+.receipt{
+  background:var(--sage-soft);color:var(--sage);border-radius:8px;padding:10px 12px;
+  font-size:14px;margin-bottom:14px;font-variant-numeric:tabular-nums;line-height:1.7;
+}
 
 .print-val{display:none;white-space:pre-wrap;word-break:break-word}
 .pt-head{display:none}
 
-/* ---------- 列印 ---------- */
+/* ---------- 列印（下載副本用） ---------- */
 @media print{
   @page{size:A4;margin:12mm 11mm}
-  html,body{background:#fff !important;color:#000 !important;font-size:10.5pt}
+  html,body{background:#fff !important;color:#000 !important;font-size:12pt}
   .wrap{max-width:none;padding:0}
-  .prompt{display:block !important;font-size:9.5pt;color:#000;margin:0 0 2mm;font-weight:700}
-  .no-print,.dock,.idrow,.focusbar,.hint,.starters,.counter,.legend,
+  .prompt{display:block !important;font-size:12pt;color:#000;margin:0 0 2mm;font-weight:700}
+  .no-print,.dock,.idrow,.steps,.hint,.starters,.counter,.legend,.req,.toast,#overlay,
   .pdrop input[type=file],.pdel,.alert,.btn-switch,label.fl{display:none !important}
   input.f,textarea.f,select.f{display:none !important}
-  .print-val{display:block !important;font-size:10.5pt;color:#000;min-height:1.2em}
+  .print-val{display:block !important;font-size:12pt;color:#000;min-height:1.2em}
   .pt-head{display:table !important;width:100%;border-collapse:collapse;margin-bottom:4mm}
-  .pt-head td{border:1px solid #000;padding:3px 6px;font-size:9.5pt}
+  .pt-head td{border:1px solid #000;padding:3px 6px;font-size:12pt}
   .pt-head td.k{background:#EEE;font-weight:700;white-space:nowrap;width:1%}
-  .pt-head td.ttl{text-align:center;font-size:13pt;font-weight:700;background:#DDE5E9}
+  .pt-head td.ttl{text-align:center;font-size:14pt;font-weight:700;background:#DDE5E9}
   header.top{display:none}
   .card{
     border:1px solid #000;border-radius:0;box-shadow:none;margin:0 0 3.5mm;padding:2.5mm 3mm;
     break-inside:avoid;background:#fff;
   }
   .card.allow-break{break-inside:auto}
-  .card > h2{font-size:11pt;border-bottom:1px solid #000;padding-bottom:1.2mm;margin-bottom:2mm}
-  .badge{background:#EEE;color:#000;width:18px;height:18px;font-size:9pt}
+  .card > h2{font-size:13pt;border-bottom:1px solid #000;padding-bottom:1.2mm;margin-bottom:2mm}
+  .badge{background:#EEE;color:#000;width:20px;height:20px;font-size:12pt}
   .stack{gap:1.5mm}
-  .obs{grid-template-columns:16px 1fr 60px;gap:4px}
-  .obs .n{padding-top:0;font-size:9.5pt}
+  .obs{grid-template-columns:16px 1fr 70px;gap:4px}
+  .obs .n{padding-top:0;font-size:12pt}
   .obs .print-val{border-bottom:1px solid #999;min-height:1.5em}
   .grid2,.grid3{gap:3mm}
   .photos{gap:3mm;break-inside:avoid}
   .pcell{border:1px solid #000;border-radius:0;background:#fff}
   .pdrop{aspect-ratio:auto;height:50mm;background:#fff}
-  .pdrop .ph{color:#888;font-size:8pt}
+  .pdrop .ph{color:#888;font-size:12pt}
   .pcap{border-top:1px solid #000;padding:1.5mm 2mm;gap:1mm}
-  .pcap .lab{font-size:8.5pt;color:#000;font-weight:700}
-  .lab-inline{font-weight:700}
-  .pfoot{display:block !important;margin-top:3mm;font-size:8.5pt;color:#444;text-align:right}
+  .pcap .lab{font-size:12pt;color:#000;font-weight:700}
+  .pfoot{display:block !important;margin-top:3mm;font-size:12pt;color:#444;text-align:right}
 }
 .pfoot{display:none}
 
@@ -227,10 +275,12 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
   .idrow{grid-template-columns:1fr 1fr;gap:10px}
   .idrow .fixed{grid-column:1/-1;padding-bottom:0}
   .idrow .btn-switch{grid-column:1/-1}
+  .steps{grid-template-columns:1fr 1fr}
   .grid2,.grid3,.photos{grid-template-columns:1fr}
   .obs{grid-template-columns:22px 1fr;gap:8px}
   .obs .facet{grid-column:2}
   .card{padding:16px}
+  .prog .txt #saveTxt{display:none}
 }
 </style>
 </head>
@@ -243,8 +293,8 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
     <p>115 學年度第 1 學期・商經科二年乙班</p>
     <div class="batch-grid" id="batchGrid"></div>
     <div class="gate-note">
-      填寫的內容會自動存在這台裝置的瀏覽器裡，關掉網頁再打開還在。<br>
-      <b>但換一台裝置、或清除瀏覽紀錄就會不見</b>，所以填完請馬上匯出 PDF 交給老師。
+      填寫中的內容會自動存在這台裝置；填完按「<b>繳交給老師</b>」就直接送到老師那裡，不用再寄信或傳檔案。<br>
+      <b>換一台裝置、或清除瀏覽紀錄，草稿就會不見</b>，建議用同一支手機從頭填到尾。
     </div>
   </div>
 </div>
@@ -258,7 +308,12 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
     <p class="kicker">115 學年度第 1 學期・商經科二年乙班</p>
     <h1 class="title">門市行銷研習　學習紀錄單</h1>
     <p class="meta" id="metaLine"></p>
-    <div class="focusbar" id="focusBar"></div>
+    <div class="steps">
+      <div class="step"><b>① 出發前</b>填 A 區左欄的猜想</div>
+      <div class="step"><b>② 在現場</b>拍照、記下 B 區觀察</div>
+      <div class="step"><b>③ 回來後</b>填完其餘欄位</div>
+      <div class="step"><b>④ 繳交</b>按右下角按鈕，看到「繳交成功」就完成</div>
+    </div>
   </header>
 
   <div class="idrow no-print">
@@ -271,14 +326,15 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
       <label class="fl" for="sname">姓名</label>
       <input class="f" id="sname" placeholder="王小明">
     </div>
-    <button class="btn-switch" id="switchBatch">換梯次</button>
+    <button class="btn-switch" id="switchBatch" type="button">換梯次</button>
+    <div class="idstatus" id="idStatus"></div>
   </div>
 
   <div id="sections"></div>
 
   <div class="alert no-print">
-    <b>提醒</b>　這份紀錄只存在你自己的瀏覽器，老師那邊看不到。填完一定要按下面的
-    「匯出 PDF」，把檔案傳給老師才算繳交。
+    <b>繳交說明</b>　按「繳交給老師」後，畫面出現「繳交成功」才算交出。
+    截止前發現要修改，改完再按一次「重新繳交」就好，老師那邊只會保留最新的版本。
   </div>
 
   <div class="pfoot" id="pfoot"></div>
@@ -291,12 +347,21 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
       <div class="bar"><div class="fill" id="fill"></div></div>
       <div class="txt"><span id="progTxt">尚未開始</span><span id="saveTxt"></span></div>
     </div>
-    <button class="btn btn-ghost" id="btnBackup">備份</button>
-    <button class="btn btn-ghost" id="btnRestore">還原</button>
-    <button class="btn btn-ghost" id="btnClear">清除</button>
-    <button class="btn btn-main" id="btnPdf">匯出 PDF</button>
+    <div class="more">
+      <button class="btn btn-ghost" id="btnMore" type="button" aria-expanded="false">更多</button>
+      <div class="menu" id="menu" hidden>
+        <button type="button" id="btnPdf">下載我的副本（PDF）</button>
+        <button type="button" id="btnBackup">備份草稿檔</button>
+        <button type="button" id="btnRestore">還原草稿檔</button>
+        <button type="button" id="btnClear" class="danger">清除這個梯次的草稿</button>
+      </div>
+    </div>
+    <button class="btn btn-main" id="btnSubmit" type="button">繳交給老師</button>
   </div>
 </div>
+
+<div class="toast no-print" id="toast" hidden></div>
+<div id="overlay" class="no-print" hidden><div class="ov-card" id="ovCard"></div></div>
 
 <input type="file" id="restoreInput" accept="application/json" hidden>
 
@@ -304,6 +369,9 @@ input.f::placeholder,textarea.f::placeholder{color:var(--muted);opacity:.7}
 "use strict";
 
 /* ================= 設定 ================= */
+/* 部署 Apps Script 後，把「網頁應用程式」網址貼在這裡（結尾是 /exec） */
+const API_URL = "https://script.google.com/macros/s/AKfycbxwbuBWIgNxv-9DUyf72nqTiLZX1gb-09Iv51EKTrL2uYJLyfvAHYy8xHjxUTaRmn-P/exec";
+
 const CLASS_NAME = "商二乙";
 const FACETS = [
   ["A","商品陳列"],["B","顧客服務"],["C","動線與空間"],["D","清潔衛生"],
@@ -329,26 +397,35 @@ const BATCHES = {
 let batch = null;
 let state = null;
 let saveTimer = null;
+let submitting = false;
 
 const keyFor = b => "mms115_1_b" + b;
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? "" : s);
+const escHtml = s => esc(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 function blankState(){
-  return { seat:"", name:"", fields:{}, photos:[null,null,null,null], ts:0 };
+  return { seat:"", name:"", fields:{}, photos:[null,null,null,null], ts:0,
+           submittedAt:"", submitCount:0, dirty:false };
+}
+
+function normalize(o){
+  const s = blankState();
+  if(!o || typeof o !== "object") return s;
+  s.seat = esc(o.seat); s.name = esc(o.name);
+  s.fields = o.fields && typeof o.fields === "object" ? o.fields : {};
+  s.photos = Array.isArray(o.photos) && o.photos.length === 4 ? o.photos : [null,null,null,null];
+  s.ts = o.ts || 0;
+  s.submittedAt = esc(o.submittedAt);
+  s.submitCount = Number(o.submitCount) || 0;
+  s.dirty = !!o.dirty;
+  return s;
 }
 
 function load(b){
   try{
     const raw = localStorage.getItem(keyFor(b));
-    if(!raw) return blankState();
-    const o = JSON.parse(raw);
-    return {
-      seat: esc(o.seat), name: esc(o.name),
-      fields: o.fields && typeof o.fields === "object" ? o.fields : {},
-      photos: Array.isArray(o.photos) && o.photos.length === 4 ? o.photos : [null,null,null,null],
-      ts: o.ts || 0
-    };
+    return raw ? normalize(JSON.parse(raw)) : blankState();
   }catch(e){ return blankState(); }
 }
 
@@ -357,15 +434,23 @@ function save(){
   try{
     localStorage.setItem(keyFor(batch), JSON.stringify(state));
     const d = new Date(state.ts);
-    $("saveTxt").textContent = "已儲存 " +
+    $("saveTxt").textContent = "草稿已存 " +
       String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
     $("saveTxt").className = "saved";
   }catch(e){
-    $("saveTxt").textContent = "儲存失敗：照片太大，請刪掉一張再試";
+    $("saveTxt").textContent = "草稿儲存失敗：照片太大，請刪掉一張再試";
     $("saveTxt").className = "";
   }
 }
 function queueSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(save, 400); }
+
+/* 任何內容被改動時呼叫 */
+function changed(){
+  if(state.submittedAt) state.dirty = true;
+  updateSubmitBtn();
+  queueSave();
+  progress();
+}
 
 /* ================= 建立畫面 ================= */
 function batchPicker(){
@@ -373,13 +458,21 @@ function batchPicker(){
   g.innerHTML = "";
   Object.keys(BATCHES).forEach(k=>{
     const b = BATCHES[k];
-    const has = !!localStorage.getItem(keyFor(k));
+    let info = "星期三 13:55", cls = "";
+    try{
+      const raw = localStorage.getItem(keyFor(k));
+      if(raw){
+        const o = JSON.parse(raw);
+        if(o.submittedAt){ info = "已繳交 " + o.submittedAt + (o.dirty ? "（有修改未重交）" : ""); cls = "done"; }
+        else info = "已有草稿，繼續填";
+      }
+    }catch(e){}
     const btn = document.createElement("button");
     btn.className = "batch-btn";
     btn.type = "button";
     btn.innerHTML = '<em>第 ' + k + ' 梯次</em>' +
                     '<b>' + b.short + '</b>' +
-                    '<span>' + (has ? "已有草稿，繼續填" : "星期三 13:55") + '</span>';
+                    '<span class="' + cls + '">' + info + '</span>';
     btn.addEventListener("click", ()=>start(Number(k)));
     g.appendChild(btn);
   });
@@ -402,7 +495,7 @@ function field(id, opts){
   el.addEventListener("input", ()=>{
     state.fields[id] = el.value;
     mirror(id);
-    queueSave(); progress();
+    changed();
     if(opts.counter) count(id, opts.counter);
   });
   wrap.appendChild(el);
@@ -420,16 +513,17 @@ function field(id, opts){
   return wrap;
 }
 
-function facetSelect(id){
+function facetSelect(id, required){
   const wrap = document.createElement("div");
   wrap.className = "facet";
   const s = document.createElement("select");
   s.className = "f"; s.id = id;
-  s.innerHTML = '<option value="">面向</option>' +
+  if(required) s.dataset.req = "1";
+  s.innerHTML = '<option value="">選面向</option>' +
     FACETS.map(f=>'<option value="'+f[0]+'">'+f[0]+" "+f[1]+'</option>').join("");
   s.value = esc(state.fields[id]);
   s.addEventListener("change", ()=>{
-    state.fields[id] = s.value; mirror(id); queueSave(); progress();
+    state.fields[id] = s.value; mirror(id); changed();
   });
   wrap.appendChild(s);
   const pv = document.createElement("div");
@@ -441,7 +535,11 @@ function facetSelect(id){
 function mirror(id){
   const pv = $("pv_" + id);
   if(!pv) return;
-  const v = esc(state.fields[id]);
+  let v = esc(state.fields[id]);
+  if(/^fac\d$/.test(id) && v){
+    const f = FACETS.find(x=>x[0] === v);
+    if(f) v = f[0] + " " + f[1];
+  }
   pv.textContent = pv.dataset.plabel && v ? pv.dataset.plabel + v : v;
 }
 
@@ -449,15 +547,16 @@ function count(id, need){
   const n = esc(state.fields[id]).replace(/\s/g, "").length;
   const c = $("cnt_" + id);
   if(!c) return;
-  c.textContent = n + " / " + need + " 字";
+  c.textContent = n >= need ? n + " 字　已達標" : n + " / " + need + " 字（還差 " + (need - n) + " 字）";
   c.className = "counter" + (n >= need ? " ok" : "");
 }
 
-function card(letter, title, hintText, allowBreak){
+function card(letter, title, hintText, reqText, allowBreak){
   const c = document.createElement("section");
   c.className = "card" + (allowBreak ? " allow-break" : "");
   const h = document.createElement("h2");
-  h.innerHTML = '<span class="badge">' + letter + "</span>" + title;
+  h.innerHTML = '<span class="badge">' + letter + "</span>" + title +
+                (reqText ? '<span class="req">' + reqText + '</span>' : "");
   c.appendChild(h);
   if(hintText){
     const p = document.createElement("p");
@@ -472,30 +571,30 @@ function build(){
   const box = $("sections");
   box.innerHTML = "";
 
-  /* --- A 梯次特色 --- */
-  const A = card("A", b.extra.title);
+  /* --- A 出發前 vs 回來後 --- */
+  const A = card("A", b.extra.title, null, "至少 2 組");
+  const p = document.createElement("p");
+  p.className = "prompt"; p.textContent = b.extra.prompt + "。";
+  A.appendChild(p);
   const aStack = document.createElement("div");
   aStack.className = "stack";
-  if(b.extra.kind === "predict"){
-    const p = document.createElement("p");
-    p.className = "prompt"; p.textContent = b.extra.prompt + "。";
-    A.insertBefore(p, A.children[1] || null);
-    for(let i=1;i<=3;i++){
-      const g = document.createElement("div");
-      g.className = "grid2";
-      g.appendChild(field("pre"+i, {label:i+"　出發前我猜，門市是……", multiline:true, rows:2,
-        required:i<=2, printLabel:i+". 出發前我猜："}));
-      g.appendChild(field("post"+i, {label:i+"　回來後我發現，實際上……", multiline:true, rows:2,
-        required:i<=2, printLabel:"　　回來後我發現："}));
-      aStack.appendChild(g);
-    }
+  for(let i=1;i<=3;i++){
+    const g = document.createElement("div");
+    g.className = "grid2";
+    g.appendChild(field("pre"+i, {label:i+"　出發前我猜，門市是……", multiline:true, rows:2,
+      required:i<=2, printLabel:i+". 出發前我猜：",
+      placeholder:i===1 ? "例：便利商店的貨是店員自己想進什麼就進什麼" : ""}));
+    g.appendChild(field("post"+i, {label:i+"　回來後我發現，實際上……", multiline:true, rows:2,
+      required:i<=2, printLabel:"　　回來後我發現："}));
+    aStack.appendChild(g);
   }
   A.appendChild(aStack);
   box.appendChild(A);
 
   /* --- B 現場觀察 --- */
   const B = card("B", "現場觀察紀錄",
-    '寫「<b>事實</b>」，不寫「感想」。例：<code>店長示範把即期品移到前排</code> → 面向 A');
+    '寫「<b>事實</b>」，不寫「感想」，再替每一筆選一個面向。例：<code>店長示範把即期品移到前排</code> → 面向 A',
+    "至少 2 筆");
   const leg = document.createElement("div");
   leg.className = "legend";
   leg.innerHTML = FACETS.map(f=>"<span><b>"+f[0]+"</b> "+f[1]+"</span>").join("");
@@ -512,7 +611,7 @@ function build(){
       multiline:true, rows:2, required:i<=2,
       placeholder:i===1 ? "我實際看到／聽到的事" : ""
     }));
-    row.appendChild(facetSelect("fac"+i));
+    row.appendChild(facetSelect("fac"+i, i<=2));
     bStack.appendChild(row);
   }
   B.appendChild(bStack);
@@ -520,7 +619,9 @@ function build(){
 
   /* --- C 課本連結 --- */
   const C = card("C", "把現場接回課本",
-    "想想門市行銷、商業概論、會計學、經濟學任何課本裡面學過的概念都可以寫喔");
+    "門市行銷、商業概論、會計學、經濟學課本裡學過的概念都可以。" +
+    "例：看到「鮮食一天進貨兩次」→ 概念「存貨管理」→ 理由「少量多次，可以減少報廢又不缺貨」",
+    "至少 1 組");
   const cStack = document.createElement("div");
   cStack.className = "stack";
   for(let i=1;i<=b.link;i++){
@@ -536,13 +637,14 @@ function build(){
 
   /* --- D 疑問 --- */
   const D = card("D", "我還想問的一個問題",
-    "今天沒問到、或想再深入了解的部分。");
-  D.appendChild(field("question", {multiline:true, rows:2, required:true}));
+    "今天沒問到、或想再深入了解的部分。", "必填");
+  D.appendChild(field("question", {multiline:true, rows:2, required:true,
+    placeholder:"例：店裡怎麼決定每天要訂多少個便當？"}));
   box.appendChild(D);
 
   /* --- E 如果我是店長 --- */
   const E = card("E", "如果我是這家店的店長",
-    "根據今天看到的，寫一件你會做的具體改變，以及理由");
+    "根據今天看到的，寫一件你會做的具體改變和理由。要具體到「明天就能開始做」的程度。", "必填");
   const eg = document.createElement("div");
   eg.className = "grid2";
   eg.appendChild(field("actWhat", {label:"我會做的一件事", multiline:true, rows:2, required:true, printLabel:"我會做的一件事：\n"}));
@@ -551,15 +653,16 @@ function build(){
   box.appendChild(E);
 
   /* --- F 照片 --- */
-  const F = card("F", "研習照片與說明", "四張。圖說要寫，這是紀錄單的一部分");
+  const F = card("F", "研習照片與說明",
+    "有上傳的照片都要寫圖說，這是紀錄單的一部分。拍到人之前，先問過對方。", "至少 2 張");
   const ph = document.createElement("div");
-  ph.className = "photos";
+  ph.className = "photos"; ph.id = "photoBox";
   for(let i=0;i<4;i++) ph.appendChild(photoCell(i));
   F.appendChild(ph);
   box.appendChild(F);
 
   /* --- G 心得 --- */
-  const G = card("G", "學習心得（至少 " + b.words + " 字）", null, true);
+  const G = card("G", "學習心得", null, "至少 " + b.words + " 字", true);
   const st = document.createElement("div");
   st.className = "starters";
   st.innerHTML = "<b>不知道怎麼開頭的話，這三句可以挑一句接下去寫</b>" +
@@ -568,12 +671,8 @@ function build(){
   G.appendChild(field("reflect", {multiline:true, rows:12, required:true, counter:b.words}));
   box.appendChild(G);
 
-  /* 頁首資訊 */
   $("metaLine").textContent =
     "第 " + batch + " 梯次　" + b.date + "　13:55－15:45　全家便利商店－正新店";
-  $("focusBar").innerHTML = "<b>先填 A 區左欄再出發</b>　" +
-    "A 區左邊那欄請在集合或車上就先寫好，右邊那欄研習結束後再回來填。" +
-    "兩欄對照起來，你才看得出自己這一趟真正學到什麼。";
 
   $("seat").value = state.seat;
   $("sname").value = state.name;
@@ -581,7 +680,10 @@ function build(){
   Object.keys(state.fields).forEach(mirror);
   count("reflect", b.words);
   buildPrintHead();
+  updateSubmitBtn();
   progress();
+  setIdStatus("", "");
+  checkId();
 }
 
 function photoCell(i){
@@ -603,7 +705,7 @@ function photoCell(i){
     ph.textContent = "處理中…";
     try{
       state.photos[i] = await shrink(f);
-      paintPhoto(i); save(); progress();
+      paintPhoto(i); changed(); save();
     }catch(e){ ph.textContent = "這張讀不出來，換一張試試"; }
     ev.target.value = "";
   });
@@ -615,11 +717,11 @@ function photoCell(i){
   const lab = document.createElement("div");
   lab.className = "lab"; lab.textContent = "圖 " + (i+1);
   cap.appendChild(lab);
-  cap.appendChild(field("cap"+i+"a", {label:"這張在拍", required:i<2, printLabel:"這張在拍："}));
-  cap.appendChild(field("cap"+i+"b", {label:"值得注意的是", required:i<2, printLabel:"值得注意的是："}));
+  cap.appendChild(field("cap"+i+"a", {label:"這張在拍", printLabel:"這張在拍："}));
+  cap.appendChild(field("cap"+i+"b", {label:"值得注意的是", printLabel:"值得注意的是："}));
   const del = document.createElement("button");
   del.type = "button"; del.className = "pdel"; del.textContent = "移除這張照片";
-  del.addEventListener("click", ()=>{ state.photos[i] = null; paintPhoto(i); save(); progress(); });
+  del.addEventListener("click", ()=>{ state.photos[i] = null; paintPhoto(i); changed(); save(); });
   cap.appendChild(del);
   cell.appendChild(cap);
 
@@ -638,57 +740,53 @@ function paintPhoto(i){
   }
 }
 
-/* 壓縮：長邊 1400px、JPEG 0.78，避免塞爆 localStorage */
+/* 壓縮：長邊 1400px、JPEG 0.78，避免塞爆 localStorage 與上傳太久 */
 function shrink(file){
+  const MAX = 1400;
+  const toJpeg = (src, w, h)=>{
+    const s = Math.min(1, MAX / Math.max(w, h));
+    const c = document.createElement("canvas");
+    c.width = Math.round(w * s); c.height = Math.round(h * s);
+    c.getContext("2d").drawImage(src, 0, 0, c.width, c.height);
+    return c.toDataURL("image/jpeg", 0.78);
+  };
   return new Promise((resolve, reject)=>{
-    const done = src=>{
-      const im = new Image();
-      im.onload = ()=>{
-        const max = 1400;
-        const s = Math.min(1, max / Math.max(im.width, im.height));
-        const c = document.createElement("canvas");
-        c.width = Math.round(im.width * s);
-        c.height = Math.round(im.height * s);
-        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
-        try{ resolve(c.toDataURL("image/jpeg", 0.78)); }catch(e){ reject(e); }
+    const viaReader = ()=>{
+      const fr = new FileReader();
+      fr.onload = e=>{
+        const im = new Image();
+        im.onload = ()=>{ try{ resolve(toJpeg(im, im.width, im.height)); }catch(err){ reject(err); } };
+        im.onerror = reject;
+        im.src = e.target.result;
       };
-      im.onerror = reject;
-      im.src = src;
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
     };
     if(window.createImageBitmap){
       createImageBitmap(file, {imageOrientation:"from-image"}).then(bm=>{
-        const max = 1400;
-        const s = Math.min(1, max / Math.max(bm.width, bm.height));
-        const c = document.createElement("canvas");
-        c.width = Math.round(bm.width * s);
-        c.height = Math.round(bm.height * s);
-        c.getContext("2d").drawImage(bm, 0, 0, c.width, c.height);
-        bm.close && bm.close();
-        try{ resolve(c.toDataURL("image/jpeg", 0.78)); }catch(e){ reject(e); }
-      }).catch(()=>{
-        const fr = new FileReader();
-        fr.onload = e=>done(e.target.result);
-        fr.onerror = reject;
-        fr.readAsDataURL(file);
-      });
-    }else{
-      const fr = new FileReader();
-      fr.onload = e=>done(e.target.result);
-      fr.onerror = reject;
-      fr.readAsDataURL(file);
-    }
+        try{ resolve(toJpeg(bm, bm.width, bm.height)); }catch(err){ reject(err); }
+        if(bm.close) bm.close();
+      }).catch(viaReader);
+    }else viaReader();
   });
 }
 
 /* ================= 完成度 ================= */
 function requiredList(){
-  const els = Array.prototype.slice.call(document.querySelectorAll("[data-req]"));
-  return els.map(e=>e.id);
+  return Array.prototype.slice.call(document.querySelectorAll("[data-req]")).map(e=>e.id);
+}
+function photoCaptionsOk(){
+  for(let i=0;i<4;i++){
+    if(!state.photos[i]) continue;
+    if(!esc(state.fields["cap"+i+"a"]).trim() || !esc(state.fields["cap"+i+"b"]).trim()) return false;
+  }
+  return true;
 }
 function progress(){
   const req = requiredList();
   const b = BATCHES[batch];
-  let done = 0, total = req.length + 3;   // ＋學號、姓名、至少兩張照片
+  let done = 0;
+  const total = req.length + 4;   // ＋學號、姓名、至少兩張照片、照片圖說
   req.forEach(id=>{
     const v = esc(state.fields[id]).trim();
     if(id === "reflect"){
@@ -697,30 +795,168 @@ function progress(){
   });
   if(state.seat.trim()) done++;
   if(state.name.trim()) done++;
-  if(state.photos.filter(Boolean).length >= 2) done++;
-  const pct = total ? Math.round(done / total * 100) : 0;
+  const nPhoto = state.photos.filter(Boolean).length;
+  if(nPhoto >= 2) done++;
+  if(nPhoto >= 1 && photoCaptionsOk()) done++;
+  const pct = Math.round(done / total * 100);
   $("fill").style.width = pct + "%";
-  $("progTxt").textContent = done >= total ? "全部完成，可以匯出了" : "完成 " + done + " / " + total + " 項";
-  $("btnPdf").disabled = false;
+  $("progTxt").textContent = done >= total ? "全部完成，可以繳交了" : "完成 " + done + " / " + total + " 項";
   return {done, total};
 }
 
 function firstMissing(){
-  if(!state.seat.trim()) return $("seat");
-  if(!state.name.trim()) return $("sname");
+  if(!state.seat.trim()) return {el:$("seat"), msg:"還沒填學號"};
+  if(!state.name.trim()) return {el:$("sname"), msg:"還沒填姓名"};
   const b = BATCHES[batch];
-  const req = requiredList();
-  for(const id of req){
+  for(const id of requiredList()){
     const v = esc(state.fields[id]).trim();
     if(id === "reflect"){
-      if(v.replace(/\s/g,"").length < b.words) return $(id);
-    }else if(!v) return $(id);
+      const n = v.replace(/\s/g,"").length;
+      if(n < b.words) return {el:$(id), msg:"心得還差 " + (b.words - n) + " 字"};
+    }else if(!v){
+      return {el:$(id), msg: /^fac/.test(id) ? "這筆觀察還沒選面向" : "這一格還沒填"};
+    }
   }
-  if(state.photos.filter(Boolean).length < 2) return null;
+  if(state.photos.filter(Boolean).length < 2) return {el:$("photoBox"), msg:"至少要上傳 2 張照片"};
+  for(let i=0;i<4;i++){
+    if(!state.photos[i]) continue;
+    for(const s of ["a","b"]){
+      const id = "cap" + i + s;
+      if(!esc(state.fields[id]).trim()) return {el:$(id), msg:"圖 " + (i+1) + " 的圖說還沒寫"};
+    }
+  }
   return null;
 }
 
-/* ================= 列印 ================= */
+function flag(m){
+  const el = m.el;
+  el.classList.add("missing");
+  el.scrollIntoView({behavior:"smooth", block:"center"});
+  if(el.focus && el.tagName !== "DIV") el.focus({preventScroll:true});
+  setTimeout(()=>el.classList.remove("missing"), 2500);
+  toast(m.msg);
+}
+
+let toastTimer = null;
+function toast(msg){
+  const t = $("toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.hidden = true; }, 2800);
+}
+
+/* ================= 與老師端連線 ================= */
+async function api(body, timeoutMs){
+  const ctl = new AbortController();
+  const t = setTimeout(()=>ctl.abort(), timeoutMs || 90000);
+  try{
+    const r = await fetch(API_URL, {method:"POST", body:JSON.stringify(body), signal:ctl.signal});
+    const txt = await r.text();
+    try{ return JSON.parse(txt); }
+    catch(e){ throw new Error("伺服器回應看不懂，請通知老師"); }
+  }catch(e){
+    if(e.name === "AbortError") throw new Error("等太久沒有回應，網路可能不穩");
+    if(e instanceof TypeError) throw new Error("連不上伺服器，請確認網路後再試");
+    throw e;
+  }finally{ clearTimeout(t); }
+}
+
+function setIdStatus(kind, text){
+  const s = $("idStatus");
+  s.className = "idstatus" + (kind ? " " + kind : "");
+  s.textContent = text;
+}
+
+let idTimer = null, idSeq = 0;
+function queueCheckId(){ clearTimeout(idTimer); idTimer = setTimeout(checkId, 800); }
+async function checkId(){
+  if(!API_URL) return;
+  const seat = state.seat.trim(), name = state.name.trim();
+  if(!seat || !name){ setIdStatus("", ""); return; }
+  const my = ++idSeq;
+  setIdStatus("", "核對名單中…");
+  try{
+    const r = await api({action:"status", batch:batch, seat:seat, name:name}, 20000);
+    if(my !== idSeq) return;
+    if(!r.ok){ setIdStatus("bad", r.msg); return; }
+    if(r.submitted){
+      setIdStatus("done", "✓ 已於 " + r.last + " 繳交第 " + batch + " 梯次（共 " + r.count + " 次）" +
+        (state.submittedAt ? "" : "。在這台裝置按繳交，會用這裡的內容蓋掉舊版本"));
+    }else{
+      setIdStatus("ok", "✓ 名單核對成功・尚未繳交" + (r.deadline ? "・截止時間 " + r.deadline : ""));
+    }
+  }catch(e){
+    if(my === idSeq) setIdStatus("", "暫時無法核對名單（" + e.message + "），不影響填寫");
+  }
+}
+
+function updateSubmitBtn(){
+  const b = $("btnSubmit");
+  if(!state.submittedAt){ b.textContent = "繳交給老師"; b.disabled = false; }
+  else if(state.dirty){ b.textContent = "重新繳交"; b.disabled = false; }
+  else { b.textContent = "已繳交 ✓"; b.disabled = true; }
+}
+
+function overlay(kind, data){
+  const o = $("overlay"), c = $("ovCard");
+  if(kind === "hide"){ o.hidden = true; return; }
+  o.hidden = false;
+  if(kind === "busy"){
+    c.innerHTML = '<div class="spin"></div><h3>正在繳交…</h3>' +
+      '<p>照片上傳中，大約需要 10–30 秒。<br>請不要關掉網頁或切換到別的 App。</p>';
+  }else if(kind === "ok"){
+    c.innerHTML = '<div class="ov-icon">✅</div><h3>繳交成功</h3>' +
+      '<div class="receipt">第 ' + batch + ' 梯次・' + escHtml(state.seat) + ' ' + escHtml(state.name) +
+      '<br>繳交時間 ' + escHtml(data.time) + (data.count > 1 ? '（第 ' + data.count + ' 次，已取代舊版）' : '') + '</div>' +
+      '<p>老師已經收到了，不用再寄信或傳檔案。<br>截止前想修改，改完再按「重新繳交」就好。</p>' +
+      '<button class="btn btn-main" id="ovOk" type="button">好</button>';
+  }else{
+    c.innerHTML = '<div class="ov-icon">⚠️</div><h3>這次沒有送出</h3>' +
+      '<p>' + escHtml(data) + '</p>' +
+      '<p>你填的內容還在這台裝置上，稍後再按一次就好。</p>' +
+      '<button class="btn btn-main" id="ovOk" type="button">知道了</button>';
+  }
+  const ok = $("ovOk");
+  if(ok) ok.addEventListener("click", ()=>overlay("hide"));
+}
+
+async function submit(){
+  if(submitting) return;
+  if(!API_URL){
+    alert("老師還沒設定繳交網址。請先按「更多 → 下載我的副本」存成 PDF，並告訴老師。");
+    return;
+  }
+  const miss = firstMissing();
+  if(miss){ flag(miss); return; }
+  const again = !!state.submittedAt;
+  if(!confirm(again
+      ? "確定要重新繳交嗎？老師那邊的舊版本會被這一份取代。"
+      : "確定要繳交第 " + batch + " 梯次的紀錄單嗎？\n（截止前仍可修改後重新繳交）")) return;
+
+  submitting = true;
+  overlay("busy");
+  try{
+    const res = await api({
+      action:"submit", batch:batch,
+      seat:state.seat.trim(), name:state.name.trim(),
+      fields:state.fields, photos:state.photos
+    }, 120000);
+    if(!res.ok) throw new Error(res.msg || "繳交失敗");
+    state.submittedAt = res.time;
+    state.submitCount = res.count;
+    state.dirty = false;
+    save();
+    updateSubmitBtn();
+    setIdStatus("done", "✓ 已於 " + res.time + " 繳交第 " + batch + " 梯次（共 " + res.count + " 次）");
+    overlay("ok", res);
+  }catch(e){
+    overlay("err", e.message);
+  }finally{
+    submitting = false;
+  }
+}
+
+/* ================= 列印副本 ================= */
 function fileName(){
   const seat = state.seat.trim().padStart(2, "0");
   const nm = state.name.trim().replace(/[\\\/:*?"<>|]/g, "");
@@ -729,7 +965,6 @@ function fileName(){
 
 function buildPrintHead(){
   const b = BATCHES[batch];
-  const seat = state.seat.trim(), nm = state.name.trim();
   $("ptHead").innerHTML =
    '<tr><td class="ttl" colspan="6">115學年度第1學期　商經科　門市行銷研習　學習紀錄單</td></tr>' +
    '<tr><td class="k">梯次</td><td>第 ' + batch + ' 梯次</td>' +
@@ -738,22 +973,14 @@ function buildPrintHead(){
    '<tr><td class="k">地點</td><td>全家便利商店－正新店</td>' +
        '<td class="k">講師</td><td colspan="3">魏呈翔 先生（正新店店長）</td></tr>' +
    '<tr><td class="k">班級</td><td>' + CLASS_NAME + '</td>' +
-       '<td class="k">學號</td><td>' + seat + '</td>' +
-       '<td class="k">姓名</td><td>' + nm + '</td></tr>';
+       '<td class="k">學號</td><td>' + escHtml(state.seat.trim()) + '</td>' +
+       '<td class="k">姓名</td><td>' + escHtml(state.name.trim()) + '</td></tr>';
   $("pfoot").textContent = fileName();
 }
 
 function exportPDF(){
-  const miss = firstMissing();
-  if(miss){
-    miss.classList.add("missing");
-    miss.scrollIntoView({behavior:"smooth", block:"center"});
-    miss.focus({preventScroll:true});
-    setTimeout(()=>miss.classList.remove("missing"), 2500);
-    if(!confirm("還有欄位沒填完。仍要現在匯出嗎？")) return;
-  }
   if(!state.seat.trim() || !state.name.trim()){
-    alert("請先填學號和姓名，檔名要用到。");
+    flag(firstMissing() || {el:$("seat"), msg:"請先填學號和姓名"});
     return;
   }
   buildPrintHead();
@@ -764,7 +991,7 @@ function exportPDF(){
   setTimeout(()=>{ window.print(); setTimeout(restore, 1500); }, 60);
 }
 
-/* ================= 備份 ================= */
+/* ================= 草稿備份 ================= */
 function backup(){
   const blob = new Blob([JSON.stringify({v:1, batch:batch, data:state}, null, 1)],
                         {type:"application/json"});
@@ -781,11 +1008,11 @@ $("restoreInput").addEventListener("change", ev=>{
   fr.onload = e=>{
     try{
       const o = JSON.parse(e.target.result);
-      if(!o.data || !o.batch) throw 0;
-      batch = Number(o.batch); state = o.data;
+      if(!o.data || !BATCHES[o.batch]) throw 0;
+      batch = Number(o.batch); state = normalize(o.data);
       save(); build();
-      alert("已還原第 " + batch + " 梯次的資料。");
-    }catch(err){ alert("這個檔案讀不出來，請確認是本頁匯出的備份檔。"); }
+      alert("已還原第 " + batch + " 梯次的草稿。");
+    }catch(err){ alert("這個檔案讀不出來，請確認是本頁備份的草稿檔。"); }
   };
   fr.readAsText(f);
   ev.target.value = "";
@@ -805,28 +1032,44 @@ function start(b){
 $("seat").addEventListener("input", e=>{
   state.seat = e.target.value.replace(/\D/g,"").slice(0,2);
   e.target.value = state.seat;
-  buildPrintHead(); queueSave(); progress();
+  buildPrintHead(); changed(); queueCheckId();
 });
 $("sname").addEventListener("input", e=>{
   state.name = e.target.value;
-  buildPrintHead(); queueSave(); progress();
+  buildPrintHead(); changed(); queueCheckId();
 });
 $("switchBatch").addEventListener("click", ()=>{
   save();
   $("app").hidden = true; $("dock").hidden = true; $("gate").hidden = false;
   batchPicker();
 });
-$("btnPdf").addEventListener("click", exportPDF);
-$("btnBackup").addEventListener("click", backup);
-$("btnRestore").addEventListener("click", ()=>$("restoreInput").click());
+
+/* 更多選單 */
+function closeMenu(){ $("menu").hidden = true; $("btnMore").setAttribute("aria-expanded","false"); }
+$("btnMore").addEventListener("click", e=>{
+  e.stopPropagation();
+  const open = $("menu").hidden;
+  $("menu").hidden = !open;
+  $("btnMore").setAttribute("aria-expanded", String(open));
+});
+document.addEventListener("click", e=>{ if(!e.target.closest(".more")) closeMenu(); });
+
+$("btnSubmit").addEventListener("click", submit);
+$("btnPdf").addEventListener("click", ()=>{ closeMenu(); exportPDF(); });
+$("btnBackup").addEventListener("click", ()=>{ closeMenu(); backup(); });
+$("btnRestore").addEventListener("click", ()=>{ closeMenu(); $("restoreInput").click(); });
 $("btnClear").addEventListener("click", ()=>{
-  if(!confirm("確定要清除第 " + batch + " 梯次的全部內容嗎？這個動作無法復原。")) return;
+  closeMenu();
+  if(!confirm("確定要清除這台裝置上第 " + batch + " 梯次的草稿嗎？\n（已經繳交給老師的版本不受影響）")) return;
   localStorage.removeItem(keyFor(batch));
   state = blankState();
   build();
   $("saveTxt").textContent = "已清除"; $("saveTxt").className = "";
 });
-window.addEventListener("beforeunload", ()=>{ if(state) save(); });
+window.addEventListener("beforeunload", e=>{
+  if(state) save();
+  if(submitting){ e.preventDefault(); e.returnValue = ""; }
+});
 
 batchPicker();
 </script>
