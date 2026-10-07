@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>讀書打卡牆</title>
+<title>讀書好運祭</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Huninn&display=swap" rel="stylesheet">
 <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
 :root{
-  --paper:#F6F8FC; --grid:#E1E7F2; --ink:#1D2B53; --ink-2:#5B6789; --line:#C9D2E4;
-  --hl:#FFE14D; --pink:#FF7AA2; --blue:#4D7CFE; --stamp:#D7263D;
-  --wood:#EDD3A3; --wood-d:#C79D5E; --card:#FFFFFF;
+  --paper:#F4F6FC; --grid:#E4E9F6; --ink:#0F1E66; --ink-2:#4C5888; --line:#CCD4EA;
+  --hl:#FFD54A; --pink:#D8232A; --blue:#1D3FD1; --stamp:#D8232A; --night:#0F1E66;
+  --card:#FFFFFF;
   --f-display:"Huninn","jf-openhuninn","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
   --f-body:"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
   --stick-w:54px; --stick-gap:12px; --tabs-h:58px;
@@ -36,14 +36,20 @@ h1,h2,h3{font-family:var(--f-display);font-weight:400;margin:0}
 .wrap{max-width:560px;margin:0 auto;padding:0 18px}
 .mark{background:linear-gradient(transparent 58%,var(--hl) 58%);padding:0 .1em}
 
+/* 國旗 */
+.flag{display:block;width:100%;height:auto;border-radius:3px;box-shadow:0 1px 3px rgba(15,30,102,.25)}
+.flag-sm{width:34px;flex:none}
+.flag-wave{width:150px;animation:wave 1.4s ease-in-out infinite alternate;transform-origin:left center}
+@keyframes wave{from{transform:skewY(-3deg) scaleX(.97)}to{transform:skewY(3deg) scaleX(1)}}
+
 /* 載入 */
 .boot{min-height:100vh;display:grid;place-content:center;justify-items:center;gap:14px;text-align:center;padding:24px}
-.boot .stick{animation:wob 1s ease-in-out infinite alternate}
-@keyframes wob{from{transform:rotate(-8deg)}to{transform:rotate(8deg)}}
+
 
 /* 登記 */
 .reg{padding-top:calc(env(safe-area-inset-top,0px) + 40px);padding-bottom:48px}
-.reg h1{font-size:40px;line-height:1.2}
+.reg h1{font-size:40px;line-height:1.2;margin-top:14px}
+.reg .flag-wave{width:120px}
 .reg .lead{margin:12px 0 28px;color:var(--ink-2)}
 .field-label{display:block;font-weight:600;margin:20px 0 8px}
 .hint{font-size:14px;color:var(--ink-2);margin:6px 0 0}
@@ -57,9 +63,9 @@ textarea{resize:none}
 .btn{
   display:block;width:100%;margin-top:24px;border:0;border-radius:14px;padding:14px;
   background:var(--ink);color:#fff;font-size:18px;font-family:var(--f-display);
-  box-shadow:0 4px 0 #0E1735;transition:transform .08s,box-shadow .08s;
+  box-shadow:0 4px 0 #070F3D;transition:transform .08s,box-shadow .08s;
 }
-.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #0E1735}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #070F3D}
 .btn[disabled]{opacity:.6}
 .btn.ghost{background:var(--card);color:var(--ink);border:2px solid var(--ink);box-shadow:0 4px 0 var(--ink)}
 .err{color:var(--stamp);min-height:1.6em;margin:10px 0 0;font-size:15px}
@@ -67,15 +73,16 @@ textarea{resize:none}
 /* 頂部 */
 #app{height:100%;display:flex;flex-direction:column}
 .top{
-  flex:none;background:var(--paper);
+  flex:none;background:var(--paper);border-top:5px solid var(--stamp);
   border-bottom:2px solid var(--ink);padding-top:env(safe-area-inset-top,0px);
 }
 .top .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-top:10px;padding-bottom:10px}
-.who{display:flex;align-items:baseline;gap:8px;min-width:0}
+.who{display:flex;align-items:center;gap:8px;min-width:0}
 .who strong{font-family:var(--f-display);font-weight:400;font-size:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tag{font-size:13px;border:1.5px solid var(--ink-2);color:var(--ink-2);border-radius:6px;padding:0 6px;white-space:nowrap}
 .stats{display:flex;gap:14px;text-align:center}
 .stats b{display:block;font-family:var(--f-display);font-weight:400;font-size:22px;line-height:1.1}
+.stats .lucky b{color:var(--stamp)}
 .stats small{font-size:12px;color:var(--ink-2)}
 
 main{ /* 只有這一塊會捲動，上方名牌和下方分頁列固定不動 */
@@ -129,17 +136,17 @@ body.typing .submit-bar{position:static}
 .card.mine{outline:3px solid var(--hl)}
 .empty{grid-column:1/-1;text-align:center;color:var(--ink-2);padding:32px 0}
 
-/* 籤筒 */
+/* 好運券箱 */
 .pot{display:flex;align-items:flex-end;gap:18px;margin-bottom:18px}
 .cup{position:relative;width:96px;height:112px;flex:none}
 .cup-body{
-  position:absolute;left:0;right:0;bottom:0;height:70px;border-radius:8px 8px 16px 16px;
-  background:var(--stamp);border:2px solid var(--ink);display:grid;place-items:center;
-  color:#fff;font-family:var(--f-display);font-size:22px;z-index:2;
+  position:absolute;left:0;right:0;bottom:0;height:66px;border-radius:10px;
+  background:var(--night);border:2px solid var(--ink);display:grid;place-items:center;
+  color:#fff;font-family:var(--f-display);font-size:20px;z-index:2;letter-spacing:.1em;
 }
-.cup-sticks span{
-  position:absolute;bottom:40px;width:7px;border-radius:4px 4px 0 0;background:var(--wood);
-  border:1.5px solid var(--wood-d);transform-origin:bottom center;
+.cup-sticks span{ /* 箱子裡露出來的好運券 */
+  position:absolute;bottom:44px;width:14px;border-radius:2px;background:#fff;
+  border:1.5px solid var(--ink);border-top:5px solid var(--stamp);transform-origin:bottom center;
 }
 .pot-text{flex:1}
 .pot-text h2{font-size:24px;line-height:1.3}
@@ -148,33 +155,37 @@ body.typing .submit-bar{position:static}
 
 .stage{background:var(--card);border:2px solid var(--ink);border-radius:20px;padding:16px;box-shadow:0 5px 0 var(--ink)}
 .stage-title{font-family:var(--f-display);font-size:20px;margin:0 0 10px}
-.reel-window{
-  position:relative;height:250px;overflow:hidden;border-radius:12px;
-  background:repeating-linear-gradient(90deg,#FBF6EC 0 22px,#F6EEDD 22px 23px);
+.reel-window{ /* 國慶夜空 */
+  position:relative;height:250px;overflow:hidden;border-radius:12px;background-color:var(--night);
+  background-image:radial-gradient(circle,rgba(255,255,255,.8) 1px,transparent 1.5px),radial-gradient(circle,rgba(255,213,74,.7) 1px,transparent 1.5px);
+  background-size:53px 47px,71px 61px;background-position:7px 9px,30px 25px;
 }
-.reel-window::before{ /* 螢光筆框選中央 */
-  content:"";position:absolute;top:0;bottom:0;left:50%;width:calc(var(--stick-w) + 10px);
-  margin-left:calc((var(--stick-w) + 10px) / -2);background:rgba(255,225,77,.35);z-index:0;
+.reel-window::before{ /* 中央光束 */
+  content:"";position:absolute;top:0;bottom:0;left:50%;width:calc(var(--stick-w) + 12px);
+  margin-left:calc((var(--stick-w) + 12px) / -2);background:linear-gradient(rgba(255,213,74,.45),rgba(255,213,74,.12));z-index:0;
 }
 .pointer{
   position:absolute;top:0;left:50%;width:0;height:0;margin-left:-12px;z-index:3;
-  border-left:12px solid transparent;border-right:12px solid transparent;border-top:18px solid var(--stamp);
+  border-left:12px solid transparent;border-right:12px solid transparent;border-top:18px solid var(--hl);
   transform-origin:50% 0;
 }
 .pointer.tick{animation:tick .12s ease-out}
 @keyframes tick{50%{transform:rotate(-14deg)}}
 .reel{position:absolute;left:0;bottom:0;display:flex;gap:var(--stick-gap);padding-bottom:8px;will-change:transform;z-index:1}
-.stick{
-  flex:none;width:var(--stick-w);height:200px;border-radius:27px 27px 6px 6px;
-  background:linear-gradient(var(--stamp) 0 24px,var(--wood) 24px);
-  box-shadow:inset -5px 0 0 var(--wood-d),0 2px 0 rgba(0,0,0,.12);
+.stick{ /* 好運券 */
+  flex:none;width:var(--stick-w);height:200px;border-radius:6px;position:relative;color:var(--ink);
+  background:linear-gradient(var(--stamp) 0 22px,#fff 22px);
+  box-shadow:0 3px 0 rgba(0,0,0,.35);
   display:flex;justify-content:center;padding-top:34px;transition:transform .45s cubic-bezier(.2,1.6,.4,1),background .3s;
 }
-.stick span{ /* 一行一個字，直式籤條 */
+.stick::after{ /* 券底的撕線 */
+  content:"";position:absolute;left:6px;right:6px;bottom:14px;border-top:2px dashed var(--line);
+}
+.stick span{ /* 一行一個字，直式名字 */
   display:block;width:1.05em;font-family:var(--f-display);font-size:18px;line-height:1.12;
   text-align:center;word-break:break-all;white-space:normal;max-height:152px;overflow:hidden;
 }
-.stick.won{transform:translateY(-34px);background:linear-gradient(var(--stamp) 0 24px,var(--hl) 24px)}
+.stick.won{transform:translateY(-34px);background:linear-gradient(var(--stamp) 0 22px,var(--hl) 22px)}
 
 .result{text-align:center;padding:18px 0 4px}
 .polaroid{
@@ -185,7 +196,7 @@ body.typing .submit-bar{position:static}
 .seal{
   position:absolute;right:-18px;top:-18px;width:78px;height:78px;border-radius:50%;
   border:4px solid var(--stamp);color:var(--stamp);display:grid;place-items:center;
-  font-family:var(--f-display);font-size:24px;transform:rotate(14deg);background:rgba(255,255,255,.75);
+  font-family:var(--f-display);font-size:19px;letter-spacing:-.04em;transform:rotate(14deg);background:rgba(255,255,255,.85);
 }
 .winner-name{font-family:var(--f-display);font-size:34px;margin:18px 0 0;line-height:1.2}
 .winner-note{color:var(--ink-2);margin:4px 0 0}
@@ -194,13 +205,13 @@ body.typing .submit-bar{position:static}
 .winner-card{flex:1 1 0;min-width:0;max-width:260px}
 .winner-card .polaroid{max-width:100%}
 .winner-card .polaroid img{width:100%}
-.winners.many .seal{width:46px;height:46px;font-size:15px;right:-8px;top:-10px;border-width:3px}
+.winners.many .seal{width:46px;height:46px;font-size:11px;right:-8px;top:-10px;border-width:3px}
 .winners.many .winner-name{font-size:22px;margin-top:12px;word-break:break-all}
 .winners.many{display:grid;gap:14px 10px;grid-template-columns:repeat(var(--cols,3),1fr)}
 .winners.many .winner-card{max-width:none}
 .winners.many .polaroid{padding:6px 6px 8px}
 .winners.many .winner-me{font-size:13px;padding:2px 6px}
-.prize-tag{display:inline-block;margin:0 0 10px;padding:2px 10px;border-radius:999px;background:var(--pink);color:#fff;font-family:var(--f-display);font-size:15px}
+.prize-tag{display:inline-block;margin:0 0 10px;padding:2px 10px;border-radius:999px;background:var(--night);color:#fff;font-family:var(--f-display);font-size:15px}
 .pop{animation:pop .55s cubic-bezier(.2,1.4,.4,1)}
 @keyframes pop{from{transform:scale(.6) rotate(-6deg);opacity:0}}
 
@@ -302,7 +313,9 @@ body.typing .submit-bar{position:static}
 .board .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .board .nm small{color:var(--ink-2);margin-left:6px}
 .board .pt{font-family:var(--f-display);font-size:18px}
-.board .tk{font-size:12px;background:var(--stamp);color:#fff;border-radius:6px;padding:1px 6px}
+.board .tk{font-size:12px;background:var(--stamp);color:#fff;border-radius:6px;padding:1px 6px;white-space:nowrap}
+.sending{opacity:.6}
+.note.claim{margin-top:14px;font-weight:600;color:var(--stamp)}
 .board li.me{background:#FFF8D6}
 .my-score{font-size:14px;color:var(--ink-2);margin:8px 2px 0}
 .drink-pick{display:flex;flex-direction:column;gap:6px;margin-top:8px}
@@ -317,18 +330,22 @@ body.typing .submit-bar{position:static}
 <body>
 
 <div id="boot" class="boot">
-  <div class="stick"><span>讀書</span></div>
-  <p id="bootMsg">打開書本中…</p>
+  <div class="flag-wave"><svg class="flag" viewBox="0 0 240 160" aria-label="中華民國國旗" role="img"><rect width="240" height="160" fill="#D8232A"/><rect width="120" height="80" fill="#0F1E66"/><polygon fill="#fff" points="60.00,10.00 64.27,24.06 75.00,14.02 71.67,28.33 85.98,25.00 75.94,35.73 90.00,40.00 75.94,44.27 85.98,55.00 71.67,51.67 75.00,65.98 64.27,55.94 60.00,70.00 55.73,55.94 45.00,65.98 48.33,51.67 34.02,55.00 44.06,44.27 30.00,40.00 44.06,35.73 34.02,25.00 48.33,28.33 45.00,14.02 55.73,24.06"/><circle cx="60" cy="40" r="17" fill="#0F1E66"/><circle cx="60" cy="40" r="15" fill="#fff"/></svg></div>
+  <p id="bootMsg">升旗中…</p>
 </div>
 
 <section id="register" class="wrap reg hidden">
-  <h1>讀書打卡牆</h1>
-  <p class="lead">唸書時拍一張照片打卡，大家都看得到。<span id="regEvent"></span></p>
-  <span class="field-label">你的班級</span>
-  <div id="regClasses" class="chips"></div>
-  <label class="field-label" for="regNick">暱稱</label>
-  <input id="regNick" type="text" maxlength="10" placeholder="例如：借貸平衡" autocomplete="off">
-  <p class="hint">同學只會看到暱稱，不要用本名或座號。登記後想改名請找老師。</p>
+  <div class="flag-wave"><svg class="flag" viewBox="0 0 240 160" aria-label="中華民國國旗" role="img"><rect width="240" height="160" fill="#D8232A"/><rect width="120" height="80" fill="#0F1E66"/><polygon fill="#fff" points="60.00,10.00 64.27,24.06 75.00,14.02 71.67,28.33 85.98,25.00 75.94,35.73 90.00,40.00 75.94,44.27 85.98,55.00 71.67,51.67 75.00,65.98 64.27,55.94 60.00,70.00 55.73,55.94 45.00,65.98 48.33,51.67 34.02,55.00 44.06,44.27 30.00,40.00 44.06,35.73 34.02,25.00 48.33,28.33 45.00,14.02 55.73,24.06"/><circle cx="60" cy="40" r="17" fill="#0F1E66"/><circle cx="60" cy="40" r="15" fill="#fff"/></svg></div>
+  <h1>讀書好運祭</h1>
+  <p class="lead" id="regLead">國慶連假一起唸書！拍照打卡、問會計、幫同學解題，都能累積好運值。<span id="regEvent"></span></p>
+  <div id="regNickBox">
+    <label class="field-label" for="regNick">暱稱</label>
+    <input id="regNick" type="text" maxlength="10" placeholder="例如：借貸平衡" autocomplete="off">
+    <p class="hint">大家只會看到暱稱，不要用本名。登記後想改名請找老師。</p>
+  </div>
+  <label class="field-label" for="regSid">學號</label>
+  <input id="regSid" type="text" maxlength="12" inputmode="text" autocapitalize="characters" placeholder="只有老師看得到" autocomplete="off">
+  <p class="hint">學號只用來確認領獎的人，<b>網頁上不會顯示，其他同學看不到</b>。一個學號只能登記一次。</p>
   <button id="regBtn" class="btn">開始打卡</button>
   <p id="regErr" class="err" role="alert"></p>
 </section>
@@ -336,10 +353,10 @@ body.typing .submit-bar{position:static}
 <div id="app" class="hidden">
   <header class="top">
     <div class="wrap">
-      <div class="who"><strong id="meNick" class="mark"></strong><span id="meClass" class="tag"></span></div>
+      <div class="who"><span class="flag-sm"><svg class="flag" viewBox="0 0 240 160" aria-label="中華民國國旗" role="img"><rect width="240" height="160" fill="#D8232A"/><rect width="120" height="80" fill="#0F1E66"/><polygon fill="#fff" points="60.00,10.00 64.27,24.06 75.00,14.02 71.67,28.33 85.98,25.00 75.94,35.73 90.00,40.00 75.94,44.27 85.98,55.00 71.67,51.67 75.00,65.98 64.27,55.94 60.00,70.00 55.73,55.94 45.00,65.98 48.33,51.67 34.02,55.00 44.06,44.27 30.00,40.00 44.06,35.73 34.02,25.00 48.33,28.33 45.00,14.02 55.73,24.06"/><circle cx="60" cy="40" r="17" fill="#0F1E66"/><circle cx="60" cy="40" r="15" fill="#fff"/></svg></span><strong id="meNick" class="mark"></strong></div>
       <div class="stats">
-        <div><b id="meScore">0</b><small>今日積分</small></div>
-        <div><b id="meStreak">0</b><small>連續天數</small></div>
+        <div class="lucky"><b id="meScore">–</b><small>今日好運值</small></div>
+        <div><b id="meTickets">0</b><small>好運券</small></div>
       </div>
     </div>
   </header>
@@ -378,7 +395,7 @@ body.typing .submit-bar{position:static}
 
     <section id="tab-draw" class="tab hidden">
       <div class="pot">
-        <div class="cup" aria-hidden="true"><div id="cupSticks" class="cup-sticks"></div><div class="cup-body">籤</div></div>
+        <div class="cup" aria-hidden="true"><div id="cupSticks" class="cup-sticks"></div><div class="cup-body">好運</div></div>
         <div class="pot-text">
           <h2 id="potTitle"></h2>
           <p id="potNote"></p>
@@ -396,7 +413,7 @@ body.typing .submit-bar{position:static}
         <button id="replayBtn" class="btn ghost">看開獎重播</button>
       </div>
 
-      <div class="board-title"><h3>今日積分榜</h3><small id="boardNote"></small></div>
+      <div class="board-title"><h3>今日好運榜</h3><small id="boardNote"></small></div>
       <ul id="board" class="board"></ul>
       <p id="myScore" class="my-score"></p>
 
@@ -419,7 +436,7 @@ body.typing .submit-bar{position:static}
   <div class="sheet-head"><button id="sheetBack">‹ 返回</button><b id="sheetTitle"></b></div>
   <div id="sheetBody" class="sheet-body"></div>
 </div>
-<div id="stampOverlay" class="stamp-overlay hidden"><div class="stamp"><b>已打卡</b><small id="stampDate"></small></div></div>
+<div id="stampOverlay" class="stamp-overlay hidden"><div class="stamp"><b>好運+1</b><small id="stampDate"></small></div></div>
 <div id="lightbox" class="lightbox hidden"><figure><img id="lbImg" alt=""><figcaption id="lbCap"></figcaption></figure></div>
 <canvas id="confetti"></canvas>
 
@@ -431,7 +448,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbxDvkhG0Oq9Uov74JSLsRnp
 /* ===== 基本工具 ===== */
 const DEMO = new URLSearchParams(location.search).has('demo');
 const $ = id => document.getElementById(id);
-const state = { me:null, photo:null, wallCache:{}, wallDate:null, draws:null, playing:false, timer:null, qa:null, qaFilter:'all' };
+const state = { me:null, photo:null, wallCache:{}, wallDate:null, draws:null, playing:false, timer:null, qa:null, qaFilter:'all', qd:{} };
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
@@ -441,7 +458,8 @@ function addDays(key,n){ const d=new Date(key+'T12:00:00+08:00'); return tpeKey(
 function md(key){ const p=key.split('-'); return (+p[1])+'/'+(+p[2]); }
 function dayName(key){ const t=tpeKey(new Date()); if(key===t) return '今天'; if(key===addDays(t,-1)) return '昨天'; if(key===addDays(t,1)) return '明天'; return md(key); }
 function drawAt(key){ return new Date(key+'T'+String(state.me.drawHour).padStart(2,'0')+':00:00+08:00'); }
-function eventText(){ const m=state.me; return md(m.eventStart)+'～'+md(m.eventEnd)+' 每天 '+m.drawHour+':00 開獎。當天有打卡就有 1 支籤，當天積分最高的人拿 '+(m.topTickets||3)+' 支籤。'; }
+function eventText(){ const m=state.me; return md(m.eventStart)+'～'+md(m.eventEnd)+' 每天 '+m.drawHour+':00 開獎'+(m.todayPrizes&&m.todayPrizes.length?'，抽 '+m.todayPrizes.length+' 位送'+uniq(m.todayPrizes).join('、'):'')+'。有打卡就有 1 張好運券，當天好運值最高的人拿 '+(m.topTickets||3)+' 張。中獎要自己「主動」找老師領，沒來領就不發喔！'; }
+const CLAIM = '記得「主動」找老師領獎，沒來領就不發喔！';
 function uniq(a){ return [...new Set(a)]; }
 function prizeSummary(list){   // ['霜淇淋','霜淇淋','巧克力棒'] → 霜淇淋 ×2、巧克力棒 ×1
   const c = {}; (list||[]).forEach(x=> c[x]=(c[x]||0)+1);
@@ -471,7 +489,7 @@ function store(k,v){ try{ if(v===undefined) return localStorage.getItem(k); loca
 
 async function api(action, payload={}, tries=2){
   if(DEMO) return demoApi(action, payload);
-  const retry = tries>1 && !['checkin','register','ask','answer','accept','drink'].includes(action);
+  const retry = tries>1 && !['checkin','register','set_sid','ask','answer','accept','drink','boot'].includes(action);
   const bad = msg=>{ const e=new Error(msg); e.bad=true; return e; };
   let text;
   try{
@@ -516,33 +534,46 @@ async function boot(){
       await liff.init({ liffId: LIFF_ID });
       if(!liff.isLoggedIn()){ liff.login({ redirectUri: location.href }); return; }
     }
-    state.me = await api('me');
+    let r;
+    try{ r = await api('boot'); }
+    catch(e){ if(/未知的動作/.test(e.message)) r = { me: await api('me') }; else throw e; }   // 後端還是舊版時的備案
+    fillBoot(r);
     show('boot', false);
-    state.me.registered ? startApp() : startRegister();
+    if(!state.me.registered) startRegister();
+    else if(state.me.needSid) startRegister(true);
+    else startApp();
   }catch(e){
     $('bootMsg').textContent = (e.message || '頁面打不開') + '（請關掉頁面，從 LINE 班群的連結重新開啟）';
   }
 }
 
+function fillBoot(r){
+  state.me = r.me;
+  if(r.wall) state.wallCache[r.wallDate] = r.wall;
+  if(r.draws){ r.draws.draws = normalizeDraws(r.draws.draws || []); state.draws = r.draws; }
+  if(r.qa) state.qa = r.qa;
+  state.booted = !!r.draws;
+}
+
 /* ===== 登記 ===== */
-function startRegister(){
+function startRegister(sidOnly){
   show('register');
   $('regEvent').textContent = eventText();
-  let picked = null;
-  const box = $('regClasses');
-  state.me.classes.forEach(c=>{
-    const b = el('button','chip',c); b.setAttribute('aria-pressed','false');
-    b.onclick = ()=>{ picked=c; box.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed', String(x===b))); };
-    box.append(b);
-  });
+  if(sidOnly){
+    $('regLead').textContent = '嗨 '+state.me.nickname+'！這次活動高三同學也會加入，領獎要對學號，請補填一次你的學號。';
+    show('regNickBox', false);
+    $('regBtn').textContent = '補填完成，開始';
+  }
+  $('regSid').addEventListener('input', e=>{ e.target.value = e.target.value.toUpperCase().replace(/\s/g,''); });
   $('regBtn').onclick = async ()=>{
-    const nick = $('regNick').value.trim();
+    const nick = $('regNick').value.trim(), sid = $('regSid').value.trim().toUpperCase();
     $('regErr').textContent = '';
-    if(!picked) return $('regErr').textContent='先選你的班級';
-    if(nick.length<2) return $('regErr').textContent='暱稱至少 2 個字';
+    if(!sidOnly && nick.length<2) return $('regErr').textContent='暱稱至少 2 個字';
+    if(!/^[A-Z0-9]{4,12}$/.test(sid)) return $('regErr').textContent='學號格式不對，請再檢查一次';
     $('regBtn').disabled = true;
     try{
-      state.me = await api('register', { classCode:picked, nickname:nick });
+      state.me = sidOnly ? await api('set_sid', { sid }) : await api('register', { nickname:nick, sid });
+      $('regSid').value = '';
       show('register', false); startApp();
     }catch(e){ $('regErr').textContent = e.message; }
     finally{ $('regBtn').disabled = false; }
@@ -567,27 +598,21 @@ function startApp(){
   ta.addEventListener('blur', ()=> document.body.classList.remove('typing'));
   if(location.hash==='#draw') switchTab('draw');
   if(location.hash==='#qa') switchTab('qa');
-  const first = eventDays()[0];
-  setTimeout(()=>{
-    if(first) api('wall',{date:first}).then(w=>{ if(!state.wallCache[first]) state.wallCache[first]=w; }).catch(()=>{});
-    api('draws').then(d=>{ if(!state.draws) state.draws=d; }).catch(()=>{});
-    api('qa_list').then(d=>{ if(!state.qa) state.qa=d; }).catch(()=>{});
-  }, 300);
+  if(!state.booted) api('boot').then(r=>{ const me = state.me; fillBoot(r); state.me = Object.assign(me, r.me); renderMe(); }).catch(()=>{});
 }
 
 function renderMe(){
   const m = state.me;
   $('meNick').textContent = m.nickname;
-  $('meClass').textContent = m.classCode;
-  $('meStreak').textContent = m.streak;
   $('meScore').textContent = m.phase==='open' && m.score ? m.score.total : '–';
+  $('meTickets').textContent = m.phase==='open' ? (m.tickets||0) : '–';
   const open = m.phase === 'open';
   $('ciBtn').disabled = !open;
   if(m.phase === 'before') $('ciStatus').textContent = '活動 '+md(m.eventStart)+' 開始，'+eventText();
   else if(m.phase === 'ended') $('ciStatus').textContent = '活動已經結束，謝謝參加！得主都在「開獎」頁。';
   else $('ciStatus').textContent = m.checkedToday
-    ? '今天已經有籤了，'+drawWhen(m.today)+'開獎。想多拿籤？去「問答」幫同學解題，當天積分最高拿 '+(m.topTickets||3)+' 支籤。'
-    : drawWhen(m.today)+'開獎，現在打卡就能參加（活動到 '+md(m.eventEnd)+'）。';
+    ? '今天的好運券到手了！'+drawWhen(m.today)+'開獎。去「問答」幫同學解題積陰德，好運值最高的人拿 '+(m.topTickets||3)+' 張好運券。'
+    : drawWhen(m.today)+'開獎，打卡就能拿到 1 張好運券（活動到 '+md(m.eventEnd)+'）。';
 }
 
 function switchTab(name){
@@ -639,10 +664,10 @@ async function doCheckin(){
   const done = me=>{
     state.me = me; renderMe();
     const key = me.today, cache = state.wallCache[key];   // 先把自己的照片放上牆，不用等重新載入
-    if(cache) cache.items.unshift({ nick:me.nickname, cls:me.classCode, caption, time:'剛剛', fileId:photo, mine:true });
+    if(cache) cache.items.unshift({ nick:me.nickname, caption, time:'剛剛', fileId:photo, mine:true });
     state.photo = null; $('photoInput').value=''; $('photoPreview').hidden = true; $('photoHint').hidden = false;
     $('ciCaption').value=''; $('ciCount').textContent='0';
-    $('stampDate').textContent = md(key);
+    $('stampDate').textContent = '讀書有好運・'+md(key);
     show('stampOverlay');
     setTimeout(()=>{ show('stampOverlay', false); state.wallDate = key; switchTab('wall'); }, 1500);
   };
@@ -696,9 +721,9 @@ function renderWall(date, w){
       const f = el('figure','card'+(it.mine?' mine':''));
       f.style.transform = 'rotate('+[-1.2,.8,-.4,1.1][i%4]+'deg)';
       const img = el('img'); img.loading='lazy'; img.alt = it.nick+' 的讀書照'; setImg(img, it.fileId);
-      img.onclick = ()=>{ setImg($('lbImg'), it.fileId, 1400); $('lbCap').textContent = it.nick+'（'+it.cls+'）'+(it.caption?'｜'+it.caption:''); show('lightbox'); };
+      img.onclick = ()=>{ setImg($('lbImg'), it.fileId, 1400); $('lbCap').textContent = it.nick+(it.caption?'｜'+it.caption:''); show('lightbox'); };
       const meta = el('div','meta'); meta.append(el('span','nick',it.nick), el('span','time',it.time));
-      f.append(img, meta, el('div','cls',it.cls));
+      f.append(img, meta);
       if(it.caption) f.append(el('p','cap',it.caption));
       grid.append(f);
     });
@@ -728,7 +753,7 @@ function renderDraws(d){
     const latest = d.draws[0];
     const waiting = (!latest || latest.date !== prevKey) && (Date.now() - drawAt(prevKey)) < 2*3600e3 && Date.now() >= drawAt(prevKey);
     if(waiting){
-      $('stageTitle').textContent = '開獎機器正在轉，過幾分鐘再回來看';
+      $('stageTitle').textContent = '好運正在發送中，過幾分鐘再回來看';
       $('reel').replaceChildren(); show('result',false); show('replayBtn',false);
       return;
     }
@@ -744,11 +769,11 @@ function renderPot(d){
     $('potTitle').textContent = '活動結束，得主都在下面';
     $('potNote').textContent = '謝謝大家一起唸書！'; $('countdown').textContent = '';
   }else if(d.phase === 'before'){
-    $('potTitle').textContent = '籤筒還是空的';
+    $('potTitle').textContent = '好運券箱還是空的';
     $('potNote').textContent = md(d.eventStart)+' 開始打卡'; $('countdown').textContent = '';
   }else{
     const tk = d.todayTickets != null ? d.todayTickets : n;
-    $('potTitle').textContent = dayName(d.today)+'的籤筒有 '+tk+' 支籤';
+    $('potTitle').textContent = dayName(d.today)+'的好運券有 '+tk+' 張';
     $('potNote').textContent = drawWhen(d.today)+'開獎' + (d.todayPrizes && d.todayPrizes.length ? '：'+prizeSummary(d.todayPrizes) : '');
   }
   const box = $('cupSticks'); box.replaceChildren();
@@ -794,15 +819,15 @@ function prepare(dr, autoplay){
   }
   show('replayBtn');
   renderReel(buildSeq(dr, 0).seq, 2);
-  const seenKey = 'seen3_'+state.me.classCode+'_'+dr.date;
+  const seenKey = 'seen5_'+dr.date;
   if(autoplay && !store(seenKey)) setTimeout(()=>play(dr), 500);
 }
 
-// 第 i 支籤：已經抽中的人不再出現在籤條上
+// 第 i 位幸運兒：已經抽中的人不再出現在好運券上
 function buildSeq(dr, i){
   const W = dr.winners[i].nick;
   const taken = dr.winners.slice(0,i).map(x=>x.nick);
-  let E = dr.entrants.filter(n=>!taken.includes(n));   // 拿 3 支籤的人名字出現 3 次，籤條上也會出現比較多次
+  let E = dr.entrants.filter(n=>!taken.includes(n));   // 拿 3 張好運券的人名字出現 3 次，捲動時也會出現比較多次
   if(!E.includes(W)) E = E.concat(W);
   const rnd = seeded(hash(dr.date+W+i));
   let seq = [];
@@ -857,25 +882,26 @@ async function play(dr){
   r.append(box); show('result');
   for(let i=0;i<n;i++){
     const pz = dr.winners[i].prize;
-    $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）'+(n>1 ? '第 '+(i+1)+' 支籤' : '開獎') + (pz ? '：'+pz+'…' : '…');
+    $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）第 '+(i+1)+' 位幸運兒' + (pz ? '：'+pz+'…' : '…');
     await spin(dr, i);
     await wait(500);
     const w = dr.winners[i];
     const card = el('div','winner-card pop');
     const pol = el('div','polaroid');
     if(w.fileId){ const img=el('img'); img.alt=w.nick+' 的讀書照'; setImg(img, w.fileId); pol.append(img); }
-    pol.append(el('div','seal','中籤'));
+    pol.append(el('div','seal','好運到'));
     if(w.prize) card.append(el('p','prize-tag', w.prize));
-    card.append(pol, el('p','winner-name mark',w.nick), el('p','winner-note', w.cls));
-    if(w.isMe) card.append(el('p','winner-me','是你！'));
+    card.append(pol, el('p','winner-name mark',w.nick));
+    if(w.isMe) card.append(el('p','winner-me','是你！好運到！'), el('p','note',CLAIM));
     card.append(drinkBox(dr, w));
     box.append(card);
     confetti();
     if(i < n-1) await wait(1600);
   }
   const nTk = dr.entrants.length, nPp = uniq(dr.entrants).length;
-  $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）的得主｜'+nPp+' 人、'+nTk+' 支籤';
-  store('seen3_'+state.me.classCode+'_'+dr.date, '1');
+  $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）的幸運兒｜'+nPp+' 人、'+nTk+' 張好運券';
+  r.append(el('p','note claim', '恭喜幸運兒！'+CLAIM));
+  store('seen5_'+dr.date, '1');
   state.playing = false; $('replayBtn').disabled = false;
 }
 
@@ -883,30 +909,33 @@ async function play(dr){
 function renderPointRule(){
   const P = state.me.points || {CHECKIN:1, ASK:1, SOLVE:5};
   const box = $('pointRule'); box.replaceChildren();
-  [['打卡','+'+P.CHECKIN,'（每天一次）'],['發問','+'+P.ASK,''],['解答被採納','+'+P.SOLVE,''],['當日最高分','籤×'+(state.me.topTickets||3),'']]
+  [['讀書有好運','+'+P.CHECKIN,'（打卡，每天一次）'],['勇敢發問','+'+P.ASK,''],['解題積陰德','+'+P.SOLVE,'（被採納）'],['好運值最高','好運券×'+(state.me.topTickets||3),'']]
     .forEach(([a,b,c])=>{ const sp = el('span',null,a+' '); sp.append(el('b',null,b)); if(c) sp.append(c); box.append(sp); });
 }
 
 function renderBoard(d){
   const ul = $('board'); ul.replaceChildren();
-  $('boardNote').textContent = d.phase==='open' ? '要有打卡才有籤' : '';
+  $('boardNote').textContent = d.phase==='open' ? '有打卡才有好運券' : '';
   if(d.phase !== 'open'){
     ul.append(el('li',null, d.phase==='before' ? '活動開始後顯示' : '活動已結束')); $('myScore').textContent = ''; return;
   }
   const list = d.board || [];
-  if(!list.length) ul.append(el('li',null,'還沒有人得分，搶頭香！'));
+  if(!list.length) ul.append(el('li',null,'還沒有人累積好運，搶頭香！'));
   list.forEach((r,i)=>{
     const li = el('li', r.isMe ? 'me' : null);
     li.append(el('span','rk',String(i+1)));
-    const nm = el('span','nm',r.nick); nm.append(el('small',null,r.cls)); li.append(nm);
-    if(r.tickets > 1) li.append(el('span','tk','籤×'+r.tickets));
-    li.append(el('span','pt',r.total+' 分'));
+    li.append(el('span','nm',r.nick));
+    if(r.tickets > 1) li.append(el('span','tk','券×'+r.tickets));
+    li.append(el('span','pt',r.total+' 點'));
     ul.append(li);
   });
   const m = d.my || {};
-  $('myScore').textContent = '你今天：打卡 '+(m.c||0)+'＋發問 '+(m.a||0)+'＋解題 '+(m.s||0)+'＝'+(m.total||0)+' 分'
-    + (m.checked ? '' : '（還沒打卡，沒有籤喔）');
+  $('myScore').textContent = '你今天的好運值：讀書 '+(m.c||0)+'＋發問 '+(m.a||0)+'＋積陰德 '+(m.s||0)+'＝'+(m.total||0)
+    + (m.checked ? '' : '（還沒打卡，沒有好運券喔）');
   $('meScore').textContent = m.total || 0;
+  const mine = list.find(r=>r.isMe);
+  const tk = mine ? mine.tickets : (m.checked ? 1 : 0);
+  $('meTickets').textContent = tk; state.me.tickets = tk; state.me.score = m;
 }
 
 function drinkBox(dr, w){
@@ -914,15 +943,15 @@ function drinkBox(dr, w){
   const box = el('div');
   if(!drinks.length) return box;
   if(!w.isMe){ box.append(el('span','drink-tag', w.drink ? w.drink : '還沒選飲料')); return box; }
-  box.append(el('p','note', w.drink ? '你選了'+w.drink+'，上課找老師領' : '選一杯，上課找老師領：'));
+  box.append(el('p','note', w.drink ? '你選了'+w.drink+'，記得主動找老師領' : '選一杯飲料：'));
   const g = el('div','drink-pick');
   drinks.forEach(x=>{
     const b = el('button',null,x);
     if(w.drink === x) b.style.background = 'var(--hl)';
-    b.onclick = async ()=>{
-      g.querySelectorAll('button').forEach(y=>y.disabled=true);
-      try{ await api('drink',{ date:dr.date, choice:x }); w.drink = x; box.replaceWith(drinkBox(dr, w)); }
-      catch(e){ alert(e.message); g.querySelectorAll('button').forEach(y=>y.disabled=false); }
+    b.onclick = ()=>{
+      const before = w.drink;
+      w.drink = x; const nb = drinkBox(dr, w); box.replaceWith(nb);          // 先顯示選好的樣子
+      api('drink',{ date:dr.date, choice:x }).catch(e=>{ w.drink = before; nb.replaceWith(drinkBox(dr, w)); alert(e.message); });
     };
     g.append(b);
   });
@@ -985,7 +1014,7 @@ function openSheet(title){
   return inner;
 }
 function closeSheet(){
-  show('sheet', false);
+  show('sheet', false); state.openQ = null;
   if(!$('tab-qa').classList.contains('hidden')) loadQA();
 }
 function photoInput(onPick){
@@ -1035,38 +1064,53 @@ function openAsk(){
 
 async function openQuestion(id){
   const inner = openSheet('問題');
-  inner.append(el('p','empty','載入中…'));
-  try{ renderQuestion(inner, await api('qa_detail',{ id })); }
-  catch(e){ inner.replaceChildren(el('p','err',e.message)); }
+  state.openQ = id;
+  const had = state.qd[id];
+  if(had) renderQuestion(inner, had); else inner.append(el('p','empty','載入中…'));
+  try{
+    const q = await api('qa_detail',{ id });
+    const changed = JSON.stringify(q) !== JSON.stringify(had);
+    state.qd[id] = q;
+    if(state.openQ === id && (changed || !had) && !state.busyQ) renderQuestion(inner, q);
+  }catch(e){ if(!had) inner.replaceChildren(el('p','err',e.message)); }
 }
 
 function renderQuestion(inner, q){
+  state.openQ = q.id;
   inner.replaceChildren();
   const box = el('div','q-full');
   const img = el('img'); img.alt='題目照片'; setImg(img, q.fileId, 1000); img.onclick = ()=> zoom(q.fileId, q.nick+' 的問題');
   const meta = el('div','q-meta');
-  meta.append(el('span',null, q.nick+'（'+q.cls+'）・'+q.time));
+  meta.append(el('span',null, q.nick+'・'+q.time));
   if(q.solved) meta.append(el('span','badge done','已解決'));
   box.append(img, el('p',null,q.text), meta);
   inner.append(box);
 
   inner.append(el('h3','ans-title', q.answers.length ? q.answers.length+' 則解答' : '還沒有人解答'));
   const canAccept = q.mine && !q.solved && q.open;
-  if(canAccept && q.answers.length) inner.append(el('p','note','哪個解答讓你看懂了，就按「採納」，他會得到 5 分。每題只能採納一個，採納後不能更改。'));
+  if(canAccept && q.answers.length) inner.append(el('p','note','哪個解答讓你看懂了，就按「採納」，對方積陰德 +5。每題只能採納一個，採納後不能更改。'));
   q.answers.forEach(a=>{
     const d = el('div','ans'+(a.accepted?' accepted':''));
-    const who = el('div','who2'); const st = el('strong',null,a.nick); who.append(st, el('span',null,a.cls+'・'+a.time));
+    const who = el('div','who2'); const st = el('strong',null,a.nick); who.append(st, el('span',null,a.time));
     d.append(who);
     if(a.text) d.append(el('p','t',a.text));
     if(a.fileId){ const im = el('img'); im.alt='解題照片'; setImg(im, a.fileId, 1000); im.onclick=()=>zoom(a.fileId, a.nick+' 的解答'); d.append(im); }
-    if(a.accepted) d.append(el('span','ok-tag','✓ 已採納　+5 分'));
+    if(a.sending) d.classList.add('sending');
+    if(a.accepted) d.append(el('span','ok-tag','✓ 已採納　積陰德 +5'));
     if(canAccept && !a.mine){
       const b = el('button','accept-btn','採納這個解答');
-      b.onclick = async ()=>{
+      b.onclick = ()=>{
         if(!confirm('確定採納「'+a.nick+'」的解答嗎？採納後不能更改。')) return;
-        b.disabled = true;
-        try{ renderQuestion(inner, await api('accept',{ aid:a.id })); }
-        catch(e){ alert(e.message); b.disabled = false; }
+        const prev = q;
+        const nq = Object.assign({}, q, { solved:true,
+          answers: q.answers.map(x=> x.id===a.id ? Object.assign({}, x, { accepted:true }) : x)
+            .sort((x,y)=>(y.accepted?1:0)-(x.accepted?1:0)) });
+        state.qd[q.id] = nq; renderQuestion(inner, nq);                       // 先顯示採納結果
+        state.busyQ = true;
+        api('accept',{ aid:a.id })
+          .then(r=>{ state.qd[q.id] = r; if(state.openQ===q.id) renderQuestion(inner, r); })
+          .catch(e=>{ state.qd[q.id] = prev; if(state.openQ===q.id) renderQuestion(inner, prev); alert(e.message); })
+          .finally(()=>{ state.busyQ = false; });
       };
       d.append(b);
     }
@@ -1078,7 +1122,7 @@ function renderQuestion(inner, q){
 
   const c = el('div','composer');
   c.append(el('b',null,'我來解答'));
-  if(q.solved) c.append(el('p','note','這題已經被採納了，再回答不會加分，但可以補充別的解法。'));
+  if(q.solved) c.append(el('p','note','這題已經被採納了，再回答不會加好運值，但可以補充別的解法。'));
   const ta = el('textarea'); ta.rows=3; ta.maxLength=500; ta.placeholder='寫下解法或關鍵步驟，也可以拍算式'; ta.style.marginTop='8px';
   let photo = null;
   const prev = el('img','mini-prev'); prev.hidden = true; prev.alt='解題照片';
@@ -1093,11 +1137,22 @@ function renderQuestion(inner, q){
     err.textContent = '';
     const text = ta.value.trim();
     if(!photo && text.length < 2) return err.textContent = '寫下解法，或附一張解題照片';
-    send.disabled = true; send.textContent = '送出中…';
-    try{
-      renderQuestion(inner, await api('answer',{ qid:q.id, text, image: photo ? photo.split(',')[1] : '' }));
-      $('sheetBody').scrollTop = $('sheetBody').scrollHeight;
-    }catch(e){ err.textContent = e.message; send.disabled = false; send.textContent = '送出解答'; }
+    const prev = q;
+    const nq = Object.assign({}, q, { answers: q.answers.concat([{ id:'tmp', nick:state.me.nickname,
+      text, fileId: photo || '', time:'送出中…', accepted:false, mine:true, sending:true }]) });
+    state.qd[q.id] = nq; renderQuestion(inner, nq);                          // 先把自己的解答放上去
+    $('sheetBody').scrollTop = $('sheetBody').scrollHeight;
+    state.busyQ = true;
+    api('answer',{ qid:q.id, text, image: photo ? photo.split(',')[1] : '' })
+      .then(r=>{ state.qd[q.id] = r; if(state.openQ===q.id) renderQuestion(inner, r); })
+      .catch(e=>{
+        state.qd[q.id] = prev;
+        if(state.openQ!==q.id) return alert(e.message);
+        renderQuestion(inner, prev);
+        const box = inner.querySelector('.composer');
+        if(box){ box.querySelector('textarea').value = text; box.querySelector('.err').textContent = e.message+'（內容還在，再按一次送出）'; }
+      })
+      .finally(()=>{ state.busyQ = false; });
   };
 }
 
@@ -1106,24 +1161,32 @@ function hash(s){ let h=2166136261; for(const c of s){ h^=c.codePointAt(0); h=Ma
 function seeded(a){ return ()=>{ a|=0; a=a+0x6D2B79F5|0; let t=Math.imul(a^a>>>15,1|a); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; }; }
 function shuffle(arr,rnd){ for(let i=arr.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); [arr[i],arr[j]]=[arr[j],arr[i]]; } return arr; }
 
-/* ===== 彩帶 ===== */
+/* ===== 國慶煙火 ===== */
 function confetti(){
   if(reduceMotion) return;
   const c = $('confetti'), ctx = c.getContext('2d'), dpr = devicePixelRatio||1;
   c.style.display = 'block';
-  c.width = innerWidth*dpr; c.height = innerHeight*dpr; ctx.scale(dpr,dpr);
-  const colors = ['#FFE14D','#FF7AA2','#4D7CFE','#1D2B53','#D7263D'];
-  const bits = Array.from({length:150}, ()=>({
-    x: innerWidth/2 + (Math.random()-.5)*80, y: innerHeight*.45,
-    vx: (Math.random()-.5)*14, vy: -Math.random()*14-4, r: Math.random()*6.28, vr:(Math.random()-.5)*.4,
-    w: 6+Math.random()*6, h: 10+Math.random()*8, c: colors[Math.floor(Math.random()*colors.length)]
-  }));
-  const t0 = performance.now();
-  const step = t=>{
+  c.width = innerWidth*dpr; c.height = innerHeight*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const colors = ['#D8232A','#1D3FD1','#FFD54A','#0F1E66','#FF8A3D'];
+  const bits = [];
+  const burst = (x,y,col,delay)=>{ for(let i=0;i<64;i++){ const a = i/64*Math.PI*2, v = 2.2+Math.random()*3.4;
+    bits.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, life:1, delay, c: Math.random()<.75 ? col : colors[Math.floor(Math.random()*colors.length)] }); } };
+  for(let k=0;k<4;k++) burst(innerWidth*(.2+Math.random()*.6), innerHeight*(.18+Math.random()*.3), colors[k%colors.length], k*14);
+  let f = 0;
+  const step = ()=>{
     ctx.clearRect(0,0,innerWidth,innerHeight);
-    bits.forEach(b=>{ b.vy+=.35; b.vx*=.99; b.x+=b.vx; b.y+=b.vy; b.r+=b.vr;
-      ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(b.r); ctx.fillStyle=b.c; ctx.fillRect(-b.w/2,-b.h/2,b.w,b.h*Math.abs(Math.cos(b.r))); ctx.restore(); });
-    if(t-t0 < 3200) requestAnimationFrame(step); else { ctx.clearRect(0,0,innerWidth,innerHeight); c.style.display = 'none'; }
+    let alive = false;
+    bits.forEach(b=>{
+      if(f < b.delay){ alive = true; return; }
+      b.vx *= .975; b.vy = b.vy*.975 + .06; b.x += b.vx; b.y += b.vy; b.life -= .011;
+      if(b.life <= 0) return;
+      alive = true;
+      ctx.globalAlpha = Math.max(0, b.life);
+      ctx.fillStyle = b.c;
+      ctx.beginPath(); ctx.arc(b.x, b.y, 2.6, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.globalAlpha = 1; f++;
+    if(alive) requestAnimationFrame(step); else { ctx.clearRect(0,0,innerWidth,innerHeight); c.style.display = 'none'; }
   };
   requestAnimationFrame(step);
 }
@@ -1144,13 +1207,16 @@ const demoApi = (()=>{
   const me = { registered:true, nickname:'小熊軟糖', classCode:'商二乙', streak:3, total:5, checkedToday:false,
                classes, drawHour:H, today, eventStart, eventEnd, scope:'all', phase:'open', todayPrizes:['飲料','飲料','飲料'],
                points:P, topTickets:3, askMin:10, score:my };
+  const qs0 = new URLSearchParams(location.search);
+  if(qs0.has('newuser')) me.registered = false;     // ?demo=1&newuser 看第一次登記畫面
+  if(qs0.has('needsid')) me.needSid = true;         // ?demo=1&needsid 看補填學號畫面
   const wall = {}, draws = [];
   for(let i=0;i<2;i++){
     const key = addDays(today,-i), who = shuffle(names.slice(0,10), rnd).slice(0, i===0 ? 4 : 7);
     wall[key] = who.map((n,j)=>({ nick:n, cls:classes[n.length%2], caption:['計算機陪我去烤肉','在機場也要算一題','','書桌前第三章'][j%4],
       time:String(18+j%4).padStart(2,'0')+':'+String(10+j*7%50).padStart(2,'0'), fileId:pics[j%4], mine:false }));
     if(i>0){
-      const ent = who.concat([who[0],who[0]]);   // 第一位是積分王，有 3 支籤
+      const ent = who.concat([who[0],who[0]]);   // 第一位是好運王，有 3 張好運券
       const wz = [who[0], who[3], who[5]];
       draws.push({ date:key, entrants:ent, note:'', winners: wz.map((w,j)=>({ prize:'飲料', drink:j===1?'美式':'', nick:w, cls:classes[w.length%2], fileId:pics[j%4], isMe:j===2 })) });
     }
@@ -1171,12 +1237,18 @@ const demoApi = (()=>{
   let seq = 10;
   return async (action, p)=>{
     await sleep(300);
-    if(action==='me') return Object.assign({}, me, { score:sum() });
-    if(action==='register'){ Object.assign(me,{registered:true,nickname:p.nickname,classCode:p.classCode}); return Object.assign({},me); }
+    if(action==='me') return Object.assign({}, me, { score:sum(), tickets: my.checked?1:0 });
+    if(action==='boot'){
+      const r = { me: Object.assign({}, me, { score:sum(), tickets: my.checked?1:0 }) };
+      r.wallDate = today; r.wall = await demoApi('wall',{date:today}); r.draws = await demoApi('draws',{}); r.qa = await demoApi('qa_list',{});
+      return r;
+    }
+    if(action==='register'){ Object.assign(me,{registered:true,nickname:p.nickname}); return Object.assign({},me,{ score:sum(), tickets:0 }); }
+    if(action==='set_sid'){ me.needSid = false; return Object.assign({},me,{ score:sum(), tickets:0 }); }
     if(action==='checkin'){
       wall[today].unshift({ nick:me.nickname, cls:me.classCode, caption:p.caption, time:'現在', fileId:'data:image/jpeg;base64,'+p.image, mine:true });
       if(!me.checkedToday){ me.checkedToday=true; me.streak++; me.total++; my.c=1; my.checked=true; }
-      return Object.assign({},me,{ score:sum() });
+      return Object.assign({},me,{ score:sum(), tickets:1 });
     }
     if(action==='wall'){ const items = (wall[p.date]||[]).slice(); return { date:p.date, people:new Set(items.map(i=>i.nick)).size, items }; }
     if(action==='draws'){
