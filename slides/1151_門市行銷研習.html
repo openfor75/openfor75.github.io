@@ -4,7 +4,114 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>門市行銷研習學習紀錄單</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 <style>
+/* ================= PDF 版面（畫面外排版，再轉成 PDF） ================= */
+#rpt{position:absolute;left:-12000px;top:0;width:794px;pointer-events:none}
+#rpt *{box-sizing:border-box}
+.rp-page{
+  width:794px;height:1123px;background:#FFFFFF;position:relative;overflow:hidden;
+  font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  color:#20303B;font-size:16px;line-height:1.6;margin-bottom:20px;
+}
+.rp-top{position:absolute;left:0;top:0;width:794px;height:8px;background:#A44F39}
+.rp-body{position:absolute;left:56px;top:46px;width:682px;height:1000px;overflow:hidden}
+.rp-foot{
+  position:absolute;left:56px;bottom:30px;width:682px;padding-top:10px;border-top:1px solid #E2DDD5;
+  display:flex;justify-content:space-between;color:#8A97A0;font-size:16px;
+}
+.rp-blk{padding-bottom:18px}
+
+/* 抬頭 */
+.rp-hd{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px}
+.rp-kick{color:#A44F39;font-weight:700;font-size:16px}
+.rp-h1{font-size:30px;font-weight:900;line-height:1.25;margin-top:4px}
+.rp-h1 span{color:#A44F39}
+.rp-badge{
+  width:100px;height:100px;border-radius:50px;border:3px solid #A44F39;color:#A44F39;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;
+}
+.rp-badge b{font-size:38px;font-weight:900;line-height:1}
+.rp-badge span{font-size:16px;font-weight:700}
+.rp-meta{display:flex;flex-wrap:wrap;background:#FBF8F3;border-radius:12px;padding:6px 0}
+.rp-mc{width:50%;padding:6px 20px}
+.rp-mc i{display:block;font-style:normal;color:#8A97A0;font-size:16px}
+.rp-mc b{font-size:18px;font-weight:700}
+
+/* 區塊標題 */
+.rp-sec{display:flex;align-items:center;margin-bottom:12px}
+.rp-no{
+  width:34px;height:34px;border-radius:17px;background:#A44F39;color:#FFFFFF;font-weight:900;font-size:18px;
+  display:flex;align-items:center;justify-content:center;flex:none;
+}
+.rp-h2{font-size:21px;font-weight:900;margin-left:12px;white-space:nowrap}
+.rp-rule{flex:1;height:2px;background:#F0E6E1;margin-left:16px}
+.rp-pill{
+  margin-left:12px;background:#E4F0E9;color:#3F7358;font-weight:700;font-size:16px;
+  border-radius:20px;padding:2px 12px;white-space:nowrap;
+}
+
+/* A 猜一猜 */
+.rp-ga{display:flex;flex-wrap:wrap;justify-content:space-between}
+.rp-gc{width:334px;background:#FBF8F3;border-radius:12px;padding:10px 14px;margin-bottom:10px;border-left:5px solid #E8C9BE}
+.rp-gq{font-weight:700;font-size:16px;margin-bottom:4px}
+.rp-gr{display:flex;align-items:flex-start;margin-top:3px}
+.rp-gl{
+  flex:none;font-size:16px;font-weight:700;border-radius:6px;padding:0 8px;margin-right:10px;
+  background:#ECE7DF;color:#6B7B86;
+}
+.rp-gl.fact{background:#A44F39;color:#FFFFFF}
+.rp-gv{font-size:16px}
+.rp-gv.fact{font-weight:700;color:#A44F39}
+
+/* B 觀察 */
+.rp-ob{display:flex;align-items:flex-start;padding:9px 4px;border-bottom:1px dashed #E2DDD5}
+.rp-ob:last-child{border-bottom:none}
+.rp-on{
+  flex:none;width:28px;height:28px;border-radius:14px;background:#F3EFE8;color:#6B7B86;font-weight:700;
+  display:flex;align-items:center;justify-content:center;font-size:16px;margin-right:12px;margin-top:1px;
+}
+.rp-ft{
+  flex:none;background:#E4F0E9;color:#3F7358;font-weight:700;font-size:16px;border-radius:6px;
+  padding:1px 10px;margin-right:12px;margin-top:1px;white-space:nowrap;
+}
+.rp-ot{flex:1;font-size:16px}
+
+/* C 一條線 */
+.rp-ch{display:flex;align-items:stretch;margin-bottom:12px}
+.rp-cb{border:1.5px solid #E2DDD5;border-radius:12px;padding:12px 14px;background:#FFFFFF}
+.rp-cb i{display:block;font-style:normal;color:#8A97A0;font-size:16px;margin-bottom:4px}
+.rp-cb.see{width:236px}
+.rp-cb.con{width:150px;background:#F6E9E4;border-color:#F6E9E4;display:flex;flex-direction:column;justify-content:center}
+.rp-cb.con b{color:#A44F39;font-size:18px;font-weight:900;line-height:1.4}
+.rp-cb.why{flex:1}
+.rp-ar{width:30px;flex:none;display:flex;align-items:center;justify-content:center;color:#A44F39;font-size:22px;font-weight:900}
+
+/* D 問題 */
+.rp-q{background:#FBF8F3;border-radius:12px;padding:16px 20px 16px 56px;position:relative;font-size:17px}
+.rp-q:before{content:"Q";position:absolute;left:20px;top:12px;font-size:26px;font-weight:900;color:#A44F39}
+
+/* E 店長這一招 */
+.rp-e{display:flex;border-radius:12px;overflow:hidden;border:1.5px solid #CFE3D7}
+.rp-ec{flex:1;padding:14px 18px}
+.rp-ec.l{background:#E4F0E9}
+.rp-ec i{display:block;font-style:normal;font-weight:700;color:#3F7358;font-size:16px;margin-bottom:4px}
+
+/* F 照片 */
+.rp-ph{display:flex;flex-wrap:wrap;justify-content:space-between}
+.rp-pc{width:332px;margin-bottom:12px}
+.rp-pc img{width:332px;height:221px;border-radius:12px;display:block}
+.rp-pt{margin-top:8px;font-weight:700;font-size:16px;display:flex;align-items:flex-start}
+.rp-pt span{flex:none;background:#A44F39;color:#FFFFFF;border-radius:6px;padding:0 8px;margin-right:8px}
+.rp-pn{color:#6B7B86;font-size:16px;margin-top:2px}
+
+/* G 心得 */
+.rp-p{font-size:16px;line-height:1.9;margin-bottom:4px}
+
 :root{
   --paper:#F7F5F1; --surface:#FFFFFF; --surface2:#FBFAF8;
   --ink:#20303B; --ink2:#465966; --muted:#7B8B96;
@@ -1027,7 +1134,7 @@ function overlay(kind, data){
   o.hidden = false;
   if(kind === "busy"){
     c.innerHTML = '<div class="spin"></div><h3>正在繳交…</h3>' +
-      '<p>照片上傳中，大約需要 10–30 秒。<br>請不要關掉網頁或切換到別的 App。</p>';
+      '<p id="ovStep">準備中…</p><p>大約需要 10–30 秒，請不要關掉網頁或切換到別的 App。</p>';
   }else if(kind === "ok"){
     c.innerHTML = '<div class="ov-icon">✅</div><h3>繳交成功</h3>' +
       '<div class="receipt">第 ' + batch + ' 梯次・' + escHtml(state.seat) + ' ' + escHtml(state.name) +
@@ -1059,12 +1166,23 @@ async function submit(){
 
   submitting = true;
   overlay("busy");
+  const step = t=>{ const s = $("ovStep"); if(s) s.textContent = t; };
   try{
+    /* 先在手機上做好 PDF；做不出來時改送照片，由老師端排一份簡易版 */
+    let pdf64 = null;
+    try{
+      const pdf = await makePdf(step);
+      pdf64 = pdf.output("datauristring").split(",")[1];
+    }catch(err){ console.warn(err); }
+    step("上傳中…");
     const res = await api({
       action:"submit", batch:batch,
       seat:state.seat.trim(), name:state.name.trim(),
-      fields:state.fields, photos:state.photos
-    }, 120000);
+      fields:state.fields,
+      pdf:pdf64,
+      photoCount:state.photos.filter(Boolean).length,
+      photos:pdf64 ? null : state.photos
+    }, 150000);
     if(!res.ok) throw new Error(res.msg || "繳交失敗");
     state.submittedAt = res.time;
     state.submitCount = res.count;
@@ -1077,6 +1195,280 @@ async function submit(){
     overlay("err", e.message);
   }finally{
     submitting = false;
+  }
+}
+
+/* ================= PDF 產生（在學生手機上排版） ================= */
+const RP_W = 682, RP_H = 1000;
+
+function el(tag, cls, text){
+  const e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(text != null) e.textContent = text;
+  return e;
+}
+function fv(k){ return esc(state.fields[k]).trim(); }
+function oneLine(k){ return fv(k).replace(/\s*\n\s*/g, " ") || "—"; }
+
+/* 照片放進 3:2 的框（不裁切，留米色底），避免直拍照片被切掉 */
+function fitPhoto(src){
+  return new Promise(resolve=>{
+    const im = new Image();
+    im.onload = ()=>{
+      const W = 996, H = 664;
+      const c = document.createElement("canvas");
+      c.width = W; c.height = H;
+      const g = c.getContext("2d");
+      g.fillStyle = "#F3EFE8"; g.fillRect(0, 0, W, H);
+      const s = Math.min(W / im.width, H / im.height);
+      const w = im.width * s, h = im.height * s;
+      g.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
+      resolve(c.toDataURL("image/jpeg", 0.9));
+    };
+    im.onerror = ()=>resolve(null);
+    im.src = src;
+  });
+}
+
+function secHead(letter, title, pill){
+  const h = el("div", "rp-sec");
+  h.appendChild(el("div", "rp-no", letter));
+  h.appendChild(el("div", "rp-h2", title));
+  if(pill) h.appendChild(el("div", "rp-pill", pill));
+  h.appendChild(el("div", "rp-rule"));
+  return h;
+}
+
+function reportBlocks(photos){
+  const b = BATCHES[batch];
+  const blocks = [];
+  const blk = ()=>el("div", "rp-blk");
+
+  /* 抬頭 */
+  const H = blk();
+  const hd = el("div", "rp-hd");
+  const hl = el("div");
+  hl.appendChild(el("div", "rp-kick", "115 學年度第 1 學期・商業經營科"));
+  const h1 = el("div", "rp-h1");
+  h1.appendChild(document.createTextNode("門市行銷研習"));
+  h1.appendChild(document.createElement("br"));
+  h1.appendChild(el("span", null, "學習紀錄單"));
+  hl.appendChild(h1);
+  hd.appendChild(hl);
+  const badge = el("div", "rp-badge");
+  badge.appendChild(el("span", null, "第"));
+  badge.appendChild(el("b", null, String(batch)));
+  badge.appendChild(el("span", null, "梯次"));
+  hd.appendChild(badge);
+  H.appendChild(hd);
+  const meta = el("div", "rp-meta");
+  [["學生", CLASS_NAME + "　" + state.seat.trim() + " 號　" + state.name.trim()],
+   ["研習時間", b.date + "　13:55–15:45"],
+   ["研習地點", "全家便利商店　正新店"],
+   ["講師", "魏呈翔 店長"]].forEach(([k, v])=>{
+    const c = el("div", "rp-mc");
+    c.appendChild(el("i", null, k)); c.appendChild(el("b", null, v));
+    meta.appendChild(c);
+  });
+  H.appendChild(meta);
+  blocks.push({node:H});
+
+  /* A */
+  const A = blk();
+  A.appendChild(secHead("A", "出發前猜一猜，到現場對答案"));
+  const ga = el("div", "rp-ga");
+  GUESS.forEach((g, k)=>{
+    const i = k + 1;
+    if(!fv("guess"+i) && !fv("fact"+i)) return;
+    const c = el("div", "rp-gc");
+    c.appendChild(el("div", "rp-gq", i + ". " + g.q));
+    const r1 = el("div", "rp-gr");
+    r1.appendChild(el("span", "rp-gl", "我猜")); r1.appendChild(el("span", "rp-gv", oneLine("guess"+i)));
+    const r2 = el("div", "rp-gr");
+    r2.appendChild(el("span", "rp-gl fact", "實際")); r2.appendChild(el("span", "rp-gv fact", oneLine("fact"+i)));
+    c.appendChild(r1); c.appendChild(r2);
+    ga.appendChild(c);
+  });
+  A.appendChild(ga);
+  blocks.push({node:A});
+
+  /* B */
+  const B = blk();
+  B.appendChild(secHead("B", "現場觀察紀錄"));
+  let n = 0;
+  for(let i=1;i<=b.obs;i++){
+    if(!fv("obs"+i)) continue;
+    const r = el("div", "rp-ob");
+    r.appendChild(el("div", "rp-on", String(++n)));
+    const k = fv("fac"+i), f = FACETS.find(x=>x[0] === k);
+    if(f) r.appendChild(el("div", "rp-ft", f[1]));
+    r.appendChild(el("div", "rp-ot", oneLine("obs"+i)));
+    B.appendChild(r);
+  }
+  blocks.push({node:B});
+
+  /* C */
+  const C = blk();
+  C.appendChild(secHead("C", "把現場接回課本"));
+  for(let i=1;i<=b.link;i++){
+    if(!fv("lk"+i+"a") && !fv("lk"+i+"b") && !fv("lk"+i+"c")) continue;
+    const ch = el("div", "rp-ch");
+    const see = el("div", "rp-cb see");
+    see.appendChild(el("i", null, "我在現場看到")); see.appendChild(el("div", null, oneLine("lk"+i+"a")));
+    const con = el("div", "rp-cb con");
+    con.appendChild(el("i", null, "課本概念")); con.appendChild(el("b", null, oneLine("lk"+i+"b")));
+    const why = el("div", "rp-cb why");
+    why.appendChild(el("i", null, "關聯性在於")); why.appendChild(el("div", null, oneLine("lk"+i+"c")));
+    ch.appendChild(see); ch.appendChild(el("div", "rp-ar", "→"));
+    ch.appendChild(con); ch.appendChild(el("div", "rp-ar", "→"));
+    ch.appendChild(why);
+    C.appendChild(ch);
+  }
+  blocks.push({node:C});
+
+  /* D */
+  const D = blk();
+  D.appendChild(secHead("D", "我還想問的一個問題"));
+  D.appendChild(el("div", "rp-q", oneLine("question")));
+  blocks.push({node:D});
+
+  /* E */
+  const E = blk();
+  E.appendChild(secHead("E", "店長的這一招，我學起來了"));
+  const e = el("div", "rp-e");
+  const el1 = el("div", "rp-ec l");
+  el1.appendChild(el("i", null, "店長（店員）做了什麼")); el1.appendChild(el("div", null, oneLine("actWhat")));
+  const el2 = el("div", "rp-ec");
+  el2.appendChild(el("i", null, "我覺得聰明，是因為")); el2.appendChild(el("div", null, oneLine("actWhy")));
+  e.appendChild(el1); e.appendChild(el2);
+  E.appendChild(e);
+  blocks.push({node:E});
+
+  /* F：兩張一列，每列是一個區塊 */
+  const pics = [0,1,2,3].filter(i=>photos[i]);
+  for(let r=0;r<pics.length;r+=2){
+    const F = blk();
+    if(r === 0) F.appendChild(secHead("F", "研習照片與說明"));
+    const row = el("div", "rp-ph");
+    pics.slice(r, r+2).forEach(i=>{
+      const c = el("div", "rp-pc");
+      const im = el("img"); im.src = photos[i];
+      c.appendChild(im);
+      const t = el("div", "rp-pt");
+      t.appendChild(el("span", null, "圖 " + (i+1)));
+      t.appendChild(el("div", null, oneLine("cap"+i+"a")));
+      c.appendChild(t);
+      c.appendChild(el("div", "rp-pn", oneLine("cap"+i+"b")));
+      row.appendChild(c);
+    });
+    F.appendChild(row);
+    blocks.push({node:F});
+  }
+
+  /* G：標題，接著每段一個可拆的區塊 */
+  const words = fv("reflect").replace(/\s/g, "").length;
+  const G = blk();
+  G.style.paddingBottom = "4px";
+  G.appendChild(secHead("G", "學習心得", words + " 字"));
+  blocks.push({node:G, keepNext:120});
+  fv("reflect").split(/\n+/).map(s=>s.trim()).filter(Boolean).forEach(p=>{
+    blocks.push({text:p});
+  });
+  return blocks;
+}
+
+function newPage(host){
+  const pg = el("div", "rp-page");
+  pg.appendChild(el("div", "rp-top"));
+  const body = el("div", "rp-body");
+  pg.appendChild(body);
+  const ft = el("div", "rp-foot");
+  ft.appendChild(el("span", null, "門市行銷研習學習紀錄單・" + CLASS_NAME + " " + state.seat.trim() + " 號 " + state.name.trim()));
+  ft.appendChild(el("span", "rp-pg"));
+  pg.appendChild(ft);
+  host.appendChild(pg);
+  return body;
+}
+const usedH = body=>{ const l = body.lastElementChild; return l ? l.offsetTop + l.offsetHeight : 0; };
+const over = body=>usedH(body) > RP_H;
+
+function paginate(host, blocks){
+  let body = newPage(host);
+  for(let k=0;k<blocks.length;k++){
+    const bl = blocks[k];
+    if(bl.text != null){
+      /* 心得段落：放不下就從句子中間拆到下一頁 */
+      let parts = bl.text.match(/[^。！？!?；]+[。！？!?；」』）)]*|[。！？!?；]+/g) || [bl.text];
+      let indent = true;
+      while(parts.length){
+        const p = el("div", "rp-p");
+        const set = n=>{ p.textContent = (indent ? "　　" : "") + parts.slice(0, n).join(""); };
+        set(parts.length); body.appendChild(p);
+        if(!over(body)){ parts = []; break; }
+        let lo = 0, hi = parts.length - 1;
+        while(lo < hi){ const mid = Math.ceil((lo + hi) / 2); set(mid); if(over(body)) hi = mid - 1; else lo = mid; }
+        if(lo === 0){
+          if(body.children.length === 1){   // 空白頁還放不下一句：硬切字
+            const s = parts[0]; let a = 1, z = s.length;
+            while(a < z){ const m = Math.ceil((a + z) / 2); p.textContent = (indent ? "　　" : "") + s.slice(0, m); if(over(body)) z = m - 1; else a = m; }
+            parts[0] = s.slice(a);
+            p.textContent = (indent ? "　　" : "") + s.slice(0, a);
+          }else body.removeChild(p);
+        }else{
+          set(lo); parts = parts.slice(lo);
+        }
+        indent = false;
+        body = newPage(host);
+      }
+      continue;
+    }
+    body.appendChild(bl.node);
+    const need = bl.keepNext || 0;
+    if(over(body) || (need && usedH(body) + need > RP_H)){
+      if(body.children.length > 1){
+        body.removeChild(bl.node);
+        body = newPage(host);
+        body.appendChild(bl.node);
+      }
+    }
+  }
+  const pages = host.querySelectorAll(".rp-page");
+  pages.forEach((pg, i)=>{ pg.querySelector(".rp-pg").textContent = (i + 1) + " / " + pages.length; });
+  return pages;
+}
+
+function withTimeout(p, ms){ return Promise.race([p, new Promise(r=>setTimeout(r, ms))]); }
+
+async function makePdf(onStep){
+  if(!window.html2canvas || !window.jspdf) throw new Error("PDF 工具沒有載入，請確認網路後重新整理頁面");
+  const host = el("div"); host.id = "rpt";
+  document.body.appendChild(host);
+  try{
+    if(onStep) onStep("排版中…");
+    const photos = await Promise.all(state.photos.map(p=>p ? fitPhoto(p) : null));
+    const blocks = reportBlocks(photos);
+    /* 先載入用得到的字，再排版量高度 */
+    if(document.fonts && document.fonts.load){
+      const all = host.textContent + blocks.map(b=>b.text || b.node.textContent).join("") + "第梯次/0123456789";
+      await withTimeout(Promise.all([
+        document.fonts.load('400 16px "Noto Sans TC"', all),
+        document.fonts.load('700 16px "Noto Sans TC"', all),
+        document.fonts.load('900 16px "Noto Sans TC"', all)
+      ]).catch(()=>{}), 8000);
+    }
+    const pages = paginate(host, blocks);
+    await Promise.all(Array.from(host.querySelectorAll("img")).map(im=>
+      im.complete ? 0 : new Promise(r=>{ im.onload = im.onerror = r; })));
+    const pdf = new window.jspdf.jsPDF({unit:"mm", format:"a4", compress:true});
+    for(let i=0;i<pages.length;i++){
+      if(onStep) onStep("製作 PDF 第 " + (i + 1) + " / " + pages.length + " 頁…");
+      const cv = await window.html2canvas(pages[i], {scale:2, backgroundColor:"#FFFFFF", logging:false, useCORS:true});
+      if(i) pdf.addPage();
+      pdf.addImage(cv.toDataURL("image/jpeg", 0.85), "JPEG", 0, 0, 210, 297, undefined, "FAST");
+    }
+    return pdf;
+  }finally{
+    host.remove();
   }
 }
 
@@ -1102,17 +1494,18 @@ function buildPrintHead(){
   $("pfoot").textContent = fileName();
 }
 
-function exportPDF(){
+async function exportPDF(){
   if(!state.seat.trim() || !state.name.trim()){
     flag(firstMissing() || {el:$("seat"), msg:"請先填座號和姓名"});
     return;
   }
-  buildPrintHead();
-  const prev = document.title;
-  document.title = fileName();
-  const restore = ()=>{ document.title = prev; window.removeEventListener("afterprint", restore); };
-  window.addEventListener("afterprint", restore);
-  setTimeout(()=>{ window.print(); setTimeout(restore, 1500); }, 60);
+  toast("PDF 製作中，請稍候…");
+  try{
+    const pdf = await makePdf();
+    pdf.save(fileName() + ".pdf");
+  }catch(e){
+    alert("PDF 做不出來：" + e.message);
+  }
 }
 
 /* ================= 草稿備份 ================= */
