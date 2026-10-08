@@ -365,14 +365,14 @@ body.typing .submit-bar{position:static}
     <section id="tab-checkin" class="tab">
       <h2>你在哪裡唸書？</h2>
       <p id="ciStatus" class="status"></p>
-      <p class="rule"><b>計算機一定要入鏡</b>！書桌前、烤肉旁、出國玩都算，放假也讓計算機陪著你。</p>
+      <p class="rule"><b>計算機一定要入鏡！</b>書桌前、午餐旁、有家人陪、有同學陪伴都很讚，請讓計算機陪伴你度過各種考驗！</p>
       <label class="photo-drop" for="photoInput">
         <input id="photoInput" type="file" accept="image/*" hidden>
         <img id="photoPreview" alt="準備上傳的照片" hidden>
         <span id="photoHint">點這裡拍照或選照片</span>
       </label>
       <label class="field-label" for="ciCaption">一句話（可不填）</label>
-      <textarea id="ciCaption" rows="2" maxlength="60" placeholder="例如：在露營區算完第三章"></textarea>
+      <textarea id="ciCaption" rows="2" maxlength="60" placeholder="例如：吃完午餐算完第三章"></textarea>
       <div class="counter"><span id="ciCount">0</span>/60</div>
       <div class="submit-bar">
         <button id="ciBtn" class="btn">打卡</button>
@@ -443,7 +443,7 @@ body.typing .submit-bar{position:static}
 <script>
 /* ===== 設定：部署後填入 ===== */
 const LIFF_ID = '2011719250-n581x26c';
-const API_URL = 'https://script.google.com/macros/s/AKfycbwGHqbEC4ltHtR0J-zvpGnB3kA3N3Cv5rPTIyuPUni14LF-KdXyDR-LtoyGq6u8hSH51w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxDvkhG0Oq9Uov74JSLsRnpCONeTQKgz_lMlEZzj1v9ThfsMTg7uuD_057wrYZYoSbYYA/exec';
 
 /* ===== 基本工具 ===== */
 const DEMO = new URLSearchParams(location.search).has('demo');
@@ -457,8 +457,13 @@ function tpeKey(d){ return new Date(d.getTime()+8*3600e3).toISOString().slice(0,
 function addDays(key,n){ const d=new Date(key+'T12:00:00+08:00'); return tpeKey(new Date(d.getTime()+n*864e5)); }
 function md(key){ const p=key.split('-'); return (+p[1])+'/'+(+p[2]); }
 function dayName(key){ const t=tpeKey(new Date()); if(key===t) return '今天'; if(key===addDays(t,-1)) return '昨天'; if(key===addDays(t,1)) return '明天'; return md(key); }
-function drawAt(key){ return new Date(key+'T'+String(state.me.drawHour).padStart(2,'0')+':00:00+08:00'); }
-function eventText(){ const m=state.me; return md(m.eventStart)+'～'+md(m.eventEnd)+' 每天 '+m.drawHour+':00 開獎'+(m.todayPrizes&&m.todayPrizes.length?'，抽 '+m.todayPrizes.length+' 位送'+uniq(m.todayPrizes).join('、'):'')+'。有打卡就有 1 張好運券，當天好運值最高的人拿 '+(m.topTickets||3)+' 張。中獎要自己「主動」找老師領，沒來領就不發喔！'; }
+function drawAt(key){ return new Date(addDays(key, state.me.drawOffset||0)+'T'+String(state.me.drawHour).padStart(2,'0')+':00:00+08:00'); }
+function eventText(){
+  const m = state.me, n = (m.todayPrizes||[]).length || 2;
+  return md(m.eventStart)+'～'+md(m.eventEnd)+' 每天打卡，隔天早上 '+m.drawHour+':00 抽出 '+n+' 位幸運兒'
+    + (m.drinks && m.drinks.length ? '，可任選'+m.drinks.join('、') : '')
+    + '。有打卡就有 1 張好運券，當天好運值最高的人拿 '+(m.topTickets||3)+' 張。中獎要自己「主動」找老師領，沒來領就不發喔！';
+}
 const CLAIM = '記得「主動」找老師領獎，沒來領就不發喔！';
 function uniq(a){ return [...new Set(a)]; }
 function prizeSummary(list){   // ['霜淇淋','霜淇淋','巧克力棒'] → 霜淇淋 ×2、巧克力棒 ×1
@@ -478,8 +483,14 @@ function normalizeDraws(list){
   return Object.keys(by).sort().reverse().map(k=>by[k]);
 }
 function eventDays(){ const out=[]; const last = state.me.today < state.me.eventEnd ? state.me.today : state.me.eventEnd;
+  if(state.me.tester && state.me.today < state.me.eventStart) return [state.me.today];   // 測試帳號活動前看得到今天
   for(let k=last; k>=state.me.eventStart; k=addDays(k,-1)) out.push(k); return out; }
-function drawWhen(key){ return (key===tpeKey(new Date()) ? '今晚 ' : '明晚 ') + state.me.drawHour + ':00'; }
+function drawWhen(key){
+  const k = addDays(key, state.me.drawOffset||0), t = tpeKey(new Date());
+  const d = k===t ? '今天' : k===addDays(t,1) ? '明天' : md(k);
+  const h = state.me.drawHour;
+  return d + (h < 12 ? '早上 ' : '晚上 ') + (h > 12 ? h-12 : h) + ':00';
+}
 function imgUrl(id,w){ return id.startsWith('data:') ? id : 'https://lh3.googleusercontent.com/d/'+id+'=w'+w; }
 function setImg(img,id,w=500){
   img.src=imgUrl(id,w);
@@ -604,15 +615,16 @@ function startApp(){
 function renderMe(){
   const m = state.me;
   $('meNick').textContent = m.nickname;
-  $('meScore').textContent = m.phase==='open' && m.score ? m.score.total : '–';
-  $('meTickets').textContent = m.phase==='open' ? (m.tickets||0) : '–';
-  const open = m.phase === 'open';
+  const open = m.phase === 'open' || !!m.tester;
+  $('meScore').textContent = open && m.score ? m.score.total : '–';
+  $('meTickets').textContent = open ? (m.tickets||0) : '–';
   $('ciBtn').disabled = !open;
-  if(m.phase === 'before') $('ciStatus').textContent = '活動 '+md(m.eventStart)+' 開始，'+eventText();
-  else if(m.phase === 'ended') $('ciStatus').textContent = '活動已經結束，謝謝參加！得主都在「開獎」頁。';
+  if(m.tester) $('ciStatus').textContent = '🧪 測試帳號：隨時都能打卡、發問、解答，這些資料不會進入好運榜和抽獎。';
+  else if(m.phase === 'before') $('ciStatus').textContent = '活動 '+md(m.eventStart)+' 開始，'+eventText();
+  else if(m.phase === 'ended') $('ciStatus').textContent = '打卡活動結束了，謝謝大家一起唸書！問答區開放到 '+md(m.qaEnd||m.eventEnd)+'，幸運兒都在「開獎」頁。';
   else $('ciStatus').textContent = m.checkedToday
     ? '今天的好運券到手了！'+drawWhen(m.today)+'開獎。去「問答」幫同學解題積陰德，好運值最高的人拿 '+(m.topTickets||3)+' 張好運券。'
-    : drawWhen(m.today)+'開獎，打卡就能拿到 1 張好運券（活動到 '+md(m.eventEnd)+'）。';
+    : '今天打卡就能拿到 1 張好運券，'+drawWhen(m.today)+'開獎（打卡到 '+md(m.eventEnd)+'）。';
 }
 
 function switchTab(name){
@@ -679,7 +691,7 @@ async function doCheckin(){
     }
     $('ciErr').textContent = e.message;
   }
-  finally{ btn.disabled = state.me.phase !== 'open'; btn.textContent = '打卡'; }
+  finally{ btn.disabled = state.me.phase !== 'open' && !state.me.tester; btn.textContent = '打卡'; }
 }
 
 /* ===== 打卡牆 ===== */
@@ -757,7 +769,7 @@ function renderDraws(d){
       $('reel').replaceChildren(); show('result',false); show('replayBtn',false);
       return;
     }
-    if(!latest){ $('stageTitle').textContent = '還沒有開獎紀錄，第一次開獎在 '+md(d.eventStart)+' 晚上 '+d.drawHour+':00'; show('replayBtn',false); $('reel').replaceChildren(); return; }
+    if(!latest){ $('stageTitle').textContent = '還沒有開獎紀錄，第一次開獎在'+drawWhen(d.eventStart); show('replayBtn',false); $('reel').replaceChildren(); return; }
     prepare(latest, true);
   }
 }
@@ -774,7 +786,7 @@ function renderPot(d){
   }else{
     const tk = d.todayTickets != null ? d.todayTickets : n;
     $('potTitle').textContent = dayName(d.today)+'的好運券有 '+tk+' 張';
-    $('potNote').textContent = drawWhen(d.today)+'開獎' + (d.todayPrizes && d.todayPrizes.length ? '：'+prizeSummary(d.todayPrizes) : '');
+    $('potNote').textContent = drawWhen(d.today)+'開獎，抽出 '+((d.todayPrizes||[]).length||2)+' 位幸運兒';
   }
   const box = $('cupSticks'); box.replaceChildren();
   const shown = Math.min(d.todayTickets != null ? d.todayTickets : n, 14), rnd = seeded(hash(d.today+n));
@@ -799,7 +811,7 @@ function renderHistory(list){
   if(!list.length){ ul.append(el('li','empty','還沒有紀錄')); return; }
   list.forEach(dr=>{
     const b = el('button');
-    b.append(el('span','d',md(dr.date)));
+    b.append(el('span','d',md(dr.date)));   // 打卡日（隔天早上開獎）
     const w = el('span','w', dr.winners.length ? dr.winners.map(x=>x.nick).join('、') : (dr.note||'—'));
     if(dr.winners.some(x=>x.isMe)) w.append(el('span','me','你'));
     b.append(w, el('span','n', dr.entrants.length ? uniq(dr.entrants).length+' 人參加' : ''));
@@ -810,7 +822,7 @@ function renderHistory(list){
 
 function prepare(dr, autoplay){
   state.current = dr;
-  $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）的開獎';
+  $('stageTitle').textContent = md(dr.date)+' 打卡的開獎';
   show('result', false);
   if(!dr.winners.length){
     $('reel').replaceChildren(); show('replayBtn', false);
@@ -882,7 +894,7 @@ async function play(dr){
   r.append(box); show('result');
   for(let i=0;i<n;i++){
     const pz = dr.winners[i].prize;
-    $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）第 '+(i+1)+' 位幸運兒' + (pz ? '：'+pz+'…' : '…');
+    $('stageTitle').textContent = md(dr.date)+' 打卡・第 '+(i+1)+' 位幸運兒…';
     await spin(dr, i);
     await wait(500);
     const w = dr.winners[i];
@@ -899,7 +911,7 @@ async function play(dr){
     if(i < n-1) await wait(1600);
   }
   const nTk = dr.entrants.length, nPp = uniq(dr.entrants).length;
-  $('stageTitle').textContent = dayName(dr.date)+'（'+md(dr.date)+'）的幸運兒｜'+nPp+' 人、'+nTk+' 張好運券';
+  $('stageTitle').textContent = md(dr.date)+' 打卡的幸運兒｜'+nPp+' 人、'+nTk+' 張好運券';
   r.append(el('p','note claim', '恭喜幸運兒！'+CLAIM));
   store('seen5_'+dr.date, '1');
   state.playing = false; $('replayBtn').disabled = false;
@@ -942,8 +954,8 @@ function drinkBox(dr, w){
   const drinks = (state.draws && state.draws.drinks) || [];
   const box = el('div');
   if(!drinks.length) return box;
-  if(!w.isMe){ box.append(el('span','drink-tag', w.drink ? w.drink : '還沒選飲料')); return box; }
-  box.append(el('p','note', w.drink ? '你選了'+w.drink+'，記得主動找老師領' : '選一杯飲料：'));
+  if(!w.isMe){ box.append(el('span','drink-tag', w.drink ? w.drink : '還沒選好禮')); return box; }
+  box.append(el('p','note', w.drink ? '你選了'+w.drink+'，記得主動找老師領' : '任選一樣：'));
   const g = el('div','drink-pick');
   drinks.forEach(x=>{
     const b = el('button',null,x);
@@ -1029,7 +1041,7 @@ function photoInput(onPick){
 function zoom(fileId, cap){ setImg($('lbImg'), fileId, 1400); $('lbCap').textContent = cap||''; show('lightbox'); }
 
 function openAsk(){
-  if(state.qa && !state.qa.open) return;
+  if(state.qa && !state.qa.open && !state.me.tester) return;
   const min = state.me.askMin || 10;
   const inner = openSheet('我要發問');
   let photo = null;
@@ -1197,15 +1209,15 @@ const demoApi = (()=>{
   const classes = ['商二乙','貿二丙'];
   const pic = (bg,t)=>'data:image/svg+xml;utf8,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="'+bg+'"/><text x="300" y="360" font-size="200" text-anchor="middle">'+t+'</text></svg>');
   const pics = [pic('#D6E4FF','🧮'),pic('#FFF0A8','📒'),pic('#FFD6E2','☕'),pic('#D8F5E4','📚')];
-  const now = new Date(), H = 21;
-  const tpeHour = new Date(now.getTime()+8*3600e3).getUTCHours();
-  const today = tpeKey(new Date(now.getTime() + (tpeHour >= H ? 864e5 : 0)));
+  const now = new Date(), H = 8;
+  const today = tpeKey(now);
   const eventStart = addDays(today,-1), eventEnd = addDays(today,1);   // 示範用：活動第 2 天
   const rnd = seeded(7);
   const P = {CHECKIN:1, ASK:1, SOLVE:5};
   const my = { c:0, a:0, s:0, total:0, checked:false };
   const me = { registered:true, nickname:'小熊軟糖', classCode:'商二乙', streak:3, total:5, checkedToday:false,
-               classes, drawHour:H, today, eventStart, eventEnd, scope:'all', phase:'open', todayPrizes:['飲料','飲料','飲料'],
+               classes, drawHour:H, drawOffset:1, today, eventStart, eventEnd, qaEnd:addDays(eventEnd,1), scope:'all', phase:'open', todayPrizes:['好禮','好禮'],
+               drinks:['全家霜淇淋','7-11 濃粹美式','高蛋白飲料','豆漿'],
                points:P, topTickets:3, askMin:10, score:my };
   const qs0 = new URLSearchParams(location.search);
   if(qs0.has('newuser')) me.registered = false;     // ?demo=1&newuser 看第一次登記畫面
@@ -1213,12 +1225,12 @@ const demoApi = (()=>{
   const wall = {}, draws = [];
   for(let i=0;i<2;i++){
     const key = addDays(today,-i), who = shuffle(names.slice(0,10), rnd).slice(0, i===0 ? 4 : 7);
-    wall[key] = who.map((n,j)=>({ nick:n, cls:classes[n.length%2], caption:['計算機陪我去烤肉','在機場也要算一題','','書桌前第三章'][j%4],
+    wall[key] = who.map((n,j)=>({ nick:n, cls:classes[n.length%2], caption:['午餐旁算一題','阿嬤陪我唸書','','書桌前第三章'][j%4],
       time:String(18+j%4).padStart(2,'0')+':'+String(10+j*7%50).padStart(2,'0'), fileId:pics[j%4], mine:false }));
     if(i>0){
       const ent = who.concat([who[0],who[0]]);   // 第一位是好運王，有 3 張好運券
-      const wz = [who[0], who[3], who[5]];
-      draws.push({ date:key, entrants:ent, note:'', winners: wz.map((w,j)=>({ prize:'飲料', drink:j===1?'美式':'', nick:w, cls:classes[w.length%2], fileId:pics[j%4], isMe:j===2 })) });
+      const wz = [who[0], who[3]];
+      draws.push({ date:key, entrants:ent, note:'', winners: wz.map((w,j)=>({ prize:'好禮', drink:j===0?'全家霜淇淋':'', nick:w, cls:classes[w.length%2], fileId:pics[j%4], isMe:j===1 })) });
     }
   }
   const qs = [
@@ -1257,8 +1269,8 @@ const demoApi = (()=>{
         {nick:'豆花',cls:'貿二丙',total:2,c:1,a:1,s:0,tickets:1,isMe:false} ];
       if(sum().total) board.push({ nick:me.nickname, cls:me.classCode, total:my.total, c:my.c, a:my.a, s:my.s, tickets:my.checked?1:0, isMe:true });
       board.sort((x,y)=>y.total-x.total);
-      return { today, drawHour:H, todayCount:wall[today].length, todayTickets:wall[today].length+2, draws, board, my:sum(),
-        phase:'open', eventStart, eventEnd, todayPrizes:['飲料','飲料','飲料'], drinks:['美式','高蛋白飲料','豆漿'], topTickets:3 };
+      return { today, drawHour:H, drawOffset:1, todayCount:wall[today].length, todayTickets:wall[today].length+2, draws, board, my:sum(),
+        phase:'open', eventStart, eventEnd, todayPrizes:['好禮','好禮'], drinks:['全家霜淇淋','7-11 濃粹美式','高蛋白飲料','豆漿'], topTickets:3 };
     }
     if(action==='drink') return { drink:p.choice };
     if(action==='qa_list') return listOf();
