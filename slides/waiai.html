@@ -1,0 +1,483 @@
+<title>衛愛而生（示範版）</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+/* Layout: mirrors the real Streamlit app — navy sidebar on the left, pale-blue canvas with a white working block on the right; stacks to one column on phones. Single light look on purpose, matching the original (Streamlit theme base = light). */
+:root{
+  color-scheme: light;
+  --canvas:#f0f4f9; --block:#ffffff; --ink:#1a2a4a; --ink2:#2c3e6b; --ink3:#2c4a8a; --muted:#4a5568; --faint:#718096;
+  --line:#d8e4f0; --field:#fafcff; --field-line:#c9d7e8;
+  --blue:#3182ce; --blue-d:#2b6cb0; --green:#38a169; --green-d:#276749; --purple:#6b46c1; --purple-d:#553c9a;
+  --red:#e53e3e; --amber:#d69e2e;
+  --side1:#1a2a4a; --side2:#0d1b35; --side-ink:#e8edf5;
+  --font:'Noto Sans TC','PingFang TC','Microsoft JhengHei',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6}
+.app{display:flex;min-height:100%}
+/* sidebar */
+.side{width:268px;flex:none;background:linear-gradient(160deg,var(--side1) 0%,var(--side2) 100%);color:var(--side-ink);padding:28px 18px 70px;position:relative}
+.side h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 4px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.15)}
+.side .sub{font-size:12px;color:rgba(255,255,255,.45);margin:6px 0 18px}
+.side .nav{display:flex;flex-direction:column;gap:6px}
+.side .nav button{all:unset;cursor:pointer;display:block;padding:10px 14px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-size:15px;font-weight:500;color:var(--side-ink);transition:.15s}
+.side .nav button:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);transform:translateX(3px)}
+.side .nav button[aria-pressed="true"]{background:rgba(99,179,237,.25);border-color:#63b3ed;color:#fff}
+.side .nav button:focus-visible{outline:2px solid #63b3ed;outline-offset:2px}
+.side hr{border:0;border-top:1px solid rgba(255,255,255,.15);margin:20px 0}
+.side .demo{font-size:12px;line-height:1.6;background:rgba(255,255,255,.06);border:1px dashed rgba(255,255,255,.25);border-radius:10px;padding:10px 12px;color:rgba(255,255,255,.75)}
+.side .foot{position:absolute;bottom:20px;left:0;right:0;text-align:center;font-size:11px;color:rgba(255,255,255,.3)}
+/* main */
+.main{flex:1;min-width:0;padding:28px clamp(16px,3vw,40px) 60px}
+.blk{background:var(--block);border-radius:16px;padding:24px clamp(16px,2.4vw,32px);max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1.pg{font-size:26px;font-weight:700;color:var(--ink);margin:0 0 6px;border-left:5px solid var(--blue);padding-left:12px}
+h2{font-size:21px;color:var(--ink2);font-weight:600;margin:6px 0 0}
+h3{font-size:18px;color:var(--ink3);margin:4px 0 0}
+h4{font-size:16px;color:var(--ink);margin:6px 0 0}
+p{margin:0}
+.cap{font-size:13px;color:var(--faint)}
+hr.div{border:0;border-top:1px solid var(--line);margin:8px 0}
+.row{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.row>*{flex:1 1 220px;min-width:0}
+.f{display:flex;flex-direction:column;gap:6px}
+.lab{font-size:14px;font-weight:500;color:var(--ink)}
+input[type=text],input[type=password],input[type=number],input[type=date],select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--field);border:1.5px solid var(--field-line);border-radius:8px;padding:8px 10px;width:100%}
+textarea{min-height:84px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(49,130,206,.15)}
+.radios{display:flex;flex-wrap:wrap;gap:6px 16px}
+.radios.v{flex-direction:column;gap:4px}
+.radios label,.chk{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:14px}
+.radios input,.chk input{accent-color:#e05252;width:16px;height:16px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:6px;border:1.5px solid var(--field-line);border-radius:8px;background:var(--field)}
+.chips label{cursor:pointer;font-size:13px;padding:3px 10px;border-radius:6px;border:1px solid var(--field-line);background:#fff;user-select:none}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips label:has(input:checked){background:#e05252;color:#fff;border-color:#e05252}
+.chips label:has(input:focus-visible){outline:2px solid var(--blue)}
+.btn{font:inherit;cursor:pointer;border:0;border-radius:10px;font-weight:600;font-size:14px;padding:8px 18px;color:#fff;background:linear-gradient(135deg,var(--blue-d),var(--blue));box-shadow:0 2px 8px rgba(49,130,206,.35);transition:.15s;align-self:flex-start}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(49,130,206,.45)}
+.btn:focus-visible{outline:3px solid #90cdf4;outline-offset:2px}
+.btn.g{background:linear-gradient(135deg,var(--green-d),var(--green));box-shadow:0 2px 8px rgba(56,161,105,.35)}
+.btn.p{background:linear-gradient(135deg,var(--purple-d),var(--purple));box-shadow:0 2px 8px rgba(107,70,193,.35);width:100%;font-size:16px;padding:12px;align-self:stretch}
+.btn.o{background:#fff;color:var(--blue-d);border:1.5px solid var(--field-line);box-shadow:none}
+.al{border-radius:10px;border-left:5px solid;padding:10px 14px;font-size:14px}
+.al.info{background:#ebf4ff;border-color:#3182ce;color:#1a3a6a}
+.al.ok{background:#e9f8ef;border-color:#38a169;color:#1c4f37}
+.al.warn{background:#fffbea;border-color:#d69e2e;color:#6b4e0e}
+.al.err{background:#fff1f1;border-color:#e53e3e;color:#822727}
+details.ex{border:1.5px solid var(--line);border-radius:12px;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+details.ex>summary{cursor:pointer;font-weight:600;font-size:15px;padding:12px 16px;color:var(--ink)}
+details.ex>.in{padding:4px 16px 16px;display:flex;flex-direction:column;gap:12px}
+.box{border:1.5px solid var(--line);border-radius:14px;padding:14px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.05);display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;flex-wrap:wrap;gap:2px;border-bottom:1px solid var(--line)}
+.tabs button{all:unset;cursor:pointer;font-weight:600;font-size:14px;padding:8px 14px;border-radius:8px 8px 0 0;color:var(--muted);border-bottom:3px solid transparent}
+.tabs button[aria-selected="true"]{color:var(--blue-d);border-bottom-color:var(--blue)}
+.tabs button:focus-visible{outline:2px solid var(--blue)}
+.tw{overflow-x:auto;border-radius:10px;box-shadow:0 1px 8px rgba(0,0,0,.07)}
+table{border-collapse:collapse;width:100%;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:7px 10px;border-bottom:1px solid #edf2f7;text-align:left;white-space:nowrap}
+th{background:#f7fafc;color:var(--muted);font-weight:600}
+td.wrap{white-space:normal;min-width:180px}
+.metrics{display:flex;flex-wrap:wrap;gap:12px}
+.metric{flex:1 1 150px;min-width:0}
+.metric .l{font-size:13px;color:var(--muted)}
+.metric .v{font-size:28px;font-weight:600;color:var(--ink)}
+.metric .d{font-size:12px;color:var(--green)}
+.sum{display:flex;flex-wrap:wrap;gap:12px}
+.sum>div{flex:1 1 180px;background:#f0f7ff;border-radius:12px;padding:14px 16px;border-left:4px solid}
+.sum .l{font-size:12px;color:#555}
+.sum .v{font-size:26px;font-weight:700}
+.rec{border:1.5px solid;border-radius:12px;padding:12px 16px;display:flex;flex-direction:column;gap:4px}
+.rec .top{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.pill{border-radius:20px;padding:3px 12px;font-size:13px;font-weight:600}
+.bubble{background:#d0e8f2;border:2px solid #189ab4;border-radius:15px;padding:15px 20px;color:#05445e;font-size:16px;position:relative;margin-left:10px}
+.bubble:before{content:"";position:absolute;left:-12px;top:18px;border:10px solid transparent;border-right-color:#189ab4;border-left:0}
+.bigrank{border:2px solid;border-radius:14px;padding:20px 24px;text-align:center}
+.bigrank .n{font-size:48px;font-weight:700;color:#2d3748;line-height:1.2}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-family:var(--font)}
+.copy{display:flex;gap:8px;flex-wrap:wrap}
+/* modal (print preview) */
+.mask{position:fixed;inset:0;background:rgba(13,27,53,.55);display:flex;align-items:flex-start;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 16px 24px;overflow:auto;z-index:20}
+.sheet{background:#fff;color:#000;max-width:820px;width:100%;border-radius:6px;box-shadow:0 12px 40px rgba(0,0,0,.35);padding:20px clamp(12px,3vw,40px);display:flex;flex-direction:column;gap:14px}
+.sheet .bar{display:flex;justify-content:space-between;align-items:center;gap:10px;font-family:var(--font);color:var(--ink);flex-wrap:wrap}
+.paper{font-family:var(--font);overflow-x:auto}
+.slip{border-bottom:1.5px dashed #555;padding:14px 4px 18px;display:flex;flex-direction:column;gap:8px}
+.slip h2{font-size:21px;font-weight:900;text-align:center;letter-spacing:.1em;color:#000;margin:0}
+.slip table th{background:#fff;color:#000;border-bottom:3px solid #000;font-weight:900}
+.slip table td{border-bottom:1.2px solid #888;white-space:normal;color:#000}
+.formt{border-collapse:collapse;width:100%;min-width:640px}
+.formt td,.formt th{border:1px solid #000;padding:6px 8px;white-space:normal;color:#000;background:#fff;text-align:center;font-size:13px}
+.formt .tt{font-size:17px;font-weight:900;border:0}
+.stamp{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));background:#1a2a4a;color:#fff;font-size:12px;padding:6px 12px;border-radius:999px;opacity:.85;z-index:10}
+@media (max-width:760px){
+  .app{flex-direction:column}
+  .side{width:auto;padding:16px 16px 14px}
+  .side .nav{flex-direction:row;flex-wrap:wrap}
+  .side .nav button{flex:1 1 auto;text-align:center;padding:8px 10px;font-size:14px}
+  .side .foot,.side hr,.side .demo{display:none}
+  .main{padding:16px 16px 60px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <aside class="side">
+    <h1>🏫 衛愛而生</h1>
+    <div class="sub">示範學校 衛生組管理系統</div>
+    <nav class="nav" id="nav"></nav>
+    <hr>
+    <div class="demo">🎭 這是<b>示範版</b>：所有班級、學號、扣分都是虛構的，資料只存在這個網頁裡，不會連到 Google 試算表，也不會用到任何 API 額度。</div>
+    <div class="foot">林ㄊㄩ製作@2025</div>
+  </aside>
+  <main class="main"><div class="blk" id="root"></div></main>
+</div>
+<div class="stamp">示範版｜資料皆為虛構</div>
+<div id="modal"></div>
+
+<script>
+(function(){
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let seed=20251012;function rnd(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}
+const pick=a=>a[Math.floor(rnd()*a.length)];
+const pad=n=>String(n).padStart(2,'0');
+const fmt=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const now=new Date();const TODAY=fmt(now);
+const ts=d=>`${fmt(d)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x}
+const monday=(()=>{const d=new Date(now);d.setHours(0,0,0,0);const w=(d.getDay()+6)%7;return addDays(d,-w)})();
+const SEM_START=addDays(monday,-35); // 今天落在第 6 週
+const weekOf=s=>Math.floor((new Date(s+'T00:00:00')-SEM_START)/864e5/7)+1;
+const CUR_WEEK=weekOf(TODAY);
+const rid=d=>`${fmt(d).replace(/-/g,'')}${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}_${Math.floor(rnd()*0xffffff).toString(16).padStart(6,'0')}`;
+
+/* ---------- 虛構資料 ---------- */
+const GRADES=['1年級','2年級','3年級'];
+const CLASSES={'1年級':['商一甲','商一乙','商一丙','英一甲','資一甲','家一甲','服一甲'],'2年級':['商二甲','商二乙','商二丙','英二甲','資二甲','家二甲','服二甲'],'3年級':['商三甲','商三乙','商三丙','英三甲','資三甲','家三甲','服三甲']};
+const ALL=GRADES.flatMap(g=>CLASSES[g]);
+const gradeOf=c=>GRADES.find(g=>CLASSES[g].includes(c));
+const ROSTER={};ALL.forEach((c,ci)=>{const g=gradeOf(c)[0];const yr={'1':'4','2':'3','3':'2'}[g];ROSTER[c]=Array.from({length:8},(_,i)=>`${yr}9${pad(ci)}${pad(i+1)}`)});
+const AREAS={};const BLD=['誠信樓B棟 3F 男廁','誠信樓B棟 4F 女廁','樸實樓 2F 走廊','勤學樓 1F 洗手台','敬業樓 2F 樓梯間','戶外-校門口/川堂','戶外-籃球場/司令台','誠信樓A棟 2F 茶水間'];ALL.forEach((c,i)=>AREAS[c]=BLD[i%BLD.length]);
+const OFFICES=[['教務處','商三甲'],['學務處','商三乙'],['總務處','英三甲'],['輔導室','資三甲'],['圖書館','家三甲']];
+const INSPECTORS=[
+ {id:'390101',role:'內掃檢查',classes:['商一甲','商一乙','商一丙','英一甲','資一甲']},
+ {id:'390102',role:'外掃檢查',classes:['商二甲','商二乙','英二甲','資二甲']},
+ {id:'390103',role:'內掃檢查',classes:['商三甲','商三乙','商三丙','英三甲','資三甲']},
+ {id:'390104',role:'機動',classes:[]},
+ {id:'390105',role:'衛生糾察隊長',classes:[]},
+ {id:'490201',role:'外掃檢查',classes:['家一甲','服一甲','家二甲','服二甲']},
+ {id:'490202',role:'內掃檢查',classes:['商二丙','家二甲','服二甲','家三甲','服三甲']},
+ {id:'490203',role:'垃圾回收(中午)',classes:[]},
+ {id:'490204',role:'環保(下午)',classes:[]},
+ {id:'490205',role:'回收(中午)',classes:[]},
+];
+const allowed=p=>/垃圾|回收|環保/.test(p.role)?['垃圾/回收檢查']:/機動|隊長/.test(p.role)?['內掃檢查','外掃檢查']:[p.role];
+const IN_POS=['走廊','黑板','地板','窗戶(窗溝)','陽台'];
+const IN_ST=['髒亂','沒拖地','沒擦拭','酒精未補','掃具壞掉未換','懸掛垃圾未清除','人工垃圾','蜘蛛網','頭髮圈圈','打掃玩手機'];
+const OUT_ITEMS=['男廁','女廁','茶水間','無障礙廁所','樓梯間','洗手台','天花板','走廊','地板','陽台'];
+const OUT_ST=['髒亂','沒拖地','沒掃地','沒擦拭','酒精未補','掃具壞掉未換','人工垃圾','蜘蛛網','頭髮圈圈','打掃玩手機'];
+const BUILDINGS={'':[''],'誠信樓A棟(各處室)':['','1F','2F','3F','4F','5F','6F'],'誠信樓B棟':['','B1','1F','2F','3F','4F','5F','6F'],'樸實樓(合作社)':['','1F','2F','3F','4F','5F'],'勤學樓(烘焙縫紉)':['','1F','2F','3F','4F','5F'],'敬業樓':['','1F','2F','3F'],'戶外-籃球場/司令台':[''],'戶外-校門口/川堂/雨庇':[''],'戶外-車棚/資收場/階梯':[''],'戶外-空橋/走道/其他':['','1F','2F','3F','4F','5F']};
+const TRASH=['一般垃圾','紙類','網袋aka塑膠鐵鋁','其他'];
+
+const S={records:[],published:{},service:[],debts:[],debtHist:[],hyTask:'今天重點檢查：黑板溝槽、窗台灰塵，拍照請拍到掃區全景！',undo:[]};
+function rec(o){return Object.assign({日期:TODAY,週次:weekOf(o.日期||TODAY),班級:'',評分項目:'',檢查人員:'',內掃原始分:0,外掃原始分:0,垃圾原始分:0,手機人數:0,備註:'',違規細項:'',登錄時間:'',修正:false,紀錄ID:''},o)}
+(function gen(){
+  for(let w=CUR_WEEK-3;w<=CUR_WEEK;w++){
+    for(let dd=0;dd<5;dd++){
+      const d=addDays(SEM_START,(w-1)*7+dd);const ds=fmt(d);if(ds>TODAY)continue;
+      INSPECTORS.filter(p=>p.classes.length).forEach(p=>{
+        p.classes.forEach((c,ci)=>{
+          if(ds===TODAY&&ci>=2)return; // 今天還沒評完，示範進度條
+          const t=new Date(d);t.setHours(16,2+ci,Math.floor(rnd()*59));
+          const r=rnd();const base={日期:ds,週次:w,班級:c,檢查人員:`學號: ${p.id}`,登錄時間:ts(t),紀錄ID:rid(t)};
+          if(r<0.62)S.records.push(rec({...base,評分項目:`${p.role}(普通)`,備註:'本次檢查無扣分，表現普通'}));
+          else if(r<0.72)S.records.push(rec({...base,評分項目:`${p.role}(${w>=CUR_WEEK-1&&rnd()<.5?'待審優良':'優良'})`,備註:'優良原因：地板乾淨、掃具整齊'}));
+          else{const pts=rnd()<.7?1:2;
+            if(p.role==='內掃檢查'){const pos=[pick(IN_POS)],st=[pick(IN_ST)];S.records.push(rec({...base,評分項目:'內掃檢查',內掃原始分:pts,備註:`位置：${pos.join('、')} | 狀況：${st.join('、')}`,違規細項:st.join('、')}))}
+            else{const it=[pick(OUT_ITEMS)],st=[pick(OUT_ST)];S.records.push(rec({...base,評分項目:'外掃檢查',外掃原始分:pts,備註:`掃區：${AREAS[c]} | 項目：${it.join('、')} | 狀況：${st.join('、')}`,違規細項:st.join('、')}))}}
+        });
+      });
+      if(rnd()<.6){const c=pick(ALL);const t=new Date(d);t.setHours(16,20,0);const n=rnd()<.5?1:2;S.records.push(rec({日期:ds,週次:w,班級:c,評分項目:'垃圾/回收檢查',檢查人員:'學號: 490203',垃圾原始分:n,備註:`內掃-${pick(TRASH)}(${n>1?'未倒垃圾,未做好分類':'未做好分類'})`,違規細項:'垃圾分類',登錄時間:ts(t),紀錄ID:rid(t)}))}
+    }
+  }
+  // 服務時數 / 欠時 / 消警告
+  ['392001','392003'].forEach((sid,i)=>{S.debts.push({學號:sid,班級:'商三甲',時數:2,備註:`${fmt(addDays(now,-20))} 返校打掃未到`})});
+  S.debts.push({學號:'392102',班級:'商三乙',時數:1.5,備註:`${fmt(addDays(now,-20))} 返校打掃未到`});
+  S.debts.push({學號:'391504',班級:'英二甲',時數:0.5,備註:`${fmt(addDays(now,-12))} 返校打掃未到`});
+  [['491003','商一乙',3],['491003','商一乙',1],['491003','商一乙',-3],['390705','家二甲',2]].forEach(([sid,c,dd])=>{});
+  const wk=[['刷誠信樓B棟5樓廁所','12:30'],['資收場整理','12:10'],['川堂拖地','12:20']];
+  [['490902','商一甲'],['490902','商一甲'],['391202','服二甲'],['391202','服二甲'],['391202','服二甲'],['391202','服二甲']].forEach(([sid,c],i)=>{const w=wk[i%3];S.service.push({日期:fmt(addDays(now,-(i+2))),學號:sid,班級:`${w[0]}|${w[1]}`,類別:'愛校服務(消警告)',時數:0.5,核發狀態:i<1?'已核發':'',realClass:c})});
+  // 督核單示範：今天早上幾筆完整的扣分（同一班多筆，印出來比較有感）
+  let _n=0;const dm=(c,item,who,o,note,det,t)=>S.records.push(rec({日期:TODAY,班級:c,評分項目:item,檢查人員:who,備註:note,違規細項:det,登錄時間:`${TODAY} ${t}`,紀錄ID:`${TODAY.replace(/-/g,'')}DEMO${++_n}`,...o}));
+  dm('商二乙','內掃檢查','學號: 390101',{內掃原始分:2},'位置：黑板、地板 | 狀況：沒擦拭、髒亂','沒擦拭、髒亂','07:52:10');
+  dm('商二乙','外掃檢查','學號: 490201',{外掃原始分:1},'掃區：樸實樓 2F 走廊 | 項目：地板 | 狀況：人工垃圾','人工垃圾','07:58:41');
+  dm('商二乙','垃圾/回收檢查','學號: 490203',{垃圾原始分:1},'內掃-一般垃圾(未做好分類)','垃圾分類','08:05:03');
+  dm('資一甲','內掃檢查','學號: 390102',{內掃原始分:1,手機人數:1},'位置：窗戶(窗溝) | 狀況：打掃玩手機','打掃玩手機','07:55:27');
+  dm('家三甲','外掃檢查','學號: 490202',{外掃原始分:2},'掃區：戶外-籃球場/司令台 | 項目：地面 | 狀況：落葉未清、人工垃圾','落葉未清、人工垃圾','08:01:16');
+  dm('服一甲','內掃檢查','學號: 390103',{內掃原始分:1},'位置：陽台 | 狀況：懸掛垃圾未清除','懸掛垃圾未清除','08:03:48');
+  // 服務時數示範：返校打掃、班級義工（期末匯出登錄表用）
+  ROSTER['商三甲'].slice(0,6).forEach(id=>S.service.push({日期:fmt(addDays(now,-9)),學號:id,班級:'商三甲',類別:'返校打掃｜第一梯次',時數:2}));
+  ROSTER['資二甲'].slice(0,4).forEach(id=>S.service.push({日期:fmt(addDays(now,-5)),學號:id,班級:'資二甲',類別:'班級義工',時數:1}));
+  ROSTER['家一甲'].slice(0,3).forEach(id=>S.service.push({日期:fmt(addDays(now,-3)),學號:id,班級:'家一甲',類別:'校外服務｜淨灘',時數:3}));
+})();
+
+/* ---------- 計分 ---------- */
+const isScored=r=>!/優良|普通/.test(r.評分項目)&&!r.修正&&r.評分項目!=='服務時數發放';
+const dedOf=r=>Math.min(+r.內掃原始分||0,2)+Math.min(+r.外掃原始分||0,2)+Math.min(+r.垃圾原始分||0,2)+(+r.手機人數||0);
+function weekStats(w){const m={};ALL.forEach(c=>m[c]={ded:0,exc:0});S.records.forEach(r=>{if(w!=null&&r.週次!==w)return;if(!m[r.班級])return;if(isScored(r))m[r.班級].ded+=dedOf(r);if(/\(優良\)/.test(r.評分項目))m[r.班級].exc++});return m}
+function grade(d){return d===0?'⭐ 優良':d<=3?'✅ 普通':'⚠️ 需加強'}
+function rank(w,mode){const st=weekStats(w);let rows=ALL.map(c=>({年級:gradeOf(c),班級:c,總扣分:st[c].ded,優良次數:st[c].exc,總成績:90-st[c].ded,評等:grade(st[c].ded)}));
+  const doRank=list=>{list.sort((a,b)=>b.總成績-a.總成績||b.優良次數-a.優良次數);list.forEach((r,i)=>{r.排名=i&&list[i-1].總成績===r.總成績&&list[i-1].優良次數===r.優良次數?list[i-1].排名:i+1});return list};
+  if(mode==='全校')return doRank(rows);return GRADES.flatMap(g=>doRank(rows.filter(r=>r.年級===g)))}
+
+[CUR_WEEK-2,CUR_WEEK-1].forEach(w=>{S.published[w]={rows:rank(w,'年級'),mode:'年級',at:fmt(addDays(SEM_START,(w-1)*7+4))+' 17:30'}});
+
+/* ---------- 名冊（個資不落地示範：只存在本頁記憶體） ---------- */
+let SESSION_ROSTER=null;
+function rosterBox(what){return (SESSION_ROSTER?al('ok',`📇 名冊已載入本頁記憶體（${Object.keys(SESSION_ROSTER).length} 位），將自動帶入${what}。關閉或重新整理頁面即消失。`)+btn('clearRoster','🧹 用完清除名冊','o'):al('warn',`📇 尚未載入名冊：${what}會留白，需手寫。（名冊只放本頁記憶體，不寫入雲端）`)+btn('loadRoster','📇 載入示範名冊（名字皆虛構）','o'))+'<div style="height:12px"></div>'}
+function buildFakeRoster(){const SN='王李張陳林黃吳劉蔡楊許鄭謝郭洪曾邱廖賴周',G1='宇子承品家冠柏睿芷宜詠思彥羽亭佳以昱',G2='翔涵恩妤廷安晴辰諺蓁琪軒瑄哲萱潔';
+  const out={};const add=(id,cls,seat)=>{if(!id||out[id])return;const n=+String(id).replace(/\D/g,'')||0;out[id]={班級:cls||'',座號:seat||String(n%40+1),姓名:(h=>SN[h%SN.length]+G1[(h>>>5)%G1.length]+G2[(h>>>11)%G2.length])(Math.imul(n^0x5bd1e995,2654435761)>>>0)}};
+  ALL.forEach(c=>ROSTER[c].forEach((id,i)=>add(id,c,String(i+1))));
+  S.service.forEach(x=>add(x.學號,x.realClass||(ALL.includes(x.班級)?x.班級:''),''));S.debts.forEach(x=>add(x.學號,x.班級,''));return out}
+
+/* ---------- UI 狀態 ---------- */
+const MODES=['糾察底家👀','班級負責人🥸','組長ㄉ窩💃'];
+const U={mode:0,authI:false,authA:false,pre:'3開頭',insp:'學號: 390101',idate:TODAY,role:'',grade:'1年級',cls:'',result:'❌ 違規(需扣分)',inPts:1,outPts:1,posSel:[],stSel:[],itemSel:[],bld:'',flr:'',extra:'',fix:false,note:'',trashCat:'一般垃圾',trashTarget:'1年級',trashMarks:{},flash:null,
+ cGrade:'1年級',cCls:'商一甲',cTab:0,cWeek:null,
+ aTab:0,dashWeek:null,slipDate:TODAY,rcTeam:'🧹 衛生糾察',rcAbsent:[],rcMobile:[],rcShift:'🕛 中午班 (資收場整理)',rcHours:0.25,undoSel:'',undoReason:'',undoOk:false,
+ sumWeek:null,sumMode:'年級',sumShown:null,semMode:'全校',semShown:false,
+ shDate:TODAY,shCat:'返校打掃',shNote:'',shMode:'🏫 班級模式',shCls:'商三甲',shEx:[],shAbs:[],shHours:2,shDebt:2,
+ dbDate:TODAY,dbPurpose:'🔔 消警告',dbHours:0.5,dbStart:'12:10',dbWork:'',dbIds:'',dbOk:false,settle:null,lineTxt:null,slipQuery:false,slipStu:'',
+ dailyIn:'',flashA:{}};
+
+/* ---------- 元件 ---------- */
+let uid=0;const nid=()=>'w'+(++uid);
+function radio(k,label,opts,{v=false,re=true}={}){const id=nid();return `<div class="f"><span class="lab" id="${id}">${esc(label)}</span><div class="radios${v?' v':''}" role="radiogroup" aria-labelledby="${id}">${opts.map(o=>`<label><input type="radio" name="${k}" data-k="${k}" ${re?'data-re':''} value="${esc(o)}" ${String(U[k])===String(o)?'checked':''}>${esc(o)}</label>`).join('')}</div></div>`}
+function sel(k,label,opts,{re=true,fmtf=x=>x}={}){const id=nid();return `<div class="f"><label class="lab" for="${id}">${esc(label)}</label><select id="${id}" data-k="${k}" ${re?'data-re':''}>${opts.map(o=>`<option value="${esc(o)}" ${String(U[k])===String(o)?'selected':''}>${esc(fmtf(o))}</option>`).join('')}</select></div>`}
+function multi(k,label,opts,{re=false}={}){const id=nid();return `<div class="f"><span class="lab" id="${id}">${esc(label)}</span><div class="chips" role="group" aria-labelledby="${id}">${opts.map(o=>`<label><input type="checkbox" data-m="${k}" ${re?'data-re':''} value="${esc(o)}" ${U[k].includes(o)?'checked':''}>${esc(o)}</label>`).join('')||'<span class="cap">（沒有可選的項目）</span>'}</div></div>`}
+function inp(k,label,{type='text',ph='',step='',min='',max='',re=false}={}){const id=nid();return `<div class="f"><label class="lab" for="${id}">${esc(label)}</label><input id="${id}" type="${type}" data-k="${k}" ${re?'data-re':''} value="${esc(U[k])}" placeholder="${esc(ph)}" ${step?`step="${step}"`:''} ${min!==''?`min="${min}"`:''} ${max!==''?`max="${max}"`:''}></div>`}
+function area(k,label,{ph=''}={}){const id=nid();return `<div class="f"><label class="lab" for="${id}">${esc(label)}</label><textarea id="${id}" data-k="${k}" placeholder="${esc(ph)}">${esc(U[k])}</textarea></div>`}
+function chk(k,label,{re=false}={}){return `<label class="chk"><input type="checkbox" data-k="${k}" ${re?'data-re':''} ${U[k]?'checked':''}>${esc(label)}</label>`}
+const btn=(act,label,cls='')=>`<button type="button" class="btn ${cls}" data-act="${act}">${esc(label)}</button>`;
+const al=(t,h)=>`<div class="al ${t}">${h}</div>`;
+const ex=(t,body,open=true)=>`<details class="ex" ${open?'open':''}><summary>${esc(t)}</summary><div class="in">${body}</div></details>`;
+function table(cols,rows){return `<div class="tw"><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td class="${/備註|違規|缺失|內容/.test(c)?'wrap':''}">${esc(r[c])}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}" class="cap">（沒有資料）</td></tr>`}</tbody></table></div>`}
+const metric=(l,v,d='')=>`<div class="metric"><div class="l">${esc(l)}</div><div class="v">${esc(v)}</div>${d?`<div class="d">${esc(d)}</div>`:''}</div>`;
+function tabs(k,list){return `<div class="tabs" role="tablist">${list.map((t,i)=>`<button role="tab" aria-selected="${U[k]===i}" data-tab="${k}" data-i="${i}">${esc(t)}</button>`).join('')}</div>`}
+function bars(data,{h=300,color='#3182ce',vertical=true}={}){if(!data.length)return '';const W=Math.max(520,data.length*44),pl=40,pb=vertical?90:40,pt=14,H=h;const mx=Math.max(...data.map(d=>d[1]),1);const step=Math.ceil(mx/4)||1;const top=step*4;const bw=(W-pl-10)/data.length;
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="長條圖">`;for(let i=0;i<=4;i++){const y=pt+(H-pt-pb)*(1-i/4);s+=`<line x1="${pl}" x2="${W-10}" y1="${y}" y2="${y}" stroke="#e2e8f0"/><text x="${pl-6}" y="${y+4}" font-size="12" text-anchor="end">${step*i}</text>`}
+  data.forEach(([lab,v],i)=>{const bh=(H-pt-pb)*v/top;const x=pl+i*bw+bw*.18;s+=`<rect x="${x}" y="${H-pb-bh}" width="${bw*.64}" height="${bh}" rx="3" fill="${color}"/>`;
+    if(vertical){[...lab].forEach((ch,j)=>{s+=`<text x="${x+bw*.32}" y="${H-pb+16+j*15}" font-size="13" text-anchor="middle">${esc(ch)}</text>`})}else s+=`<text x="${x+bw*.32}" y="${H-pb+18}" font-size="12" text-anchor="middle">${esc(lab)}</text>`});
+  return s+'</svg>'}
+function lines(series,weeks){const W=640,H=260,pl=40,pb=34,pt=12;const mx=Math.max(1,...series.flatMap(s=>s.v));const top=Math.ceil(mx/2)*2;const xs=i=>pl+(W-pl-120)*(weeks.length>1?i/(weeks.length-1):.5);const ys=v=>pt+(H-pt-pb)*(1-v/top);
+  const cols=['#3182ce','#e53e3e','#38a169','#d69e2e','#805ad5','#dd6b20','#319795','#d53f8c'];
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="近四週扣分趨勢">`;for(let i=0;i<=2;i++){const v=top*i/2;s+=`<line x1="${pl}" x2="${W-120}" y1="${ys(v)}" y2="${ys(v)}" stroke="#e2e8f0"/><text x="${pl-6}" y="${ys(v)+4}" font-size="12" text-anchor="end">${v}</text>`}
+  weeks.forEach((w,i)=>s+=`<text x="${xs(i)}" y="${H-10}" font-size="12" text-anchor="middle">第${w}週</text>`);
+  series.forEach((se,k)=>{const c=cols[k%cols.length];s+=`<polyline fill="none" stroke="${c}" stroke-width="2.5" points="${se.v.map((v,i)=>`${xs(i)},${ys(v)}`).join(' ')}"/>`;se.v.forEach((v,i)=>s+=`<circle cx="${xs(i)}" cy="${ys(v)}" r="3.5" fill="${c}"/>`);s+=`<rect x="${W-108}" y="${pt+k*22}" width="12" height="12" rx="2" fill="${c}"/><text x="${W-90}" y="${pt+k*22+11}" font-size="12">${esc(se.n)}</text>`});return s+'</svg>'}
+
+/* ---------- 頁面：糾察底家 ---------- */
+function pInspector(){
+  let h=`<h1 class="pg">📝 衛生糾察評分系統</h1>`;
+  if(S.hyTask)h+=`<div class="bubble"><strong>📢 組長廣播 / 糾察重點：</strong><br>${esc(S.hyTask).replace(/\n/g,'<br>')}</div>`;
+  h+=ex('🔐 身份驗證',`${inp('pwI','請輸入隊伍通行碼',{type:'password',ph:'示範版：隨便輸入都可以'})}${btn('loginI','登入')}`,!U.authI);
+  if(!U.authI)return h+al('info','👆 示範版：通行碼隨便輸入，按「登入」即可。');
+  const prefixes=[...new Set(INSPECTORS.map(p=>p.id[0]+'開頭'))];
+  h+=radio('pre','步驟 1：選擇開頭',prefixes);
+  const names=INSPECTORS.filter(p=>p.id[0]+'開頭'===U.pre).map(p=>`學號: ${p.id}`);if(!names.includes(U.insp))U.insp=names[0];
+  h+=radio('insp','步驟 2：點選身份',names,{v:true});
+  const me=INSPECTORS.find(p=>`學號: ${p.id}`===U.insp);const roles=allowed(me);if(!roles.includes(U.role))U.role=roles[0];
+  h+=`<hr class="div"><div class="row">${inp('idate','檢查日期',{type:'date',re:true})}${roles.length>1?radio('role','檢查項目',roles):`<div class="f"><span class="lab">檢查項目</span><b>${esc(U.role)}</b></div>`}</div>`;
+  if(U.idate>TODAY)h+=al('err',`⛔ 「檢查日期」不能是未來日期（${esc(U.idate)}）！請改回今天（${TODAY}）或更早，否則無法送出。`);
+  if(U.flash)h+=al(U.flash[0],U.flash[1]);
+  if(U.role==='垃圾/回收檢查')return h+pTrash();
+  // 內掃/外掃
+  let cls;
+  if(me.classes.length){const done=me.classes.filter(c=>S.records.some(r=>r.日期===U.idate&&r.班級===c&&r.檢查人員===U.insp&&r.評分項目.startsWith(U.role)));const miss=me.classes.filter(c=>!done.includes(c));
+    h+=al('info',`今日任務：${U.role==='內掃檢查'?'🏫 內掃檢查':'🏢 外掃檢查'}　|　進度：${done.length}/${me.classes.length}　|　${miss.length?'尚缺：'+esc(miss.join(', ')):'✅ 今日任務全數完成！'}`);
+    if(U.role==='外掃檢查')h+=ex('📋 今日待檢查班級 + 外掃區域',table(['狀態','班級','外掃區域'],me.classes.map(c=>({狀態:done.includes(c)?'✅ 已檢查':'⏳ 待檢查',班級:c,外掃區域:AREAS[c]})))+`<p class="cap">💡 若區域顯示「未設定」，請通知管理員到 Google Sheet 的 class_areas 分頁補資料。</p>`);
+    if(!me.classes.includes(U.cls))U.cls=miss[0]||me.classes[0];h+=radio('cls','選擇負責班級',me.classes,{v:true});cls=U.cls;
+    if(U.role==='外掃檢查')h+=al('info',`📍 <b>${esc(cls)}</b> 外掃區域：<b>${esc(AREAS[cls])}</b>`);
+  }else{h+=al('info','📍 今日任務：機動/隊長/組長自由巡查');h+=radio('grade','步驟 A: 選擇年級',GRADES);if(!CLASSES[U.grade].includes(U.cls))U.cls=CLASSES[U.grade][0];h+=radio('cls','步驟 B: 選擇班級',CLASSES[U.grade]);cls=U.cls}
+  h+='<hr class="div">';
+  if(S.records.some(r=>r.日期===U.idate&&r.班級===cls&&r.檢查人員===U.insp&&r.評分項目.startsWith(U.role)))h+=al('warn',`⚠️ 今日已評過 ${esc(cls)}！`);
+  h+=radio('result','檢查結果',['⭐ 優良','✅ 普通','❌ 違規(需扣分)']);
+  if(U.result==='⭐ 優良')h+=`<p class="cap">⏳ 優良紀錄將送交組長審核，審核通過前學生端顯示為「普通」。</p>`;
+  if(U.result==='✅ 普通')h+=`<p class="cap">✅ 無扣分，表現普通。如有需要可在下方填寫備註（選填）。</p>`;
+  if(U.result==='❌ 違規(需扣分)'){
+    if(U.role==='內掃檢查')h+=inp('inPts','內掃扣分',{type:'number',step:1,min:0})+`<b>📍 違規位置（可複選）</b>`+multi('posSel','違規位置',IN_POS)+`<b>⚠️ 違規狀況（可複選）</b>`+multi('stSel','違規狀況',IN_ST);
+    else{h+=inp('outPts','外掃扣分',{type:'number',step:1,min:0})+`<b>📍 違規位置</b><div class="row">${sel('bld','大樓',Object.keys(BUILDINGS),{fmtf:x=>x||'（請選擇）'})}${sel('flr','樓層',BUILDINGS[U.bld]||[''],{re:false,fmtf:x=>x||'—'})}</div><b>⚠️ 違規項目（可複選）</b>`+multi('itemSel','違規項目',OUT_ITEMS)+`<b>⚠️ 違規狀況（可複選）</b>`+multi('stSel','違規狀況',OUT_ST)}
+    h+=inp('extra','📝 其他補充（找不到對應選項時請在此輸入）');
+  }
+  h+=`<div class="box">${chk('fix','🚩 這是修正單')}${U.result!=='❌ 違規(需扣分)'?inp('note',U.result==='⭐ 優良'?'📝 優良原因（選填）':'📝 備註（選填）',{ph:U.result==='⭐ 優良'?'請簡單描述優良原因，例如：地板乾淨、掃具整齊':'可填寫備註，例如：掃得不夠乾淨但未達扣分標準，下次請加強'}):''}${al('info','📸 照片請上傳至【糾察社群群組】：無論髒或乾淨都要拍照（註明掃區＋日期），以示負責。系統端不需附照，送出更快！')}${btn('submitScore','送出','p')}</div>`;
+  return h;
+}
+function pTrash(){let h=al('info','🗑️ 資源回收與垃圾檢查 (每日每班此項目總扣分上限2分將於結算時自動卡控)');
+  h+=radio('trashCat','步驟 A: 選擇垃圾類別',TRASH)+radio('trashTarget','步驟 B: 篩選檢查對象',['各處室 (外掃)',...GRADES]);
+  const isOff=U.trashTarget==='各處室 (外掃)';const list=isOff?OFFICES.map(o=>({key:o[0],a:o[0],b:o[1]})):CLASSES[U.trashTarget].map(c=>({key:c,a:c}));
+  h+=`<div class="tw"><table><thead><tr>${isOff?'<th>處室/區域</th><th>負責班級</th>':'<th>班級</th>'}<th>🗑️ 未倒垃圾（扣1分）</th><th>♻️ 未做好分類（扣1分）</th></tr></thead><tbody>${list.map(r=>`<tr><td>${esc(r.a)}</td>${isOff?`<td>${esc(r.b)}</td>`:''}${['未倒垃圾','未做好分類'].map(t=>`<td><input type="checkbox" aria-label="${esc(r.a)} ${t}" data-tm="${esc(r.key)}|${t}" ${U.trashMarks[r.key+'|'+t]?'checked':''}></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  return h+btn('submitTrash',`💾 登記違規 (${U.trashCat} - ${isOff?'各處室':U.trashTarget})`);}
+
+/* ---------- 頁面：班級負責人 ---------- */
+function pClass(){let h=`<h1 class="pg">🔎 班級成績查詢</h1>`+radio('cGrade','選擇年級',GRADES);if(!CLASSES[U.cGrade].includes(U.cCls))U.cCls=CLASSES[U.cGrade][0];h+=sel('cCls','選擇班級',CLASSES[U.cGrade]);
+  const cls=U.cCls;const wk=weekStats(CUR_WEEK)[cls].ded;const sem=weekStats(null)[cls].ded;
+  h+=`<div class="sum"><div style="border-color:#3182ce"><div class="l">本週扣分</div><div class="v" style="color:${wk?'#e53e3e':'#38a169'}">${wk} 分</div></div><div style="border-color:#805ad5"><div class="l">待處理申訴</div><div class="v" style="color:#38a169">0 件</div></div><div style="border-color:#dd6b20"><div class="l">學期累計扣分</div><div class="v" style="color:${sem?'#e53e3e':'#38a169'}">${sem} 分</div></div></div>`;
+  h+=tabs('cTab',['📋 扣分明細','🏆 各週排名']);
+  if(U.cTab===0){const rs=S.records.filter(r=>r.班級===cls).sort((a,b)=>b.登錄時間.localeCompare(a.登錄時間));if(!rs.length)return h+al('ok','🎉 目前沒有任何評分紀錄！');
+    h+=rs.slice(0,30).map(r=>{let k,bg,bd,pb,pc,pt;const it=r.評分項目.replace('(待審優良)','(普通)');
+      if(r.修正){[bg,bd,pb,pc,pt]=['#f0fff4','#38a169','#c6f6d5','#276749','🛠️ 已修正']}
+      else if(/\(優良\)/.test(it)){[bg,bd,pb,pc,pt]=['#f0fff4','#68d391','#c6f6d5','#276749','⭐ 優良']}
+      else if(/\(普通\)/.test(it)){[bg,bd,pb,pc,pt]=['#f7fafc','#a0aec0','#edf2f7','#4a5568','✅ 普通']}
+      else{[bg,bd,pb,pc,pt]=['#fff5f5','#fc8181','#fed7d7','#9b2c2c',`❌ 扣 ${dedOf(r)} 分`]}
+      return `<div class="rec" style="background:${bg};border-color:${bd}"><div class="top"><span><b>${esc(r.日期)}</b> <span class="cap">第${r.週次}週</span></span><span class="pill" style="background:${pb};color:${pc}">${pt}</span></div><div style="font-size:13px;color:#4a5568">🧑‍✈️ ${esc(r.檢查人員)} | 📌 ${esc(it)} | 📝 ${esc(r.備註)}</div><div style="font-size:12px;color:#718096">登錄：${esc(r.登錄時間)}</div>${isScored(r)?`<details class="ex"><summary>📋 查看詳情</summary><div class="in">${al('info','📣 對扣分不服者，請於 <b>3 日內</b>之中午時間，由衛生股長至衛生組提出申訴。')}</div></details>`:''}</div>`}).join('');
+    return h}
+  const ws=Object.keys(S.published).map(Number).sort((a,b)=>b-a);if(!ws.length)return h+al('info','📭 組長尚未發布任何週次的成績，請耐心等候！');
+  if(!ws.includes(U.cWeek))U.cWeek=ws[0];h+=sel('cWeek','選擇查詢週次',ws,{fmtf:w=>`第 ${w} 週`});const P=S.published[U.cWeek];const me=P.rows.find(r=>r.班級===cls);
+  if(me){const [bg,bd]=me.總扣分===0?['#f0fff4','#38a169']:me.總扣分<=3?['#fffbeb','#f6ad55']:['#fff5f5','#fc8181'];h+=`<div class="bigrank" style="background:${bg};border-color:${bd}"><div class="cap" style="font-size:14px">第 ${U.cWeek} 週 · ${esc(cls)}</div><div class="n">#${me.排名}</div><div>總成績 ${me.總成績} 分 | 扣分 ${me.總扣分} 分 | ⭐ 優良評分 ${me.優良次數} 次</div></div>`}
+  const g=gradeOf(cls);h+=`<h4>${P.mode==='全校'?'全校完整排名':esc(g)+' 完整排名'}</h4>`+table(P.mode==='全校'?['排名','年級','班級','總扣分','優良次數','總成績']:['排名','班級','總扣分','優良次數','總成績'],P.rows.filter(r=>P.mode==='全校'||r.年級===g))+`<p class="cap">發布時間：${esc(P.at)}</p>`;return h}
+
+/* ---------- 頁面：組長ㄉ窩 ---------- */
+function pAdmin(){let h=`<h1 class="pg">⚙️ 管理後台</h1><div class="metrics">${metric('待處理','0')}${metric('失敗','0')}${metric('延遲(s)','0')}${metric('背景 Worker','🟢 正常運作','心跳: 12秒前 | 成功: ✅ 30秒前')}</div>`;
+  if(!U.authA)return h+`<div class="box">${inp('pwA','管理密碼',{type:'password',ph:'示範版：隨便輸入都可以'})}${btn('loginA','登入')}</div>`+al('info','👆 示範版：密碼隨便輸入，按「登入」即可。');
+  const T=['📈 儀表板與明細','🙋 出勤點名','📣 申訴','⭐ 優良審核','📊 成績總表','⚙️ 設定','🎖️ 服務時數發放','🤝 愛校與欠時管理'];h+=tabs('aTab',T);
+  if(U.flashA[U.aTab])h+=al(U.flashA[U.aTab][0],U.flashA[U.aTab][1]);
+  return h+[tDash,tRoll,tAppeal,tExc,tSum,tSet,tHours,tDebt][U.aTab]();}
+function tDash(){const ws=[...new Set(S.records.map(r=>r.週次))].sort((a,b)=>b-a);if(!ws.includes(U.dashWeek))U.dashWeek=ws[0];
+  let h=`<h2>📈 扣分儀表板</h2><p class="cap">💡 即時概況（含待審核與修正前的原始資料），正式成績仍以「📊 成績總表」的結算為準。</p>`+sel('dashWeek','檢視週次',ws,{fmtf:w=>`第 ${w} 週`});
+  {const sr=S.records.filter(r=>r.日期===U.slipDate&&isScored(r)&&dedOf(r)>0);const sc=new Set(sr.map(r=>r.班級)).size;
+   h+=ex('🖨️ 督核單批次列印',`<p class="cap">選擇日期後，系統將該日所有扣分紀錄依班級彙整，每班一張督核單（A4 一頁兩張）。示範版改為直接在畫面上預覽。</p>${inp('slipDate','督核單日期',{type:'date',re:true})}<p>${sr.length?`📄 這天有 <b>${sr.length}</b> 筆扣分、<b>${sc}</b> 個班級，會印出 <b>${sc}</b> 張督核單。`:'🎉 這天沒有扣分紀錄。'}</p>${btn('previewSlip','👀 預覽督核單','g')}`,true)+`<hr class="div">`}
+  const rs=S.records.filter(r=>r.週次===U.dashWeek&&isScored(r));const by={};rs.forEach(r=>by[r.班級]=(by[r.班級]||0)+dedOf(r));
+  h+=`<div class="metrics">${metric(`第 ${U.dashWeek} 週扣分筆數`,rs.length)}${metric(`第 ${U.dashWeek} 週扣分總點數`,rs.reduce((a,r)=>a+dedOf(r),0))}${metric('被扣分班級數',Object.keys(by).length)}</div>`;
+  const recent=S.records.filter(r=>r.週次>U.dashWeek-4&&r.週次<=U.dashWeek&&isScored(r));const vc={};recent.forEach(r=>String(r.違規細項||'').split('、').filter(Boolean).forEach(v=>vc[v]=(vc[v]||0)+1));
+  const top=Object.entries(vc).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  h+=`<div class="row"><div class="f"><h4>🔻 各班扣分排行（第 ${U.dashWeek} 週）</h4>${Object.keys(by).length?bars(Object.entries(by).sort((a,b)=>b[1]-a[1])):al('ok','🎉 本週目前無扣分紀錄！')}</div><div class="f"><h4>🧾 常見違規細項 Top 10（近四週）</h4>${top.length?bars(top,{color:'#dd6b20',vertical:true}):al('info','近四週沒有違規細項紀錄。')}<p class="cap">👉 從這裡看出全校最常發生的問題：是該「教方法」，還是該「加強盯場」。</p></div></div>`;
+  const weeks=[U.dashWeek-3,U.dashWeek-2,U.dashWeek-1,U.dashWeek].filter(w=>w>=1);const tot={};recent.forEach(r=>tot[r.班級]=(tot[r.班級]||0)+dedOf(r));const top8=Object.entries(tot).sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0]);
+  h+=`<h4>📉 近四週各班扣分趨勢</h4>${lines(top8.map(c=>({n:c,v:weeks.map(w=>S.records.filter(r=>r.週次===w&&r.班級===c&&isScored(r)).reduce((a,r)=>a+dedOf(r),0))})),weeks)}<p class="cap">僅顯示近四週扣分最多的前 8 個班級，避免線條過多。</p>`;
+  const t5=w=>{const m={};S.records.filter(r=>r.週次===w&&isScored(r)).forEach(r=>m[r.班級]=(m[r.班級]||0)+dedOf(r));return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,5).map(x=>x[0])};const both=t5(U.dashWeek).filter(c=>t5(U.dashWeek-1).includes(c));
+  if(both.length)h+=al('warn',`🚨 <b>連續兩週進入扣分前五名：</b> ${esc(both.join('、'))}　→ 建議私下與導師聊聊，或安排糾察示範正確打掃方法。`);
+  h+=`<hr class="div"><h2>📝 扣分明細</h2>`+table(['登錄時間','日期','班級','評分項目','檢查人員','備註','違規細項','紀錄ID'],S.records.filter(isScored).sort((a,b)=>b.登錄時間.localeCompare(a.登錄時間)).slice(0,40));
+  return h}
+function tRoll(){let h=`<h2>🙋 出勤點名</h2>`+radio('rcTeam','點名隊別',['🧹 衛生糾察','♻️ 環保糾察 (資收場)'])+'<hr class="div">';
+  if(U.rcTeam==='🧹 衛生糾察'){const reg=INSPECTORS.filter(p=>/內掃|外掃|隊長/.test(p.role)).map(p=>p.id),mob=INSPECTORS.filter(p=>/機動/.test(p.role)).map(p=>p.id);
+    h+=al('info','💡 說明：衛生糾察每天全員應勤（機動人員除外）。一般糾察採【扣除法】勾缺席者；機動人員採【加入法】勾有到者。送出即發放當日時數。')+inp('rcDate','出勤日期',{type:'date'})+inp('rcHours','每人發放時數 (小時)',{type:'number',step:.25,min:0,max:8})+`<p class="cap">💡 定案標準：衛生糾察每次執勤 15 分鐘（0.25 小時）。開會、大掃除等額外時數請至「🎖️ 服務時數發放」處理。</p>`;
+    const go=reg.filter(x=>!U.rcAbsent.includes(x)).concat(U.rcMobile);
+    h+=`<div class="box"><p>📋 每日應勤名單共 ${reg.length} 人</p>${multi('rcAbsent','❌ 勾選【請假 / 未到】的糾察 (扣除法)',reg,{re:true})}${multi('rcMobile','🟠 機動人員【今日有出勤】者 (加入法)',mob,{re:true})}<p>✅ 預計發放對象：共 ${go.length} 人 (每人 ${U.rcHours} 小時)</p>${btn('rollHy','🚀 發放衛生糾察時數','p')}</div>`}
+  else{const eco=INSPECTORS.filter(p=>/垃圾|回收|環保/.test(p.role));const tag=U.rcShift.includes('中午')?'中午':'下午';const list=eco.filter(p=>p.role.includes(tag)).map(p=>p.id);
+    h+=al('info','💡 說明：此區專為資收場的環保糾察設計。先選班別，再勾選沒來的人，系統會自動幫有來的人發放時數。')+radio('rcShift','點名班別',['🕛 中午班 (資收場整理)','🕒 下午班 (垃圾管制)']);
+    const hrs=tag==='中午'?0.33:0.25;h+=`<div class="box"><p>資收場糾察名單共 ${list.length} 人（每人 ${hrs} 小時）</p>${multi('rcAbsent','❌ 勾選【請假 / 未到】的糾察 (扣除法)',list,{re:true})}<p>✅ 預計發放對象：${esc(list.filter(x=>!U.rcAbsent.includes(x)).join('、')||'（無）')}</p>${btn('rollEco','🚀 發放環保糾察時數','p')}</div>`}
+  return h}
+function tAppeal(){let h=`<h2>📣 申訴與撤分</h2><p class="cap">線上申訴管道已關閉：申訴一律採現場制（扣分後 3 日內之中午，由衛生股長至衛生組提出）。申訴成立時，在下方直接撤銷該筆扣分。</p>`;
+  const lim=fmt(addDays(now,-14));const rs=S.records.filter(r=>isScored(r)&&r.日期>=lim).sort((a,b)=>b.登錄時間.localeCompare(a.登錄時間));
+  if(!rs.length)return h+al('info','近 14 天沒有可撤銷的扣分紀錄。');
+  const lab=r=>`${r.日期}｜${r.班級}｜${r.評分項目}｜扣 ${dedOf(r)} 分｜${String(r.違規細項||r.備註).slice(0,20)}｜ID:${r.紀錄ID}`;
+  if(!rs.some(r=>r.紀錄ID===U.undoSel))U.undoSel=rs[0].紀錄ID;
+  const id=nid();h+=`<div class="box"><h4>↩️ 撤銷扣分</h4><div class="f"><label class="lab" for="${id}">選擇要撤銷的扣分紀錄（近 14 天內）</label><select id="${id}" data-k="undoSel">${rs.map(r=>`<option value="${esc(r.紀錄ID)}" ${r.紀錄ID===U.undoSel?'selected':''}>${esc(lab(r))}</option>`).join('')}</select></div>${inp('undoReason','撤分原因（必填，會寫入該筆備註留下紀錄）',{ph:'例如：現場申訴成立／糾察誤評'})}${chk('undoOk','我確認要撤銷這筆扣分（撤銷後成績自動重算）')}${btn('undo','↩️ 確認撤分')}</div>`;return h}
+function tExc(){let h=`<h2>⭐ 優良審核</h2>`;const ps=S.records.filter(r=>/待審優良/.test(r.評分項目));if(!ps.length)return h+al('ok','🎉 目前沒有待審核的優良紀錄！');
+  h+=`<p class="cap">共 ${ps.length} 筆待審核，審核後不會跳頁，可以繼續審核其他筆。</p>`;
+  return h+ps.map(r=>`<div class="box"><div class="row"><div class="f" style="flex:2 1 260px"><p>⭐ <b>${esc(r.班級)}</b> | ${esc(r.檢查人員)}</p><p class="cap">${esc(r.日期)} | ${esc(r.評分項目)}</p><p>📝 ${esc(r.備註)}</p></div><div class="f" style="flex:1 1 160px">${btn('exOk:'+r.紀錄ID,'✅ 核可優良')}${btn('exNo:'+r.紀錄ID,'🚫 駁回(改普通)','o')}</div></div></div>`).join('')}
+function tSum(){const ws=[...new Set(S.records.map(r=>r.週次))].sort((a,b)=>a-b);if(!ws.includes(U.sumWeek))U.sumWeek=ws[ws.length-1];
+  let h=`<h2>📊 成績總表</h2>`+tabs('sumTab',['📅 單週成績結算','🏆 全學期總結算']);
+  if((U.sumTab||0)===0){h+=sel('sumWeek','請選擇結算週次',ws,{fmtf:w=>`第 ${w} 週`})+al('info','💡 系統偵測目前為 <b>上學期</b>，預設採用 <b>年級 (上學期制)</b> 排名。')+radio('sumMode','排名方式 (可手動更改)',['年級','全校'])+`<div class="copy">${btn('calcWeek','🚀 計算並顯示當週成績')}${btn('reload','🔄 重新讀取資料','o')}</div>`;
+    if(U.sumShown===U.sumWeek){const rows=rank(U.sumWeek,U.sumMode);if(U.sumMode==='年級')GRADES.forEach(g=>h+=`<h4>${g} 排名</h4>`+table(['排名','班級','總扣分','優良次數','總成績','評等'],rows.filter(r=>r.年級===g)));else h+=table(['排名','年級','班級','總扣分','優良次數','總成績','評等'],rows);
+      const det=S.records.filter(r=>r.週次===U.sumWeek&&isScored(r)).map(r=>({...r,總扣分:dedOf(r)}));h+=`<hr class="div"><h4>📋 第 ${U.sumWeek} 週扣分明細（共 ${det.length} 筆）</h4>`+table(['日期','班級','評分項目','檢查人員','總扣分','備註'],det);
+      h+=al('info',`💡 計算完成後，可將第 ${U.sumWeek} 週成績發布給學生查詢。`)+btn('publish',`📢 發布第 ${U.sumWeek} 週成績給學生`)}}
+  else{h+=`<p>計算全學期累計總扣分與總成績</p>`+radio('semMode','學期排名方式',['全校','年級'])+btn('calcSem','🚀 計算並顯示全學期成績');if(U.semShown){const rows=rank(null,U.semMode);h+=table(U.semMode==='全校'?['排名','年級','班級','總扣分','優良次數','總成績']:['排名','年級','班級','總扣分','優良次數','總成績'],rows)}}
+  return h}
+function tSet(){if(!U.dailyIn)U.dailyIn=S.hyTask;return `<h2>⚙️ 系統設定與維護</h2><div class="f"><span class="lab">開學日</span><b>${fmt(SEM_START)}</b><span class="cap">（示範版固定，讓今天剛好是第 ${CUR_WEEK} 週）</span></div><hr class="div"><h4>📢 衛生糾察每日廣播/提醒</h4>${area('dailyIn','請輸入想給糾察隊看的話（例如：今天重點檢查黑板、窗台）')}${btn('saveTask','💾 更新糾察任務')}<hr class="div"><h4>🔧 系統連線狀態</h4>${al('ok','✅ Google Sheets 連線正常（示範版：使用網頁內的虛構資料）')}${al('info','若需修改名單請直接至 Google Sheet 修改 inspectors / roster / office_areas 分頁')}`}
+function tHours(){let h=`<h2>🎖️ 服務時數發放</h2><div class="row">${inp('shDate','日期',{type:'date'})}${sel('shCat','活動類別',['返校打掃','校外服務','社區服務','班級義工'])}</div>${inp('shNote','備註（選填）',{ph:'例如：返校打掃第一梯次'})}<hr class="div">`+radio('shMode','發放對象模式',['🏫 班級模式','👮 衛生糾察隊全員']);
+  if(U.shMode==='🏫 班級模式'){h+=sel('shCls','選擇班級',ALL);const mem=ROSTER[U.shCls];U.shEx=U.shEx.filter(x=>mem.includes(x));U.shAbs=U.shAbs.filter(x=>mem.includes(x));
+    if(U.shCat==='返校打掃'){const att=mem.filter(x=>!U.shEx.includes(x)&&!U.shAbs.includes(x));h+=al('info',`📋 全班 ${mem.length} 人，請標記「免除」和「未到」的同學，其餘預設為出席。`)+multi('shEx','🏃 免除名單（體育生等不需打掃的同學）',mem,{re:true})+multi('shAbs','❌ 未到名單（需補時數 2hr 的同學）',mem,{re:true})+`<div class="metrics">${metric('✅ 出席',att.length+' 人')}${metric('🏃 免除',U.shEx.length+' 人')}${metric('❌ 未到',U.shAbs.length+' 人')}</div><div class="row">${inp('shHours','出席者時數',{type:'number',step:.5,min:0})}${inp('shDebt','未到者欠時數',{type:'number',step:.5,min:0})}</div>`+btn('giveCls','🚀 發放時數 + 登記未到欠時','p')}
+    else h+=multi('shAbs',`❌ 缺席名單（共 ${mem.length} 人，扣除法）`,mem,{re:true})+inp('shHours','基礎時數',{type:'number',step:.5,min:0})+btn('giveCls','🚀 發放','p')}
+  else{const team=INSPECTORS.filter(p=>!/垃圾|回收|環保/.test(p.role)).map(p=>p.id);h+=al('info',`📋 👮 <b>衛生糾察隊</b>共 <b>${team.length}</b> 人。請勾選<b>未到 / 請假</b>的同學，其餘預設視為出席。`)+multi('shAbs','❌ 未到 / 請假名單（扣除法）',team,{re:true})+`<p><b>✅ 預計發放對象：共 ${team.filter(x=>!U.shAbs.includes(x)).length} 人</b></p>`+inp('shHours','時數（全體統一）',{type:'number',step:.5,min:0})+btn('giveTeam','🚀 發放 👮 衛生糾察隊時數','p')}
+  const recent=S.service.slice(-8).reverse();h+=`<hr class="div"><h4>🧾 最近發放紀錄</h4>`+table(['日期','學號','班級','類別','時數'],recent);
+  h+=ex('📥 匯出學校正規時數檔（期末交給幹事用）',`<p class="cap">彙總 service_hours 各學生時數 → 反查名冊 → 產出與學校格式相同的「服務學習證明登錄表」。示範版改為直接在畫面上預覽。</p>${rosterBox('座號、姓名')}${btn('previewHours','👀 預覽服務學習證明登錄表','g')}`,true);return h}
+function tDebt(){let h=`<h2>🤝 愛校與欠時管理</h2>`;
+  h+=ex('✅ 愛校完成登記（現場版）',`<p class="cap">學生現場完成愛校工作後，在此登記。系統將自動處理：🟢 還時數→扣抵欠時＋寫入補打掃時數；🔔 消警告→寫入消警告紀錄（之後到下方「🖨️ 銷過單核發」產製表單）。</p><div class="row">${inp('dbDate','完成日期',{type:'date'})}${radio('dbPurpose','登記目的',['🟢 還時數（補打掃）','🔔 消警告'])}</div><div class="row">${inp('dbHours','時數 (小時)',{type:'number',step:.25,min:.25,max:8})}${inp('dbStart','開始時間（選填，會印在銷過單上）',{ph:'例如：12:10'})}</div>${inp('dbWork','工作內容（必填，例如：資收場整理、川堂拖地）')}${area('dbIds','學號（可多位，用逗號、空白或換行分隔）',{ph:'例如：392001, 392003'})}${chk('dbOk','我確認以上學生已完成愛校工作')}${btn('dbSubmit','📝 送出登記')}`);
+  let sb=btn('settle','🚀 結算滿 1 小時警告名單');if(U.settle){const hit=Object.values(S.debts.reduce((m,d)=>{(m[d.學號]=m[d.學號]||{學號:d.學號,班級:d.班級,未完成時數:0}).未完成時數+=d.時數;return m},{})).filter(x=>x.未完成時數>=1).map(x=>({...x,應記警告支數:Math.floor(x.未完成時數),結算後剩餘欠時:x.未完成時數-Math.floor(x.未完成時數)}));
+    sb+=hit.length?al('warn',`⚠️ 共有 <b>${hit.length}</b> 位學生達到記警告門檻：`)+table(['學號','班級','未完成時數','應記警告支數','結算後剩餘欠時'],hit):al('ok','🎉 目前沒有學生達到記警告的門檻！')}
+  h+=ex('⚠️ 欠時懲處結算報表',sb);
+  let lb=al('info','💡 一鍵產生通知文字，直接複製貼到 LINE 群組。')+btn('lineTxt','📢 產生提醒訊息');if(U.lineTxt!=null){lb+=`<div class="f"><label class="lab" for="lineTA">📋 複製以下文字貼到 LINE 群組</label><textarea id="lineTA" style="min-height:260px" readonly>${esc(U.lineTxt)}</textarea></div><div class="copy">${btn('copyLine','📋 複製文字','o')}<span class="cap" id="copyMsg"></span></div>`}
+  h+=ex('📢 欠時數提醒通知',lb,U.lineTxt!=null);
+  let sl=al('info','🔒 <b>個資不落地</b>：資料庫只存學號，不存姓名。要印單時才把學校名冊放進「這個頁面的記憶體」，關閉或重新整理頁面就消失，不會寫回任何雲端。');
+  sl+=rosterBox('姓名');
+  sl+=`<hr class="div">`+al('info','💡 系統自動查詢所有「愛校服務(消警告)」紀錄，一鍵產製所有學生的《愛校服務申請單》。')+btn('slipQuery','🔎 查詢消警告紀錄');
+  if(U.slipQuery){const recs=S.service.filter(s=>s.類別==='愛校服務(消警告)');const by={};recs.forEach(s=>{const k=s.學號;(by[k]=by[k]||{學號:k,班級:s.realClass||'',服務筆數:0,總時數:0,未:0}).服務筆數++;by[k].總時數+=+s.時數;if(!s.核發狀態)by[k].未++});const rows=Object.values(by).map(x=>({...x,姓名:SESSION_ROSTER?.[x.學號]?.姓名||'（未載入）',狀態:x.未?'⏳ 未核發':'✅ 已核發'}));
+    sl+=al('ok',`✅ 共找到 <b>${recs.length}</b> 筆消警告紀錄，涵蓋 <b>${rows.length}</b> 位學生：`)+table(['學號','姓名','班級','服務筆數','總時數','狀態'],rows);if(!rows.some(r=>r.學號===U.slipStu))U.slipStu=rows[0]?.學號||'';
+    sl+=`<hr class="div"><h4>📥 選擇單一學生預覽</h4>`+sel('slipStu','選擇學生',rows.map(r=>r.學號),{re:false,fmtf:k=>{const r=by[k];return `${k} (${r.班級}, ${r.總時數}h, ${r.服務筆數}筆)`}})+btn('previewForm','👀 預覽愛校服務申請單','g')}
+  h+=ex('🖨️ 銷過單核發 (消警告單)',sl);return h}
+
+/* ---------- 列印預覽 ---------- */
+function modal(title,inner){$('#modal').innerHTML=`<div class="mask" role="dialog" aria-modal="true" aria-label="${esc(title)}"><div class="sheet"><div class="bar"><b>${esc(title)}</b><button type="button" class="btn o" data-act="closeModal">✕ 關閉預覽</button></div><p class="cap" style="font-family:var(--font)">示範版只提供畫面預覽；正式系統會下載成檔案再列印。</p><div class="paper">${inner}</div></div></div>`;$('#modal .btn').focus()}
+function slipHTML(date){const rs=S.records.filter(r=>r.日期===date&&isScored(r)&&dedOf(r)>0&&dedOf(r)<=20);if(!rs.length)return null;const by={};rs.forEach(r=>(by[r.班級]=by[r.班級]||[]).push(r));
+  return Object.entries(by).map(([c,list])=>`<div class="slip"><h2>示範學校 整潔缺失督核單</h2><div>班級：<b>${esc(c)}</b>　　日期：${esc(date)}</div><table><thead><tr><th style="width:18%">檢查項目</th><th>缺失事項</th><th style="width:10%">扣分</th><th style="width:20%">檢查糾察</th></tr></thead><tbody>${list.map(r=>`<tr><td>${esc(r.評分項目)}</td><td>${esc([r.違規細項,r.備註].filter(Boolean).join('、')||'（見評分紀錄）')}</td><td style="text-align:center;font-weight:900;font-size:16px">${dedOf(r)}</td><td>${esc(r.檢查人員)}</td></tr>`).join('')}</tbody></table><div>隊長確認：＿＿＿＿＿＿　衛生股長：＿＿＿＿＿＿　<b>導師簽名：＿＿＿＿＿＿</b></div><div style="font-size:13px;color:#333">※ 對扣分不服者，請於 <b>3 日內</b>之中午時間至衛生組提出申訴。本單經導師簽名後，請衛生股長繳回衛生組。</div></div>`).join('')}
+function formHTML(sid){const recs=S.service.filter(s=>s.類別==='愛校服務(消警告)'&&s.學號===sid);const cls=recs[0]?.realClass||SESSION_ROSTER?.[sid]?.班級||'';const tot=recs.reduce((a,s)=>a+ +s.時數,0);
+  const rows=Array.from({length:8},(_,i)=>{const s=recs[i];if(!s)return `<tr><td>&nbsp;</td><td></td><td colspan="2"></td><td></td><td></td><td></td></tr>`;const [w,st]=s.班級.split('|');const [hh,mm]=st.split(':').map(Number);const e=new Date(2000,0,1,hh,mm+s.時數*60);return `<tr><td>消警告</td><td></td><td colspan="2" style="text-align:left">${esc(w)}</td><td>${esc(s.日期)}<br>${esc(st)}~${pad(e.getHours())}:${pad(e.getMinutes())}</td><td></td><td>${s.時數}</td></tr>`}).join('');
+  const roc=now.getFullYear()-1911;return `<table class="formt"><tr><td colspan="7" class="tt">示範學校學生銷過『愛校服務』申請表</td></tr><tr><th>班　級</th><td>${esc(cls)}</td><th>姓　名</th><td>${SESSION_ROSTER?.[sid]?esc(SESSION_ROSTER[sid].姓名):'<span style="color:#999">（未載入名冊，請手寫）</span>'}</td><th>學　號</th><td colspan="2">${esc(sid)}</td></tr><tr><th>愛校事由</th><th>獎懲<br>缺曠日期<br>(年月日)</th><th colspan="2">工作內容</th><th>愛校時間<br>起迄</th><th>師長驗收<br>簽章</th><th>累計<br>時數</th></tr>${rows}<tr><th colspan="5">合計愛校時數</th><td colspan="2"><b>${tot}</b></td></tr><tr><th colspan="7">審　查　簽　核</th></tr><tr><th colspan="2">導師</th><th colspan="2">生輔組長</th><th>學務主任</th><th colspan="2">校長</th></tr><tr><td colspan="2" style="height:56px"></td><td colspan="2"></td><td></td><td colspan="2"></td></tr><tr><td colspan="7" style="text-align:left;border:0">注意：愛校服務申請：銷警告 1 次需愛校服務累計 1 小時。</td></tr><tr><td colspan="7" style="text-align:left;border:0;font-size:12px">（本表由衛生組系統自動產製，僅供消警告使用，不得銷過。列印日期：民國 ${roc} 年 ${now.getMonth()+1} 月 ${now.getDate()} 日）</td></tr></table>`}
+function hoursHTML(){const sum={};S.service.filter(s=>!/消警告/.test(s.類別)).forEach(s=>{const act=/衛生糾察/.test(s.類別)?'衛生糾察值勤':/回收|環保/.test(s.類別)?'資源回收場值勤':s.類別.split('｜')[0];const k=s.學號+'|'+act;(sum[k]=sum[k]||{學號:s.學號,班級:s.班級,活動:act,地點:/校外|社區/.test(act)?'校外':'校內',時數:0}).時數+=+s.時數});
+  const rows=Object.values(sum).slice(0,20);const roc=now.getFullYear()-1911;const rng=`${roc}0801~${roc}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+  return `<table class="formt"><tr><td colspan="9" class="tt">示範學校服務學習證明登錄表</td></tr><tr><th>班級</th><th>座號</th><th>學號<br>(務必輸入)</th><th>姓名</th><th>服務活動名稱<br>(事由)</th><th>服務類別<br>(填入代號)</th><th>地點</th><th>日期</th><th>時數</th></tr>${rows.map(r=>`<tr><td>${esc(r.班級||SESSION_ROSTER?.[r.學號]?.班級||'')}</td><td>${esc(SESSION_ROSTER?.[r.學號]?.座號||'')}</td><td>${esc(r.學號)}</td><td>${esc(SESSION_ROSTER?.[r.學號]?.姓名||'')}</td><td>${esc(r.活動)}</td><td>C043</td><td>${r.地點}</td><td>${rng}</td><td>${Math.round(r.時數*100)/100}</td></tr>`).join('')||'<tr><td colspan="9">（尚無時數資料：先到上方發放一次時數再預覽）</td></tr>'}<tr><td colspan="9" style="text-align:left">◎學號欄請務必輸入才可匯入校務系統，核章後請將紙本送至學務處。</td></tr><tr><td colspan="3" style="text-align:left">簽表人：</td><td colspan="2" style="text-align:left">單位主管：</td><td colspan="3" style="text-align:left">學務處認證人：</td><td style="text-align:left">認證日期：</td></tr></table>`}
+
+/* ---------- 動作 ---------- */
+const A={
+ loginI(){U.authI=true},loginA(){U.authA=true},
+ submitScore(){const me=INSPECTORS.find(p=>`學號: ${p.id}`===U.insp);const cls=U.cls;const t=new Date();
+  if(U.idate>TODAY){U.flash=['err','⛔ 檢查日期不能是未來日期，無法送出。'];return}
+  const base={日期:U.idate,週次:weekOf(U.idate),班級:cls,檢查人員:U.insp,登錄時間:ts(t),修正:false,紀錄ID:rid(t)};
+  if(U.result==='⭐ 優良'){S.records.push(rec({...base,評分項目:U.role+'(待審優良)',備註:U.note?'優良原因：'+U.note:'本次檢查表現優良，無扣分項目（待組長審核）'}));U.flash=['ok','⭐ 優良紀錄已送出！等待組長審核中...']}
+  else if(U.result==='✅ 普通'){S.records.push(rec({...base,評分項目:U.role+'(普通)',備註:U.note||'本次檢查無扣分，表現普通'}));U.flash=['ok','✅ 普通紀錄已登記！']}
+  else{let note,det,pts;if(U.role==='內掃檢查'){pts=+U.inPts||0;det=U.stSel.join('、');note=`位置：${U.posSel.join('、')||'—'} | 狀況：${det||'—'}${U.extra?' | '+U.extra:''}`;S.records.push(rec({...base,評分項目:'內掃檢查',內掃原始分:pts,備註:(pts?'':'【警告，扣0分】')+note,違規細項:det}))}
+   else{pts=+U.outPts||0;det=U.stSel.join('、');note=`掃區：${AREAS[cls]} | ${U.bld||'—'} | ${U.flr||'—'} | 項目：${U.itemSel.join('、')||'—'} | 狀況：${det||'—'}${U.extra?' | '+U.extra:''}`;S.records.push(rec({...base,評分項目:'外掃檢查',外掃原始分:pts,備註:(pts?'':'【警告，扣0分】')+note,違規細項:det}))}
+   const miss=me.classes.filter(c=>!S.records.some(r=>r.日期===U.idate&&r.班級===c&&r.檢查人員===U.insp&&r.評分項目.startsWith(U.role)));
+   U.flash=['ok',me.classes.length?(miss.length?`✅ 送出成功！尚缺 ${miss.length} 個班級，請繼續努力！`:'✅ 送出成功！今日任務已全數完成，系統將自動核發 0.25 小時！'):'✅ 送出成功！系統將自動排程發放本日 0.25 小時。']}
+  U.posSel=[];U.stSel=[];U.itemSel=[];U.extra='';U.note='';U.fix=false;
+  if(me.classes.length){const nx=me.classes.find(c=>!S.records.some(r=>r.日期===U.idate&&r.班級===c&&r.檢查人員===U.insp&&r.評分項目.startsWith(U.role)));if(nx)U.cls=nx}},
+ submitTrash(){const marks=Object.entries(U.trashMarks).filter(([k,v])=>v);if(!marks.length){U.flash=['warn','⚠️ 請先勾選違規項目。'];return}const by={};marks.forEach(([k])=>{const [key,t]=k.split('|');(by[key]=by[key]||[]).push(t)});const t=new Date();
+  Object.entries(by).forEach(([key,ts2])=>{const off=OFFICES.find(o=>o[0]===key);const cls=off?off[1]:key;S.records.push(rec({日期:U.idate,週次:weekOf(U.idate),班級:cls,評分項目:'垃圾/回收檢查',檢查人員:U.insp,垃圾原始分:ts2.length,備註:off?`外掃(${key})-${U.trashCat}(${ts2.join(',')})`:`內掃-${U.trashCat}(${ts2.join(',')})`,違規細項:U.trashCat,登錄時間:ts(t),紀錄ID:rid(t)}))});
+  U.flash=['ok',`✅ 已登記 ${Object.keys(by).length} 筆違規！`];U.trashMarks={}},
+ previewSlip(){const h=slipHTML(U.slipDate);if(!h){U.flashA[0]=['ok',`🎉 ${U.slipDate} 沒有扣分紀錄，不需要印督核單。`];return}modal(`督核單（${U.slipDate}）`,h)},
+ rollHy(){const reg=INSPECTORS.filter(p=>/內掃|外掃|隊長/.test(p.role)).map(p=>p.id);const go=reg.filter(x=>!U.rcAbsent.includes(x)).concat(U.rcMobile);go.forEach(id=>S.service.push({日期:U.rcDate||TODAY,學號:id,班級:'糾察隊',類別:'衛生糾察值勤',時數:+U.rcHours}));U.flashA[1]=['ok',`✅ 已排程發放 ${go.length} 人的出勤時數！(系統會自動阻擋同一天的重複發放)`];U.rcAbsent=[];U.rcMobile=[]},
+ rollEco(){const tag=U.rcShift.includes('中午')?'中午':'下午';const list=INSPECTORS.filter(p=>/垃圾|回收|環保/.test(p.role)&&p.role.includes(tag)).map(p=>p.id).filter(x=>!U.rcAbsent.includes(x));list.forEach(id=>S.service.push({日期:TODAY,學號:id,班級:'糾察隊',類別:`資源回收糾察(${tag})`,時數:tag==='中午'?.33:.25}));U.flashA[1]=['ok',`✅ 已排程發放 ${list.length} 人的出勤時數！`];U.rcAbsent=[]},
+ undo(){if(!U.undoReason.trim()){U.flashA[2]=['err','❌ 請填寫撤分原因'];return}if(!U.undoOk){U.flashA[2]=['warn','⚠️ 請先勾選確認'];return}const r=S.records.find(x=>x.紀錄ID===U.undoSel);if(r){r.修正=true;r.備註+=` | 【組長撤分】${U.undoReason}`}U.flashA[2]=['ok','✅ 已排入撤分佇列，約 10–30 秒後生效，儀表板與成績將自動重算。（示範版：已立即生效）'];U.undoReason='';U.undoOk=false},
+ calcWeek(){U.sumShown=U.sumWeek},reload(){U.flashA[4]=['ok','已重新讀取資料。']},calcSem(){U.semShown=true},
+ publish(){S.published[U.sumWeek]={rows:rank(U.sumWeek,U.sumMode),mode:U.sumMode,at:ts(new Date()).slice(0,16)};U.flashA[4]=['ok',`✅ 第 ${U.sumWeek} 週成績已發布！學生現在可以查詢。（到「班級負責人🥸 → 🏆 各週排名」就看得到）`]},
+ saveTask(){S.hyTask=U.dailyIn;U.flashA[5]=['ok','✅ 糾察任務已更新！糾察隊現在起會看到最新廣播。']},
+ giveCls(){const mem=ROSTER[U.shCls];const cat=U.shCat+(U.shNote?'｜'+U.shNote:'');const att=mem.filter(x=>!U.shEx.includes(x)&&!U.shAbs.includes(x));att.forEach(id=>S.service.push({日期:U.shDate,學號:id,班級:U.shCls,類別:cat,時數:+U.shHours}));
+  let msg=`✅ 已發放！出席 ${att.length} 人 (${U.shHours}h)`;if(U.shCat==='返校打掃'){U.shAbs.forEach(id=>{S.debts.push({學號:id,班級:U.shCls,時數:+U.shDebt,備註:`${U.shDate} 返校打掃未到`});S.debtHist.push({學號:id,異動時數:+U.shDebt})});msg+=`　|　🏃 免除 ${U.shEx.length} 人（不處理）　|　❌ 未到 ${U.shAbs.length} 人已登記欠時 ${U.shDebt}hr`}
+  U.flashA[6]=['ok',msg];U.shEx=[];U.shAbs=[]},
+ giveTeam(){const team=INSPECTORS.filter(p=>!/垃圾|回收|環保/.test(p.role)).map(p=>p.id).filter(x=>!U.shAbs.includes(x));team.forEach(id=>S.service.push({日期:U.shDate,學號:id,班級:'糾察隊',類別:U.shCat,時數:+U.shHours}));U.flashA[6]=['ok',`✅ 已排程發放 ${team.length} 位 衛生糾察 各 ${U.shHours}h 時數！（類別：${U.shCat}）`];U.shAbs=[]},
+ previewHours(){modal('服務學習證明登錄表（預覽）',hoursHTML())},
+ dbSubmit(){const ids=U.dbIds.split(/[\s,，、]+/).map(s=>s.trim()).filter(Boolean);if(!ids.length){U.flashA[7]=['err','❌ 請輸入至少一位學號'];return}if(!U.dbWork.trim()){U.flashA[7]=['err','❌ 請填寫工作內容'];return}if(!U.dbOk){U.flashA[7]=['warn','⚠️ 請先勾選確認'];return}
+  const h=+U.dbHours;if(U.dbPurpose.includes('消警告')){ids.forEach(id=>{const c=S.debts.find(d=>d.學號===id)?.班級||ALL.find(c=>ROSTER[c].includes(id))||'';S.service.push({日期:U.dbDate,學號:id,班級:`${U.dbWork}|${U.dbStart||'—'}`,類別:'愛校服務(消警告)',時數:h,核發狀態:'',realClass:c})});U.slipQuery=false}
+  else{ids.forEach(id=>{let left=h;S.debts.filter(d=>d.學號===id).forEach(d=>{const x=Math.min(d.時數,left);d.時數-=x;left-=x});S.debts=S.debts.filter(d=>d.時數>0);S.service.push({日期:U.dbDate,學號:id,班級:'愛校打掃',類別:'返校打掃(補打掃)',時數:h})})}
+  U.flashA[7]=['ok',`✅ 已排入處理佇列（${ids.length} 人，${U.dbPurpose.includes('消警告')?'消警告':'還時數'}）。約 10–30 秒後生效；${U.dbPurpose.includes('消警告')?'消警告請稍後至「🖨️ 銷過單核發」產製表單。':'欠時已自動扣抵。'}（示範版：已立即生效）`];U.dbIds='';U.dbWork='';U.dbOk=false;U.settle=null;U.lineTxt=null},
+ settle(){U.settle=true},
+ lineTxt(){const by={};S.debts.forEach(d=>(by[d.班級]=by[d.班級]||[]).push(d));const n=new Set(S.debts.map(d=>d.學號)).size;U.lineTxt=n?`⚠️ 返校打掃欠時數提醒\n\n${Object.entries(by).map(([c,l])=>`📌 ${c}\n${l.map(d=>`  • ${d.學號}（${d.時數}hr）　${d.備註}`).join('\n')}`).join('\n\n')}\n\n共 ${n} 位同學，請盡速安排補打掃。\n逾期未完成將依規定記警告處分。`:'🎉 目前沒有欠時的同學！'},
+ copyLine(){const ta=$('#lineTA');const m=$('#copyMsg');const done=()=>{m.textContent='✅ 已複製，可以貼到 LINE 了'};try{navigator.clipboard.writeText(ta.value).then(done,()=>{ta.select();m.textContent='已幫你選取文字，請按 Ctrl+C（手機長按）複製'})}catch(e){ta.select();m.textContent='已幫你選取文字，請按 Ctrl+C（手機長按）複製'}},
+ slipQuery(){U.slipQuery=true},
+ loadRoster(){SESSION_ROSTER=buildFakeRoster()},
+ clearRoster(){SESSION_ROSTER=null},
+ previewForm(){if(!U.slipStu)return;modal(`愛校服務申請單（${U.slipStu}）`,formHTML(U.slipStu))},
+ closeModal(){$('#modal').innerHTML=''},
+};
+const NORERENDER=new Set(['copyLine','closeModal','previewForm','previewHours']);
+
+/* ---------- 渲染與事件 ---------- */
+function render(){$('#nav').innerHTML=MODES.map((m,i)=>`<button type="button" aria-pressed="${U.mode===i}" data-mode="${i}">${m}</button>`).join('');
+  $('#root').innerHTML=[pInspector,pClass,pAdmin][U.mode]();}
+document.addEventListener('click',e=>{const m=e.target.closest('[data-mode]');if(m){U.mode=+m.dataset.mode;U.flash=null;render();window.scrollTo(0,0);return}
+  const t=e.target.closest('[data-tab]');if(t){U[t.dataset.tab]=+t.dataset.i;render();return}
+  const b=e.target.closest('[data-act]');if(b){const [a,arg]=b.dataset.act.split(':');if(a==='exOk'||a==='exNo'){const r=S.records.find(x=>x.紀錄ID===arg);if(r){r.評分項目=r.評分項目.replace('(待審優良)',a==='exOk'?'(優良)':'(普通)');U.flashA[3]=a==='exOk'?['ok',`✅ 已核可為優良！（${r.班級}）`]:['info',`已改為普通。（${r.班級}）`]}render();return}
+    if(A[a]){A[a](arg);if(!NORERENDER.has(a))render()}return}
+  if(e.target.classList.contains('mask'))A.closeModal();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#modal').innerHTML)A.closeModal()});
+document.addEventListener('input',e=>{const el=e.target;if(el.dataset.k&&el.type!=='radio'&&el.type!=='checkbox'&&el.tagName!=='SELECT'){U[el.dataset.k]=el.type==='number'?el.value:el.value}});
+document.addEventListener('change',e=>{const el=e.target;
+  if(el.dataset.tm){U.trashMarks[el.dataset.tm]=el.checked;return}
+  if(el.dataset.m){const k=el.dataset.m;U[k]=el.checked?[...U[k],el.value]:U[k].filter(x=>x!==el.value)}
+  else if(el.dataset.k){U[el.dataset.k]=el.type==='checkbox'?el.checked:el.value;if(el.dataset.k==='bld')U.flr=''}
+  else return;
+  if(el.type==='radio'||el.tagName==='SELECT'||el.hasAttribute('data-re')){if(['pre','insp','role','cls','grade','result','trashCat','trashTarget'].includes(el.dataset.k))U.flash=null;if(['rcTeam','rcShift'].includes(el.dataset.k))U.rcAbsent=[];if(el.dataset.k==='shMode'||el.dataset.k==='shCls')U.shAbs=[],U.shEx=[];render()}});
+U.cls='';render();
+})();
+</script>
