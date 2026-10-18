@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>鳳姨搶答</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+/* 學生端：手機直式 */
+body{font-size:17px;padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px;min-height:calc(100vh - 34px)}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{margin:0;font-size:1.25rem;font-weight:900}
+.me{font-weight:900;background:#fff;border:2px solid var(--ink);border-radius:999px;padding:1px 12px;font-variant-numeric:tabular-nums;max-width:64%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.me i{font-style:normal;display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:0}
+section{display:flex;flex-direction:column;gap:14px}
+.center{align-items:center;text-align:center}
+.char{width:min(46vw,200px)}
+.say{font-size:1.35rem;font-weight:900;margin:0}
+.qhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qno{font-weight:900;color:var(--muted)}
+.tleft{margin-left:auto;font-size:1.6rem;font-weight:900;font-variant-numeric:tabular-nums}
+.qtext{margin:0;font-size:1.15rem;font-weight:800;line-height:1.55;white-space:pre-line}
+.cellgrid{grid-template-columns:4.6em repeat(2,minmax(0,1fr));gap:8px}
+.cellgrid .ch{font-size:.9rem;padding:4px 6px}
+.cellgrid .rh{font-size:.85rem;padding:4px}
+button.cellopt{font-family:var(--font);font-size:1.05rem;color:var(--ink);min-height:88px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+button.cellopt:active,button.mcopt:active{transform:translateY(4px);box-shadow:none}
+.mcgrid{grid-template-columns:1fr}
+button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+.numbox{display:flex;flex-direction:column;gap:10px}
+.numbox .pre{font-size:2rem;font-weight:900;text-align:center;font-variant-numeric:tabular-nums;min-height:1.4em}
+.numbox input{font-size:1.6rem;font-weight:900;text-align:right;border:3px solid var(--ink);border-radius:14px;padding:10px 14px;width:100%;font-variant-numeric:tabular-nums}
+.numbox input:focus-visible{outline:4px solid var(--sun)}
+.result{font-size:4rem;font-weight:900;line-height:1}
+.result.ok{color:var(--yes)}.result.bad{color:var(--no)}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}
+.stat{background:#fff;border:2.5px solid var(--ink);border-radius:14px;padding:8px;text-align:center;font-weight:900}
+.stat b{display:block;font-size:1.6rem;font-variant-numeric:tabular-nums}
+.mine{font-weight:800}
+.bg-bad{background:var(--no-soft)}
+/* 分組揭曉 */
+.teamcard{width:100%;border:3px solid var(--ink);border-radius:22px;box-shadow:0 6px 0 var(--ink);color:#fff;padding:22px 16px;display:flex;flex-direction:column;align-items:center;gap:6px;transition:background .2s}
+.teamcard .lab{font-weight:900;font-size:1rem;opacity:.9}
+.teamcard .tname{font-size:2.6rem;font-weight:900;line-height:1.2}
+.teamcard .tsub{font-weight:800}
+.landed{animation:land .6s cubic-bezier(.3,1.6,.5,1)}
+@keyframes land{0%{transform:scale(.8)}100%{transform:none}}
+.gainbox{width:100%;border-radius:16px;border:3px solid var(--ink);padding:10px 14px;font-weight:900;color:#fff;display:flex;flex-direction:column;gap:2px}
+.gainbox .g{font-size:1.8rem;font-variant-numeric:tabular-nums}
+.teambar{height:8px;border-radius:999px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>鳳姨搶答</h1>
+    <span class="me" id="meTag" hidden></span>
+  </header>
+
+  <!-- 加入 -->
+  <section id="join" class="card">
+    <div class="char bob" id="joinChar" style="align-self:center;width:min(36vw,150px)"></div>
+    <label class="field">房號（看大螢幕）
+      <input id="room" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="4 位數">
+    </label>
+    <label class="field">學號
+      <input id="sid" inputmode="numeric" maxlength="12" autocomplete="off" placeholder="輸入你的學號">
+    </label>
+    <p class="muted" style="margin:0;font-size:.95rem">學號只會記在老師的紀錄表，大螢幕只顯示末三碼。</p>
+    <button class="btn go" type="button" id="btnJoin">加入 →</button>
+    <p class="err" id="joinErr"></p>
+  </section>
+
+  <!-- 等待 -->
+  <section id="wait" class="center" hidden>
+    <div class="char bob" id="waitChar"></div>
+    <p class="say" id="waitText">加入成功！等老師分組…</p>
+    <p class="muted" style="margin:0">看大螢幕，分組會突然開始喔！</p>
+  </section>
+
+  <!-- 分組揭曉 -->
+  <section id="grouped" class="center" hidden>
+    <p class="say" id="gSay">分組中…</p>
+    <div class="teamcard" id="gCard" style="background:#22262B">
+      <span class="lab" id="gNo">你是…</span>
+      <span class="tname" id="gName">？？？？</span>
+      <span class="tsub" id="gSub"></span>
+    </div>
+    <p class="muted" style="margin:0">全組一起答對，分數就會一直往上加！</p>
+  </section>
+
+  <!-- 作答 -->
+  <section id="q" hidden>
+    <div class="teambar" id="qTeamBar"></div>
+    <div class="qhead"><span class="tag" id="qRound"></span><span class="qno" id="qNo"></span><span class="tleft" id="qLeft"></span></div>
+    <div class="timer" id="qBar"><i style="width:100%"></i></div>
+    <div class="card" style="padding:14px 16px"><p class="qtext" id="qText"></p></div>
+    <div id="qOpts"></div>
+  </section>
+
+  <!-- 已送出 -->
+  <section id="sent" class="center" hidden>
+    <div class="char bob" id="sentChar"></div>
+    <p class="say">已送出！</p>
+    <div class="card mine" id="sentVal" style="width:100%"></div>
+    <p class="muted" style="margin:0">等老師公布答案…</p>
+  </section>
+
+  <!-- 結果 -->
+  <section id="res" class="center" hidden>
+    <div class="result" id="rMark"></div>
+    <p class="say" id="rSay"></p>
+    <div class="gainbox" id="rGainBox">
+      <span id="rTeamLine"></span>
+      <span class="g" id="rGain"></span>
+    </div>
+    <div class="stats">
+      <div class="stat">組別總分<b id="rScore">0</b></div>
+      <div class="stat">組別名次<b id="rRank">-</b></div>
+    </div>
+    <div class="card" style="width:100%;text-align:left;display:flex;flex-direction:column;gap:8px">
+      <div class="mine" id="rAns"></div>
+      <div class="plain"><span class="lab">白話</span><span id="rPlain"></span></div>
+      <div class="formula" id="rFormula"></div>
+    </div>
+  </section>
+
+  <!-- 結束 -->
+  <section id="end" class="center" hidden>
+    <div class="char bob" id="endChar"></div>
+    <p class="say" id="eSay">盤點完成！</p>
+    <div class="stats">
+      <div class="stat">組別名次<b id="eRank">-</b></div>
+      <div class="stat">組別總分<b id="eScore">0</b></div>
+    </div>
+    <p class="muted" id="eOk" style="margin:0"></p>
+  </section>
+</div>
+
+<script src="config.js"></script>
+<script src="common.js"></script>
+<script>
+(function(){
+  var B = window.Battle, $ = function(id){ return document.getElementById(id); };
+  var LS = { get: function(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+             set: function(k, v){ try { localStorage.setItem(k, v); } catch(e){} },
+             del: function(k){ try { localStorage.removeItem(k); } catch(e){} } };
+  ['joinChar','waitChar','sentChar','endChar'].forEach(function(id){ $(id).innerHTML = B.CHAR; });
+  B.setFace($('waitChar'), 'happy'); B.setFace($('endChar'), 'happy');
+
+  var params = new URLSearchParams(location.search);
+  var room = params.get('room') || LS.get('battle_last_room') || '';
+  var pid = null;
+  var offset = 0, last = null, viewKey = '', sending = false, pollT = null, tickT = null, revealedTeam = '';
+  $('room').value = room;
+  if (!B.apiReady()) $('joinErr').textContent = '這個網頁還沒設定後端網址，請跟老師說。';
+
+  var VIEWS = ['join','wait','grouped','q','sent','res','end'];
+  function show(id){ VIEWS.forEach(function(v){ $(v).hidden = v !== id; }); $('meTag').hidden = id === 'join'; }
+
+  var ERR = { no_room: '找不到這個房號，看一下大螢幕。', no_sid: '請輸入學號。', full: '人數已滿。', not_joined: '你被移出房間了，請確認學號後重新加入。' };
+
+  /* ---------- 加入 ---------- */
+  function doJoin(){
+    room = $('room').value.replace(/\D/g, '');
+    var sid = $('sid').value.replace(/[^0-9A-Za-z]/g, '');
+    if (room.length !== 4){ $('joinErr').textContent = '房號是 4 位數字。'; return; }
+    if (sid.length < 3){ $('joinErr').textContent = '請輸入完整學號。'; return; }
+    $('btnJoin').disabled = true; $('joinErr').textContent = '';
+    B.api('join', { room: room, sid: sid }).then(function(res){
+      $('btnJoin').disabled = false;
+      if (!res.ok){ $('joinErr').textContent = ERR[res.err] || ('加入失敗：' + res.err); return; }
+      pid = res.pid;
+      LS.set('battle_pid_' + room, pid); LS.set('battle_last_room', room);
+      show('wait'); viewKey = 'wait'; poll();
+    }).catch(function(){ $('btnJoin').disabled = false; $('joinErr').textContent = '連線失敗，再按一次試試。'; });
+  }
+  $('btnJoin').addEventListener('click', doJoin);
+  $('sid').addEventListener('keydown', function(e){ if (e.key === 'Enter') doJoin(); });
+
+  // 重新整理後自動回到房間
+  if (room && LS.get('battle_pid_' + room) && B.apiReady()){
+    pid = LS.get('battle_pid_' + room);
+    revealedTeam = LS.get('battle_team_shown_' + room) || '';
+    poll();
+  }
+
+  /* ---------- 輪詢 ---------- */
+  function poll(){
+    if (pollT) clearTimeout(pollT);
+    if (!pid) return;
+    B.api('poll', { room: room, pid: pid }).then(function(res){
+      if (!res.ok){
+        if (res.err === 'not_joined' || res.err === 'no_room'){
+          LS.del('battle_pid_' + room); pid = null; show('join');
+          $('joinErr').textContent = res.err === 'no_room' ? '這場已經結束了，請看大螢幕的新房號。' : ERR.not_joined;
+          return;
+        }
+      } else handle(res);
+      pollT = setTimeout(poll, res.phase === 'lobby' ? 2000 : 1500);
+    }).catch(function(){ pollT = setTimeout(poll, 3000); });
+  }
+
+  function teamTag(res){
+    var t = res.myTeam;
+    $('meTag').innerHTML = '';
+    if (t){ var i = document.createElement('i'); i.style.background = B.teamColor(t.id); $('meTag').appendChild(i); }
+    $('meTag').appendChild(document.createTextNode('…' + String(res.me.sid).slice(-3) + (t ? '・' + t.name : '')));
+  }
+
+  function handle(res){
+    offset = res.now - Date.now();
+    last = res;
+    teamTag(res);
+    var tkey = res.myTeam ? res.myTeam.id + ':' + res.myTeam.name : '';
+    var key = res.phase + ':' + res.q + ':' + (res.mine !== null && res.mine !== undefined ? 'a' : '-') + ':' + tkey;
+    if (key === viewKey) return;
+    viewKey = key;
+    if (res.phase === 'lobby'){ show('wait'); $('waitText').textContent = '加入成功！等老師分組…'; }
+    else if (res.phase === 'grouped') showGrouped(res);
+    else if (res.phase === 'question'){
+      if (res.mine !== null && res.mine !== undefined) showSent(res, res.mine);
+      else showQuestion(res);
+    }
+    else if (res.phase === 'reveal') showResult(res);
+    else if (res.phase === 'end') showEnd(res);
+  }
+
+  /* ---------- 分組揭曉（拉霸動畫） ---------- */
+  function showGrouped(res){
+    show('grouped');
+    var t = res.myTeam;
+    if (!t){ $('gSay').textContent = '分組中…'; return; }
+    var tkey = room + ':' + t.id + ':' + t.name;
+    var names = res.teamNames || B.TEAM_NAMES;
+    function land(){
+      $('gCard').style.background = B.teamColor(t.id);
+      $('gNo').textContent = '你是第 ' + (t.id + 1) + ' 組';
+      $('gName').textContent = t.name;
+      $('gSub').textContent = '組員 ' + t.size + ' 人，加油！';
+      $('gSay').textContent = '分組完成！';
+      $('gCard').classList.remove('landed'); void $('gCard').offsetWidth; $('gCard').classList.add('landed');
+    }
+    if (revealedTeam === tkey){ land(); return; }
+    revealedTeam = tkey; LS.set('battle_team_shown_' + room, tkey);
+    $('gSay').textContent = '分組中…';
+    var n = 0, total = 22, delay = 70;
+    (function spin(){
+      var i = (Math.random() * names.length) | 0;
+      $('gCard').style.background = B.teamColor(i);
+      $('gNo').textContent = '你是…';
+      $('gName').textContent = names[i];
+      $('gSub').textContent = '';
+      n++;
+      if (n >= total) return land();
+      delay = delay * 1.09;
+      setTimeout(spin, delay);
+    })();
+  }
+
+  /* ---------- 作答 ---------- */
+  function showQuestion(res){
+    var p = res.pub;
+    show('q'); sending = false;
+    $('qTeamBar').style.background = res.myTeam ? B.teamColor(res.myTeam.id) : 'transparent';
+    $('qRound').textContent = p.round;
+    $('qNo').textContent = '第 ' + (res.q + 1) + ' / ' + res.total + ' 題';
+    $('qText').textContent = p.text;
+    var box = $('qOpts'); box.innerHTML = '';
+    if (p.type === 'cell'){
+      box.innerHTML = '<div class="cellgrid"><div class="ch blank"></div><div class="ch in">在倉庫裡</div><div class="ch out">不在倉庫裡</div>' +
+        '<div class="rh mine">是我的存貨</div>' + cellBtn(0, '倉庫內', '是存貨') + cellBtn(1, '倉庫外', '是存貨') +
+        '<div class="rh not">不是我的存貨</div>' + cellBtn(2, '倉庫內', '不是存貨') + cellBtn(3, '倉庫外', '不是存貨') + '</div>';
+    } else if (p.type === 'mc'){
+      box.innerHTML = '<div class="mcgrid">' + p.options.map(function(o, i){
+        return '<button type="button" class="mcopt o' + i + '" data-v="' + i + '"><span class="s">' + B.SHAPES[i] + '</span><span>' + B.esc(o) + '</span></button>';
+      }).join('') + '</div>';
+    } else {
+      box.innerHTML = '<div class="numbox"><div class="pre" id="numPre"></div><input id="numIn" inputmode="numeric" autocomplete="off" placeholder="輸入金額"><button type="button" class="btn go" id="numGo">送出</button></div>';
+      var inp = $('numIn');
+      inp.addEventListener('input', function(){
+        var d = inp.value.replace(/[^\d]/g, '');
+        $('numPre').textContent = d ? B.money(Number(d)) : '';
+      });
+      inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') submitNum(); });
+      $('numGo').addEventListener('click', submitNum);
+    }
+    Array.prototype.slice.call(box.querySelectorAll('[data-v]')).forEach(function(b){
+      b.addEventListener('click', function(){ submit(Number(b.dataset.v)); });
+    });
+    if (tickT) clearInterval(tickT);
+    tickT = setInterval(tick, 250); tick();
+  }
+  function cellBtn(i, a, b){ return '<button type="button" class="cellopt o' + i + '" data-v="' + i + '"><span class="k">' + (i + 1) + '</span>' + a + '<br>' + b + '</button>'; }
+  function submitNum(){
+    var d = $('numIn').value.replace(/[^\d]/g, '');
+    if (!d){ $('numIn').focus(); return; }
+    submit(Number(d));
+  }
+  function tick(){
+    if (!last || last.phase !== 'question') return;
+    var left = Math.max(0, last.startAt + last.dur * 1000 - (Date.now() + offset));
+    var s = Math.ceil(left / 1000);
+    $('qLeft').textContent = s;
+    $('qBar').firstElementChild.style.width = (left / (last.dur * 1000) * 100) + '%';
+    $('qBar').classList.toggle('low', s <= 5);
+  }
+  function submit(v){
+    if (sending || !last) return;
+    sending = true;
+    Array.prototype.slice.call(document.querySelectorAll('#qOpts button')).forEach(function(b){ b.disabled = true; });
+    showSent(last, v, true);
+    B.api('answer', { room: room, pid: pid, q: last.q, v: v }).then(function(res){
+      if (!res.ok){
+        var msg = res.err === 'late' || res.err === 'closed' ? '時間到了，這題沒有收到 QQ' : '送出失敗：' + res.err;
+        $('sentVal').textContent = msg; $('sentVal').className = 'card mine bg-bad';
+      } else {
+        viewKey = 'question:' + last.q + ':a:' + (last.myTeam ? last.myTeam.id + ':' + last.myTeam.name : '');
+        $('sentVal').textContent = '你的答案：' + ansText(last.pub, v);
+      }
+    }).catch(function(){
+      sending = false; showQuestion(last);
+      var m = document.createElement('p'); m.className = 'err'; m.textContent = '網路不穩，沒送出去，請再按一次。';
+      $('qOpts').prepend(m);
+    });
+  }
+  function ansText(pub, v){
+    if (v === null || v === undefined) return '沒有作答';
+    if (pub.type === 'num') return B.money(v);
+    return (pub.type === 'mc' ? B.SHAPES[v] + ' ' : '') + (pub.options[v] || '');
+  }
+  function showSent(res, v, pending){
+    show('sent');
+    $('sentVal').className = 'card mine';
+    $('sentVal').textContent = '你的答案：' + ansText(res.pub, v) + (pending ? '（送出中…）' : '');
+  }
+
+  /* ---------- 結果 ---------- */
+  function showResult(res){
+    if (tickT) clearInterval(tickT);
+    show('res');
+    var r = res.myRes || {}, pub = res.pub, ok = !!r.c, t = res.myTeam, g = res.teamGain;
+    $('rMark').textContent = r.none ? '–' : (ok ? '○' : '×');
+    $('rMark').className = 'result ' + (ok ? 'ok' : 'bad');
+    $('rSay').textContent = r.none ? '這題沒有作答，組員幫你扛了！' : (ok ? '答對了！幫組上加分！' : '可惜，答錯了');
+    if (t && g){
+      $('rGainBox').hidden = false;
+      $('rGainBox').style.background = B.teamColor(t.id);
+      $('rTeamLine').textContent = t.name + '：' + g.right + ' / ' + g.size + ' 人答對' + (g.full ? '，全組答對加碼！' : '');
+      $('rGain').textContent = '+' + g.gain + ' 分';
+      $('rScore').textContent = t.score;
+      $('rRank').textContent = t.rank + ' / ' + res.teamCount;
+    } else { $('rGainBox').hidden = true; }
+    $('rAns').textContent = '正解：' + ansText(pub, res.reveal.answer) + (r.none ? '' : '　你答：' + ansText(pub, res.mine));
+    $('rPlain').textContent = res.reveal.plain;
+    $('rFormula').textContent = res.reveal.formula;
+  }
+  function showEnd(res){
+    if (tickT) clearInterval(tickT);
+    show('end');
+    var t = res.myTeam;
+    if (t){
+      $('eSay').textContent = '「' + t.name + '」第 ' + t.rank + ' 名！';
+      $('eRank').textContent = t.rank + ' / ' + res.teamCount;
+      $('eScore').textContent = t.score;
+    }
+    $('eOk').textContent = '你個人答對 ' + res.me.ok + ' / ' + res.total + ' 題，看大螢幕的頒獎台！';
+  }
+})();
+</script>
+</body>
+</html>
