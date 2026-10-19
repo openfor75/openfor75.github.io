@@ -177,6 +177,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
         <button class="btn go" type="button" id="btnGroup" disabled>隨機分組 →</button>
       </div>
       <p class="muted" style="margin:0">學生輸入學號加入，這裡只顯示學號末三碼。打錯的點兩下可以移除。</p>
+      <div class="row"><button class="btn ghost" type="button" id="btnBots">＋ 加入 5 個機器人同學（自己測試用）</button><span class="muted" style="font-size:.85em">機器人公布答案時才作答、約 6 成答對，不會寫進試算表</span></div>
       <div class="players" id="players"></div>
     </div>
   </section>
@@ -238,6 +239,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     <h2>盤點完成！各組最終排名</h2>
     <div class="podium" id="podium"></div>
     <div class="card rest" id="restWrap"><ol class="lb" id="endList"></ol></div>
+    <p class="muted" id="practiceHint" style="margin:0;font-weight:800"></p>
     <button class="btn" type="button" id="btnHome">回設定頁</button>
   </section>
 </div>
@@ -260,7 +262,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
 
   var key = LS.get('battle_host_key') || '';
   var deck = [], durs = [];   // 這一場的題目（QUESTIONS 的索引）與每題秒數
-  var st = null, players = [], offset = 0;
+  var st = null, players = [], humans = 0, offset = 0;
   var revealing = false, timeUp = false, pollTimer = null, tickTimer = null;
   var prevScores = null;
 
@@ -371,13 +373,13 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
   }
   function renderPlayers(){
     $('lobbyCount').textContent = players.length;
-    $('btnGroup').disabled = players.length < 2;
+    $('btnGroup').disabled = players.length < 1;
     var box = $('players'), have = {}, want = {};
     Array.prototype.slice.call(box.children).forEach(function(c){ have[c.dataset.pid] = c; });
     players.forEach(function(p){
       want[p.pid] = 1;
       if (have[p.pid]) return;
-      var c = document.createElement('button'); c.type = 'button'; c.className = 'chip pop'; c.dataset.pid = p.pid; c.textContent = p.tag;
+      var c = document.createElement('button'); c.type = 'button'; c.className = 'chip pop'; c.dataset.pid = p.pid; c.textContent = (p.bot ? '🤖 ' : '') + p.tag;
       c.addEventListener('click', function(){
         if (!c.classList.contains('kill')){ c.classList.add('kill'); c.textContent = '移除 ' + p.tag + '？'; setTimeout(function(){ if (c.isConnected){ c.classList.remove('kill'); c.textContent = p.tag; } }, 3000); return; }
         call('hostKick', { pid: p.pid }).then(function(){ c.remove(); });
@@ -400,6 +402,13 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     }).catch(function(e){ $('btnGroup').disabled = false; $('btnRegroup').disabled = false; alertBar('分組失敗：' + (e.message || e)); });
   }
   $('btnGroup').addEventListener('click', doGroup);
+  $('btnBots').addEventListener('click', function(){
+    $('btnBots').disabled = true;
+    call('hostAddBots', { n: 5 }).then(function(res){
+      $('btnBots').disabled = false;
+      if (res.ok){ players = res.players || players; renderPlayers(); renderHeader(); }
+    }).catch(function(){ $('btnBots').disabled = false; });
+  });
   $('btnRegroup').addEventListener('click', doGroup);
 
   function renderTeams(animate){
@@ -467,12 +476,12 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     var loop = function(){
       call('hostStatus').then(function(res){
         if (!res.ok || !res.state) return;
-        players = res.players || []; renderHeader();
+        players = res.players || []; humans = res.humans != null ? res.humans : players.length; renderHeader();
         if (!$('lobby').hidden) renderPlayers();
         if (!$('grouping').hidden) syncLateJoiners();
         if (!$('question').hidden){
-          $('qCount').textContent = res.answered || 0; $('qTotal').textContent = players.length;
-          if (players.length && res.answered >= players.length) doReveal();
+          $('qCount').textContent = res.answered || 0; $('qTotal').textContent = humans;
+          if (humans && res.answered >= humans) doReveal();
         }
       }).catch(function(){}).then(function(){ pollTimer = setTimeout(loop, 1300); });
     };
@@ -535,7 +544,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     $('qNo').textContent = '第 ' + (st.q + 1) + ' / ' + deck.length + ' 題';
     $('qText').textContent = q.text; $('qText').classList.toggle('long', q.text.length > 60);
     $('qOpts').innerHTML = optsHtml(q, q.options, 'q');
-    $('qCount').textContent = '0'; $('qTotal').textContent = players.length;
+    $('qCount').textContent = '0'; $('qTotal').textContent = humans;
     $('btnReveal').disabled = false;
     if (tickTimer) clearInterval(tickTimer);
     tickTimer = setInterval(tick, 200); tick();
@@ -614,6 +623,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
       }).join('');
       $('endList').innerHTML = r.slice(3).map(function(t, i){ return '<li><span>' + (i + 4) + '</span><span><span style="color:' + B.teamColor(t.id) + '">●</span> ' + B.esc(t.name) + '</span><span>' + t.score + ' 分</span></li>'; }).join('');
       $('restWrap').hidden = r.length <= 3;
+      $('practiceHint').textContent = '回家想再練：' + joinUrl().split('index.html')[0] + 'practice.html';
     });
   }
   $('btnHome').addEventListener('click', function(){ show('setup'); checkResume(); });

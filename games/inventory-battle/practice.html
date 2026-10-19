@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>鳳姨搶答・自己練習</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<link rel="stylesheet" href="style.css">
+<style>
+/* 自己練習：手機、電腦都能用，不連後端、不用學號 */
+body{font-size:17px;padding:max(14px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(24px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.3rem;font-weight:900}
+section{display:flex;flex-direction:column;gap:14px}
+.rounds{display:flex;flex-direction:column;gap:8px}
+.rounds label,.opt{display:flex;align-items:center;gap:10px;font-weight:800;border:2px solid var(--line);border-radius:12px;padding:8px 12px;background:#fff;cursor:pointer}
+.rounds input,.opt input{width:22px;height:22px;accent-color:var(--yes);flex:none}
+.modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.best{font-weight:800;color:var(--muted);margin:0}
+.qhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.qno{font-weight:900;color:var(--muted);font-variant-numeric:tabular-nums}
+.tleft{margin-left:auto;font-size:1.5rem;font-weight:900;font-variant-numeric:tabular-nums}
+.qrow{display:flex;gap:12px;align-items:flex-start}
+.qrow .char{width:86px;flex:none}
+.qtext{margin:0;font-size:1.15rem;font-weight:800;line-height:1.6;white-space:pre-line}
+.cellgrid{grid-template-columns:5em repeat(2,minmax(0,1fr));gap:8px}
+button.cellopt,button.mcopt{font-family:var(--font);cursor:pointer;box-shadow:0 4px 0 var(--ink)}
+button.cellopt{font-size:1.05rem;color:var(--ink);min-height:84px}
+button.cellopt:active,button.mcopt:active{transform:translateY(4px);box-shadow:none}
+button.mcopt{font-size:1.05rem;min-height:58px}
+.mcgrid{grid-template-columns:1fr}
+button[disabled]{cursor:default}
+.picked{outline:4px solid var(--ink);outline-offset:3px}
+.right{outline:5px solid var(--yes);outline-offset:3px}
+.faded{opacity:.45}
+.numbox{display:flex;flex-direction:column;gap:10px}
+.numbox .pre{font-size:1.8rem;font-weight:900;text-align:center;font-variant-numeric:tabular-nums;min-height:1.4em}
+.numbox input{font-size:1.5rem;font-weight:900;text-align:right;border:3px solid var(--ink);border-radius:14px;padding:10px 14px;width:100%;font-variant-numeric:tabular-nums}
+.fb{display:flex;flex-direction:column;gap:10px}
+.verdict{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:900;flex-wrap:wrap}
+.mark{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:50%;color:#fff;flex:none}
+.ok .mark{background:var(--yes)}.bad .mark{background:var(--no)}
+.big{font-size:3rem;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.misslist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.misslist li{border:2px solid var(--no);background:var(--no-soft);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.misslist b{white-space:pre-line}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row .btn{flex:1 1 180px}
+@media (max-width:480px){ .modes{grid-template-columns:1fr} .qrow .char{width:64px} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>鳳姨搶答・自己練習</h1>
+    <span class="tag">不用登入、不用學號</span>
+  </header>
+
+  <!-- 選題 -->
+  <section id="setup" class="card">
+    <div class="qrow"><div class="char bob" id="setupChar"></div><p style="margin:0;font-weight:800">上課沒答好沒關係，回家自己多練幾次！答完每一題都會馬上告訴你為什麼。</p></div>
+    <div class="field">要練哪些？
+      <div class="rounds" id="roundPick"></div>
+    </div>
+    <div class="field">練習方式
+      <div class="modes">
+        <label class="opt"><input type="radio" name="mode" value="slow" checked><span>慢慢練<br><small class="muted">不計時，想清楚再答</small></span></label>
+        <label class="opt"><input type="radio" name="mode" value="timed"><span>計時挑戰<br><small class="muted">跟上課一樣有時間限制</small></span></label>
+      </div>
+    </div>
+    <label class="opt"><input type="checkbox" id="shuffle" checked><span>題目順序打亂</span></label>
+    <p class="best" id="best"></p>
+    <button class="btn go" type="button" id="btnStart">開始練習 →</button>
+  </section>
+
+  <!-- 作答 -->
+  <section id="quiz" hidden>
+    <div class="qhead"><span class="tag" id="qRound"></span><span class="qno" id="qNo"></span><span class="tleft" id="qLeft"></span></div>
+    <div class="timer" id="qBar" hidden><i style="width:100%"></i></div>
+    <div class="card" style="padding:14px 16px"><div class="qrow"><div class="char bob" id="qChar"></div><p class="qtext" id="qText"></p></div></div>
+    <div id="qOpts"></div>
+    <div class="card fb" id="fb" hidden>
+      <div class="verdict" id="fbVerdict"></div>
+      <div style="font-weight:800" id="fbAns"></div>
+      <div class="plain"><span class="lab">白話</span><span id="fbPlain"></span></div>
+      <div class="formula" id="fbFormula"></div>
+      <button class="btn go" type="button" id="btnNext">下一題 →</button>
+    </div>
+  </section>
+
+  <!-- 結果 -->
+  <section id="end" class="card" hidden>
+    <div class="qrow"><div class="char bob" id="endChar"></div>
+      <div><div class="big" id="eScore">0 / 0</div><p style="margin:6px 0 0;font-weight:900;font-size:1.15rem" id="eMsg"></p></div>
+    </div>
+    <div id="missWrap"><h3 style="margin:0 0 8px">再看一次答錯的題目</h3><ul class="misslist" id="missList"></ul></div>
+    <div class="row">
+      <button class="btn go" type="button" id="btnWrong">只練答錯的題目</button>
+      <button class="btn" type="button" id="btnAgain">同樣範圍再練一次</button>
+      <button class="btn" type="button" id="btnBack">換範圍</button>
+    </div>
+  </section>
+</div>
+
+<script src="common.js"></script>
+<script src="questions.js"></script>
+<script>
+(function(){
+  var B = window.Battle, $ = function(id){ return document.getElementById(id); };
+  var LS = { get: function(k){ try { return localStorage.getItem(k); } catch(e){ return null; } },
+             set: function(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
+  ['setupChar','qChar','endChar'].forEach(function(id){ $(id).innerHTML = B.CHAR; });
+
+  var deck = [], idx = 0, score = 0, missed = [], answered = false, timed = false, tickT = null, deadline = 0, lastRounds = [];
+
+  ROUNDS.forEach(function(r){
+    var n = QUESTIONS.filter(function(q){ return q.round === r.id; }).length;
+    var lab = document.createElement('label');
+    lab.innerHTML = '<input type="checkbox" value="' + r.id + '" checked><span>' + B.esc(r.name) + '　<span class="muted">' + n + ' 題</span></span>';
+    $('roundPick').appendChild(lab);
+  });
+  function roundOf(q){ return ROUNDS.filter(function(x){ return x.id === q.round; })[0]; }
+  function pickedRounds(){ return Array.prototype.slice.call(document.querySelectorAll('#roundPick input:checked')).map(function(x){ return Number(x.value); }); }
+  function bestKey(rs){ return 'practice_best_' + rs.join(''); }
+  function showBest(){
+    var rs = pickedRounds(), b = LS.get(bestKey(rs));
+    $('best').textContent = b ? '這個範圍你的最佳紀錄：' + b : '';
+  }
+  $('roundPick').addEventListener('change', showBest); showBest();
+
+  function show(id){ ['setup','quiz','end'].forEach(function(s){ $(s).hidden = s !== id; }); window.scrollTo({ top: 0 }); }
+  function shuffle(a){ a = a.slice(); for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
+
+  function start(list){
+    timed = document.querySelector('input[name="mode"]:checked').value === 'timed';
+    deck = $('shuffle').checked ? shuffle(list) : list.slice();
+    idx = 0; score = 0; missed = [];
+    show('quiz'); showQ();
+  }
+  $('btnStart').addEventListener('click', function(){
+    var rs = pickedRounds();
+    if (!rs.length){ $('best').textContent = '至少勾一個範圍喔！'; return; }
+    lastRounds = rs;
+    start(QUESTIONS.filter(function(q){ return rs.indexOf(q.round) >= 0; }));
+  });
+
+  /* ---------- 出題 ---------- */
+  function showQ(){
+    var q = deck[idx]; answered = false;
+    $('qRound').textContent = roundOf(q).short;
+    $('qNo').textContent = '第 ' + (idx + 1) + ' / ' + deck.length + ' 題・答對 ' + score;
+    $('qText').textContent = q.text;
+    B.setFace($('qChar'), 'ask');
+    $('fb').hidden = true;
+    var box = $('qOpts');
+    if (q.type === 'cell'){
+      var c = function(i, a, b){ return '<button type="button" class="cellopt o' + i + '" data-v="' + i + '"><span class="k">' + (i + 1) + '</span>' + a + '<br>' + b + '</button>'; };
+      box.innerHTML = '<div class="cellgrid"><div class="ch blank"></div><div class="ch in">在倉庫裡</div><div class="ch out">不在倉庫裡</div>' +
+        '<div class="rh mine">是我的存貨</div>' + c(0, '倉庫內', '是存貨') + c(1, '倉庫外', '是存貨') +
+        '<div class="rh not">不是我的存貨</div>' + c(2, '倉庫內', '不是存貨') + c(3, '倉庫外', '不是存貨') + '</div>';
+    } else if (q.type === 'mc'){
+      box.innerHTML = '<div class="mcgrid">' + q.options.map(function(o, i){ return '<button type="button" class="mcopt o' + i + '" data-v="' + i + '"><span class="s">' + B.SHAPES[i] + '</span><span>' + B.esc(o) + '</span></button>'; }).join('') + '</div>';
+    } else {
+      box.innerHTML = '<div class="numbox"><div class="pre" id="numPre"></div><input id="numIn" inputmode="numeric" autocomplete="off" placeholder="輸入金額（只打數字）"><button type="button" class="btn go" id="numGo">送出</button></div>';
+      var inp = $('numIn');
+      inp.addEventListener('input', function(){ var d = inp.value.replace(/[^\d]/g, ''); $('numPre').textContent = d ? B.money(Number(d)) : ''; });
+      inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') submitNum(); });
+      $('numGo').addEventListener('click', submitNum);
+    }
+    Array.prototype.slice.call(box.querySelectorAll('[data-v]')).forEach(function(b){ b.addEventListener('click', function(){ answer(Number(b.dataset.v)); }); });
+    if (tickT) clearInterval(tickT);
+    $('qBar').hidden = !timed; $('qLeft').textContent = '';
+    if (timed){ deadline = Date.now() + q.dur * 1000; tickT = setInterval(tick, 200); tick(); }
+  }
+  function submitNum(){
+    var d = $('numIn').value.replace(/[^\d]/g, '');
+    if (!d){ $('numIn').focus(); return; }
+    answer(Number(d));
+  }
+  function tick(){
+    var q = deck[idx], left = Math.max(0, deadline - Date.now()), s = Math.ceil(left / 1000);
+    $('qLeft').textContent = s;
+    $('qBar').firstElementChild.style.width = (left / (q.dur * 1000) * 100) + '%';
+    $('qBar').classList.toggle('low', s <= 5);
+    if (left <= 0) answer(null);
+  }
+  function ansText(q, v){
+    if (v === null || v === undefined) return '沒有作答';
+    if (q.type === 'num') return B.money(v);
+    if (q.type === 'cell') return CELL_OPTIONS[v];
+    return B.SHAPES[v] + ' ' + q.options[v];
+  }
+
+  /* ---------- 回饋 ---------- */
+  function answer(v){
+    if (answered) return;
+    answered = true;
+    if (tickT) clearInterval(tickT);
+    var q = deck[idx], ok = v !== null && v === q.answer;
+    if (ok) score++; else missed.push({ q: q, v: v });
+    Array.prototype.slice.call(document.querySelectorAll('#qOpts button')).forEach(function(b){
+      b.disabled = true;
+      if (b.dataset.v === undefined) return;
+      var bv = Number(b.dataset.v);
+      if (bv === q.answer) b.classList.add('right'); else b.classList.add('faded');
+      if (bv === v) b.classList.add('picked');
+    });
+    if ($('numIn')) $('numIn').disabled = true;
+    B.setFace($('qChar'), ok ? 'happy' : 'oops');
+    var vd = $('fbVerdict'); vd.className = 'verdict ' + (ok ? 'ok' : 'bad');
+    vd.innerHTML = '<span class="mark" aria-hidden="true">' + (ok ? '○' : '×') + '</span>' + (ok ? '答對了！' : (v === null ? '時間到了！' : '再想想！'));
+    $('fbAns').textContent = '正解：' + ansText(q, q.answer) + (ok ? '' : '　你答：' + ansText(q, v));
+    $('fbPlain').textContent = q.plain;
+    $('fbFormula').textContent = q.formula;
+    $('btnNext').textContent = idx === deck.length - 1 ? '看結果 →' : '下一題 →';
+    $('qNo').textContent = '第 ' + (idx + 1) + ' / ' + deck.length + ' 題・答對 ' + score;
+    $('fb').hidden = false;
+    $('fb').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('btnNext').focus({ preventScroll: true });
+  }
+  $('btnNext').addEventListener('click', function(){
+    if (idx < deck.length - 1){ idx++; showQ(); window.scrollTo({ top: 0, behavior: 'smooth' }); } else finish();
+  });
+
+  /* ---------- 結果 ---------- */
+  function finish(){
+    show('end');
+    var n = deck.length, r = n ? score / n : 0;
+    $('eScore').textContent = score + ' / ' + n;
+    $('eMsg').textContent = r === 1 ? '全對！鳳姨的倉庫交給你管了！' : r >= 0.8 ? '很厲害！把錯的再看一次就完美了。' : r >= 0.6 ? '及格了！錯的那幾題再練一次。' : '沒關係，越挫越勇！先練錯的題目。';
+    B.setFace($('endChar'), r >= 0.6 ? 'happy' : 'oops');
+    if (lastRounds.length && deck.length === QUESTIONS.filter(function(q){ return lastRounds.indexOf(q.round) >= 0; }).length){
+      var k = bestKey(lastRounds), old = LS.get(k), oldN = old ? Number(old.split(' / ')[0]) : -1;
+      if (score > oldN) LS.set(k, score + ' / ' + n);
+    }
+    var list = $('missList'); list.innerHTML = '';
+    $('missWrap').hidden = !missed.length; $('btnWrong').hidden = !missed.length;
+    missed.forEach(function(m){
+      var li = document.createElement('li');
+      var b = document.createElement('b'); b.textContent = m.q.text;
+      var a = document.createElement('span'); a.textContent = '正解：' + ansText(m.q, m.q.answer) + '　你答：' + ansText(m.q, m.v);
+      var p = document.createElement('span'); p.className = 'muted'; p.textContent = m.q.plain;
+      li.appendChild(b); li.appendChild(a); li.appendChild(p); list.appendChild(li);
+    });
+  }
+  $('btnWrong').addEventListener('click', function(){ start(missed.map(function(m){ return m.q; })); });
+  $('btnAgain').addEventListener('click', function(){ start(QUESTIONS.filter(function(q){ return lastRounds.indexOf(q.round) >= 0; })); });
+  $('btnBack').addEventListener('click', function(){ show('setup'); showBest(); });
+
+  document.addEventListener('keydown', function(e){
+    if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON')) return;
+    if ($('quiz').hidden) return;
+    var q = deck[idx]; if (!q) return;
+    if (!answered && q.type !== 'num'){ var k = ['1','2','3','4'].indexOf(e.key); if (k >= 0){ e.preventDefault(); answer(k); } }
+    else if (answered && e.key === 'Enter'){ e.preventDefault(); $('btnNext').click(); }
+  });
+})();
+</script>
+</body>
+</html>

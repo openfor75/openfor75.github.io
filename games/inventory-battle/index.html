@@ -74,6 +74,7 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
     <button class="btn go" type="button" id="btnJoin">加入 →</button>
     <p class="err" id="joinErr"></p>
   </section>
+  <a class="btn" id="practiceLink" href="practice.html" style="text-decoration:none">不是上課時間？自己練習 →</a>
 
   <!-- 等待 -->
   <section id="wait" class="center" hidden>
@@ -160,7 +161,7 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
   if (!B.apiReady()) $('joinErr').textContent = '這個網頁還沒設定後端網址，請跟老師說。';
 
   var VIEWS = ['join','wait','grouped','q','sent','res','end'];
-  function show(id){ VIEWS.forEach(function(v){ $(v).hidden = v !== id; }); $('meTag').hidden = id === 'join'; }
+  function show(id){ VIEWS.forEach(function(v){ $(v).hidden = v !== id; }); $('meTag').hidden = id === 'join'; $('practiceLink').hidden = !(id === 'join' || id === 'end'); }
 
   var ERR = { no_room: '找不到這個房號，看一下大螢幕。', no_sid: '請輸入學號。', full: '人數已滿。', not_joined: '你被移出房間了，請確認學號後重新加入。' };
 
