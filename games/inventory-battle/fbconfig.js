@@ -1,5 +1,5 @@
 /* Firebase 設定（從 Firebase 主控台「專案設定 → 你的應用程式」複製；這段是公開的，不是密碼）
- * TEACHER_EMAIL：只有這個 Google 帳號可以開房、出題、看學號 */
+ * 老師密碼不放在這裡（這個檔案是公開的），只放在 Firebase 的資料庫規則裡 */
 window.FIREBASE_CONFIG = {
   apiKey: 'AIzaSyB5b9qsjCBeThIxZ73HKUVBh51QxJrZLbw',
   authDomain: 'goodsock.firebaseapp.com',
@@ -7,4 +7,3 @@ window.FIREBASE_CONFIG = {
   projectId: 'goodsock',
   appId: '1:811068087102:web:a56a96e6143712946bea6f'
 };
-window.TEACHER_EMAIL = 'openfor75@gmail.com';

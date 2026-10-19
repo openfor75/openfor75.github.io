@@ -1,6 +1,6 @@
 /* 鳳姨搶答：Firebase 連線（Realtime Database＋登入）
  * 學生：匿名登入（不用帳號，重新整理也是同一個身分）
- * 老師：Google 登入，只有 TEACHER_EMAIL 能開房出題（資料庫規則也會擋）
+ * 老師：也是匿名登入，再輸入老師密碼（密碼由資料庫規則比對，網頁裡沒有）
  */
 (function () {
   var cfg = window.FIREBASE_CONFIG || {};

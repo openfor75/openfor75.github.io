@@ -153,13 +153,10 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
   <section id="setup" class="card">
     <h2 style="margin:0;font-size:1.5em">開一場分組搶答</h2>
     <p class="err" id="apiErr" hidden>還沒設定 Firebase：請把 Firebase 設定貼到 fbconfig.js。</p>
-    <div class="row" id="loginRow">
-      <button class="btn go" type="button" id="btnLogin">用 Google 登入老師帳號</button>
-      <span class="muted" id="whoami" style="font-weight:800"></span>
-    </div>
-    <label class="field">老師密碼（選填：要把作答紀錄自動寫進 Google 試算表才需要）
+    <label class="field">老師密碼
       <input id="hostKey" type="password" autocomplete="current-password">
     </label>
+    <p class="muted" id="whoami" style="font-weight:800;margin:0"></p>
     <div class="field">要考哪些回合？
       <div class="rounds" id="roundPick"></div>
     </div>
@@ -178,7 +175,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     </div>
     <p class="muted" style="margin:0">大結算的加總題和挑戰題，時間自動加倍。</p>
     <div class="row">
-      <button class="btn go" type="button" id="btnCreate" disabled>開新的一場</button>
+      <button class="btn go" type="button" id="btnCreate">開新的一場</button>
       <button class="btn" type="button" id="btnResume" hidden>接續上一場</button>
     </div>
     <p class="err" id="setupErr"></p>
@@ -298,7 +295,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
   var players = {};              // uid → { sid, team, ok, bot, joinedAt, last }
   var answers = {};              // 這一題的作答 uid → { v, t }
   var ansRef = null, plRef = null;
-  var revealing = false, timeUp = false, tickTimer = null, prevScores = null, teacherOK = false;
+  var revealing = false, timeUp = false, tickTimer = null, prevScores = null, teacherOK = false, verifiedKey = null;
   var logAll = [];               // 本場作答紀錄（下載用）
 
   $('splashChar').innerHTML = B.CHAR;
@@ -339,21 +336,23 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     $('roundPick').appendChild(lab);
   });
 
-  if (!FB.ready()){ $('apiErr').hidden = false; $('btnLogin').disabled = true; }
+  if (!FB.ready()){ $('apiErr').hidden = false; $('btnCreate').disabled = true; }
   else {
     FB.onConnection(function(ok){ netBar(ok ? '' : '網路斷線，重新連線中…'); });
-    FB.waitUser().then(setUser);
+    if (key) verify(key, true).then(function(ok){ if (ok) verifiedKey = key; });
   }
-  function setUser(u){
-    teacherOK = FB.isTeacher(u);
-    $('whoami').textContent = u && u.email ? (teacherOK ? '已登入：' + u.email : u.email + ' 不是老師帳號') : '';
-    $('btnLogin').textContent = teacherOK ? '換帳號' : '用 Google 登入老師帳號';
-    $('btnCreate').disabled = !teacherOK;
-    if (teacherOK) checkResume();
+  // 老師密碼：寫進 teachers/自己的編號，資料庫規則會比對密碼，對了才寫得進去
+  function verify(k, quiet){
+    return FB.anon().then(function(u){ return FB.ref('teachers/' + u.uid).set(k); }).then(function(){
+      teacherOK = true; $('whoami').textContent = '✅ 老師密碼正確'; checkResume(); return true;
+    }).catch(function(e){
+      teacherOK = false;
+      if (!quiet) $('setupErr').textContent = e && e.code === 'PERMISSION_DENIED' ? '老師密碼不對，再試一次。' : '連不上 Firebase：' + ((e && (e.code || e.message)) || '');
+      $('whoami').textContent = '';
+      return false;
+    });
   }
-  $('btnLogin').addEventListener('click', function(){
-    FB.teacher().then(setUser).catch(function(e){ $('setupErr').textContent = '登入沒有完成：' + (e.code || e.message); });
-  });
+  $('hostKey').addEventListener('keydown', function(e){ if (e.key === 'Enter') $('btnCreate').click(); });
 
   function checkResume(){
     var d = JSON.parse(LS.get('battle_deck') || '{}');
@@ -368,6 +367,12 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     var rounds = Array.prototype.slice.call(document.querySelectorAll('#roundPick input:checked')).map(function(x){ return Number(x.value); });
     if (!rounds.length){ $('setupErr').textContent = '至少選一個回合。'; return; }
     key = $('hostKey').value.trim();
+    if (!key){ $('setupErr').textContent = '請輸入老師密碼。'; return; }
+    if (!teacherOK || key !== verifiedKey){
+      $('btnCreate').disabled = true; $('setupErr').textContent = '';
+      verify(key).then(function(ok){ $('btnCreate').disabled = false; if (ok){ verifiedKey = key; $('btnCreate').click(); } });
+      return;
+    }
     var tsel = $('timeSel').value;
     LS.set('battle_host_key', key); LS.set('battle_rounds', rounds.join(','));
     LS.set('battle_teamN', $('teamN').value); LS.set('battle_time', tsel);
