@@ -5,11 +5,14 @@
 
   function apiReady() { return /^https?:\/\//.test(API) && API.indexOf('請貼上') < 0; }
 
-  function api(action, data) {
+  function api(action, data, timeoutMs) {
     var body = JSON.stringify(Object.assign({ action: action }, data || {}));
+    var ctl = window.AbortController ? new AbortController() : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, timeoutMs || 15000) : null;
     // 不設定 Content-Type（預設 text/plain），Apps Script 才不會擋跨網域預檢
-    return fetch(API, { method: 'POST', body: body, redirect: 'follow' })
-      .then(function (r) { return r.json(); });
+    return fetch(API, { method: 'POST', body: body, redirect: 'follow', signal: ctl ? ctl.signal : undefined })
+      .then(function (r) { if (!r.ok) throw new Error('http_' + r.status); return r.json(); })
+      .finally(function () { if (timer) clearTimeout(timer); });
   }
 
   var CHAR = '<svg viewBox="-70 -78 190 160" role="img" aria-label="鳳姨">' +

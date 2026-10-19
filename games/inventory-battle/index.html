@@ -193,10 +193,22 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
   }
 
   /* ---------- 輪詢 ---------- */
+  // 省流量輪詢：等待時問得慢、作答中問得快，加隨機錯開；連線失敗就逐步拉長間隔，避免全班一起塞爆後端
+  var fails = 0;
+  function nextDelay(res){
+    // 作答中還沒答：題目已經在手機上了，不用一直問（送出答案時就會知道有沒有收到）
+    var base = 4000;
+    if (res && res.phase === 'lobby') base = 6000;
+    else if (res && res.phase === 'grouped') base = 4000;
+    else if (res && res.phase === 'question') base = (res.mine !== null && res.mine !== undefined) ? 5000 : 8000;
+    else if (res && res.phase === 'reveal') base = 4500;
+    return base + Math.random() * 2000;
+  }
   function poll(){
     if (pollT) clearTimeout(pollT);
     if (!pid) return;
-    B.api('poll', { room: room, pid: pid }).then(function(res){
+    B.api('poll', { room: room, pid: pid }, 12000).then(function(res){
+      fails = 0; setNet(true);
       if (!res.ok){
         if (res.err === 'not_joined' || res.err === 'no_room'){
           LS.del('battle_pid_' + room); pid = null; show('join');
@@ -204,8 +216,17 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
           return;
         }
       } else handle(res);
-      pollT = setTimeout(poll, res.phase === 'lobby' ? 2000 : 1500);
-    }).catch(function(){ pollT = setTimeout(poll, 3000); });
+      if (res.ok && res.phase === 'end') return;   // 結束了就不再問
+      pollT = setTimeout(poll, nextDelay(res));
+    }).catch(function(){
+      fails++; if (fails >= 2) setNet(false);
+      pollT = setTimeout(poll, Math.min(12000, 3000 * Math.pow(1.6, fails)) + Math.random() * 2000);
+    });
+  }
+  function setNet(ok){
+    var n = document.getElementById('netWarn');
+    if (!n){ n = document.createElement('div'); n.id = 'netWarn'; n.textContent = '連線有點塞，正在重試…不用重新整理'; n.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);background:#22262B;color:#fff;font-weight:800;font-size:.9rem;padding:6px 14px;border-radius:999px;z-index:50'; document.body.appendChild(n); }
+    n.hidden = ok;
   }
 
   function teamTag(res){
@@ -312,7 +333,8 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
     var left = Math.max(0, last.startAt + last.dur * 1000 - (Date.now() + offset));
     var s = Math.ceil(left / 1000);
     $('qLeft').textContent = s;
-    $('qBar').firstElementChild.style.width = (left / (last.dur * 1000) * 100) + '%';
+    $('qBar').firstElementChild.style.width = Math.min(100, left / (last.dur * 1000) * 100) + '%';
+    if (s > last.dur) { s = last.dur; $('qLeft').textContent = '準備'; } else $('qLeft').textContent = s;
     $('qBar').classList.toggle('low', s <= 5);
   }
   function submit(v){
@@ -320,10 +342,12 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
     sending = true;
     Array.prototype.slice.call(document.querySelectorAll('#qOpts button')).forEach(function(b){ b.disabled = true; });
     showSent(last, v, true);
-    B.api('answer', { room: room, pid: pid, q: last.q, v: v }).then(function(res){
+    var sendAns = function(){ return B.api('answer', { room: room, pid: pid, q: last.q, v: v }, 15000); };
+    sendAns().catch(function(){ return new Promise(function(r){ setTimeout(r, 1200 + Math.random() * 1500); }).then(sendAns); }).then(function(res){
       if (!res.ok){
         var msg = res.err === 'late' || res.err === 'closed' ? '時間到了，這題沒有收到 QQ' : '送出失敗：' + res.err;
         $('sentVal').textContent = msg; $('sentVal').className = 'card mine bg-bad';
+        if (pollT) clearTimeout(pollT); pollT = setTimeout(poll, 1500 + Math.random() * 1500);
       } else {
         viewKey = 'question:' + last.q + ':a:' + (last.myTeam ? last.myTeam.id + ':' + last.myTeam.name : '');
         $('sentVal').textContent = '你的答案：' + ansText(last.pub, v);

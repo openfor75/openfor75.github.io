@@ -309,12 +309,27 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     $('roundPick').appendChild(lab);
   });
 
-  function call(action, data){
-    return B.api(action, Object.assign({ key: key }, data || {})).then(function(res){
-      if (res && res.now) offset = res.now - Date.now();
-      if (!res.ok && res.err === 'bad_key') throw new Error('老師密碼不對，請輸入第一次一鍵部署時設定的密碼。');
-      return res;
-    });
+  // 老師端的動作（出題、公布、分組…）遇到網路塞車會自動重試，不會一直傻等
+  function call(action, data, tries){
+    tries = tries || (action === 'hostStatus' ? 1 : 4);
+    var attempt = function(n){
+      return B.api(action, Object.assign({ key: key }, data || {}), action === 'hostStatus' ? 12000 : 20000).then(function(res){
+        if (res && res.now) offset = res.now - Date.now();
+        if (!res.ok && res.err === 'bad_key') { var e = new Error('老師密碼不對，請輸入第一次一鍵部署時設定的密碼。'); e.fatal = true; throw e; }
+        if (n > 1) netBar('');
+        return res;
+      }).catch(function(e){
+        if (e.fatal || n >= tries) { if (action !== 'hostStatus') netBar(''); throw e; }
+        netBar('連線有點塞，正在重試（第 ' + n + ' 次）…請稍等，不用重新整理');
+        return new Promise(function(r){ setTimeout(r, 1500 * n); }).then(function(){ return attempt(n + 1); });
+      });
+    };
+    return attempt(1);
+  }
+  function netBar(msg){
+    var d = document.getElementById('netBar');
+    if (!d){ d = document.createElement('div'); d.id = 'netBar'; d.style.cssText = 'position:fixed;left:50%;top:10px;transform:translateX(-50%);background:#22262B;color:#fff;font-weight:800;padding:8px 18px;border-radius:999px;z-index:9'; document.body.appendChild(d); }
+    d.textContent = msg; d.hidden = !msg;
   }
 
   function checkResume(){
@@ -492,10 +507,12 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
   $('btnBegin').addEventListener('click', function(){ if (deck.length) startQuestion(0); });
 
   /* ---------- 輪詢 ---------- */
+  var pollFails = 0;
   function startPolling(){
     stopPolling();
     var loop = function(){
       call('hostStatus').then(function(res){
+        pollFails = 0;
         if (!res.ok || !res.state) return;
         players = res.players || []; humans = res.humans != null ? res.humans : players.length; renderHeader();
         if (!$('lobby').hidden) renderPlayers();
@@ -504,7 +521,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
           $('qCount').textContent = res.answered || 0; $('qTotal').textContent = humans;
           if (humans && res.answered >= humans) doReveal();
         }
-      }).catch(function(){}).then(function(){ pollTimer = setTimeout(loop, 1300); });
+      }).catch(function(){ pollFails++; }).then(function(){ pollTimer = setTimeout(loop, 3000 + Math.min(8000, pollFails * 1500)); });
     };
     loop();
   }
@@ -598,7 +615,8 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     var left = Math.max(0, st.startAt + st.dur * 1000 - (Date.now() + offset));
     var s = Math.ceil(left / 1000);
     $('qTimer').textContent = s;
-    $('qBar').firstElementChild.style.width = (left / (st.dur * 1000) * 100) + '%';
+    $('qBar').firstElementChild.style.width = Math.min(100, left / (st.dur * 1000) * 100) + '%';
+    if (s > st.dur) { s = st.dur; $('qTimer').textContent = '準備'; }
     $('qBar').classList.toggle('low', s <= 5);
     if (left <= 0 && !timeUp){ timeUp = true; setTimeout(doReveal, 1800); }
   }
@@ -607,6 +625,13 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     revealing = true; $('btnReveal').disabled = true;
     if (tickTimer) clearInterval(tickTimer);
     call('hostReveal').then(function(res){
+      if (!res.ok && res.err === 'not_in_question'){
+        // 第一次其實已經公布成功、只是回應塞車沒收到 → 直接拿目前狀態
+        return call('hostStatus', null, 3).then(function(s2){
+          if (s2.state && s2.state.phase === 'reveal' && s2.reveal){ st.phase = 'reveal'; renderReveal(s2.reveal); return; }
+          throw new Error('not_in_question');
+        });
+      }
       if (!res.ok) throw new Error(res.err);
       st.phase = 'reveal';
       renderReveal(res.reveal);
