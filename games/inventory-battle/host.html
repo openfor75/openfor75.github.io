@@ -152,8 +152,12 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
   <!-- 設定 -->
   <section id="setup" class="card">
     <h2 style="margin:0;font-size:1.5em">開一場分組搶答</h2>
-    <p class="err" id="apiErr" hidden>還沒設定後端網址：請先點「一鍵部署.bat」，再把「網站」資料夾上傳到 GitHub。</p>
-    <label class="field">老師密碼（第一次一鍵部署時設定的）
+    <p class="err" id="apiErr" hidden>還沒設定 Firebase：請把 Firebase 設定貼到 fbconfig.js。</p>
+    <div class="row" id="loginRow">
+      <button class="btn go" type="button" id="btnLogin">用 Google 登入老師帳號</button>
+      <span class="muted" id="whoami" style="font-weight:800"></span>
+    </div>
+    <label class="field">老師密碼（選填：要把作答紀錄自動寫進 Google 試算表才需要）
       <input id="hostKey" type="password" autocomplete="current-password">
     </label>
     <div class="field">要考哪些回合？
@@ -174,7 +178,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     </div>
     <p class="muted" style="margin:0">大結算的加總題和挑戰題，時間自動加倍。</p>
     <div class="row">
-      <button class="btn go" type="button" id="btnCreate">開新的一場</button>
+      <button class="btn go" type="button" id="btnCreate" disabled>開新的一場</button>
       <button class="btn" type="button" id="btnResume" hidden>接續上一場</button>
     </div>
     <p class="err" id="setupErr"></p>
@@ -260,6 +264,8 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     <div class="podium" id="podium"></div>
     <div class="card rest" id="restWrap"><ol class="lb" id="endList"></ol></div>
     <p class="muted" id="practiceHint" style="margin:0;font-weight:800"></p>
+    <p class="muted" id="logHint" style="margin:0;font-weight:800"></p>
+    <button class="btn" type="button" id="btnCsv">下載作答紀錄（Excel 可開）</button>
     <button class="btn" type="button" id="btnHome">回設定頁</button>
   </section>
 </div>
@@ -270,10 +276,16 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
 </div>
 
 <script src="qrcode.js"></script>
+<script src="firebase-app-compat.js"></script>
+<script src="firebase-auth-compat.js"></script>
+<script src="firebase-database-compat.js"></script>
+<script src="fbconfig.js"></script>
+<script src="fb.js"></script>
 <script src="config.js"></script>
 <script src="common.js"></script>
 <script src="questions.js"></script>
 <script>
+/* 老師端（Firebase 版）：老師的電腦負責出題、計分、分組，結果寫進 Firebase，手機即時收到 */
 (function(){
   var B = window.Battle, $ = function(id){ return document.getElementById(id); };
   var SECTIONS = ['setup','lobby','grouping','question','reveal','end'];
@@ -281,17 +293,20 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
              set: function(k, v){ try { localStorage.setItem(k, v); } catch(e){} } };
 
   var key = LS.get('battle_host_key') || '';
-  var deck = [], durs = [];   // 這一場的題目（QUESTIONS 的索引）與每題秒數
-  var st = null, players = [], humans = 0, offset = 0;
-  var revealing = false, timeUp = false, pollTimer = null, tickTimer = null;
-  var prevScores = null;
+  var room = null, deck = [], durs = [];
+  var st = null;                 // 房間狀態（跟 Firebase 的 state 同步）
+  var players = {};              // uid → { sid, team, ok, bot, joinedAt, last }
+  var answers = {};              // 這一題的作答 uid → { v, t }
+  var ansRef = null, plRef = null;
+  var revealing = false, timeUp = false, tickTimer = null, prevScores = null, teacherOK = false;
+  var logAll = [];               // 本場作答紀錄（下載用）
 
   $('splashChar').innerHTML = B.CHAR;
   $('hostKey').value = key;
-  if (!B.apiReady()) $('apiErr').hidden = false;
   $('teamN').value = LS.get('battle_teamN') || '6';
   $('timeSel').value = LS.get('battle_time') || 'auto';
 
+  function R(p){ return FB.ref('rooms/' + room + (p ? '/' + p : '')); }
   function show(id){
     SECTIONS.forEach(function(s){ $(s).hidden = s !== id; });
     $('hstats').hidden = id === 'setup';
@@ -299,8 +314,23 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
   }
   function roundOf(qi){ var r = QUESTIONS[qi].round; return ROUNDS.filter(function(x){ return x.id === r; })[0]; }
   function teams(){ return (st && st.teams) || []; }
+  function plist(){
+    return Object.keys(players).map(function(pid){ var p = players[pid]; return { pid: pid, tag: p.bot ? p.sid : '…' + String(p.sid).slice(-3), team: (p.team === undefined ? null : p.team), bot: !!p.bot, sid: p.sid, ok: p.ok || 0 }; });
+  }
+  function humanCount(){ return plist().filter(function(p){ return !p.bot; }).length; }
+  function sizes(n){ var a = []; for (var i = 0; i < n; i++) a.push(0); plist().forEach(function(p){ if (p.team !== null && p.team < n) a[p.team]++; }); return a; }
+  function alertBar(msg){
+    var d = document.createElement('div'); d.textContent = msg;
+    d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#22262B;color:#fff;font-weight:800;padding:10px 18px;border-radius:12px;z-index:9';
+    document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 5000);
+  }
+  function netBar(msg){
+    var d = document.getElementById('netBar');
+    if (!d){ d = document.createElement('div'); d.id = 'netBar'; d.style.cssText = 'position:fixed;left:50%;top:10px;transform:translateX(-50%);background:#22262B;color:#fff;font-weight:800;padding:8px 18px;border-radius:999px;z-index:9'; document.body.appendChild(d); }
+    d.textContent = msg; d.hidden = !msg;
+  }
 
-  /* ---------- 設定 ---------- */
+  /* ---------- 設定與登入 ---------- */
   var savedRounds = (LS.get('battle_rounds') || '1,2,3').split(',');
   ROUNDS.forEach(function(r){
     var n = QUESTIONS.filter(function(q){ return q.round === r.id; }).length;
@@ -309,46 +339,35 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     $('roundPick').appendChild(lab);
   });
 
-  // 老師端的動作（出題、公布、分組…）遇到網路塞車會自動重試，不會一直傻等
-  function call(action, data, tries){
-    tries = tries || (action === 'hostStatus' ? 1 : 4);
-    var attempt = function(n){
-      return B.api(action, Object.assign({ key: key }, data || {}), action === 'hostStatus' ? 12000 : 20000).then(function(res){
-        if (res && res.now) offset = res.now - Date.now();
-        if (!res.ok && res.err === 'bad_key') { var e = new Error('老師密碼不對，請輸入第一次一鍵部署時設定的密碼。'); e.fatal = true; throw e; }
-        if (n > 1) netBar('');
-        return res;
-      }).catch(function(e){
-        if (e.fatal || n >= tries) { if (action !== 'hostStatus') netBar(''); throw e; }
-        netBar('連線有點塞，正在重試（第 ' + n + ' 次）…請稍等，不用重新整理');
-        return new Promise(function(r){ setTimeout(r, 1500 * n); }).then(function(){ return attempt(n + 1); });
-      });
-    };
-    return attempt(1);
+  if (!FB.ready()){ $('apiErr').hidden = false; $('btnLogin').disabled = true; }
+  else {
+    FB.onConnection(function(ok){ netBar(ok ? '' : '網路斷線，重新連線中…'); });
+    FB.waitUser().then(setUser);
   }
-  function netBar(msg){
-    var d = document.getElementById('netBar');
-    if (!d){ d = document.createElement('div'); d.id = 'netBar'; d.style.cssText = 'position:fixed;left:50%;top:10px;transform:translateX(-50%);background:#22262B;color:#fff;font-weight:800;padding:8px 18px;border-radius:999px;z-index:9'; document.body.appendChild(d); }
-    d.textContent = msg; d.hidden = !msg;
+  function setUser(u){
+    teacherOK = FB.isTeacher(u);
+    $('whoami').textContent = u && u.email ? (teacherOK ? '已登入：' + u.email : u.email + ' 不是老師帳號') : '';
+    $('btnLogin').textContent = teacherOK ? '換帳號' : '用 Google 登入老師帳號';
+    $('btnCreate').disabled = !teacherOK;
+    if (teacherOK) checkResume();
   }
+  $('btnLogin').addEventListener('click', function(){
+    FB.teacher().then(setUser).catch(function(e){ $('setupErr').textContent = '登入沒有完成：' + (e.code || e.message); });
+  });
 
   function checkResume(){
-    if (!key || !B.apiReady()) return;
-    call('hostStatus').then(function(res){
-      var saved = LS.get('battle_deck');
-      if (res.ok && res.state && res.state.phase !== 'end' && saved){
-        var d = JSON.parse(saved);
-        if (d.room === res.state.room){ $('btnResume').hidden = false; $('btnResume').textContent = '接續上一場（房號 ' + res.state.room + '）'; }
-      }
+    var d = JSON.parse(LS.get('battle_deck') || '{}');
+    if (!d.room) return;
+    FB.ref('rooms/' + d.room + '/state').once('value').then(function(s){
+      var v = s.val();
+      if (v && v.phase !== 'end'){ $('btnResume').hidden = false; $('btnResume').textContent = '接續上一場（房號 ' + d.room + '）'; }
     }).catch(function(){});
   }
-  checkResume();
 
   $('btnCreate').addEventListener('click', function(){
-    key = $('hostKey').value.trim();
-    if (!key){ $('setupErr').textContent = '請輸入老師密碼。'; return; }
     var rounds = Array.prototype.slice.call(document.querySelectorAll('#roundPick input:checked')).map(function(x){ return Number(x.value); });
     if (!rounds.length){ $('setupErr').textContent = '至少選一個回合。'; return; }
+    key = $('hostKey').value.trim();
     var tsel = $('timeSel').value;
     LS.set('battle_host_key', key); LS.set('battle_rounds', rounds.join(','));
     LS.set('battle_teamN', $('teamN').value); LS.set('battle_time', tsel);
@@ -359,92 +378,149 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
       durs.push(tsel === 'auto' ? q.dur : Number(tsel) * (q.big ? 2 : 1));
     });
     $('btnCreate').disabled = true; $('setupErr').textContent = '';
-    call('hostCreate', { total: deck.length }).then(function(res){
-      $('btnCreate').disabled = false;
-      if (!res.ok) throw new Error('開房失敗：' + res.err);
-      st = res.state; prevScores = null;
-      LS.set('battle_deck', JSON.stringify({ room: st.room, deck: deck, durs: durs, n: Number($('teamN').value) }));
-      enterLobby();
-    }).catch(function(e){ $('btnCreate').disabled = false; $('setupErr').textContent = e.message || '連不到後端，請檢查 config.js 的網址。'; });
+    var old = JSON.parse(LS.get('battle_deck') || '{}').room;
+    var tryRoom = function(n){
+      var code = String(Math.floor(1000 + Math.random() * 9000));
+      return FB.ref('rooms/' + code + '/meta').once('value').then(function(s){
+        if (s.exists() && n < 6) return tryRoom(n + 1);
+        return code;
+      });
+    };
+    tryRoom(0).then(function(code){
+      room = code;
+      if (old && old !== code) FB.ref('rooms/' + old).remove().catch(function(){});   // 清掉上一場（含學號）
+      st = { phase: 'lobby', q: -1, total: deck.length };
+      return R().set({ meta: { created: FB.TS(), total: deck.length }, state: st });
+    }).then(function(){
+      $('btnCreate').disabled = false; prevScores = null; logAll = []; players = {};
+      LS.set('battle_deck', JSON.stringify({ room: room, deck: deck, durs: durs, n: Number($('teamN').value) }));
+      listenPlayers(); enterLobby();
+    }).catch(function(e){ $('btnCreate').disabled = false; $('setupErr').textContent = '開房失敗：' + (e.code || e.message) + '（確認已用老師帳號登入，資料庫規則也已貼上）'; });
   });
 
   $('btnResume').addEventListener('click', function(){
-    key = $('hostKey').value.trim() || key;
     var d = JSON.parse(LS.get('battle_deck') || '{}');
-    deck = d.deck || []; durs = d.durs || [];
-    call('hostStatus').then(function(res){
-      st = res.state; players = res.players || [];
-      renderHeader();
+    room = d.room; deck = d.deck || []; durs = d.durs || [];
+    R().once('value').then(function(s){
+      var v = s.val() || {};
+      st = v.state || { phase: 'lobby', q: -1 }; players = v.players || {};
+      listenPlayers();
       if (st.phase === 'lobby') enterLobby();
-      else if (st.phase === 'grouped') { renderTeams(false); startPolling(); }
-      else if (st.phase === 'question') { showQuestion(); startPolling(); }
-      else if (st.phase === 'reveal') { renderReveal(res.reveal); startPolling(); }
-    }).catch(function(e){ $('setupErr').textContent = e.message; });
+      else if (st.phase === 'grouped') renderTeams(false);
+      else if (st.phase === 'question') { showQuestion(); listenAnswers(st.q); }
+      else if (st.phase === 'reveal' && st.reveal) { renderReveal(st.reveal.summary); }
+      else enterLobby();
+    }).catch(function(e){ $('setupErr').textContent = '接續失敗：' + (e.code || e.message); });
   });
+
+  /* ---------- 學生名單（即時） ---------- */
+  function listenPlayers(){
+    if (plRef) plRef.off();
+    plRef = R('players');
+    plRef.on('value', function(s){
+      players = s.val() || {};
+      if (dedupe()) return;          // 有重複學號 → 合併後會再觸發一次
+      if (assignLate()) return;
+      renderHeader();
+      if (!$('lobby').hidden) renderPlayers();
+      if (!$('grouping').hidden) syncLateJoiners();
+      if (!$('question').hidden) updateCount();
+    });
+  }
+  // 同一個學號換手機加入：保留新的那支，把組別和答對數搬過去
+  function dedupe(){
+    var bySid = {}, upd = {}, n = 0;
+    plist().forEach(function(p){ if (p.bot) return; (bySid[p.sid] = bySid[p.sid] || []).push(p.pid); });
+    Object.keys(bySid).forEach(function(sid){
+      var ids = bySid[sid]; if (ids.length < 2) return;
+      ids.sort(function(a, b){ return (players[b].joinedAt || 0) - (players[a].joinedAt || 0); });
+      var keep = ids[0], src = ids.filter(function(id){ return players[id].team !== undefined && players[id].team !== null; })[0];
+      if (src && src !== keep){ upd['players/' + keep + '/team'] = players[src].team; upd['players/' + keep + '/ok'] = players[src].ok || 0; }
+      ids.slice(1).forEach(function(id){ upd['players/' + id] = null; n++; });
+    });
+    if (!n) return false;
+    R().update(upd); return true;
+  }
+  // 分組後才加入的同學：放進人數最少的組
+  function assignLate(){
+    var T = teams(); if (!T.length || st.phase === 'lobby') return false;
+    var late = plist().filter(function(p){ return p.team === null; });
+    if (!late.length) return false;
+    var sz = sizes(T.length), upd = {};
+    late.forEach(function(p){ var best = 0; sz.forEach(function(n, i){ if (n < sz[best]) best = i; }); sz[best]++; upd['players/' + p.pid + '/team'] = best; upd['players/' + p.pid + '/ok'] = 0; });
+    T.forEach(function(t, i){ upd['state/teams/' + i + '/size'] = sz[i]; t.size = sz[i]; });
+    R().update(upd); return true;
+  }
 
   /* ---------- 等待加入 ---------- */
   function joinUrl(){
     var base = location.href.split('#')[0].split('?')[0].replace(/host\.html$/, '');
     if (!/\/$/.test(base)) base = base.replace(/[^\/]*$/, '');
-    var u = base + 'index.html?room=' + st.room;
-    var p = new URLSearchParams(location.search).get('api');
-    if (p) u += '&api=' + encodeURIComponent(p);
-    return u;
+    return base + 'index.html?room=' + room;
   }
   function enterLobby(){
     show('lobby'); renderHeader();
-    $('roomCode').textContent = st.room;
-    var u = joinUrl(); $('joinUrl').textContent = u.split('&api=')[0];
+    $('roomCode').textContent = room;
+    var u = joinUrl(); $('joinUrl').textContent = u;
     if (window.qrcode){
       var qr = qrcode(0, 'M'); qr.addData(u); qr.make();
       $('qr').innerHTML = qr.createSvgTag({ cellSize: 6, margin: 2, scalable: true });
       $('qr').hidden = false;
     }
-    startPolling();
+    renderPlayers();
   }
   function renderHeader(){
-    if (!st) return;
-    $('hRoom').textContent = '房號 ' + st.room;
-    $('hPlayers').textContent = players.length + ' 人';
+    if (!room) return;
+    $('hRoom').textContent = '房號 ' + room;
+    $('hPlayers').textContent = plist().length + ' 人';
   }
   function renderPlayers(){
-    $('lobbyCount').textContent = players.length;
-    $('btnGroup').disabled = players.length < 1;
+    var list = plist();
+    $('lobbyCount').textContent = list.length;
+    $('btnGroup').disabled = list.length < 1;
     var box = $('players'), have = {}, want = {};
     Array.prototype.slice.call(box.children).forEach(function(c){ have[c.dataset.pid] = c; });
-    players.forEach(function(p){
+    list.forEach(function(p){
       want[p.pid] = 1;
       if (have[p.pid]) return;
       var c = document.createElement('button'); c.type = 'button'; c.className = 'chip pop'; c.dataset.pid = p.pid; c.textContent = (p.bot ? '🤖 ' : '') + p.tag;
       c.addEventListener('click', function(){
-        if (!c.classList.contains('kill')){ c.classList.add('kill'); c.textContent = '移除 ' + p.tag + '？'; setTimeout(function(){ if (c.isConnected){ c.classList.remove('kill'); c.textContent = p.tag; } }, 3000); return; }
-        call('hostKick', { pid: p.pid }).then(function(){ c.remove(); });
+        if (!c.classList.contains('kill')){ c.classList.add('kill'); c.textContent = '移除 ' + p.tag + '？'; setTimeout(function(){ if (c.isConnected){ c.classList.remove('kill'); c.textContent = (p.bot ? '🤖 ' : '') + p.tag; } }, 3000); return; }
+        R('players/' + p.pid).remove();
       });
       box.appendChild(c);
     });
     Object.keys(have).forEach(function(pid){ if (!want[pid]) have[pid].remove(); });
   }
+  $('btnBots').addEventListener('click', function(){
+    var have = plist().filter(function(p){ return p.bot; }).length, upd = {}, T = teams();
+    var sz = sizes(T.length);
+    for (var i = 1; i <= 5; i++){
+      var p = { sid: '機器人' + (have + i), bot: true, joinedAt: Date.now(), ok: 0 };
+      if (T.length){ var best = 0; sz.forEach(function(n, k){ if (n < sz[best]) best = k; }); sz[best]++; p.team = best; }
+      upd['players/bot' + (have + i)] = p;
+    }
+    R().update(upd);
+  });
 
   /* ---------- 隨機分組 ---------- */
   function doGroup(){
-    var d = JSON.parse(LS.get('battle_deck') || '{}');
-    var n = Math.min(Number($('teamN').value) || d.n || 6, players.length);
+    var list = plist();
+    var n = Math.max(1, Math.min(Number($('teamN').value) || 6, list.length));
+    var names = B.pickNames(8), upd = {}, T = [];
+    for (var i = 0; i < n; i++) T.push({ id: i, name: names[i], score: 0, size: 0 });
+    list.map(function(p){ return p.pid; }).sort(function(){ return Math.random() - 0.5; }).forEach(function(pid, k){
+      var t = k % n; T[t].size++;
+      upd['players/' + pid + '/team'] = t; upd['players/' + pid + '/ok'] = 0; upd['players/' + pid + '/last'] = null;
+      players[pid].team = t; players[pid].ok = 0;
+    });
+    st.teams = T; st.phase = 'grouped';
+    upd['state/teams'] = T; upd['state/phase'] = 'grouped';
     $('btnGroup').disabled = true; $('btnRegroup').disabled = true;
-    call('hostGroup', { n: n, names: B.pickNames(8) }).then(function(res){
-      if (!res.ok) throw new Error(res.err);
-      st = res.state; players = res.players || []; prevScores = null;
-      renderTeams(true);
-      startPolling();
-    }).catch(function(e){ $('btnGroup').disabled = false; $('btnRegroup').disabled = false; alertBar('分組失敗：' + (e.message || e)); });
+    R().update(upd).then(function(){ prevScores = null; renderTeams(true); })
+      .catch(function(e){ $('btnGroup').disabled = false; $('btnRegroup').disabled = false; alertBar('分組失敗：' + (e.code || e.message)); });
   }
   $('btnGroup').addEventListener('click', doGroup);
-  $('btnBots').addEventListener('click', function(){
-    $('btnBots').disabled = true;
-    call('hostAddBots', { n: 5 }).then(function(res){
-      $('btnBots').disabled = false;
-      if (res.ok){ players = res.players || players; renderPlayers(); renderHeader(); }
-    }).catch(function(){ $('btnBots').disabled = false; });
-  });
   $('btnRegroup').addEventListener('click', doGroup);
 
   function renderTeams(animate){
@@ -457,7 +533,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     $('groupTitle').textContent = animate ? '隨機分組中…' : '分組完成！';
     $('btnBegin').disabled = true;
     var cards = Array.prototype.slice.call($('teams').children);
-    var members = players.slice().sort(function(){ return Math.random() - 0.5; });
+    var members = plist().sort(function(){ return Math.random() - 0.5; });
     function placeMembers(){
       var delay = 0;
       members.forEach(function(p){
@@ -471,11 +547,9 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
       return delay;
     }
     if (!animate){ placeMembers(); $('btnBegin').disabled = false; $('btnRegroup').disabled = false; return; }
-    // 組名跑馬燈 → 一組一組揭曉 → 組員掉進各組
-    var pool = B.TEAM_NAMES, ticks = 0;
+    var pool = B.TEAM_NAMES;
     var spin = setInterval(function(){
       cards.forEach(function(card){ var tn = card.querySelector('.tn'); if (tn.classList.contains('spin')) tn.textContent = pool[(Math.random() * pool.length) | 0]; });
-      ticks++;
     }, 90);
     T.forEach(function(t, i){
       setTimeout(function(){
@@ -493,39 +567,18 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     Array.prototype.slice.call($('teams').children).forEach(function(card){ card.querySelector('.cnt').textContent = card.querySelectorAll('.tb .chip').length; });
   }
   function syncLateJoiners(){
-    if ($('grouping').hidden || $('btnBegin').disabled) return;
-    var cards = Array.prototype.slice.call($('teams').children);
-    var have = {};
+    if ($('btnBegin').disabled) return;
+    var cards = Array.prototype.slice.call($('teams').children), have = {};
     $('teams').querySelectorAll('.tb .chip').forEach(function(c){ have[c.dataset.pid] = c; });
-    players.forEach(function(p){
+    plist().forEach(function(p){
       if (have[p.pid] || p.team === null || !cards[p.team]) return;
       var c = document.createElement('span'); c.className = 'chip drop'; c.dataset.pid = p.pid; c.textContent = p.tag;
       cards[p.team].querySelector('.tb').appendChild(c);
     });
+    Object.keys(have).forEach(function(pid){ if (!players[pid]) have[pid].remove(); });
     updateCounts();
   }
   $('btnBegin').addEventListener('click', function(){ if (deck.length) startQuestion(0); });
-
-  /* ---------- 輪詢 ---------- */
-  var pollFails = 0;
-  function startPolling(){
-    stopPolling();
-    var loop = function(){
-      call('hostStatus').then(function(res){
-        pollFails = 0;
-        if (!res.ok || !res.state) return;
-        players = res.players || []; humans = res.humans != null ? res.humans : players.length; renderHeader();
-        if (!$('lobby').hidden) renderPlayers();
-        if (!$('grouping').hidden) syncLateJoiners();
-        if (!$('question').hidden){
-          $('qCount').textContent = res.answered || 0; $('qTotal').textContent = humans;
-          if (humans && res.answered >= humans) doReveal();
-        }
-      }).catch(function(){ pollFails++; }).then(function(){ pollTimer = setTimeout(loop, 3000 + Math.min(8000, pollFails * 1500)); });
-    };
-    loop();
-  }
-  function stopPolling(){ if (pollTimer) clearTimeout(pollTimer); pollTimer = null; }
 
   /* ---------- 出題 ---------- */
   function splash(text, ms){
@@ -540,15 +593,26 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     var newRound = i === 0 || QUESTIONS[deck[i - 1]].round !== q.round;
     var go = function(){
       var pub = { type: q.type, round: roundOf(qi).short, text: q.text, unit: q.unit || '', options: q.type === 'cell' ? CELL_OPTIONS : (q.options || []) };
-      return call('hostStart', { q: i, total: deck.length, pub: pub, answer: q.answer, plain: q.plain, formula: q.formula, dur: durs[i] || q.dur }).then(function(res){
-        if (!res.ok) throw new Error(res.err);
-        var keepTeams = st.teams;
-        st = res.state; if (!st.teams || !st.teams.length) st.teams = keepTeams;
-        revealing = false; timeUp = false;
-        showQuestion(); startPolling();
-      }).catch(function(e){ alertBar('出題失敗：' + (e.message || e)); });
+      var dur = durs[i] || q.dur;
+      var upd = { phase: 'question', q: i, qk: String(i), total: deck.length, pub: pub, dur: dur, startAt: Math.round(FB.now()) + 3000, reveal: null };
+      Object.keys(upd).forEach(function(k){ st[k] = upd[k]; });
+      revealing = false; timeUp = false; answers = {};
+      listenAnswers(i);
+      showQuestion();
+      R('state').update(upd).catch(function(e){ alertBar('出題失敗：' + (e.code || e.message) + '，請再按一次'); });
     };
     if (newRound) splash(roundOf(qi).name.replace('　', '\n'), 2200).then(go); else go();
+  }
+  function listenAnswers(i){
+    if (ansRef) ansRef.off();
+    ansRef = R('answers/' + i);
+    ansRef.on('value', function(s){ answers = s.val() || {}; updateCount(); });
+  }
+  function updateCount(){
+    var hs = plist().filter(function(p){ return !p.bot; });
+    var n = hs.filter(function(p){ return answers[p.pid]; }).length;
+    $('qCount').textContent = n; $('qTotal').textContent = hs.length;
+    if (st && st.phase === 'question' && hs.length && n >= hs.length) doReveal();
   }
   function optsHtml(q, opts, mode, sum){
     var dist = (sum && sum.dist) || {}, tot = (sum && sum.answered) || 0;
@@ -569,7 +633,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
       return '<div class="mcgrid">' + opts.map(function(o, i){ return '<div class="mcopt o' + i + cls(i) + '"><span class="s">' + B.SHAPES[i] + '</span><span style="flex:1">' + B.esc(o) + '</span>' + extra(i) + '</div>'; }).join('') + '</div>';
     }
     if (mode === 'q') return q.round >= 3 ? '<div class="numtips"><div class="numhint">請在手機輸入金額（只打數字）</div>' + tipsHtml() + '</div>' : '<div class="numhint">請在手機輸入金額（只打數字）</div>';
-    var vals = Object.keys(dist).map(function(k){ return { v: Number(k), n: dist[k] }; }).sort(function(a, b){ return b.n - a.n; }).slice(0, 4);
+    var vals = Object.keys(dist).filter(function(k){ return dist[k]; }).map(function(k){ return { v: Number(k), n: dist[k] }; }).sort(function(a, b){ return b.n - a.n; }).slice(0, 4);
     var max = vals.length ? vals[0].n : 1;
     return '<div class="card numres"><div>正確答案</div><div class="ans">' + B.money(sum.answer) + '</div>' +
       (vals.length ? '<div class="muted" style="font-weight:800">全班最常見的答案</div><div class="vals">' + vals.map(function(x){
@@ -583,7 +647,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     var dist = (sum && sum.dist) || {}, tot = (sum && sum.answered) || 0;
     var cAns = Math.floor(q.answer / 10), aAns = q.answer % 10;
     var cellN = [0, 0, 0, 0], amtN = q.options.map(function(){ return 0; });
-    Object.keys(dist).forEach(function(k){ var v = Number(k); cellN[Math.floor(v / 10)] += dist[k]; if (amtN[v % 10] !== undefined) amtN[v % 10] += dist[k]; });
+    Object.keys(dist).forEach(function(k){ var v = Number(k), n = dist[k] || 0; cellN[Math.floor(v / 10)] += n; if (amtN[v % 10] !== undefined) amtN[v % 10] += n; });
     function bar(n){ var w = tot ? Math.round(n / tot * 100) : 0; return '<span class="n">' + n + ' 人</span><span class="bar" style="width:' + w + '%"></span>'; }
     var c = function(i, a, b){
       var cl = mode === 'r' ? (' opt-res ' + (i === cAns ? 'correct' : 'dim')) : '';
@@ -605,39 +669,78 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     $('qNo').textContent = '第 ' + (st.q + 1) + ' / ' + deck.length + ' 題';
     $('qText').textContent = q.text; $('qText').classList.toggle('long', q.text.length > 60);
     $('qOpts').innerHTML = optsHtml(q, q.options, 'q');
-    $('qCount').textContent = '0'; $('qTotal').textContent = humans;
+    updateCount();
     $('btnReveal').disabled = false;
     if (tickTimer) clearInterval(tickTimer);
     tickTimer = setInterval(tick, 200); tick();
   }
   function tick(){
     if (!st || st.phase !== 'question') return;
-    var left = Math.max(0, st.startAt + st.dur * 1000 - (Date.now() + offset));
+    var left = Math.max(0, st.startAt + st.dur * 1000 - FB.now());
     var s = Math.ceil(left / 1000);
-    $('qTimer').textContent = s;
+    $('qTimer').textContent = s > st.dur ? '準備' : s;
     $('qBar').firstElementChild.style.width = Math.min(100, left / (st.dur * 1000) * 100) + '%';
-    if (s > st.dur) { s = st.dur; $('qTimer').textContent = '準備'; }
     $('qBar').classList.toggle('low', s <= 5);
-    if (left <= 0 && !timeUp){ timeUp = true; setTimeout(doReveal, 1800); }
+    if (left <= 0 && !timeUp){ timeUp = true; setTimeout(doReveal, 2500); }   // 等最後一秒送出的答案進來
+  }
+
+  /* ---------- 公布與計分（在老師電腦上算，再寫回 Firebase） ---------- */
+  var CELL_TEXT = CELL_OPTIONS;
+  function shownAnswer(pub, v){
+    if (v === null || v === undefined) return '（未作答）';
+    if (pub.type === 'num') return v;
+    if (pub.type === 'item') return CELL_TEXT[Math.floor(v / 10)] + '／' + (pub.options[v % 10] || '');
+    if (pub.type === 'cell') return CELL_TEXT[v] || v;
+    return pub.options[v] || v;
   }
   function doReveal(){
     if (revealing || !st || st.phase !== 'question') return;
     revealing = true; $('btnReveal').disabled = true;
     if (tickTimer) clearInterval(tickTimer);
-    call('hostReveal').then(function(res){
-      if (!res.ok && res.err === 'not_in_question'){
-        // 第一次其實已經公布成功、只是回應塞車沒收到 → 直接拿目前狀態
-        return call('hostStatus', null, 3).then(function(s2){
-          if (s2.state && s2.state.phase === 'reveal' && s2.reveal){ st.phase = 'reveal'; renderReveal(s2.reveal); return; }
-          throw new Error('not_in_question');
-        });
+    var qi = deck[st.q], q = QUESTIONS[qi], key = q.answer, pub = st.pub;
+    var T = teams(), list = plist(), sz = sizes(T.length), right = T.map(function(){ return 0; });
+    var dist = {}, nRight = 0, answered = 0, upd = {}, rows = [];
+    list.forEach(function(p){
+      var a = answers[p.pid];
+      if (p.bot){   // 機器人：約 6 成答對
+        var ok = Math.random() < 0.6, v = key;
+        if (!ok){ if (pub.type === 'num') v = key + 1000; else if (pub.type === 'item'){ var n = pub.options.length || 1; do { v = Math.floor(Math.random() * 4) * 10 + Math.floor(Math.random() * n); } while (v === key); } else v = (key + 1 + Math.floor(Math.random() * 3)) % 4; }
+        a = { v: v, t: st.startAt + 2000 };
       }
-      if (!res.ok) throw new Error(res.err);
-      st.phase = 'reveal';
-      renderReveal(res.reveal);
-    }).catch(function(e){ revealing = false; $('btnReveal').disabled = false; alertBar('公布失敗：' + (e.message || e) + '，請再按一次「提早公布答案」。'); });
+      var c = !!a && a.v === key;
+      if (a){ answered++; dist[String(a.v)] = (dist[String(a.v)] || 0) + 1; }
+      var okN = (p.ok || 0) + (c ? 1 : 0);
+      if (c){ nRight++; if (p.team !== null && right[p.team] !== undefined) right[p.team]++; }
+      upd['players/' + p.pid + '/ok'] = okN; players[p.pid].ok = okN;
+      upd['players/' + p.pid + '/last'] = a ? { q: st.q, c: c, v: a.v } : { q: st.q, c: false, none: true };
+      if (!p.bot) rows.push([room, st.q + 1, p.sid, p.team !== null && T[p.team] ? T[p.team].name : '', shownAnswer(pub, a ? a.v : null), c ? '○' : '×', a ? Math.max(0, Math.round((a.t - st.startAt) / 100) / 10) : '']);
+    });
+    var gains = T.map(function(t, i){
+      var g = sz[i] ? Math.round(100 * right[i] / sz[i]) + (right[i] === sz[i] ? 20 : 0) : 0;
+      t.score = (t.score || 0) + g; t.size = sz[i];
+      return { id: i, name: t.name, gain: g, right: right[i], size: sz[i], full: sz[i] > 0 && right[i] === sz[i], score: t.score };
+    });
+    var summary = { answer: key, dist: dist, right: nRight, answered: answered, players: list.length, gains: gains };
+    st.phase = 'reveal'; st.reveal = { answer: key, plain: q.plain, formula: q.formula, summary: summary };
+    upd['state/phase'] = 'reveal'; upd['state/teams'] = T; upd['state/reveal'] = st.reveal;
+    renderReveal(summary);
+    var write = function(n){
+      return R().update(upd).catch(function(e){
+        if (n < 3) { netBar('寫入失敗，重試中…'); return new Promise(function(r){ setTimeout(r, 1500); }).then(function(){ return write(n + 1); }); }
+        netBar(''); alertBar('公布結果沒有寫進 Firebase：' + (e.code || e.message));
+      }).then(function(){ netBar(''); });
+    };
+    write(1);
+    logAll = logAll.concat(rows);
+    sendLog('hostLog', rows);
   }
   $('btnReveal').addEventListener('click', doReveal);
+  function sendLog(action, rows){
+    if (!key || !rows.length || !B.apiReady()) return;
+    B.api(action, { key: key, rows: rows }, 20000).then(function(r){
+      $('logHint').textContent = r && r.ok ? '作答紀錄已寫進 Google 試算表。' : '試算表沒寫成功（' + (r && r.err) + '），可以用下面的按鈕下載。';
+    }).catch(function(){ $('logHint').textContent = '試算表沒寫成功，可以用下面的按鈕下載作答紀錄。'; });
+  }
 
   function renderReveal(sum){
     var qi = deck[st.q], q = QUESTIONS[qi];
@@ -680,29 +783,42 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
 
   /* ---------- 結束 ---------- */
   function finish(){
-    stopPolling();
-    call('hostEnd').then(function(res){
-      var r = res.ranking || [];
-      show('end');
-      var medal = ['🥇', '🥈', '🥉'];
-      var order = [1, 0, 2];
-      $('podium').innerHTML = order.map(function(i){
-        var t = r[i]; if (!t) return '<div></div>';
-        return '<div class="pod p' + (i + 1) + ' pop" style="border-top-color:' + B.teamColor(t.id) + '"><span class="medal">' + medal[i] + '</span><span class="nm">' + B.esc(t.name) + '</span><span class="sc">' + t.score + ' 分</span><span class="muted">第 ' + (t.id + 1) + ' 組・' + (t.size || 0) + ' 人</span></div>';
-      }).join('');
-      $('endList').innerHTML = r.slice(3).map(function(t, i){ return '<li><span>' + (i + 4) + '</span><span><span style="color:' + B.teamColor(t.id) + '">●</span> ' + B.esc(t.name) + '</span><span>' + t.score + ' 分</span></li>'; }).join('');
-      $('restWrap').hidden = r.length <= 3;
-      $('practiceHint').textContent = '回家想再練：' + joinUrl().split('index.html')[0] + 'practice.html';
+    if (ansRef) ansRef.off();
+    var T = teams(), sz = sizes(T.length);
+    var r = T.map(function(t, i){ return { id: i, name: t.name, score: t.score || 0, size: sz[i] }; }).sort(function(a, b){ return b.score - a.score || a.id - b.id; });
+    st.phase = 'end';
+    R('state').update({ phase: 'end', ranking: r });
+    show('end');
+    var medal = ['🥇', '🥈', '🥉'], order = [1, 0, 2];
+    $('podium').innerHTML = order.map(function(i){
+      var t = r[i]; if (!t) return '<div></div>';
+      return '<div class="pod p' + (i + 1) + ' pop" style="border-top-color:' + B.teamColor(t.id) + '"><span class="medal">' + medal[i] + '</span><span class="nm">' + B.esc(t.name) + '</span><span class="sc">' + t.score + ' 分</span><span class="muted">第 ' + (t.id + 1) + ' 組・' + (t.size || 0) + ' 人</span></div>';
+    }).join('');
+    $('endList').innerHTML = r.slice(3).map(function(t, i){ return '<li><span>' + (i + 4) + '</span><span><span style="color:' + B.teamColor(t.id) + '">●</span> ' + B.esc(t.name) + '</span><span>' + t.score + ' 分</span></li>'; }).join('');
+    $('restWrap').hidden = r.length <= 3;
+    $('practiceHint').textContent = '回家想再練：' + joinUrl().split('index.html')[0] + 'practice.html';
+    // 總排名寫進試算表：每位同學一列
+    var place = {}, rank = 0, lastS = null;
+    r.forEach(function(t, i){ if (t.score !== lastS){ rank = i + 1; lastS = t.score; } place[t.id] = rank; });
+    var rows = [];
+    r.forEach(function(t){
+      plist().filter(function(p){ return !p.bot && p.team === t.id; }).sort(function(a, b){ return a.sid < b.sid ? -1 : 1; })
+        .forEach(function(p){ rows.push([room, place[t.id], t.name, t.score, p.sid, p.ok, deck.length]); });
     });
+    rankRows = rows;
+    sendLog('hostLogRank', rows);
   }
+  var rankRows = [];
+  $('btnCsv').addEventListener('click', function(){
+    var esc = function(x){ x = String(x == null ? '' : x); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
+    var lines = ['房號,題號,學號,組別,作答,對錯,秒數'].concat(logAll.map(function(r){ return r.map(esc).join(','); }));
+    lines.push('', '房號,組別名次,組別,組別總分,學號,個人答對題數,總題數');
+    rankRows.forEach(function(r){ lines.push(r.map(esc).join(',')); });
+    var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = '鳳姨搶答_' + room + '.csv';
+    document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  });
   $('btnHome').addEventListener('click', function(){ show('setup'); checkResume(); });
-
-  function alertBar(msg){
-    var d = document.createElement('div');
-    d.textContent = msg;
-    d.style.cssText = 'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#22262B;color:#fff;font-weight:800;padding:10px 18px;border-radius:12px;z-index:9';
-    document.body.appendChild(d); setTimeout(function(){ d.remove(); }, 4000);
-  }
 
   document.addEventListener('keydown', function(e){
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT')) return;

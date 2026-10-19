@@ -142,7 +142,11 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
   </section>
 </div>
 
-<script src="config.js"></script>
+<script src="firebase-app-compat.js"></script>
+<script src="firebase-auth-compat.js"></script>
+<script src="firebase-database-compat.js"></script>
+<script src="fbconfig.js"></script>
+<script src="fb.js"></script>
 <script src="common.js"></script>
 <script src="questions.js"></script>
 <script src="calculator.js"></script>
@@ -157,77 +161,113 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
 
   var params = new URLSearchParams(location.search);
   var room = params.get('room') || LS.get('battle_last_room') || '';
-  var pid = null;
-  var offset = 0, last = null, viewKey = '', sending = false, pollT = null, tickT = null, revealedTeam = '';
+  var uid = null, joined = false, st = null, me = null, myAns = {}, ansRef = null, refs = [];
+  var last = null, viewKey = '', sending = false, tickT = null, revealedTeam = '';
   $('room').value = room;
-  if (!B.apiReady()) $('joinErr').textContent = '這個網頁還沒設定後端網址，請跟老師說。';
+  if (!FB.ready()) $('joinErr').textContent = '這個網頁還沒設定 Firebase，請跟老師說。';
 
   var VIEWS = ['join','wait','grouped','q','sent','res','end'];
   function show(id){ VIEWS.forEach(function(v){ $(v).hidden = v !== id; }); $('meTag').hidden = id === 'join'; $('practiceLink').hidden = !(id === 'join' || id === 'end'); if (window.Calc) Calc.show(id === 'q'); }
 
   var ERR = { no_room: '找不到這個房號，看一下大螢幕。', no_sid: '請輸入學號。', full: '人數已滿。', not_joined: '你被移出房間了，請確認學號後重新加入。' };
 
-  /* ---------- 加入 ---------- */
+  /* ---------- 加入（Firebase 匿名登入，重新整理也是同一個身分） ---------- */
+  function R(p){ return FB.ref('rooms/' + room + (p ? '/' + p : '')); }
   function doJoin(){
     room = $('room').value.replace(/\D/g, '');
-    var sid = $('sid').value.replace(/[^0-9A-Za-z]/g, '');
+    var sid = $('sid').value.replace(/[^0-9A-Za-z]/g, '').toUpperCase();
     if (room.length !== 4){ $('joinErr').textContent = '房號是 4 位數字。'; return; }
     if (sid.length < 3){ $('joinErr').textContent = '請輸入完整學號。'; return; }
     $('btnJoin').disabled = true; $('joinErr').textContent = '';
-    B.api('join', { room: room, sid: sid }).then(function(res){
+    FB.anon().then(function(u){
+      uid = u.uid;
+      return R('meta').once('value');
+    }).then(function(m){
+      if (!m.exists()) throw { code: 'no_room' };
+      return R('players/' + uid).once('value');
+    }).then(function(p){
+      if (p.exists()) return;
+      return R('players/' + uid).set({ sid: sid, joinedAt: FB.TS() });
+    }).then(function(){
       $('btnJoin').disabled = false;
-      if (!res.ok){ $('joinErr').textContent = ERR[res.err] || ('加入失敗：' + res.err); return; }
-      pid = res.pid;
-      LS.set('battle_pid_' + room, pid); LS.set('battle_last_room', room);
-      show('wait'); viewKey = 'wait'; poll();
-    }).catch(function(){ $('btnJoin').disabled = false; $('joinErr').textContent = '連線失敗，再按一次試試。'; });
+      LS.set('battle_last_room', room); LS.set('battle_joined_' + room, '1');
+      show('wait'); viewKey = 'wait'; attach();
+    }).catch(function(e){
+      $('btnJoin').disabled = false;
+      $('joinErr').textContent = e && e.code === 'no_room' ? '找不到這個房號，看一下大螢幕。' : '加入失敗，再按一次試試。（' + ((e && (e.code || e.message)) || '') + '）';
+    });
   }
   $('btnJoin').addEventListener('click', doJoin);
   $('sid').addEventListener('keydown', function(e){ if (e.key === 'Enter') doJoin(); });
 
   // 重新整理後自動回到房間
-  if (room && LS.get('battle_pid_' + room) && B.apiReady()){
-    pid = LS.get('battle_pid_' + room);
+  if (room && LS.get('battle_joined_' + room) && FB.ready()){
     revealedTeam = LS.get('battle_team_shown_' + room) || '';
-    poll();
+    FB.anon().then(function(u){ uid = u.uid; return R('players/' + uid).once('value'); }).then(function(p){
+      if (p.exists()) attach(); else LS.del('battle_joined_' + room);
+    }).catch(function(){});
   }
 
-  /* ---------- 輪詢 ---------- */
-  // 省流量輪詢：等待時問得慢、作答中問得快，加隨機錯開；連線失敗就逐步拉長間隔，避免全班一起塞爆後端
-  var fails = 0;
-  function nextDelay(res){
-    // 作答中還沒答：題目已經在手機上了，不用一直問（送出答案時就會知道有沒有收到）
-    var base = 4000;
-    if (res && res.phase === 'lobby') base = 6000;
-    else if (res && res.phase === 'grouped') base = 4000;
-    else if (res && res.phase === 'question') base = (res.mine !== null && res.mine !== undefined) ? 5000 : 8000;
-    else if (res && res.phase === 'reveal') base = 4500;
-    return base + Math.random() * 2000;
-  }
-  function poll(){
-    if (pollT) clearTimeout(pollT);
-    if (!pid) return;
-    B.api('poll', { room: room, pid: pid }, 12000).then(function(res){
-      fails = 0; setNet(true);
-      if (!res.ok){
-        if (res.err === 'not_joined' || res.err === 'no_room'){
-          LS.del('battle_pid_' + room); pid = null; show('join');
-          $('joinErr').textContent = res.err === 'no_room' ? '這場已經結束了，請看大螢幕的新房號。' : ERR.not_joined;
-          return;
+  /* ---------- 即時同步：題目一出來 Firebase 就推到手機，不用一直問 ---------- */
+  function attach(){
+    refs.forEach(function(r){ r.off(); }); refs = [];
+    joined = false;
+    var sRef = R('state'), mRef = R('players/' + uid);
+    refs.push(sRef, mRef);
+    sRef.on('value', function(s){ st = s.val(); watchAnswer(); render(); });
+    mRef.on('value', function(s){
+      var v = s.val();
+      if (!v){
+        if (joined){ // 被老師移除，或老師開了新的一場
+          refs.forEach(function(r){ r.off(); }); refs = []; LS.del('battle_joined_' + room);
+          show('join'); $('joinErr').textContent = '你被移出房間了，或這場已經結束，請看大螢幕重新加入。';
         }
-      } else handle(res);
-      if (res.ok && res.phase === 'end') return;   // 結束了就不再問
-      pollT = setTimeout(poll, nextDelay(res));
-    }).catch(function(){
-      fails++; if (fails >= 2) setNet(false);
-      pollT = setTimeout(poll, Math.min(12000, 3000 * Math.pow(1.6, fails)) + Math.random() * 2000);
+        return;
+      }
+      joined = true; me = v; render();
     });
   }
+  function watchAnswer(){
+    if (!st || st.phase !== 'question') return;
+    var path = 'answers/' + st.q + '/' + uid;
+    if (ansRef && ansRef.__path === path) return;
+    if (ansRef) ansRef.off();
+    ansRef = R(path); ansRef.__path = path; refs.push(ansRef);
+    var q = st.q;
+    ansRef.on('value', function(s){ var v = s.val(); if (v){ myAns[q] = v.v; render(); } });
+  }
+  FB.onConnection && FB.ready() && FB.onConnection(function(ok){ setNet(ok || !joined); });
   function setNet(ok){
     var n = document.getElementById('netWarn');
-    if (!n){ n = document.createElement('div'); n.id = 'netWarn'; n.textContent = '連線有點塞，正在重試…不用重新整理'; n.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);background:#22262B;color:#fff;font-weight:800;font-size:.9rem;padding:6px 14px;border-radius:999px;z-index:50'; document.body.appendChild(n); }
+    if (!n){ n = document.createElement('div'); n.id = 'netWarn'; n.textContent = '網路斷線，重新連線中…不用重新整理'; n.style.cssText = 'position:fixed;left:50%;top:8px;transform:translateX(-50%);background:#22262B;color:#fff;font-weight:800;font-size:.9rem;padding:6px 14px;border-radius:999px;z-index:50'; document.body.appendChild(n); }
     n.hidden = ok;
   }
+
+  // 把 Firebase 的資料整理成畫面要用的樣子
+  function build(){
+    if (!st || !me) return null;
+    var teams = st.teams || [];
+    var res = { phase: st.phase, q: st.q, total: st.total, pub: st.pub, startAt: st.startAt, dur: st.dur,
+      me: { sid: me.sid, ok: me.ok || 0, team: me.team }, teamCount: teams.length };
+    if (me.team !== null && me.team !== undefined && teams[me.team]){
+      var t = teams[me.team], rank = 1;
+      teams.forEach(function(x){ if (x && x.score > t.score) rank++; });
+      res.myTeam = { id: me.team, name: t.name, score: t.score || 0, rank: rank, size: t.size || 0 };
+      res.teamNames = teams.map(function(x){ return x ? x.name : ''; });
+    }
+    if (st.phase === 'question' || st.phase === 'reveal'){
+      res.mine = myAns[st.q] !== undefined ? myAns[st.q] : null;
+      if (res.mine === null && me.last && me.last.q === st.q && !me.last.none) res.mine = me.last.v;
+    }
+    if (st.phase === 'reveal' && st.reveal){
+      res.reveal = { answer: st.reveal.answer, plain: st.reveal.plain, formula: st.reveal.formula };
+      res.myRes = (me.last && me.last.q === st.q) ? me.last : { c: false, none: true };
+      var gains = (st.reveal.summary && st.reveal.summary.gains) || [];
+      if (res.myTeam) res.teamGain = gains[me.team] || null;
+    }
+    return res;
+  }
+  function render(){ var r = build(); if (r) handle(r); }
 
   function teamTag(res){
     var t = res.myTeam;
@@ -237,11 +277,11 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
   }
 
   function handle(res){
-    offset = res.now - Date.now();
     last = res;
     teamTag(res);
     var tkey = res.myTeam ? res.myTeam.id + ':' + res.myTeam.name : '';
-    var key = res.phase + ':' + res.q + ':' + (res.mine !== null && res.mine !== undefined ? 'a' : '-') + ':' + tkey;
+    var rkey = res.phase === 'reveal' ? ':' + (res.myRes && !res.myRes.none ? (res.myRes.c ? 'R1' : 'R0') : 'RN') + ':' + (res.teamGain ? res.teamGain.gain : '-') : '';
+    var key = res.phase + ':' + res.q + ':' + (res.mine !== null && res.mine !== undefined ? 'a' : '-') + ':' + tkey + rkey + (res.phase === 'end' && res.myTeam ? ':' + res.myTeam.rank : '');
     if (key === viewKey) return;
     viewKey = key;
     if (res.phase === 'lobby'){ show('wait'); $('waitText').textContent = '加入成功！等老師分組…'; }
@@ -330,7 +370,7 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
   }
   function tick(){
     if (!last || last.phase !== 'question') return;
-    var left = Math.max(0, last.startAt + last.dur * 1000 - (Date.now() + offset));
+    var left = Math.max(0, last.startAt + last.dur * 1000 - FB.now());
     var s = Math.ceil(left / 1000);
     $('qLeft').textContent = s;
     $('qBar').firstElementChild.style.width = Math.min(100, left / (last.dur * 1000) * 100) + '%';
@@ -342,17 +382,14 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
     sending = true;
     Array.prototype.slice.call(document.querySelectorAll('#qOpts button')).forEach(function(b){ b.disabled = true; });
     showSent(last, v, true);
-    var sendAns = function(){ return B.api('answer', { room: room, pid: pid, q: last.q, v: v }, 15000); };
-    sendAns().catch(function(){ return new Promise(function(r){ setTimeout(r, 1200 + Math.random() * 1500); }).then(sendAns); }).then(function(res){
-      if (!res.ok){
-        var msg = res.err === 'late' || res.err === 'closed' ? '時間到了，這題沒有收到 QQ' : '送出失敗：' + res.err;
-        $('sentVal').textContent = msg; $('sentVal').className = 'card mine bg-bad';
-        if (pollT) clearTimeout(pollT); pollT = setTimeout(poll, 1500 + Math.random() * 1500);
-      } else {
-        viewKey = 'question:' + last.q + ':a:' + (last.myTeam ? last.myTeam.id + ':' + last.myTeam.name : '');
-        $('sentVal').textContent = '你的答案：' + ansText(last.pub, v);
-      }
-    }).catch(function(){
+    var q = last.q;
+    R('answers/' + q + '/' + uid).set({ v: v, t: FB.TS() }).then(function(){
+      myAns[q] = v;
+      viewKey = 'question:' + q + ':a:' + (last.myTeam ? last.myTeam.id + ':' + last.myTeam.name : '');
+      $('sentVal').textContent = '你的答案：' + ansText(last.pub, v);
+    }).catch(function(e){
+      var denied = e && /permission|PERMISSION/i.test(String(e.code || e.message));
+      if (denied){ $('sentVal').textContent = '時間到了，這題沒有收到 QQ'; $('sentVal').className = 'card mine bg-bad'; return; }
       sending = false; showQuestion(last);
       var m = document.createElement('p'); m.className = 'err'; m.textContent = '網路不穩，沒送出去，請再按一次。';
       $('qOpts').prepend(m);
