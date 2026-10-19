@@ -106,6 +106,7 @@ button[disabled]{cursor:default}
 </div>
 
 <script src="common.js"></script>
+<script src="calculator.js"></script>
 <script src="questions.js"></script>
 <script>
 (function(){
@@ -131,7 +132,7 @@ button[disabled]{cursor:default}
   }
   $('roundPick').addEventListener('change', showBest); showBest();
 
-  function show(id){ ['setup','quiz','end'].forEach(function(s){ $(s).hidden = s !== id; }); window.scrollTo({ top: 0 }); }
+  function show(id){ ['setup','quiz','end'].forEach(function(s){ $(s).hidden = s !== id; }); if (window.Calc) Calc.show(id === 'quiz'); window.scrollTo({ top: 0 }); }
   function shuffle(a){ a = a.slice(); for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
 
   function start(list){
@@ -161,6 +162,8 @@ button[disabled]{cursor:default}
       box.innerHTML = '<div class="cellgrid"><div class="ch blank"></div><div class="ch in">在倉庫裡</div><div class="ch out">不在倉庫裡</div>' +
         '<div class="rh mine">是我的存貨</div>' + c(0, '倉庫內', '是存貨') + c(1, '倉庫外', '是存貨') +
         '<div class="rh not">不是我的存貨</div>' + c(2, '倉庫內', '不是存貨') + c(3, '倉庫外', '不是存貨') + '</div>';
+    } else if (q.type === 'item'){
+      B.itemUI(box, q, answer);
     } else if (q.type === 'mc'){
       box.innerHTML = '<div class="mcgrid">' + q.options.map(function(o, i){ return '<button type="button" class="mcopt o' + i + '" data-v="' + i + '"><span class="s">' + B.SHAPES[i] + '</span><span>' + B.esc(o) + '</span></button>'; }).join('') + '</div>';
     } else {
@@ -169,8 +172,10 @@ button[disabled]{cursor:default}
       inp.addEventListener('input', function(){ var d = inp.value.replace(/[^\d]/g, ''); $('numPre').textContent = d ? B.money(Number(d)) : ''; });
       inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') submitNum(); });
       $('numGo').addEventListener('click', submitNum);
+      if (q.round >= 3) box.insertAdjacentHTML('beforeend', B.tipsDetails(false));
     }
     Array.prototype.slice.call(box.querySelectorAll('[data-v]')).forEach(function(b){ b.addEventListener('click', function(){ answer(Number(b.dataset.v)); }); });
+    if (window.Calc) Calc.refresh();
     if (tickT) clearInterval(tickT);
     $('qBar').hidden = !timed; $('qLeft').textContent = '';
     if (timed){ deadline = Date.now() + q.dur * 1000; tickT = setInterval(tick, 200); tick(); }
@@ -191,6 +196,7 @@ button[disabled]{cursor:default}
     if (v === null || v === undefined) return '沒有作答';
     if (q.type === 'num') return B.money(v);
     if (q.type === 'cell') return CELL_OPTIONS[v];
+    if (q.type === 'item') return B.itemText(q, v);
     return B.SHAPES[v] + ' ' + q.options[v];
   }
 
@@ -209,6 +215,11 @@ button[disabled]{cursor:default}
       if (bv === v) b.classList.add('picked');
     });
     if ($('numIn')) $('numIn').disabled = true;
+    if (q.type === 'item'){
+      var ca = Math.floor(q.answer / 10), aa = q.answer % 10;
+      document.querySelectorAll('#qOpts [data-c]').forEach(function(b){ b.disabled = true; if (Number(b.dataset.c) === ca) b.classList.add('right'); });
+      document.querySelectorAll('#qOpts [data-a]').forEach(function(b){ b.disabled = true; if (Number(b.dataset.a) === aa) b.classList.add('right'); });
+    }
     B.setFace($('qChar'), ok ? 'happy' : 'oops');
     var vd = $('fbVerdict'); vd.className = 'verdict ' + (ok ? 'ok' : 'bad');
     vd.innerHTML = '<span class="mark" aria-hidden="true">' + (ok ? '○' : '×') + '</span>' + (ok ? '答對了！' : (v === null ? '時間到了！' : '再想想！'));
@@ -254,7 +265,7 @@ button[disabled]{cursor:default}
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON')) return;
     if ($('quiz').hidden) return;
     var q = deck[idx]; if (!q) return;
-    if (!answered && q.type !== 'num'){ var k = ['1','2','3','4'].indexOf(e.key); if (k >= 0){ e.preventDefault(); answer(k); } }
+    if (!answered && (q.type === 'cell' || q.type === 'mc')){ var k = ['1','2','3','4'].indexOf(e.key); if (k >= 0){ e.preventDefault(); answer(k); } }
     else if (answered && e.key === 'Enter'){ e.preventDefault(); $('btnNext').click(); }
   });
 })();

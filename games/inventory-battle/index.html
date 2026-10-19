@@ -144,6 +144,8 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
 
 <script src="config.js"></script>
 <script src="common.js"></script>
+<script src="questions.js"></script>
+<script src="calculator.js"></script>
 <script>
 (function(){
   var B = window.Battle, $ = function(id){ return document.getElementById(id); };
@@ -161,7 +163,7 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
   if (!B.apiReady()) $('joinErr').textContent = '這個網頁還沒設定後端網址，請跟老師說。';
 
   var VIEWS = ['join','wait','grouped','q','sent','res','end'];
-  function show(id){ VIEWS.forEach(function(v){ $(v).hidden = v !== id; }); $('meTag').hidden = id === 'join'; $('practiceLink').hidden = !(id === 'join' || id === 'end'); }
+  function show(id){ VIEWS.forEach(function(v){ $(v).hidden = v !== id; }); $('meTag').hidden = id === 'join'; $('practiceLink').hidden = !(id === 'join' || id === 'end'); if (window.Calc) Calc.show(id === 'q'); }
 
   var ERR = { no_room: '找不到這個房號，看一下大螢幕。', no_sid: '請輸入學號。', full: '人數已滿。', not_joined: '你被移出房間了，請確認學號後重新加入。' };
 
@@ -276,6 +278,8 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
       box.innerHTML = '<div class="cellgrid"><div class="ch blank"></div><div class="ch in">在倉庫裡</div><div class="ch out">不在倉庫裡</div>' +
         '<div class="rh mine">是我的存貨</div>' + cellBtn(0, '倉庫內', '是存貨') + cellBtn(1, '倉庫外', '是存貨') +
         '<div class="rh not">不是我的存貨</div>' + cellBtn(2, '倉庫內', '不是存貨') + cellBtn(3, '倉庫外', '不是存貨') + '</div>';
+    } else if (p.type === 'item'){
+      B.itemUI(box, p, submit);
     } else if (p.type === 'mc'){
       box.innerHTML = '<div class="mcgrid">' + p.options.map(function(o, i){
         return '<button type="button" class="mcopt o' + i + '" data-v="' + i + '"><span class="s">' + B.SHAPES[i] + '</span><span>' + B.esc(o) + '</span></button>';
@@ -289,6 +293,7 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
       });
       inp.addEventListener('keydown', function(e){ if (e.key === 'Enter') submitNum(); });
       $('numGo').addEventListener('click', submitNum);
+      if (/大結算/.test(p.round)) box.insertAdjacentHTML('beforeend', B.tipsDetails(false));
     }
     Array.prototype.slice.call(box.querySelectorAll('[data-v]')).forEach(function(b){
       b.addEventListener('click', function(){ submit(Number(b.dataset.v)); });
@@ -332,6 +337,7 @@ button.mcopt{font-family:var(--font);font-size:1.05rem;min-height:62px;cursor:po
   function ansText(pub, v){
     if (v === null || v === undefined) return '沒有作答';
     if (pub.type === 'num') return B.money(v);
+    if (pub.type === 'item') return B.itemText(pub, v);
     return (pub.type === 'mc' ? B.SHAPES[v] + ' ' : '') + (pub.options[v] || '');
   }
   function showSent(res, v, pending){

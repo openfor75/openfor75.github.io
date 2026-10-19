@@ -61,5 +61,42 @@
     return a.slice(0, n);
   }
 
-  window.Battle = { API: API, apiReady: apiReady, api: api, CHAR: CHAR, setFace: setFace, money: money, esc: esc, SHAPES: SHAPES, TEAM_NAMES: TEAM_NAMES, teamColor: teamColor, pickNames: pickNames };
+  // 拆小題（item）作答區：①放哪一格 ②列入金額，兩個都選好才能送出。onSubmit(v) 收到 格子×10＋金額
+  var ITEM_CSS = '.istep{margin:4px 0 0;font-weight:900}' +
+    'button.amtbtn{font-family:var(--font);font-size:1rem;font-weight:900;color:var(--ink);background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px 12px;text-align:left;display:flex;gap:10px;align-items:center;cursor:pointer;box-shadow:0 4px 0 var(--ink);width:100%;font-variant-numeric:tabular-nums}' +
+    'button.amtbtn .ab{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.7em;height:1.7em;border-radius:50%;background:var(--ink);color:#fff;font-size:.85em}' +
+    '.amtlist{display:flex;flex-direction:column;gap:8px}' +
+    '.sel{outline:4px solid var(--ink);outline-offset:3px;background:var(--sun-soft) !important}' +
+    'details.tips{border:2.5px dashed var(--ink);border-radius:14px;background:var(--sun-soft);padding:8px 12px;font-weight:800;line-height:1.6}' +
+    'details.tips summary{cursor:pointer;font-weight:900}';
+  var itemCssAdded = false;
+  function tipsDetails(open) {
+    var tips = window.FORMULA_TIPS || [];
+    return '<details class="tips"' + (open ? ' open' : '') + '><summary>📒 列入金額公式小抄</summary>' + tips.map(function (t) { return '・' + esc(t); }).join('<br>') + '</details>';
+  }
+  function itemUI(box, q, onSubmit) {
+    if (!itemCssAdded) { var st = document.createElement('style'); st.textContent = ITEM_CSS; document.head.appendChild(st); itemCssAdded = true; }
+    var cb = function (i, a, b) { return '<button type="button" class="cellopt o' + i + '" data-c="' + i + '"><span class="k">' + (i + 1) + '</span>' + a + '<br>' + b + '</button>'; };
+    box.innerHTML = '<p class="istep">① 放哪一格？</p><div class="cellgrid"><div class="ch blank"></div><div class="ch in">在倉庫裡</div><div class="ch out">不在倉庫裡</div>' +
+      '<div class="rh mine">是我的存貨</div>' + cb(0, '倉庫內', '是存貨') + cb(1, '倉庫外', '是存貨') +
+      '<div class="rh not">不是我的存貨</div>' + cb(2, '倉庫內', '不是存貨') + cb(3, '倉庫外', '不是存貨') + '</div>' +
+      '<p class="istep">② 列入存貨要用多少？</p><div class="amtlist">' + q.options.map(function (o, i) {
+        return '<button type="button" class="amtbtn" data-a="' + i + '"><span class="ab">' + 'ABCD'.charAt(i) + '</span><span>' + esc(o) + '</span></button>';
+      }).join('') + '</div>' + tipsDetails(false) +
+      '<button type="button" class="btn go" data-go disabled style="width:100%">兩個都選好了，送出</button>';
+    var c = null, a = null, go = box.querySelector('[data-go]');
+    Array.prototype.slice.call(box.querySelectorAll('[data-c]')).forEach(function (b) {
+      b.addEventListener('click', function () { c = Number(b.dataset.c); box.querySelectorAll('[data-c]').forEach(function (x) { x.classList.toggle('sel', x === b); }); go.disabled = c === null || a === null; });
+    });
+    Array.prototype.slice.call(box.querySelectorAll('[data-a]')).forEach(function (b) {
+      b.addEventListener('click', function () { a = Number(b.dataset.a); box.querySelectorAll('[data-a]').forEach(function (x) { x.classList.toggle('sel', x === b); }); go.disabled = c === null || a === null; });
+    });
+    go.addEventListener('click', function () { if (c !== null && a !== null) onSubmit(c * 10 + a); });
+  }
+  function itemText(q, v) {
+    var cells = window.CELL_OPTIONS || ['倉庫內・是存貨', '倉庫外・是存貨', '倉庫內・不是存貨', '倉庫外・不是存貨'];
+    return cells[Math.floor(v / 10)] + '／' + (q.options[v % 10] || '');
+  }
+
+  window.Battle = { API: API, apiReady: apiReady, api: api, CHAR: CHAR, setFace: setFace, money: money, esc: esc, SHAPES: SHAPES, TEAM_NAMES: TEAM_NAMES, teamColor: teamColor, pickNames: pickNames, itemUI: itemUI, itemText: itemText, tipsDetails: tipsDetails };
 })();

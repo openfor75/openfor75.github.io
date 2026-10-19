@@ -68,6 +68,24 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
 .qfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:auto}
 .count{font-size:1.4em;font-weight:900}
 
+/* 拆小題 */
+.itemq{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:1.6vw;align-items:start}
+.itemq h4{margin:0 0 6px;font-size:1em;font-weight:900}
+.itemq .cellgrid{grid-template-columns:6.5em repeat(2,minmax(0,1fr));gap:8px}
+.opts .itemq .cellopt{min-height:8.5vh;font-size:1.05em}
+.amts{display:flex;flex-direction:column;gap:8px}
+.amt{border:3px solid var(--ink);border-radius:14px;background:#fff;font-weight:900;padding:8px 14px;display:flex;align-items:center;gap:10px;position:relative;overflow:hidden;font-variant-numeric:tabular-nums}
+.amt .ab{flex:none;display:inline-flex;align-items:center;justify-content:center;width:1.7em;height:1.7em;border-radius:50%;background:var(--ink);color:#fff;font-size:.85em}
+.tips{border:2.5px dashed var(--ink);border-radius:14px;background:var(--sun-soft);padding:8px 12px;font-weight:800;font-size:.9em;line-height:1.55}
+.tips b{display:block;margin-bottom:2px}
+.numtips{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:1.6vw;align-items:stretch}
+.numtips .numhint{display:flex;align-items:center;justify-content:center;padding:2vh}
+#reveal .itemq{gap:1vw}
+#reveal .itemq .cellgrid{grid-template-columns:4.2em repeat(2,minmax(0,1fr));gap:6px}
+#reveal .itemq .ch,#reveal .itemq .rh{font-size:.78em;padding:3px 4px}
+#reveal .opts .itemq .cellopt{min-height:7vh;font-size:.88em}
+#reveal .amt{padding:5px 10px;font-size:.9em}
+
 /* reveal */
 .opt-res{position:relative;overflow:hidden}
 .opt-res .bar{position:absolute;left:0;bottom:0;height:8px;background:var(--ink);opacity:.55}
@@ -143,7 +161,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     </div>
     <div class="two">
       <label class="field">分成幾組？
-        <select id="teamN"><option>3</option><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
+        <select id="teamN"><option>2</option><option>3</option><option>4</option><option>5</option><option selected>6</option><option>7</option><option>8</option></select>
       </label>
       <label class="field">每題時間
         <select id="timeSel">
@@ -154,7 +172,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
         </select>
       </label>
     </div>
-    <p class="muted" style="margin:0">第三回合是大結算題，時間自動加倍。</p>
+    <p class="muted" style="margin:0">大結算的加總題和挑戰題，時間自動加倍。</p>
     <div class="row">
       <button class="btn go" type="button" id="btnCreate">開新的一場</button>
       <button class="btn" type="button" id="btnResume" hidden>接續上一場</button>
@@ -320,7 +338,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     QUESTIONS.forEach(function(q, i){
       if (rounds.indexOf(q.round) < 0) return;
       deck.push(i);
-      durs.push(tsel === 'auto' ? q.dur : Number(tsel) * (q.round === 3 ? 2 : 1));
+      durs.push(tsel === 'auto' ? q.dur : Number(tsel) * (q.big ? 2 : 1));
     });
     $('btnCreate').disabled = true; $('setupErr').textContent = '';
     call('hostCreate', { total: deck.length }).then(function(res){
@@ -520,6 +538,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
       return '<span class="n">' + n + ' 人</span><span class="bar" style="width:' + w + '%"></span>';
     }
     function cls(i){ return mode === 'r' ? (' opt-res ' + (i === sum.answer ? 'correct' : 'dim')) : ''; }
+    if (q.type === 'item') return itemHtml(q, mode, sum);
     if (q.type === 'cell'){
       var c = function(i, a, b){ return '<div class="cellopt o' + i + cls(i) + '"><span class="k">' + (i + 1) + '</span>' + a + '<br>' + b + extra(i) + '</div>'; };
       return '<div class="cellgrid"><div class="ch blank"></div><div class="ch in">在倉庫裡</div><div class="ch out">不在倉庫裡</div>' +
@@ -529,13 +548,35 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     if (q.type === 'mc'){
       return '<div class="mcgrid">' + opts.map(function(o, i){ return '<div class="mcopt o' + i + cls(i) + '"><span class="s">' + B.SHAPES[i] + '</span><span style="flex:1">' + B.esc(o) + '</span>' + extra(i) + '</div>'; }).join('') + '</div>';
     }
-    if (mode === 'q') return '<div class="numhint">請在手機輸入金額（只打數字）</div>';
+    if (mode === 'q') return q.round >= 3 ? '<div class="numtips"><div class="numhint">請在手機輸入金額（只打數字）</div>' + tipsHtml() + '</div>' : '<div class="numhint">請在手機輸入金額（只打數字）</div>';
     var vals = Object.keys(dist).map(function(k){ return { v: Number(k), n: dist[k] }; }).sort(function(a, b){ return b.n - a.n; }).slice(0, 4);
     var max = vals.length ? vals[0].n : 1;
     return '<div class="card numres"><div>正確答案</div><div class="ans">' + B.money(sum.answer) + '</div>' +
       (vals.length ? '<div class="muted" style="font-weight:800">全班最常見的答案</div><div class="vals">' + vals.map(function(x){
         return '<div class="val' + (x.v === sum.answer ? ' ok' : '') + '"><span>' + B.money(x.v) + (x.v === sum.answer ? ' ○' : '') + '</span><span class="b" style="width:' + Math.max(4, Math.round(x.n / max * 100)) + '%"></span><span>' + x.n + ' 人</span></div>';
       }).join('') + '</div>' : '<div class="muted">沒有人作答</div>') + '</div>';
+  }
+  function tipsHtml(){
+    return '<div class="tips"><b>📒 列入金額公式小抄</b>' + FORMULA_TIPS.map(function(t){ return '・' + B.esc(t); }).join('<br>') + '</div>';
+  }
+  function itemHtml(q, mode, sum){
+    var dist = (sum && sum.dist) || {}, tot = (sum && sum.answered) || 0;
+    var cAns = Math.floor(q.answer / 10), aAns = q.answer % 10;
+    var cellN = [0, 0, 0, 0], amtN = q.options.map(function(){ return 0; });
+    Object.keys(dist).forEach(function(k){ var v = Number(k); cellN[Math.floor(v / 10)] += dist[k]; if (amtN[v % 10] !== undefined) amtN[v % 10] += dist[k]; });
+    function bar(n){ var w = tot ? Math.round(n / tot * 100) : 0; return '<span class="n">' + n + ' 人</span><span class="bar" style="width:' + w + '%"></span>'; }
+    var c = function(i, a, b){
+      var cl = mode === 'r' ? (' opt-res ' + (i === cAns ? 'correct' : 'dim')) : '';
+      return '<div class="cellopt o' + i + cl + '"><span class="k">' + (i + 1) + '</span>' + a + '<br>' + b + (mode === 'r' ? bar(cellN[i]) : '') + '</div>';
+    };
+    var grid = '<div class="cellgrid"><div class="ch blank"></div><div class="ch in">在倉庫裡</div><div class="ch out">不在倉庫裡</div>' +
+      '<div class="rh mine">是我的存貨</div>' + c(0, '倉庫內', '是存貨') + c(1, '倉庫外', '是存貨') +
+      '<div class="rh not">不是我的存貨</div>' + c(2, '倉庫內', '不是存貨') + c(3, '倉庫外', '不是存貨') + '</div>';
+    var amts = '<div class="amts">' + q.options.map(function(o, i){
+      var cl = mode === 'r' ? (' opt-res ' + (i === aAns ? 'correct' : 'dim')) : '';
+      return '<div class="amt' + cl + '"><span class="ab">' + 'ABCD'.charAt(i) + '</span><span style="flex:1">' + B.esc(o) + '</span>' + (mode === 'r' ? bar(amtN[i]) : '') + '</div>';
+    }).join('') + '</div>';
+    return '<div class="itemq"><div><h4>① 放哪一格？</h4>' + grid + '</div><div><h4>② 列入存貨要用多少？</h4>' + amts + (mode === 'q' ? '<div style="margin-top:10px">' + tipsHtml() + '</div>' : '') + '</div></div>';
   }
   function showQuestion(){
     var qi = deck[st.q], q = QUESTIONS[qi];
@@ -576,7 +617,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     $('rRound').textContent = roundOf(qi).name;
     $('rNo').textContent = '第 ' + (st.q + 1) + ' / ' + deck.length + ' 題';
     var rate = sum.players ? Math.round(sum.right / sum.players * 100) : 0;
-    $('rRate').textContent = '全班答對 ' + sum.right + ' / ' + sum.players + ' 人（' + rate + '%）';
+    $('rRate').textContent = (q.type === 'item' ? '兩個都選對 ' : '全班答對 ') + sum.right + ' / ' + sum.players + ' 人（' + rate + '%）';
     $('rText').textContent = q.text; $('rText').classList.toggle('long', q.text.length > 60);
     $('rOpts').innerHTML = optsHtml(q, q.options, 'r', sum);
     $('rPlain').textContent = q.plain;
