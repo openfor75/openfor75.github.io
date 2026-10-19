@@ -38,7 +38,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
 
 /* grouping */
 #grouping{display:flex;flex-direction:column;gap:2vh;flex:1}
-#grouping h2{margin:0;font-size:2em;font-weight:900;text-align:center}
+#grouping h2{margin:0;font-size:1.8em;font-weight:900}
 .teams{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:1.6vw}
 .team{background:#fff;border:3px solid var(--ink);border-radius:18px;overflow:hidden;box-shadow:0 5px 0 var(--ink);display:flex;flex-direction:column}
 .team .th{color:#fff;font-weight:900;font-size:1.45em;padding:8px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -202,12 +202,14 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
 
   <!-- 分組 -->
   <section id="grouping" hidden>
-    <h2 id="groupTitle">分組中…</h2>
-    <div class="teams" id="teams"></div>
-    <div class="row" style="justify-content:center;margin-top:auto">
-      <button class="btn" type="button" id="btnRegroup">重新分組</button>
-      <button class="btn go" type="button" id="btnBegin" disabled>開始搶答 →</button>
+    <div class="row" style="justify-content:space-between">
+      <h2 id="groupTitle">分組中…</h2>
+      <div class="row">
+        <button class="btn" type="button" id="btnRegroup">重新分組</button>
+        <button class="btn go" type="button" id="btnBegin" disabled>開始搶答 →</button>
+      </div>
     </div>
+    <div class="teams" id="teams"></div>
   </section>
 
   <!-- 題目 -->
@@ -293,6 +295,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
   function show(id){
     SECTIONS.forEach(function(s){ $(s).hidden = s !== id; });
     $('hstats').hidden = id === 'setup';
+    window.scrollTo(0, 0);
   }
   function roundOf(qi){ var r = QUESTIONS[qi].round; return ROUNDS.filter(function(x){ return x.id === r; })[0]; }
   function teams(){ return (st && st.teams) || []; }
@@ -680,6 +683,7 @@ header h1{margin:0;font-size:1.6em;font-weight:900}
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON' || e.target.tagName === 'SELECT')) return;
     if (e.key === 'Enter' || e.key === ' '){
       if (!$('reveal').hidden){ e.preventDefault(); $('btnNext').click(); }
+      else if (!$('grouping').hidden && !$('btnBegin').disabled){ e.preventDefault(); $('btnBegin').click(); }
       else if (!$('question').hidden){ e.preventDefault(); doReveal(); }
     }
   });
