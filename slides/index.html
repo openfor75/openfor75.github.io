@@ -23,14 +23,17 @@
     padding:24px 16px 64px;
   }
   .sheet{max-width:860px;margin:0 auto}
+  .back{display:inline-block;margin-bottom:14px;font-size:14px;color:var(--ink-soft);text-decoration:none}
+  .back:hover{color:var(--stamp)}
   header{padding-bottom:10px;border-bottom:3px double var(--stamp)}
   h1{margin:0;font-size:clamp(22px,5vw,30px);letter-spacing:.14em;font-weight:700}
   .sub{margin:6px 0 0;font-size:14px;color:var(--ink-soft);letter-spacing:.05em}
-  .month{
-    margin:28px 0 0;padding:6px 4px;font-size:13px;letter-spacing:.2em;
-    color:var(--ink-soft);border-bottom:1px solid var(--rule);
-    font-variant-numeric:tabular-nums;
+  .group{
+    margin:30px 0 0;padding:6px 4px;font-size:14px;font-weight:700;letter-spacing:.16em;
+    color:var(--ink);border-bottom:1px solid var(--rule);
+    display:flex;align-items:baseline;gap:10px;
   }
+  .group small{font-weight:400;font-size:12.5px;letter-spacing:.06em;color:var(--ink-soft)}
   ul{list-style:none;margin:0;padding:0}
   li a{
     display:flex;align-items:baseline;gap:14px;padding:13px 12px;
@@ -40,7 +43,7 @@
   li:nth-child(odd) a{background:var(--bar)}
   li a:hover,li a:focus-visible{border-left-color:var(--stamp);outline:none;background:#fff}
   .date{
-    flex:0 0 auto;font-family:ui-monospace,"SF Mono",Menlo,monospace;
+    flex:0 0 3.2em;font-family:ui-monospace,"SF Mono",Menlo,monospace;
     font-size:15px;color:var(--stamp);font-variant-numeric:tabular-nums;
   }
   .body{flex:1 1 auto;min-width:0}
@@ -51,29 +54,59 @@
 <body>
 <div class="sheet">
 
+  <a class="back" href="../">← 回首頁</a>
   <header>
     <h1>教學資料ㄉ索引</h1>
     <p class="sub">林老師和同學們的點點滴滴</p>
   </header>
 
-
 <!-- ═══════════════════════════════════════════════════════
-     新增一份簡報:複製下面五行,貼進最上面那組 <ul> 的第一筆,
-     改三個地方 —— 檔名、日期、主題。不需要科目就把 tag 那行刪掉。
+     新增一份簡報:複製下面四行,貼進對應分類 <ul> 的第一筆,
+     改三個地方 —— 檔名、日期、主題。不需要科目就把 tag 那段刪掉;
+     沒有日期就讓 date 留空(<span class="date"></span>)。
 
      <li><a href="檔名.html">
        <span class="date">月/日</span>
        <span class="body"><span class="title">主題</span>
        <span class="tag">科目</span></span></a></li>
 
-     換月份:再複製一行 <p class="month">2026 年 09 月</p>
-     和一組 <ul></ul>,整組放在最上面。
+     新分類:複製一行 <p class="group">分類名稱</p> 和一組 <ul></ul>。
      ═══════════════════════════════════════════════════════ -->
-  <p class="month">2026 年 09 月</p>
-  <ul>
 
-  <p class="month">2026 年 08 月</p>
+  <p class="group">會計學互動教室</p>
   <ul>
+    <li><a href="260909_freight.html">
+      <span class="date">09/09</span>
+      <span class="body"><span class="title">柴犬與小熊的運費會計冒險</span>
+      <span class="tag">會計學</span></span></a></li>
+
+    <li><a href="260907_impliedinterest.html">
+      <span class="date">09/07</span>
+      <span class="body"><span class="title">隱含利率互動學習室:拖延的代價</span>
+      <span class="tag">會計學</span></span></a></li>
+  </ul>
+
+  <p class="group">開學市集・初級商貿人 <small>商二乙 專題製作</small></p>
+  <ul>
+    <li><a href="260904_計算機市集結束囉.html">
+      <span class="date">09/04</span>
+      <span class="body"><span class="title">三天市集成果</span>
+      <span class="tag">專題製作</span></span></a></li>
+
+    <li><a href="260903_Calculatedone.html">
+      <span class="date">09/03</span>
+      <span class="body"><span class="title">開學市集成果小誌</span>
+      <span class="tag">專題製作</span></span></a></li>
+
+    <li><a href="260903_組內互評及心得.html">
+      <span class="date">09/03</span>
+      <span class="body"><span class="title">組內互評與自評</span>
+      <span class="tag">專題製作</span></span></a></li>
+
+    <li><a href="260902_calculators.html">
+      <span class="date">09/02</span>
+      <span class="body"><span class="title">市集心得</span>
+      <span class="tag">專題製作</span></span></a></li>
 
     <li><a href="260815_計算機企劃.html">
       <span class="date">08/15</span>
@@ -84,12 +117,53 @@
       <span class="date">08/08</span>
       <span class="body"><span class="title">大家拍的10秒影片回饋</span>
       <span class="tag">專題製作</span></span></a></li>
+  </ul>
 
+  <p class="group">門市行銷</p>
+  <ul>
     <li><a href="1151_門市行銷研習.html">
       <span class="date">08/19</span>
       <span class="body"><span class="title">員林最讚的全家便利商店</span>
       <span class="tag">門市行銷</span></span></a></li>
+  </ul>
 
+  <p class="group">班級活動</p>
+  <ul>
+    <li><a href="1010fighting.html">
+      <span class="date"></span>
+      <span class="body"><span class="title">讀書好運祭</span></span></a></li>
+
+    <li><a href="26moon.html">
+      <span class="date"></span>
+      <span class="body"><span class="title">讀書打卡牆</span></span></a></li>
+
+    <li><a href="260908_myfriend.html">
+      <span class="date">09/08</span>
+      <span class="body"><span class="title">你是哪種朋友?</span></span></a></li>
+
+    <li><a href="260819_教師節活動.html">
+      <span class="date">08/19</span>
+      <span class="body"><span class="title">教師節限定商品模擬市場競賽 說明簡報</span>
+      <span class="tag">商經科活動</span></span></a></li>
+  </ul>
+
+  <p class="group">衛生組分享 <small>給各校老師</small></p>
+  <ul>
+    <li><a href="1151109.html">
+      <span class="date"></span>
+      <span class="body"><span class="title">讓 AI 成為你的衛生組小幫手</span></span></a></li>
+
+    <li><a href="handover.html">
+      <span class="date"></span>
+      <span class="body"><span class="title">衛生組長交接手冊(精簡分享版)</span></span></a></li>
+
+    <li><a href="waiai.html">
+      <span class="date"></span>
+      <span class="body"><span class="title">衛愛而生(示範版)</span></span></a></li>
+
+    <li><a href="3dstreeeet.html">
+      <span class="date"></span>
+      <span class="body"><span class="title">校園 3D 導覽地圖(示範版)</span></span></a></li>
   </ul>
 
 </div>

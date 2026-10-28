@@ -5,6 +5,9 @@
   著作人:林亭妤(別名:教會計的林ㄊㄩ)
   Copyright (c) 2026 林亭妤　授權 CC BY-NC-SA 4.0
   ============================================================
+  分區:① 學生練習　② 上課紀錄　③ 活動專區　④ 頁尾(YouTube／授權)
+  新增入口:複製同一區的一張 <a class="card"> 改 href／標題／說明即可。
+  ============================================================
 -->
 <html lang="zh-Hant">
 <head>
@@ -32,27 +35,38 @@ body{font-family:'Huninn','jf-openhuninn','PingFang TC','Noto Sans TC','Microsof
    linear-gradient(to right,transparent 0 25px,var(--margin) 25px 26.5px,transparent 26.5px);
  background-attachment:local;touch-action:manipulation;-webkit-text-size-adjust:100%}
 .wrap{max-width:620px;margin:0 auto;padding:30px 16px 44px 42px}
+
 .hero h1{font-size:31px;font-weight:900;margin:0;letter-spacing:.04em;line-height:1.3}
 .hero .by{margin-top:6px;font-size:15px;color:var(--ink2)}
 .hero p{margin:12px 0 0;color:var(--ink2);font-size:15.5px}
 .tag{display:inline-block;border:2px solid var(--ink3);border-radius:999px;padding:2px 11px;
  font-size:13px;font-weight:800;color:var(--ink2);background:#fff;margin:10px 6px 0 0}
-.hr{height:0;border-top:2px dashed #D8CFC4;margin:24px 0 18px}
-.sec{font-size:14px;font-weight:900;color:var(--ink2);letter-spacing:.1em;margin-bottom:10px}
+
+.sec{display:flex;align-items:baseline;gap:10px;margin:30px 0 12px;
+ padding-top:18px;border-top:2px dashed #D8CFC4}
+.sec .no{font-size:13px;font-weight:900;color:#fff;background:var(--ink);border-radius:999px;
+ min-width:24px;height:24px;display:inline-flex;align-items:center;justify-content:center}
+.sec .h{font-size:19px;font-weight:900;letter-spacing:.06em}
+.sec .s{font-size:13.5px;color:var(--ink3);margin-left:auto}
+
 a.card{display:block;text-decoration:none;color:inherit;background:#fff;border:3px solid var(--ink);
  border-radius:18px;box-shadow:5px 6px 0 rgba(31,27,24,.10);padding:15px 17px;margin-bottom:13px}
 a.card:active{transform:translate(2px,2px);box-shadow:3px 4px 0 rgba(31,27,24,.10)}
 a.card .t{font-size:20px;font-weight:900;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
 a.card .badge{font-size:12px;font-weight:800;color:#fff;background:var(--ink);border-radius:999px;padding:2px 9px}
+a.card .badge.line{color:var(--ink2);background:#fff;border:2px solid var(--ink3);padding:0 8px}
 a.card .d{font-size:14.5px;color:var(--ink2);margin-top:5px;line-height:1.7}
-a.card.soft{border-width:2.5px;box-shadow:3px 4px 0 rgba(31,27,24,.08)}
+a.card .go{display:block;margin-top:6px;font-size:13.5px;font-weight:800;color:var(--ink)}
+a.card.soft{border-width:2.5px;box-shadow:3px 4px 0 rgba(31,27,24,.08);padding:13px 16px}
 a.card.soft .t{font-size:17.5px}
-.foot{margin-top:26px;padding-top:15px;border-top:2px dashed #D8CFC4;line-height:1.75}
+
+.foot{margin-top:30px;padding-top:15px;border-top:2px dashed #D8CFC4;line-height:1.75}
 .foot .fby{font-size:18px;font-weight:900;letter-spacing:.04em}
 .foot .fsite{font-size:14px;font-weight:800;color:var(--ink2);margin:3px 0 7px}
+.foot .fsite a{color:var(--ink2);text-decoration:none;border-bottom:2px solid var(--amber)}
 .foot .fsub{font-size:12.5px;color:var(--ink3)}
 .foot a{color:var(--ink2)}
-@media (max-width:400px){.wrap{padding-left:34px}.hero h1{font-size:26px}}
+@media (max-width:400px){.wrap{padding-left:34px}.hero h1{font-size:26px}.sec .s{display:none}}
 </style>
 </head>
 <body>
@@ -68,36 +82,41 @@ a.card.soft .t{font-size:17.5px}
     </div>
   </div>
 
-  <div class="hr"></div>
+  <!-- ① 學生練習 -->
+  <div class="sec"><span class="no">1</span><span class="h">學生練習</span><span class="s">打開就能練</span></div>
 
-  <div class="sec">會 計 資 訊</div>
   <a class="card" href="games/ais/">
     <div class="t">會計資訊系統(手機版)<span class="badge">30 組題組</span></div>
-    <div class="d">勞動部會計資訊丙級的分錄練習。選傳票別、登分錄、<b>隨時查帳看餘額</b>、
+    <div class="d">勞動部會計資訊丙級的分錄練習。選傳票別、登分錄、<b>隨時查帳看餘額</b>,
       全部登完自動對帳找錯,附詳解。可選日記簿、三分法或四分法傳票。</div>
   </a>
 
-  <div class="sec" style="margin-top:22px">其 他 工 具</div>
-  <a class="card soft" href="games/">
-    <div class="t">ㄊㄩ的遊戲大廳</div>
-    <div class="d">會計方程式闖關、日常分錄練習、商業概論教材等,全部從這裡進去。</div>
+  <a class="card" href="games/">
+    <div class="t">ㄊㄩ的遊戲大廳<span class="badge">19 個遊戲</span></div>
+    <div class="d">會計學 8 個:會計項目分類、借貸法則、交易鑑定、會計方程式、日常分錄、丙級檢定練習。<br>
+      商業概論 11 個:CH1–CH10 章節教材與總複習大挑戰。</div>
   </a>
-  <a class="card soft" href="https://youtube.com/@openfor75">
-    <div class="t">YouTube 頻道</div>
-    <div class="d">教學影片與工具使用說明。</div>
+
+  <!-- ② 上課紀錄 -->
+  <div class="sec"><span class="no">2</span><span class="h">上課紀錄</span><span class="s">簡報與互動教室</span></div>
+
+  <a class="card soft" href="slides/">
+    <div class="t">上課簡報與紀錄</div>
+    <div class="d">開學市集、隱含利率、運費分錄等上課用的互動簡報,
+      還有和同學們一起留下的點點滴滴。</div>
   </a>
-    <a class="card soft" href="slides/">
-    <div class="t">上課筆記</div>
-    <div class="d">與學生之間的點點滴滴</div>
-  </a>
-    <a class="card soft" href="teacherday/">
-    <div class="t">115學年度教師節活動</div>
-    <div class="d">員家商貿的活動</div>
+
+  <!-- ③ 活動專區 -->
+  <div class="sec"><span class="no">3</span><span class="h">活動專區</span><span class="s">商經科活動</span></div>
+
+  <a class="card soft" href="teacherday/">
+    <div class="t">誰能把禮物送進老師ㄉ心裡<span class="badge line">115 教師節</span></div>
+    <div class="d">教師節限定商品模擬市場競賽。班級討論牆、商品型錄、繳交進度看板、活動說明簡報。</div>
   </a>
 
   <div class="foot">
     <div class="fby">教會計的林ㄊㄩ</div>
-    <div class="fsite">youtube.com/@openfor75</div>
+    <div class="fsite">▶ YouTube　<a href="https://youtube.com/@openfor75">youtube.com/@openfor75</a></div>
     <div class="fsub">著作人:林亭妤(教會計的林ㄊㄩ)</div>
     <div class="fsub">首次發行:2026 年 7 月　·　發行地:臺灣</div>
     <div class="fsub">© 2026 林亭妤　·　<a href="games/ais/LICENSE.md">CC BY-NC-SA 4.0</a></div>
